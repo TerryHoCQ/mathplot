@@ -724,15 +724,13 @@ namespace mplot {
         //! A rotation that is saved between mouse button callbacks
         sm::quaternion<float> savedRotation;
 
-        //! The projection matrix is a member of this class
+        //! The projection matrix is a member of this class. Value is set during setPerspective() or setOrthographic()
         sm::mat44<float> projection;
 
-        //! The inverse of the projection
+        //! The inverse of the projection. Value is set during setPerspective() or setOrthographic()
         sm::mat44<float> invproj;
 
-        //! A scene transformation
-        sm::mat44<float> scene;
-        //! Scene transformation inverse
+        //! The sceneview transformation inverse has to be held as state during a mouse movement
         sm::mat44<float> invscene;
 
     public:
@@ -1102,9 +1100,9 @@ namespace mplot {
                 // Save the rotation at the start of the mouse movement
                 this->savedRotation = this->rotation;
                 // Get the scene's rotation at the start of the mouse movement:
-                this->scene.setToIdentity();
-                this->scene.rotate (this->savedRotation);
-                this->invscene = this->scene.inverse();
+                sm::mat44<float> sceneview;
+                sceneview.rotate (this->savedRotation);
+                this->invscene = sceneview.inverse();
             }
 
             if (button == mplot::mousebutton::left) { // Primary button means rotate
