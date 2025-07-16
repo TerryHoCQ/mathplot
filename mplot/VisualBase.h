@@ -1097,12 +1097,12 @@ namespace mplot {
             // Record the position at which the button was pressed
             if (action == keyaction::press) { // Button down
                 this->mousePressPosition = this->cursorpos;
-                // Save the rotation at the start of the mouse movement
-                this->savedRotation = this->rotation;
                 // Get the scene's rotation at the start of the mouse movement:
                 sm::mat44<float> sceneview;
-                sceneview.rotate (this->savedRotation);
+                sceneview.rotate (this->rotation);
                 this->invscene = sceneview.inverse();
+                // Save the rotation at the start of the mouse movement
+                this->savedRotation = this->rotation;
             }
 
             if (button == mplot::mousebutton::left) { // Primary button means rotate
