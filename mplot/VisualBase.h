@@ -730,9 +730,6 @@ namespace mplot {
         //! The inverse of the projection. Value is set during setPerspective() or setOrthographic()
         sm::mat44<float> invproj;
 
-        //! The sceneview transformation inverse has to be held as state during a mouse movement
-        sm::mat44<float> invscene;
-
     public:
 
         /*
@@ -1037,8 +1034,9 @@ namespace mplot {
 
                 // Now inverse apply the rotation of the scene to the rotation axis (vec<float,3>),
                 // so that we rotate the model the right way.
-                sm::vec<float, 4> tmp_4D = this->invscene * this->rotationAxis;
-                this->rotationAxis.set_from (tmp_4D); // Set rotationAxis from 4D result
+                sm::mat44<float> savedr;
+                savedr.rotate (this->savedRotation);
+                this->rotationAxis.set_from (savedr.inverse() * this->rotationAxis);
 
                 // Update rotation from the saved position.
                 this->rotation = this->savedRotation;
@@ -1094,14 +1092,9 @@ namespace mplot {
             // If the scene is locked, then ignore the mouse movements
             if (this->state.test (visual_state::sceneLocked)) { return; }
 
-            // Record the position at which the button was pressed
+            // Record the position and rotation at which the button was pressed
             if (action == keyaction::press) { // Button down
                 this->mousePressPosition = this->cursorpos;
-                // Get the scene's rotation at the start of the mouse movement:
-                sm::mat44<float> sceneview;
-                sceneview.rotate (this->rotation);
-                this->invscene = sceneview.inverse();
-                // Save the rotation at the start of the mouse movement
                 this->savedRotation = this->rotation;
             }
 
