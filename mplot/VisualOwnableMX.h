@@ -203,21 +203,7 @@ namespace mplot {
             }
 
             // Calculate model view transformation - transforming from "model space" to "worldspace".
-            sm::mat44<float> sv1;
-            if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
-                // send backwards (ONLY) into distance  (Avoid in cyl)
-                sv1.translate (sm::vec<>{0.0f, 0.0f, this->scenetrans.z()});
-            }
-            // Now rotate (about centre of window, rather than origin of models)
-            sm::mat44<float> sv2;
-            sv2.rotate (this->rotation);
-
-            // Finish the translation
-            sm::mat44<float> sv3;
-            sv3.translate (sm::vec<>{this->scenetrans.x(), this->scenetrans.y(), 0.0f});
-
-            // Combine into a sceneview matrix
-            sm::mat44<float> sceneview = sv1 * sv2 * sv3;
+            sm::mat44<float> sceneview = this->computeSceneview();
 
             // Clear color buffer and **also depth buffer**
             this->glfn->Clear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
