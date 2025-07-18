@@ -725,30 +725,35 @@ namespace mplot {
             // Calculate model view transformation - transforming from "model space" to "worldspace".
             sm::mat44<float> sv_tr;
             if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
-                // send backwards (ONLY) into distance  (Avoid in cyl)
-
-                // scenetrans_delta is in world frame, we want to convert to model frame
-                //std::cout << "scenetrans_delta = " << scenetrans_delta << std::endl;
-                //sm::quaternion<float> curr_rotn = this->sceneview.rotation(); // NO GOOD
-                //sm::vec<float, 3> model_delta = curr_rotn * this->scenetrans_delta;
-                //std::cout << "sceneview.rotation() * scenetrans_delta = " << model_delta << std::endl;
+                // send backwards into distance  (Avoid in cyl)
+#if 0
+                // scenetrans_delta is in world frame, we want to convert to model frame.
+                // Specifically, we want the cumulative rotation of the sceneview...
+                sm::mat33<float> r = this->savedSceneview.linear();
+                sm::vec<float> model_delta = r * -this->scenetrans_delta;
+                sv_tr.translate (model_delta);
+#endif
                 sv_tr.translate (this->scenetrans_delta);
-                this->scenetrans_delta.zero();
+
+                //sv_tr.translate (this->savedSceneview * this->scenetrans_delta);
+                //this->scenetrans_delta.zero();
             }
-            // A rotation delta in world frame
+            // A rotation delta in world frame. Do we also have a cumulative rotation?
             sm::mat44<float> sv_rot;
             sv_rot.rotate (this->rotation_delta);
-            this->rotation_delta.reset();
+            //this->rotation_delta.reset();
 
             // Original behaviour
-            sm::mat44<float> _sceneview = this->sceneview * (sv_tr * sv_rot);
+            sm::mat44<float> _sceneview =  (sv_tr * sv_rot) * this->savedSceneview;
 
             return _sceneview;
         }
 
         sm::mat44<float> computeSceneview()
         {
-            this->sceneview = this->computeSceneview3();
+            if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
+                this->sceneview = this->computeSceneview3();
+            }
             return this->sceneview;
         }
 
@@ -1040,6 +1045,8 @@ namespace mplot {
                 this->sceneview.setToIdentity();
                 this->sceneview.translate (this->scenetrans_default);
                 this->sceneview.prerotate (this->rotation_default);
+                this->scenetrans_delta.zero();
+                this->rotation_delta.reset();
 
                 needs_render = true;
             }
@@ -1047,17 +1054,13 @@ namespace mplot {
             if (this->state.test (visual_state::sceneLocked) == false
                 && _key == key::o && (mods & keymod::control) && action == keyaction::press) {
                 this->fov -= 2;
-                if (this->fov < 1.0) {
-                    this->fov = 2.0;
-                }
+                if (this->fov < 1.0) { this->fov = 2.0; }
                 std::cout << "FOV reduced to " << this->fov << std::endl;
             }
             if (this->state.test (visual_state::sceneLocked) == false
                 && _key == key::p && (mods & keymod::control) && action == keyaction::press) {
                 this->fov += 2;
-                if (this->fov > 179.0) {
-                    this->fov = 178.0;
-                }
+                if (this->fov > 179.0) { this->fov = 178.0; }
                 std::cout << "FOV increased to " << this->fov << std::endl;
             }
             if (this->state.test (visual_state::sceneLocked) == false
@@ -1117,11 +1120,10 @@ namespace mplot {
 
                 // Add the depth at which the object lies.  Use forward projection to determine the
                 // correct z coordinate for the inverse projection. This assumes only one object.
-                sm::vec<float> st = this->sceneview.translation();
-                //sm::vec<float, 4> point =  { 0.0f, 0.0f, this->scenetrans.z(), 1.0f };
+                sm::vec<float> st = this->savedSceneview.translation();
                 sm::vec<float, 4> point =  { 0.0f, 0.0f, st.z(), 1.0f };
                 sm::vec<float, 4> pp = this->projection * point;
-                float coord_z = pp[2]/pp[3]; // divide by pp[3] is divide by/normalise by 'w'.
+                float coord_z = pp[2] / pp[3]; // divide by pp[3] is divide by/normalise by 'w'.
 
                 // Construct two points for the start and end of the mouse movement
                 sm::vec<float, 4> p0 = { p0_coord[0], p0_coord[1], coord_z, 1.0f };
@@ -1132,14 +1134,14 @@ namespace mplot {
                 sm::vec<float, 4> v0 = this->invproj * p0;
                 sm::vec<float, 4> v1 = this->invproj * p1;
 
-                // This computes the difference betwen v0 and v1, the 2 mouse positions in the world
+                // This computes the difference between v0 and v1, the 2 mouse positions in the world
                 // space. Note the swap between x and y
                 if (this->state.test (visual_state::rotateModMode)) {
                     // Sort of "rotate the page" mode.
-                    mouseMoveWorld[2] = -((v1[1]/v1[3]) - (v0[1]/v0[3])) + ((v1[0]/v1[3]) - (v0[0]/v0[3]));
+                    mouseMoveWorld[2] = -((v1[1] / v1[3]) - (v0[1] / v0[3])) + ((v1[0] / v1[3]) - (v0[0] / v0[3]));
                 } else {
-                    mouseMoveWorld[1] = -((v1[0]/v1[3]) - (v0[0]/v0[3]));
-                    mouseMoveWorld[0] = -((v1[1]/v1[3]) - (v0[1]/v0[3]));
+                    mouseMoveWorld[1] = -((v1[0] / v1[3]) - (v0[0] / v0[3]));
+                    mouseMoveWorld[0] = -((v1[1] / v1[3]) - (v0[1] / v0[3]));
                 }
 
                 // Rotation axis is perpendicular to the mouse position difference vector BUT we
@@ -1149,18 +1151,7 @@ namespace mplot {
                 this->rotationAxis = (mouseMoveWorld * rotamount); // rotationAxis is in world frame
                 this->rotationAxis.renormalize();
 
-                // Now inverse apply the rotation of the scene to the rotation axis (vec<float,3>),
-                // so that we rotate the model the right way.
-#if 0
-                sm::mat44<float> savedr;
-                savedr.rotate (this->savedRotation);
-                this->rotationAxis.set_from (savedr.inverse() * this->rotationAxis);
-#endif
-                // Update rotation from the saved position.
-                //this->rotation = this->savedRotation;
-                //sm::quaternion<float> rotnQuat (this->rotationAxis, -rotamount * sm::mathconst<float>::deg2rad);
-                //this->rotation.postmultiply (rotnQuat); // combines rotations
-
+                // rotation_delta is a rotation in the world frame of reference
                 this->rotation_delta.set_rotation (this->rotationAxis, -rotamount * sm::mathconst<float>::deg2rad);
 
                 needs_render = true;
@@ -1180,10 +1171,9 @@ namespace mplot {
                 // Add the depth at which the object lies.  Use forward projection to determine the
                 // correct z coordinate for the inverse projection. This assumes only one object.
                 sm::vec<float> st = this->savedSceneview.translation();
-                //sm::vec<float, 4> point =  { 0.0f, 0.0f, this->scenetrans.z(), 1.0f };
                 sm::vec<float, 4> point =  { 0.0f, 0.0f, st.z(), 1.0f };
                 sm::vec<float, 4> pp = this->projection * point;
-                float coord_z = pp[2]/pp[3]; // divide by pp[3] is divide by/normalise by 'w'.
+                float coord_z = pp[2] / pp[3]; // divide by pp[3] is divide by/normalise by 'w'.
 
                 // Construct two points for the start and end of the mouse movement
                 sm::vec<float, 4> p0 = { p0_coord[0], p0_coord[1], coord_z, 1.0f };
@@ -1192,13 +1182,13 @@ namespace mplot {
                 sm::vec<float, 4> v0 = this->invproj * p0;
                 sm::vec<float, 4> v1 = this->invproj * p1;
                 // This computes the difference betwen v0 and v1, the 2 mouse positions in the world
-                mouseMoveWorld[0] = (v1[0]/v1[3]) - (v0[0]/v0[3]);
-                mouseMoveWorld[1] = (v1[1]/v1[3]) - (v0[1]/v0[3]);
+                mouseMoveWorld[0] = (v1[0] / v1[3]) - (v0[0] / v0[3]);
+                mouseMoveWorld[1] = (v1[1] / v1[3]) - (v0[1] / v0[3]);
                 // Note: mouseMoveWorld[2] is unmodified
 
                 // We "translate the whole scene" - used by 2D projection shaders (ignored by cyl shader)
-                this->scenetrans_delta[0] = mouseMoveWorld[0];
-                this->scenetrans_delta[1] = -mouseMoveWorld[1];
+                this->scenetrans_delta[0] += mouseMoveWorld[0];
+                this->scenetrans_delta[1] -= mouseMoveWorld[1];
 
                 // Also translate our cylindrical camera position (used in cyl shader, ignored in proj. shader)
                 this->cyl_cam_pos[0] -= mouseMoveWorld[0];
@@ -1217,8 +1207,15 @@ namespace mplot {
 
             // Record the position and rotation at which the button was pressed
             if (action == keyaction::press) { // Button down
+                std::cout << "mouse keyaction::press\n";
                 this->mousePressPosition = this->cursorpos;
                 this->savedSceneview = this->sceneview;
+                this->scenetrans_delta.zero();
+                this->rotation_delta.reset();
+            } else if (action == keyaction::repeat) {
+                std::cout << "mouse keyaction::repeat\n";
+            } else if (action == keyaction::release) {
+                std::cout << "mouse keyaction::release\n";
             }
 
             if (button == mplot::mousebutton::left) { // Primary button means rotate
@@ -1270,12 +1267,12 @@ namespace mplot {
             } else { // perspective_type::perspective or perspective_type::cylindrical
 
                 // xoffset does what mouse drag left/right in rotateModMode does (L/R scene trans)
-                this->scenetrans_delta[0] = -xoffset * this->scenetrans_stepsize;
+                this->scenetrans_delta[0] -= xoffset * this->scenetrans_stepsize;
                 this->cyl_cam_pos[0] += xoffset * this->scenetrans_stepsize;
 
                 // yoffset does the 'in-out zooming'
                 sm::vec<float, 4> scroll_move_y = { 0.0f, static_cast<float>(yoffset) * this->scenetrans_stepsize, 0.0f, 1.0f };
-                this->scenetrans_delta[2] = scroll_move_y[1];
+                this->scenetrans_delta[2] += scroll_move_y[1];
                 // Translate scroll_move_y then add it to cyl_cam_pos here
                 sm::mat44<float> sceneview_rotn;
                 sceneview_rotn.rotate (this->rotation); // FIXME for cyl_cam_pos
