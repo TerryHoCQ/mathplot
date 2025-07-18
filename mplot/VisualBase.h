@@ -654,28 +654,60 @@ namespace mplot {
             this->invproj = this->projection.inverse();
         }
 
+        // Compute the sceneview matrix, always rotating about scene origin
+        sm::mat44<float> computeSceneview0()
+        {
+            sm::mat44<float> sceneview;
+            if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
+                // This line translates from model space to world space. Avoid in cyl?
+                sceneview.translate (this->scenetrans); // send backwards into distance
+            }
+            // And this rotation completes the transition from model to world
+            sceneview.prerotate (this->rotation);
+
+            // equiv: sv1(translate) * sv2(rotate)
+            return sceneview;
+        }
+
         // Compute the sceneview matrix
-        sm::mat44<float> computeSceneview()
+        sm::mat44<float> computeSceneview1()
         {
             // Calculate model view transformation - transforming from "model space" to "worldspace".
             sm::mat44<float> sv1;
             if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
                 // send backwards (ONLY) into distance  (Avoid in cyl)
-                sv1.translate (sm::vec<>{0.0f, 0.0f, this->scenetrans.z()});
+                sv1.translate (sm::vec<float>{ 0.0f, 0.0f, this->scenetrans.z() });
             }
             // A rotation
             sm::mat44<float> sv2;
             sv2.rotate (this->rotation);
-
             // The 'in-page' translation
             sm::mat44<float> sv3;
-            sv3.translate (sm::vec<>{this->scenetrans.x(), this->scenetrans.y(), 0.0f});
-
+            sv3.translate (sm::vec<float>{ this->scenetrans.x(), this->scenetrans.y(), 0.0f });
             // Combine into a sceneview matrix - order is in-page translation, then rotation, then send-backwards
             sm::mat44<float> sceneview = sv1 * sv2 * sv3;
 
             return sceneview;
         }
+
+        sm::mat44<float> computeSceneview2()
+        {
+            // Calculate model view transformation - transforming from "model space" to "worldspace".
+            sm::mat44<float> sv1;
+            if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
+                // send backwards (ONLY) into distance  (Avoid in cyl)
+                sv1.translate (this->scenetrans);
+            }
+            // A rotation
+            sm::mat44<float> sv2;
+            sv2.rotate (this->rotation);
+
+            sm::mat44<float> sceneview = sv2 * sv1;
+
+            return sceneview;
+        }
+
+        sm::mat44<float> computeSceneview() { return this->computeSceneview0(); }
 
         //! A vector of pointers to all the mplot::VisualModels (HexGridVisual,
         //! ScatterVisual, etc) which are going to be rendered in the scene.
