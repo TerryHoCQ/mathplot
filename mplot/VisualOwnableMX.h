@@ -252,7 +252,7 @@ namespace mplot {
                 this->coordArrows->render();
             }
 
-            sm::mat44<float> scenetransonly;
+            sm::mat44<float> scenetransonly; // Maybe generate from sceneview.translation()?
             scenetransonly.translate (this->scenetrans);
 
             auto vmi = this->vm.begin();

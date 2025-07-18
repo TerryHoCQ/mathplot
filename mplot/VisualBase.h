@@ -726,16 +726,22 @@ namespace mplot {
             sm::mat44<float> sv_tr;
             if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
                 // send backwards (ONLY) into distance  (Avoid in cyl)
+
+                // scenetrans_delta is in world frame, we want to convert to model frame
+                //std::cout << "scenetrans_delta = " << scenetrans_delta << std::endl;
+                //sm::quaternion<float> curr_rotn = this->sceneview.rotation(); // NO GOOD
+                //sm::vec<float, 3> model_delta = curr_rotn * this->scenetrans_delta;
+                //std::cout << "sceneview.rotation() * scenetrans_delta = " << model_delta << std::endl;
                 sv_tr.translate (this->scenetrans_delta);
                 this->scenetrans_delta.zero();
             }
-            // A rotation
+            // A rotation delta in world frame
             sm::mat44<float> sv_rot;
-            //sv_rot.rotate (this->rotation_delta);
-            // this->rotation_delta.zero();
+            sv_rot.rotate (this->rotation_delta);
+            this->rotation_delta.reset();
 
             // Original behaviour
-            sm::mat44<float> _sceneview = this->sceneview * sv_tr * sv_rot;
+            sm::mat44<float> _sceneview = this->sceneview * (sv_tr * sv_rot);
 
             return _sceneview;
         }
@@ -1026,10 +1032,14 @@ namespace mplot {
                 && _key == key::a && (mods & keymod::control) && action == keyaction::press) {
                 std::cout << "Reset to default view\n";
                 // Reset translation
-                this->scenetrans = this->scenetrans_default;
+                this->scenetrans = this->scenetrans_default; // FIXME
                 this->cyl_cam_pos = this->cyl_cam_pos_default;
                 // Reset rotation
-                this->rotation = this->rotation_default;
+                this->rotation = this->rotation_default; // FIXME
+
+                this->sceneview.setToIdentity();
+                this->sceneview.translate (this->scenetrans_default);
+                this->sceneview.prerotate (this->rotation_default);
 
                 needs_render = true;
             }
@@ -1136,15 +1146,16 @@ namespace mplot {
                 // have to project into the model frame to determine how to rotate the model!
                 float rotamount = mouseMoveWorld.length() * 40.0f; // chosen in degrees
                 // Calculate new rotation axis as weighted sum
-                this->rotationAxis = (mouseMoveWorld * rotamount);
+                this->rotationAxis = (mouseMoveWorld * rotamount); // rotationAxis is in world frame
                 this->rotationAxis.renormalize();
 
                 // Now inverse apply the rotation of the scene to the rotation axis (vec<float,3>),
                 // so that we rotate the model the right way.
+#if 0
                 sm::mat44<float> savedr;
                 savedr.rotate (this->savedRotation);
                 this->rotationAxis.set_from (savedr.inverse() * this->rotationAxis);
-
+#endif
                 // Update rotation from the saved position.
                 //this->rotation = this->savedRotation;
                 //sm::quaternion<float> rotnQuat (this->rotationAxis, -rotamount * sm::mathconst<float>::deg2rad);
