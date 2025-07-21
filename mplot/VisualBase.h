@@ -668,82 +668,45 @@ namespace mplot {
         }
 
         // Compute the sceneview matrix, always rotating about scene origin
-        sm::mat44<float> computeSceneview0()
+        sm::mat44<float> computeSceneview_about_scene_origin()
         {
-            sm::mat44<float> _sceneview;
-            if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
-                // This line translates from model space to world space. Avoid in cyl?
-                _sceneview.translate (this->scenetrans); // send backwards into distance
-            }
-            // And this rotation completes the transition from model to world
-            _sceneview.prerotate (this->rotation);
-
-            // equiv: sv1(translate) * sv2(rotate)
-            return _sceneview;
-        }
-
-        // Compute the sceneview matrix
-        sm::mat44<float> computeSceneview1()
-        {
-            // Calculate model view transformation - transforming from "model space" to "worldspace".
-            sm::mat44<float> sv1;
-            if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
-                // send backwards (ONLY) into distance  (Avoid in cyl)
-                sv1.translate (sm::vec<float>{ 0.0f, 0.0f, this->scenetrans.z() });
-            }
-            // A rotation
-            sm::mat44<float> sv2;
-            sv2.rotate (this->rotation);
-            // The 'in-page' translation
-            sm::mat44<float> sv3;
-            sv3.translate (sm::vec<float>{ this->scenetrans.x(), this->scenetrans.y(), 0.0f });
-            // Combine into a sceneview matrix - order is in-page translation, then rotation, then send-backwards
-            sm::mat44<float> _sceneview = sv1 * sv2 * sv3;
-
-            return _sceneview;
-        }
-
-        sm::mat44<float> computeSceneview2()
-        {
-            // Calculate model view transformation - transforming from "model space" to "worldspace".
-            sm::mat44<float> sv1;
-            if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
-                // send backwards (ONLY) into distance  (Avoid in cyl)
-                sv1.translate (this->scenetrans);
-            }
-            // A rotation
-            sm::mat44<float> sv2;
-            sv2.rotate (this->rotation);
-
-            sm::mat44<float> _sceneview = sv2 * sv1;
-
-            return _sceneview;
-        }
-
-        sm::mat44<float> computeSceneview3()
-        {
-            // Calculate model view transformation - transforming from "model space" to "worldspace".
+            std::cout << "savedSceneview:\n" << this->savedSceneview << std::endl;
             sm::mat44<float> sv_tr;
-            if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
-                // send backwards into distance  (Avoid in cyl)
-#if 0
-                // scenetrans_delta is in world frame, we want to convert to model frame.
-                // Specifically, we want the cumulative rotation of the sceneview...
-                sm::mat33<float> r = this->savedSceneview.linear();
-                sm::vec<float> model_delta = r * -this->scenetrans_delta;
-                sv_tr.translate (model_delta);
-#endif
-                sv_tr.translate (this->scenetrans_delta);
-
-                //sv_tr.translate (this->savedSceneview * this->scenetrans_delta);
-                //this->scenetrans_delta.zero();
-            }
-            // A rotation delta in world frame. Do we also have a cumulative rotation?
             sm::mat44<float> sv_rot;
-            sv_rot.rotate (this->rotation_delta);
-            //this->rotation_delta.reset();
+            if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
+                sv_tr.translate (this->scenetrans_delta);
+                // A rotation delta in world frame about the 'screen centre'
+                std::cout << "savedSceneview.translation: " << this->savedSceneview.translation() << std::endl;
+                sv_rot.pretranslate (this->savedSceneview.translation());
+                sv_rot.rotate (this->rotation_delta);
+                sv_rot.pretranslate (-this->savedSceneview.translation());
+            } else {
+                // Only rotate in cyl view
+                sv_rot.rotate (this->rotation_delta);
+            }
 
-            // Original behaviour
+            sm::mat44<float> _sceneview =  this->savedSceneview * (sv_tr * sv_rot);
+
+            return _sceneview;
+        }
+
+        // Rotate about screen centre
+        sm::mat44<float> computeSceneview_about_screen_centre()
+        {
+            sm::mat44<float> sv_tr;
+            sm::mat44<float> sv_rot;
+            if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
+                sv_tr.translate (this->scenetrans_delta);
+                // A rotation delta in world frame about the 'screen centre'
+                sm::vec<float> screencentre = {0, 0, this->savedSceneview.translation().z()};
+                sv_rot.pretranslate (-screencentre);
+                sv_rot.rotate (this->rotation_delta);
+                sv_rot.translate (screencentre);
+            } else {
+                // Only rotate in cyl view
+                sv_rot.rotate (this->rotation_delta);
+            }
+
             sm::mat44<float> _sceneview =  (sv_tr * sv_rot) * this->savedSceneview;
 
             return _sceneview;
@@ -752,7 +715,8 @@ namespace mplot {
         sm::mat44<float> computeSceneview()
         {
             if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
-                this->sceneview = this->computeSceneview3();
+                // Calculate model view transformation - transforming from "model space" to "worldspace".
+                this->sceneview = this->computeSceneview_about_screen_centre();
             }
             return this->sceneview;
         }
@@ -807,6 +771,10 @@ namespace mplot {
 
         //! A delta scene translations
         sm::vec<float, 3> scenetrans_delta = { 0.0f, 0.0f, 0.0f };
+
+        //! A translation to the current 'centre of the view', which is initially the centre of the
+        //! scene, but may change from this.
+        sm::vec<float, 3> scenetrans_centre = { 0.0f, 0.0f, zDefault };
 
         //! Default for scenetrans. This is a scene position that can be reverted to, to
         //! 'reset the view'. This is copied into scenetrans when user presses Ctrl-a.
@@ -1038,6 +1006,7 @@ namespace mplot {
                 std::cout << "Reset to default view\n";
                 // Reset translation
                 this->scenetrans = this->scenetrans_default; // FIXME
+                this->scenetrans_centre = this->scenetrans_default; // FIXME
                 this->cyl_cam_pos = this->cyl_cam_pos_default;
                 // Reset rotation
                 this->rotation = this->rotation_default; // FIXME
@@ -1207,15 +1176,17 @@ namespace mplot {
 
             // Record the position and rotation at which the button was pressed
             if (action == keyaction::press) { // Button down
-                std::cout << "mouse keyaction::press\n";
+                //std::cout << "mouse keyaction::press\n";
                 this->mousePressPosition = this->cursorpos;
                 this->savedSceneview = this->sceneview;
                 this->scenetrans_delta.zero();
                 this->rotation_delta.reset();
             } else if (action == keyaction::repeat) {
-                std::cout << "mouse keyaction::repeat\n";
+                //std::cout << "mouse keyaction::repeat\n";
             } else if (action == keyaction::release) {
-                std::cout << "mouse keyaction::release\n";
+                //std::cout << "mouse keyaction::release\n";
+                this->scenetrans_delta.zero();
+                this->rotation_delta.reset();
             }
 
             if (button == mplot::mousebutton::left) { // Primary button means rotate
@@ -1273,6 +1244,7 @@ namespace mplot {
                 // yoffset does the 'in-out zooming'
                 sm::vec<float, 4> scroll_move_y = { 0.0f, static_cast<float>(yoffset) * this->scenetrans_stepsize, 0.0f, 1.0f };
                 this->scenetrans_delta[2] += scroll_move_y[1];
+                this->scenetrans_centre[2] += scroll_move_y[1]; // Centre is always (0,0,z)
                 // Translate scroll_move_y then add it to cyl_cam_pos here
                 sm::mat44<float> sceneview_rotn;
                 sceneview_rotn.rotate (this->rotation); // FIXME for cyl_cam_pos
