@@ -57,7 +57,9 @@ namespace mplot {
         //! When true, rotations about the third axis are possible.
         rotateModMode,
         //! When true, cursor movements induce translation of scene
-        translateMode
+        translateMode,
+        //! We are scrolling (and so we will need to zero scenetrans_delta after enacting the change)
+        scrolling
     };
 
     //! Boolean options - similar to state, but more likely to be modified by client code
@@ -672,13 +674,11 @@ namespace mplot {
         // Compute the sceneview matrix, always rotating about scene origin
         sm::mat44<float> computeSceneview_about_scene_origin()
         {
-            std::cout << "savedSceneview:\n" << this->savedSceneview << std::endl;
             sm::mat44<float> sv_tr;
             sm::mat44<float> sv_rot;
             if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
                 sv_tr.translate (this->scenetrans_delta);
                 // A rotation delta in world frame about the 'screen centre'
-                std::cout << "savedSceneview.translation: " << this->savedSceneview.translation() << std::endl;
                 sv_rot.pretranslate (this->savedSceneview.translation());
                 sv_rot.rotate (this->rotation_delta);
                 sv_rot.pretranslate (-this->savedSceneview.translation());
@@ -700,7 +700,7 @@ namespace mplot {
             if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
                 sv_tr.translate (this->scenetrans_delta);
                 // A rotation delta in world frame about the 'screen centre'
-                sm::vec<float> screencentre = {0, 0, this->savedSceneview.translation().z()};
+                sm::vec<float> screencentre = { 0.0f, 0.0f, this->savedSceneview.translation().z() + this->scenetrans_delta.z() };
                 sv_rot.pretranslate (-screencentre);
                 sv_rot.rotate (this->rotation_delta);
                 sv_rot.translate (screencentre);
@@ -717,6 +717,14 @@ namespace mplot {
         sm::mat44<float> computeSceneview()
         {
             if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
+#if 0
+                if (std::abs(this->scenetrans_delta.sum()) > 0.0f) {
+                    std::cout << "|scenetrans_delta.sum()| > 0" << std::endl;
+                }
+                if (this->rotation_delta.is_zero_rotation() == false) {
+                    std::cout << "rotation_delta.is_zero_rotation() == false" << std::endl;
+                }
+#endif
                 // Calculate model view transformation - transforming from "model space" to "worldspace".
                 if (this->options.test (visual_options::rotateAboutSceneOrigin) == false) {
                     this->sceneview = this->computeSceneview_about_screen_centre();
@@ -724,6 +732,12 @@ namespace mplot {
                     this->sceneview = this->computeSceneview_about_scene_origin();
                 }
             }
+
+            if (this->state.test (visual_state::scrolling)) {
+                this->scenetrans_delta.zero();
+                this->state.reset (visual_state::scrolling);
+            }
+
             return this->sceneview;
         }
 
@@ -1207,15 +1221,12 @@ namespace mplot {
 
             // Record the position and rotation at which the button was pressed
             if (action == keyaction::press) { // Button down
-                //std::cout << "mouse keyaction::press\n";
                 this->mousePressPosition = this->cursorpos;
                 this->savedSceneview = this->sceneview;
                 this->scenetrans_delta.zero();
                 this->rotation_delta.reset();
-            } else if (action == keyaction::repeat) {
-                //std::cout << "mouse keyaction::repeat\n";
             } else if (action == keyaction::release) {
-                //std::cout << "mouse keyaction::release\n";
+                // On mouse button release, zero the deltas:
                 this->scenetrans_delta.zero();
                 this->rotation_delta.reset();
             }
@@ -1256,6 +1267,11 @@ namespace mplot {
             // a second scroll wheel, xoffset will be passed non-zero. They'll be 0 or +/- 1.
 
             if (this->state.test (visual_state::sceneLocked)) { return false; }
+
+            this->savedSceneview = this->sceneview;
+            this->scenetrans_delta.zero();
+            this->rotation_delta.reset();
+            this->state.set (visual_state::scrolling);
 
             if (this->ptype == perspective_type::orthographic) {
                 // In orthographic, the wheel should scale ortho_lb and ortho_rt
