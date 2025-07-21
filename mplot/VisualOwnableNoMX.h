@@ -197,7 +197,7 @@ namespace mplot {
             }
 
             // Calculate model view transformation - transforming from "model space" to "worldspace".
-            sm::mat44<float> sceneview = this->computeSceneview();
+            this->computeSceneview();
 
             // Clear color buffer and **also depth buffer**
             glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -239,14 +239,14 @@ namespace mplot {
                 this->setContext(); // ...so re-acquire if we're managing it
 
                 if (this->options.test (visual_options::coordArrowsInScene) == true) {
-                    this->coordArrows->setSceneMatrix (sceneview);
+                    this->coordArrows->setSceneMatrix (this->sceneview);
                 } else {
                     this->positionCoordArrows();
                 }
                 this->coordArrows->render();
             }
 
-            sm::mat44<float> scenetransonly;
+            sm::mat44<float> scenetransonly; // Maybe generate from sceneview.translation()?
             scenetransonly.translate (this->scenetrans);
 
             auto vmi = this->vm.begin();
@@ -255,7 +255,7 @@ namespace mplot {
                     // It's a two-d thing. Now what?
                     (*vmi)->setSceneMatrix (scenetransonly);
                 } else {
-                    (*vmi)->setSceneMatrix (sceneview);
+                    (*vmi)->setSceneMatrix (this->sceneview);
                 }
                 (*vmi)->render();
                 ++vmi;
