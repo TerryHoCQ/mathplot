@@ -1095,7 +1095,7 @@ namespace mplot {
         {
             this->rotationAxis = axis;
             sm::quaternion<float> rotnQuat (this->rotationAxis, -angle);
-            this->rotation.postmultiply (rotnQuat);
+            this->sceneview.prerotate (rotnQuat);
         }
 
         virtual bool cursor_position_callback (double x, double y)
