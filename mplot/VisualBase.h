@@ -687,7 +687,7 @@ namespace mplot {
                 sv_rot.rotate (this->rotation_delta);
             }
 
-            sm::mat44<float> _sceneview =  this->savedSceneview * (sv_tr * sv_rot);
+            sm::mat44<float> _sceneview =  sv_tr * this->savedSceneview * sv_rot;
 
             return _sceneview;
         }
@@ -709,7 +709,7 @@ namespace mplot {
                 sv_rot.rotate (this->rotation_delta);
             }
 
-            sm::mat44<float> _sceneview =  (sv_tr * sv_rot) * this->savedSceneview;
+            sm::mat44<float> _sceneview =  sv_tr * sv_rot * this->savedSceneview;
 
             return _sceneview;
         }
