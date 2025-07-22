@@ -129,7 +129,10 @@ namespace mplot {
          * such as a QWidget.  We have to wait on calling init functions until an OpenGL
          * environment is guaranteed to exist.
          */
-        VisualBase() { this->sceneview.translate (this->scenetrans_default); }
+        VisualBase() {
+            this->sceneview.translate (this->scenetrans_default);
+            this->sceneview_tr.translate (this->scenetrans_default);
+        }
 
         /*!
          * Construct a new visualiser. The rule is 1 window to one Visual object. So, this creates a
@@ -141,6 +144,7 @@ namespace mplot {
             , title(_title)
         {
             this->sceneview.translate (this->scenetrans_default);
+            this->sceneview_tr.translate (this->scenetrans_default);
             this->options.set (visual_options::versionStdout, _version_stdout);
             this->init_gl(); // abstract
         }
@@ -688,6 +692,7 @@ namespace mplot {
             }
 
             this->sceneview = sv_tr * this->savedSceneview * sv_rot;
+            this->sceneview_tr = sv_tr * this->savedSceneview_tr;
         }
 
         // Rotate about screen centre
@@ -708,6 +713,7 @@ namespace mplot {
             }
 
             this->sceneview = sv_tr * sv_rot * this->savedSceneview;
+            this->sceneview_tr = sv_tr * this->savedSceneview_tr;
         }
 
         void computeSceneview()
@@ -836,8 +842,14 @@ namespace mplot {
         //! movements. Initialized in VisualOwnable(No)MX constructor.
         sm::mat44<float> sceneview;
 
+        //! The non-rotating sceneview matrix, updated only from mouse translations (avoiding rotations)
+        sm::mat44<float> sceneview_tr;
+
         //! Saved sceneview at mouse button down
         sm::mat44<float> savedSceneview;
+
+        //! Saved sceneview_tr
+        sm::mat44<float> savedSceneview_tr;
 
     public:
 
@@ -1036,8 +1048,10 @@ namespace mplot {
                 this->cyl_cam_pos = this->cyl_cam_pos_default;
 
                 this->sceneview.setToIdentity();
+                this->sceneview_tr.setToIdentity();
                 this->sceneview.translate (this->scenetrans_default);
                 this->sceneview.prerotate (this->rotation_default);
+                this->sceneview_tr.translate (this->scenetrans_default);
                 this->scenetrans_delta.zero();
                 this->rotation_delta.reset();
 
@@ -1209,6 +1223,7 @@ namespace mplot {
             if (action == keyaction::press) { // Button down
                 this->mousePressPosition = this->cursorpos;
                 this->savedSceneview = this->sceneview;
+                this->savedSceneview_tr = this->sceneview_tr;
                 this->scenetrans_delta.zero();
                 this->rotation_delta.reset();
             } else if (action == keyaction::release) {
@@ -1255,6 +1270,7 @@ namespace mplot {
             if (this->state.test (visual_state::sceneLocked)) { return false; }
 
             this->savedSceneview = this->sceneview;
+            this->savedSceneview_tr = this->sceneview_tr;
             this->scenetrans_delta.zero();
             this->rotation_delta.reset();
             this->state.set (visual_state::scrolling);

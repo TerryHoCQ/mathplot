@@ -252,14 +252,11 @@ namespace mplot {
                 this->coordArrows->render();
             }
 
-            sm::mat44<float> scenetransonly; // Maybe generate from sceneview.translation()?
-            scenetransonly.translate (this->scenetrans);
-
             auto vmi = this->vm.begin();
             while (vmi != this->vm.end()) {
                 if ((*vmi)->twodimensional == true) {
-                    // It's a two-d thing. Now what?
-                    (*vmi)->setSceneMatrix (scenetransonly);
+                    // It's a two-d thing. Use the companion 'scene trans only' matrix, which avoids any rotations
+                    (*vmi)->setSceneMatrix (this->sceneview_tr);
                 } else {
                     (*vmi)->setSceneMatrix (this->sceneview);
                 }
