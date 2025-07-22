@@ -672,7 +672,7 @@ namespace mplot {
         }
 
         // Compute the sceneview matrix, always rotating about scene origin
-        sm::mat44<float> computeSceneview_about_scene_origin()
+        void computeSceneview_about_scene_origin()
         {
             sm::mat44<float> sv_tr;
             sm::mat44<float> sv_rot;
@@ -687,13 +687,11 @@ namespace mplot {
                 sv_rot.rotate (this->rotation_delta);
             }
 
-            sm::mat44<float> _sceneview =  sv_tr * this->savedSceneview * sv_rot;
-
-            return _sceneview;
+            this->sceneview = sv_tr * this->savedSceneview * sv_rot;
         }
 
         // Rotate about screen centre
-        sm::mat44<float> computeSceneview_about_screen_centre()
+        void computeSceneview_about_screen_centre()
         {
             sm::mat44<float> sv_tr;
             sm::mat44<float> sv_rot;
@@ -709,36 +707,24 @@ namespace mplot {
                 sv_rot.rotate (this->rotation_delta);
             }
 
-            sm::mat44<float> _sceneview =  sv_tr * sv_rot * this->savedSceneview;
-
-            return _sceneview;
+            this->sceneview = sv_tr * sv_rot * this->savedSceneview;
         }
 
-        sm::mat44<float> computeSceneview()
+        void computeSceneview()
         {
             if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
-#if 0
-                if (std::abs(this->scenetrans_delta.sum()) > 0.0f) {
-                    std::cout << "|scenetrans_delta.sum()| > 0" << std::endl;
-                }
-                if (this->rotation_delta.is_zero_rotation() == false) {
-                    std::cout << "rotation_delta.is_zero_rotation() == false" << std::endl;
-                }
-#endif
                 // Calculate model view transformation - transforming from "model space" to "worldspace".
                 if (this->options.test (visual_options::rotateAboutSceneOrigin) == false) {
-                    this->sceneview = this->computeSceneview_about_screen_centre();
+                    this->computeSceneview_about_screen_centre();
                 } else {
-                    this->sceneview = this->computeSceneview_about_scene_origin();
+                    this->computeSceneview_about_scene_origin();
                 }
-            }
+            } // else don't change sceneview
 
             if (this->state.test (visual_state::scrolling)) {
                 this->scenetrans_delta.zero();
                 this->state.reset (visual_state::scrolling);
             }
-
-            return this->sceneview;
         }
 
         //! A vector of pointers to all the mplot::VisualModels (HexGridVisual,
