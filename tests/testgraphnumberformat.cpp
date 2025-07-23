@@ -2,8 +2,8 @@
 
 // To test non-format code:
 #ifdef FORCE_NON_FORMAT
-# ifdef MORPH_HAVE_STD_FORMAT
-#  undef MORPH_HAVE_STD_FORMAT
+# ifdef MPLOT_HAVE_STD_FORMAT
+#  undef MPLOT_HAVE_STD_FORMAT
 # endif
 #endif
 
