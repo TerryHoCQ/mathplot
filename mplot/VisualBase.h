@@ -331,7 +331,7 @@ namespace mplot {
 
             // Add the depth at which the object lies.  Use forward projection to determine the
             // correct z coordinate for the inverse projection. This assumes only one object.
-            sm::vec<float, 4> point =  { 0.0f, 0.0f, this->scenetrans.z(), 1.0f };
+            sm::vec<float, 4> point =  { 0.0f, 0.0f, this->sceneview[14], 1.0f }; // sceneview[14] is 'scenetrans.z'
             sm::vec<float, 4> pp = this->projection * point;
             float coord_z = pp[2]/pp[3]; // divide by pp[3] is divide by/normalise by 'w'.
 
@@ -766,6 +766,8 @@ namespace mplot {
                 this->sceneview.setToIdentity();
                 this->sceneview.translate (this->scenetrans_default);
                 this->sceneview.prerotate (this->rotation_default);
+                this->sceneview_tr.setToIdentity();
+                this->sceneview_tr.translate (this->scenetrans_default);
                 this->scenetrans_delta.zero();
                 this->rotation_delta.reset();
 
@@ -810,14 +812,11 @@ namespace mplot {
         //! The default z position for VisualModels should be 'away from the screen' (negative) so we can see them!
         constexpr static float zDefault = -5.0f;
 
-        //! Holds the translation coordinates for the current location of the entire scene
-        sm::vec<float, 3> scenetrans = { 0.0f, 0.0f, zDefault };
-
         //! A delta scene translations
         sm::vec<float, 3> scenetrans_delta = { 0.0f, 0.0f, 0.0f };
 
-        //! Default for scenetrans. This is a scene position that can be reverted to, to
-        //! 'reset the view'. This is copied into scenetrans when user presses Ctrl-a.
+        //! Default for scene translation. This is a scene position that can be reverted to, to
+        //! 'reset the view'. This is copied into sceneview when user presses Ctrl-a.
         sm::vec<float, 3> scenetrans_default = { 0.0f, 0.0f, zDefault };
 
         //! The world depth at which text objects should be rendered
@@ -947,10 +946,11 @@ namespace mplot {
 
             if (_key == key::z && (mods & keymod::control) && action == keyaction::press) {
                 sm::quaternion<float> rotn = this->sceneview.rotation();
+                sm::vec<float> scenetrans = this->sceneview.translation();
                 std::cout << "Scenetrans setup code:\n    v.setSceneTrans (sm::vec<float,3>{ float{"
-                          << this->scenetrans.x() << "}, float{"
-                          << this->scenetrans.y() << "}, float{"
-                          << this->scenetrans.z()
+                          << scenetrans.x() << "}, float{"
+                          << scenetrans.y() << "}, float{"
+                          << scenetrans.z()
                           << "} });"
                           <<  "\n    v.setSceneRotation (sm::quaternion<float>{ float{"
                           << rotn.w << "}, float{" << rotn.x << "}, float{"
@@ -959,9 +959,9 @@ namespace mplot {
                 std::ofstream fout;
                 fout.open ("/tmp/Visual.json", std::ios::out|std::ios::trunc);
                 if (fout.is_open()) {
-                    fout << "{\"scenetrans_x\":" << this->scenetrans.x()
-                         << ", \"scenetrans_y\":" << this->scenetrans.y()
-                         << ", \"scenetrans_z\":" << this->scenetrans.z()
+                    fout << "{\"scenetrans_x\":" << scenetrans.x()
+                         << ", \"scenetrans_y\":" << scenetrans.y()
+                         << ", \"scenetrans_z\":" << scenetrans.z()
                          << ",\n \"scenerotn_w\":" << rotn.w
                          << ", \"scenerotn_x\":" <<  rotn.x
                          << ", \"scenerotn_y\":" <<  rotn.y
@@ -1047,7 +1047,6 @@ namespace mplot {
                 && _key == key::a && (mods & keymod::control) && action == keyaction::press) {
                 std::cout << "Reset to default view\n";
                 // Reset translation
-                this->scenetrans = this->scenetrans_default; // FIXME
                 this->cyl_cam_pos = this->cyl_cam_pos_default;
 
                 this->sceneview.setToIdentity();
