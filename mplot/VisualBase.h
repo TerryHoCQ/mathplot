@@ -437,27 +437,33 @@ namespace mplot {
         //! Set a black background colour for the Visual scene
         void backgroundBlack() { this->bgcolour = { 0.0f, 0.0f, 0.0f, 0.0f }; }
 
+        //! Set sceneview and sceneview_tr back to scenetrans_default
+        void reset_sceneviews_to_scenetrans_default()
+        {
+            this->sceneview.setToIdentity();
+            this->sceneview.translate (this->scenetrans_default);
+            this->sceneview_tr.setToIdentity();
+            this->sceneview_tr.translate (this->scenetrans_default);
+        }
+
         //! Set the scene's x and y values at the same time.
         void setSceneTransXY (const float _x, const float _y)
         {
             this->scenetrans_default[0] = _x;
             this->scenetrans_default[1] = _y;
-            this->sceneview.setToIdentity();
-            this->sceneview.translate (this->scenetrans_default);
+            this->reset_sceneviews_to_scenetrans_default();
         }
         //! Set the scene's y value. Use this to shift your scene objects left or right
         void setSceneTransX (const float _x)
         {
             this->scenetrans_default[0] = _x;
-            this->sceneview.setToIdentity();
-            this->sceneview.translate (this->scenetrans_default);
+            this->reset_sceneviews_to_scenetrans_default();
         }
         //! Set the scene's y value. Use this to shift your scene objects up and down
         void setSceneTransY (const float _y)
         {
             this->scenetrans_default[1] = _y;
-            this->sceneview.setToIdentity();
-            this->sceneview.translate (this->scenetrans_default);
+            this->reset_sceneviews_to_scenetrans_default();
         }
         //! Set the scene's z value. Use this to bring the 'camera' closer to your scene
         //! objects (that is, your mplot::VisualModel objects).
@@ -467,8 +473,7 @@ namespace mplot {
                 std::cerr << "WARNING setSceneTransZ(): Normally, the default z value is negative.\n";
             }
             this->scenetrans_default[2] = _z;
-            this->sceneview.setToIdentity();
-            this->sceneview.translate (this->scenetrans_default);
+            this->reset_sceneviews_to_scenetrans_default();
         }
         void setSceneTrans (float _x, float _y, float _z)
         {
@@ -479,8 +484,7 @@ namespace mplot {
             this->scenetrans_default[0] = _x;
             this->scenetrans_default[1] = _y;
             this->scenetrans_default[2] = _z;
-            this->sceneview.setToIdentity();
-            this->sceneview.translate (this->scenetrans_default);
+            this->reset_sceneviews_to_scenetrans_default();
         }
         void setSceneTrans (const sm::vec<float, 3>& _xyz)
         {
@@ -488,8 +492,7 @@ namespace mplot {
                 std::cerr << "WARNING setSceneTrans(vec<>&): Normally, the default z value is negative.\n";
             }
             this->scenetrans_default = _xyz;
-            this->sceneview.setToIdentity();
-            this->sceneview.translate (this->scenetrans_default);
+            this->reset_sceneviews_to_scenetrans_default();
         }
 
         void setSceneRotation (const sm::quaternion<float>& _rotn)
