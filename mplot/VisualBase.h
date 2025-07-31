@@ -374,6 +374,8 @@ namespace mplot {
             sm::flags<visual_options> _options;
             // Only with ImGui do we manually swap buffers, so this is true by default:
             _options.set (visual_options::renderSwapsBuffers);
+            // For now, default to rotating about scene origin, as we ever did (Ctrl-k to change)
+            _options.set (visual_options::rotateAboutSceneOrigin);
             return _options;
         }
 
