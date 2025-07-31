@@ -1,4 +1,4 @@
-# mathplot: plotting and data visualization for C++
+# Mathplot: plotting and data visualization for C++
 
 ![A banner image mathplot VisualModels](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/banner2.png?raw=true)
 
@@ -15,15 +15,15 @@
 
 **Header-only library code to visualize C++ numerical simulations using modern OpenGL.**
 
-Mathplot is a library for drawing 3D data visualization objects called `VisualModels`.
-
-mathplot can also be integrated with other GUI frameworks including [Qt](https://doc.qt.io/) (see [**examples/qt/**](https://github.com/sebsjames/mathplot/tree/main/examples/qt)), [wxWidgets](https://www.wxwidgets.org/) (see [**examples/wx/**](https://github.com/sebsjames/mathplot/tree/main/examples/wx)) and [Dear ImGui](https://github.com/ocornut/imgui) (see this [ImGui example](https://github.com/sebsjames/mathplot_imgui)). Dear ImGui is the easiest way to add GUI control to your visualizations.
+Mathplot is a library for drawing **3D data visualization** objects called `VisualModels`.
 
 Mathplot is compatible with **Linux** (including **Raspberry Pi**), **Mac OS** and **Windows**.
 
 You'll find all of the **library code** in the [**mplot**](https://github.com/sebsjames/mathplot/tree/main/mplot) directory and you can find **example code and screenshots** [here](https://github.com/sebsjames/mathplot/tree/main/examples). There is also a **template project** [that uses mathplot](https://github.com/sebsjames/mathplot_template) to help you incorporate the library into your own work.
 
-mathplot has a **documentation and reference** website at https://sebsjames.github.io/mathplot/.
+Mathplot has a **documentation and reference** website at https://sebsjames.github.io/mathplot/.
+
+Mathplot can be **integrated with GUI frameworks** including [Qt](https://doc.qt.io/) (see [**examples/qt/**](https://github.com/sebsjames/mathplot/tree/main/examples/qt)), [wxWidgets](https://www.wxwidgets.org/) (see [**examples/wx/**](https://github.com/sebsjames/mathplot/tree/main/examples/wx)) and [Dear ImGui](https://github.com/ocornut/imgui) (see this [ImGui example](https://github.com/sebsjames/mathplot_imgui)). Dear ImGui is the easiest way to add GUI control to your visualizations.
 
 ## Quick Start
 
@@ -73,7 +73,6 @@ int main()
     v.addVisualModel (gv);
     // Render the scene on the screen until user quits with 'Ctrl-q'
     v.keepOpen();
-    return 0;
 }
 ```
 The program generates a clean looking graph...
@@ -97,7 +96,7 @@ plt.ylabel('y')
 # Render the graph on the screen until user quits with 'q'
 plt.show()
 ```
-## What is mathplot?
+## What is Mathplot?
 
 This header-only C++ code provides **dynamic runtime visualization**
 for your programs. It was developed to visualize simulations of dynamical
@@ -120,7 +119,7 @@ A modern OpenGL visualization scheme called
 
 See [the reference documentation website](https://sebsjames.github.io/mathplot/) for a guide to the main classes.
 
-mathplot code is enclosed in the **mplot** namespace. If the reference site doesn't cover it, then the header files (They're all in [mplot/](https://github.com/sebsjames/mathplot/tree/main/mplot)) contain code documentation.
+Mathplot code is enclosed in the **mplot** namespace. If the reference site doesn't cover it, then the header files (They're all in [mplot/](https://github.com/sebsjames/mathplot/tree/main/mplot)) contain code documentation.
 
 You can find example programs which are compiled when you do the standard
 cmake-driven build of mathplot in both the [tests/](https://github.com/sebsjames/mathplot/tree/main/tests) subdirectory
@@ -132,10 +131,10 @@ For more info on how to set up CMake files to build a program using mathplot (an
 
 ## Credits
 
-Authorship of mathplot code is given in each file. Copyright in
-the software is owned by the authors. Refer to [morphologica](https://github.com/ABRG-Models/morphologica) for historical code authorship details (some of the code distributed here was written by contributors to morphologica). The original idea to use OpenGL to graph hexagonal grids came from [Stuart Wilson](https://github.com/stuartwilson). [Seb James](https://github.com/sebjameswml) reimplemented Stuart's hexgrid plotting code in modern OpenGL and developed morphologica into a general purpose visualization library. In 2025, [Seb](https://github.com/sebsjames) changed the name to *mathplot* to indicate to new developers what functionality the library provides.
+Authorship of Mathplot code is given in each file. Copyright in
+the software is owned by the authors. Refer to [morphologica](https://github.com/ABRG-Models/morphologica) for historical code authorship details (some of the code distributed here was written by contributors to morphologica). The original idea to use OpenGL to graph hexagonal grids came from [Stuart Wilson](https://github.com/stuartwilson). [Seb James](https://github.com/sebjameswml) reimplemented Stuart's hexgrid plotting code in modern OpenGL and developed morphologica into a general purpose visualization library. In 2025, [Seb](https://github.com/sebsjames) changed the name to *Mathplot* to indicate to new developers what functionality the library provides.
 
-mathplot is made possible by a number of third party projects whose source code is included in this repository. These include [lodepng](https://github.com/lvandeve/lodepng), [rapidxml](http://rapidxml.sourceforge.net/), [incbin](https://github.com/graphitemaster/incbin), [UniformBicone](https://github.com/wlenthe/UniformBicone), [jcvoronoi](https://github.com/JCash/voronoi) and the [HEALPix implementation from Astrometry.net](https://astrometry.net/). Thanks to the authors of these projects!
+Mathplot is made possible by a number of third party projects whose source code is included in this repository. These include [lodepng](https://github.com/lvandeve/lodepng), [rapidxml](http://rapidxml.sourceforge.net/), [incbin](https://github.com/graphitemaster/incbin), [UniformBicone](https://github.com/wlenthe/UniformBicone), [jcvoronoi](https://github.com/JCash/voronoi) and the [HEALPix implementation from Astrometry.net](https://astrometry.net/). Thanks to the authors of these projects!
 
-mathplot is distributed under the terms of the Apache License, version 2 (see
+Mathplot is distributed under the terms of the Apache License, version 2 (see
 [LICENSE.txt](https://github.com/sebsjames/mathplot/blob/main/LICENSE.txt)).

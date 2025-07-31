@@ -32,6 +32,7 @@ namespace mplot { namespace gl { static constexpr int multicontext = 0; } }
 #include <mplot/VisualTextModel.h>
 #include <mplot/VisualBase.h>
 #include <mplot/gl/loadshaders_nomx.h>
+#include <mplot/gl/util_nomx.h>
 
 namespace mplot {
 
