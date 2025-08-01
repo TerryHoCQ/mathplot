@@ -502,3 +502,6 @@ if(HAVE_STD_FORMAT)
   add_executable(zernike zernike.cpp)
   target_link_libraries(zernike OpenGL::GL glfw Freetype::Freetype)
 endif()
+
+add_executable(vonmises vonmises.cpp)
+target_link_libraries(vonmises OpenGL::GL glfw Freetype::Freetype)
