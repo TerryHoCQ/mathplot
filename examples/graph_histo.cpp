@@ -3,6 +3,7 @@
  */
 
 #include <iostream>
+#include <format>
 #include <sm/mathconst>
 #include <sm/vec>
 #include <sm/vvec>
@@ -33,16 +34,38 @@ int main()
 #endif
 
     // Set up a mplot::Visual for a graph
-    mplot::Visual v(1024, 768, "Histogram");
+    mplot::Visual v(1024, 768, "Histograms");
     v.setSceneTrans (sm::vec<float,3>({-0.539211f, -0.401911f, -2.8f}));
 
-    // Create a new GraphVisual with offset within the scene of 0,0,0. Note the type for
-    // the GraphVisual has to match the *second* template type for the histo.
-    auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({0,0,0}));
+    constexpr float gw = 1.4f;
+
+    // Create a new GraphVisual. Note the type for the GraphVisual has to match the *second*
+    // template type for the histo.
+    auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>{-gw});
     v.bindmodel (gv);
-    gv->setdata (h); // to become gv->add_bargraph (h [,mplot::colour::darkorchid1] [,mplot::colour::orchid2])
+    // 3rd argument to setdata (histo,...) allows you to choose what will be plotted
+    gv->setdata (h, "", mplot::histo_view::counts);
+    gv->ylabel = std::format("Counts (sum {})", h.counts.sum()) ;
     gv->xlabel = "1000 sin(x)";
-    gv->ylabel = "Proportion";
+    gv->finalize();
+    v.addVisualModel (gv);
+
+    gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>{0});
+    v.bindmodel (gv);
+    // In this graph, plot probabilty densities (== proportions / bin_width)
+    gv->setdata (h, "", mplot::histo_view::densities);
+    gv->ylabel = std::format("Prob. density (sum {})", h.densities.sum());
+    gv->xlabel = "1000 sin(x)";
+    gv->finalize();
+    v.addVisualModel (gv);
+
+    gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>{gw});
+    v.bindmodel (gv);
+    // gv->setdata (h) is equivalent to gv->setdata (h, "", mplot::histo_view::proportions)
+    gv->setdata (h);
+    gv->ylabel = "Count proportions";
+    gv->ylabel = std::format("Count proportions (sum {})", h.proportions.sum()) ;
+    gv->xlabel = "1000 sin(x)";
     gv->finalize();
     v.addVisualModel (gv);
 
