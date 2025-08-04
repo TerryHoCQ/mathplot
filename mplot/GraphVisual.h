@@ -527,7 +527,7 @@ namespace mplot {
 
         //! Special setdata for a sm::histo object
         template<typename H>
-        void setdata (const sm::histo<H, Flt>& h, const std::string name = "")
+        void setdata (const sm::histo<H, Flt>& h, const std::string name = "", const mplot::histo_view hv = mplot::histo_view::proportions)
         {
             DatasetStyle ds(mplot::stylepolicy::bar);
             if (!name.empty()) { ds.datalabel = name; }
@@ -542,7 +542,7 @@ namespace mplot {
             ds.markercolour = DatasetStyle::datacolour(data_index);
             ds.linecolour = mplot::colour::black;
 
-            this->setdata (h, ds);
+            this->setdata (h, ds, hv);
         }
 
         /*!
@@ -558,9 +558,12 @@ namespace mplot {
          * mplot::DatasetStyle ds(mplot::stylepolicy::bar);
          * // ds setup goes here including ds.markersize for bar width
          * gv->setdata<H, false> (h, ds);
+         *
+         * This function plots the histogram probability densities by default. To plot proportions,
+         * pass a bool 3rd argument.
          */
         template<typename H, bool bar_width_auto = true>
-        void setdata (const sm::histo<H, Flt>& h, mplot::DatasetStyle& ds)
+        void setdata (const sm::histo<H, Flt>& h, mplot::DatasetStyle& ds, const mplot::histo_view hv = mplot::histo_view::proportions)
         {
             if (ds.policy != mplot::stylepolicy::bar) {
                 throw std::runtime_error ("GraphVisual::setdata(histo, DatasetStyle): Your DatasetStyle policy must be mplot::stylepolicy::bar");
@@ -578,7 +581,13 @@ namespace mplot {
             // datarange_y min is always 0
             this->datarange_y.min = Flt{0};
 
-            this->setdata (h.bins, h.proportions, ds);
+            if (hv == mplot::histo_view::proportions) {
+                this->setdata (h.bins, h.proportions, ds);
+            } else if (hv == mplot::histo_view::counts) {
+                this->setdata (h.bins, h.counts.template as<Flt>(), ds);
+            } else {
+                this->setdata (h.bins, h.densities, ds);
+            }
         }
 
         /*!

@@ -7,17 +7,27 @@
 
 int main (int argc, char** argv)
 {
-    double mu = 0.0;
-    double kappa = 3.0;
+    using T = float;
+
+    T mu = 0.0;
+    T kappa = 3.0;
     if (argc > 1) { kappa = std::atof (argv[1]); }
 
-    sm::rand_vonmises<double> rvm (mu, kappa);
+    sm::rand_vonmises<T> rvm (mu, kappa);
 
     constexpr unsigned int nsamp = 100000;
-    sm::vvec<double> samples (nsamp);
+    sm::vvec<T> samples (nsamp);
     for (unsigned int i = 0; i < nsamp; ++i) { samples[i] = rvm.get(); }
 
-    sm::histo<double, float> h(samples, 100, sm::range<double>{-sm::mathconst<double>::pi, sm::mathconst<double>::pi});
+    sm::histo<T, float> h(samples, 100, sm::range<T>{-sm::mathconst<T>::pi, sm::mathconst<T>::pi});
+
+#ifndef __APPLE__ // rand_vonmises::prob_density is not available with Apple, as it doesn't have std::cyl_bessel_i
+    // Compute PD function
+    sm::vvec<float> pd (h.bins.size());
+    for (size_t i = 0; i < h.bins.size(); ++i) {
+        pd[i] = static_cast<float>(rvm.prob_density (static_cast<T>(h.bins[i])));
+    }
+#endif
 
     // Set up a mplot::Visual for a graph
     mplot::Visual v(1024, 768, "Von Mises Distribution on the circle");
@@ -25,9 +35,18 @@ int main (int argc, char** argv)
 
     auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>{0,0,0});
     v.bindmodel (gv);
-    gv->setdata (h);
+
+    gv->setdata (h, "", mplot::histo_view::densities);
+
+#ifndef __APPLE__ // rand_vonmises::prob_density is not available with Apple, as it doesn't have std::cyl_bessel_i
+    mplot::DatasetStyle ds (mplot::stylepolicy::lines);
+    ds.linecolour = mplot::colour::crimson;
+    gv->setdata (h.bins, pd, ds);
+#else
+    std::cout << "Info: you don't get to see the red probability density line on a Mac\n";
+#endif
     gv->xlabel = "Angle";
-    gv->ylabel = "Proportion";
+    gv->ylabel = "Prob. density";
     gv->addLabel (std::format ("{}={}, {}={}",
                                mplot::unicode::toUtf8 (mplot::unicode::mu), mu,
                                mplot::unicode::toUtf8 (mplot::unicode::kappa), kappa),
