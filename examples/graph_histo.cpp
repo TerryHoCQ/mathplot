@@ -53,8 +53,8 @@ int main()
     gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>{0});
     v.bindmodel (gv);
     // In this graph, plot probabilty densities (== proportions / bin_width)
-    gv->setdata (h, "", mplot::histo_view::densities)
-    gv->ylabel = std::format("Prob. density (sum {})", h.densities.sum()) ;
+    gv->setdata (h, "", mplot::histo_view::densities);
+    gv->ylabel = std::format("Prob. density (sum {})", h.densities.sum());
     gv->xlabel = "1000 sin(x)";
     gv->finalize();
     v.addVisualModel (gv);
