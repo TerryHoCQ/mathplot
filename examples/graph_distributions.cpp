@@ -125,6 +125,7 @@ int main()
     draw_graph (v, h, pd, sm::vec<>{gw, -gh},
                 std::format("Pareto {}={} {}={}", uc::toUtf8(uc::alpha), alpha, uc::toUtf8(uc::sigma), sigma));
 
+#ifndef __APPLE__
     // Von Mises distribution
     mu = F{0};
     kappa = F{0.7};
@@ -136,6 +137,7 @@ int main()
     }
     draw_graph (v, h, pd, sm::vec<>{2 * gw, -gh},
                 std::format("Von Mises {}={} {}={}", uc::toUtf8(uc::mu), mu, uc::toUtf8(uc::kappa), kappa));
+#endif
 
     v.keepOpen();
 
