@@ -523,7 +523,7 @@ namespace mplot {
      * which gives two colours (clr1 and clr2) with one encoding a low value (clr1) and
      * one encoding a high value (clr2).
      */
-    template <typename T>
+    template <typename T = float> requires std::is_arithmetic_v<T>
     class ColourMap
     {
     public:
@@ -2910,7 +2910,7 @@ namespace mplot {
         }
 
         //! Set the colour by hue, saturation and value (defined in an array) (ColourMapType::Fixed only)
-        void setHSV (const std::array<float,3> hsv) { this->setHSV (hsv[0],hsv[1],hsv[2]); }
+        void setHSV (const std::array<float,3> hsv) { this->setHSV (hsv[0], hsv[1], hsv[2]); }
 
         //! Set this->hue, sat and val from the passed in RGB triplet
         void setRGB (const std::array<float,3> rgb)
@@ -2920,6 +2920,9 @@ namespace mplot {
             this->sat = hsv[1];
             this->val = hsv[2];
         }
+
+        //! Set this->hue, sat and val from the passed in RGB hex value (e.g. 0xff00ff for magenta)
+        void setRGB (const uint32_t rgb) { this->setRGB (ColourMap<T>::rgb_array (rgb)); }
 
         //! Get the hue, in its most saturated form
         std::array<float, 3> getHueRGB() const { return ColourMap::hsv2rgb (this->hue, 1.0f, 1.0f); }
@@ -2999,12 +3002,25 @@ namespace mplot {
             return ColourMap<T>::rgb2hsv (rgb[0], rgb[1], rgb[2]);
         }
 
+        //! Convert RGB (given as uint32_t) to HSV, receiving input and returning output as std::array
+        static std::array<float, 3> rgb2hsv (const uint32_t rgb)
+        {
+            return ColourMap<T>::rgb2hsv (ColourMap<T>::rgb_array (rgb));
+        }
+
         //! Convert RGB to HSV, receiving input and returning output as sm::vec
         static sm::vec<float, 3> rgb2hsv_vec (const sm::vec<float, 3>& rgb)
         {
-            std::array<float, 3> hsv_ar = ColourMap<T>::rgb2hsv (rgb[0], rgb[1], rgb[2]);
-            sm::vec<float, 3> hsv;
-            hsv.set_from (hsv_ar);
+            sm::vec<float, 3> hsv = {};
+            hsv.set_from (ColourMap<T>::rgb2hsv (rgb[0], rgb[1], rgb[2]));
+            return hsv;
+        }
+
+        //! Convert RGB (given as uint32_t) to HSV, returning output as sm::vec
+        static sm::vec<float, 3> rgb2hsv_vec (const uint32_t rgb)
+        {
+            sm::vec<float, 3> hsv = {};
+            hsv.set_from (ColourMap<T>::rgb2hsv (ColourMap<T>::rgb_array (rgb)));
             return hsv;
         }
 
@@ -3051,6 +3067,12 @@ namespace mplot {
             hsv[0] /= 360.0f; // Finally convert back to a range 0 to 1, compatible with this->hue.
 
             return hsv;
+        }
+
+        // Convert hex colour value (e.g. 0x2971c3) into our usual array of floats in range [0, 1]
+        static std::array<float,3> rgb_array (const uint32_t rgb)
+        {
+            return std::array<float,3>{ ((rgb >> 16) & 0xff) / 255.0f, ((rgb >> 8) & 0xff) / 255.0f, (rgb & 0xff) / 255.0f };
         }
 
     private:
