@@ -2,7 +2,6 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QOpenGLWidget>
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -11,6 +10,8 @@ QT_END_NAMESPACE
 #include <sm/vec>
 #include <sm/vvec>
 #include <sm/hexgrid>
+
+class QOpenGLWidget;
 
 class MainWindow : public QMainWindow
 {

@@ -290,7 +290,6 @@ namespace mplot {
         }
 
     public:
-#ifdef GLAD_GL // Only define if GL was included with GLAD
         void init_glad (GLADloadfunc procaddressfn)
         {
             this->glfn_version = gladLoadGL (procaddressfn);
@@ -298,7 +297,6 @@ namespace mplot {
                 throw std::runtime_error ("Failed to initialize GLAD GL context");
             }
         }
-#endif
 
         //! Add a label _text to the scene at position _toffset. Font features are
         //! defined by the tfeatures. Return geometry of the text.
