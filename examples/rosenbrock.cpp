@@ -32,14 +32,15 @@ int main()
     mplot::Visual v(2600, 1800, "Rosenbrock bananas");
     v.zNear = 0.001;
     v.zFar = 100000;
-    v.fov=60;
+    v.fov = 60;
     v.showCoordArrows (true);
     v.lightingEffects (true);
 
     // Initialise the vertices
-    sm::vvec<FLT> v1 = { 0.7, 0.0 };
-    sm::vvec<FLT> v2 = { 0.0, 0.6 };
-    sm::vvec<FLT> v3 = { -0.6, -1.0 };
+    sm::rand_uniform<FLT> rng(-3, 3);
+    sm::vvec<FLT> v1 = { rng.get(), rng.get() };
+    sm::vvec<FLT> v2 = { rng.get(), rng.get() };
+    sm::vvec<FLT> v3 = { rng.get(), rng.get() };
     sm::vvec<sm::vvec<FLT>> i_vertices = { v1, v2, v3 };
 
     // Add a 'triangle visual' to be visualised as three rods
@@ -91,8 +92,6 @@ int main()
     simp.too_many_operations = 10000;
     simp.objective = [](sm::vvec<FLT> x) { return banana<FLT>(x[0], x[1]); }; // objective defined as lambda
 
-    sm::rand_uniform<float> rng(-3, 3);
-
     // This is the same as the NM_Simplex::run function, but it is reproduced here to *visualize*
     // the Simplex as it descends the surface. For a more compact way to write your NM_Simplex, see
     // tests/testNMSimplex.cpp
@@ -129,7 +128,7 @@ int main()
             }
         }
         std::vector<FLT> thebest = simp.best_vertex();
-        std::cout << "Finished in "<< simp.operation_count << " operations. Best approximation at: ("
+        std::cout << "Finished in " << simp.operation_count << " operations. Best approximation at: ("
                   << thebest[0] << "," << thebest[1] << ") has value " << simp.best_value() << std::endl;
 
         // Randomly set the next start position
