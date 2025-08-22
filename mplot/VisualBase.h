@@ -656,10 +656,8 @@ namespace mplot {
         {
             // Calculate aspect ratio
             float aspect = static_cast<float>(this->window_w) / static_cast<float>(this->window_h ? this->window_h : 1);
-            // Reset projection
-            this->projection.setToIdentity();
             // Set perspective projection
-            this->projection.perspective (this->fov, aspect, this->zNear, this->zFar);
+            this->projection = sm::mat44<float>::perspective (this->fov, aspect, this->zNear, this->zFar);
             // Compute the inverse projection matrix
             this->invproj = this->projection.inverse();
         }
@@ -675,8 +673,7 @@ namespace mplot {
          */
         void setOrthographic()
         {
-            this->projection.setToIdentity();
-            this->projection.orthographic (this->ortho_lb, this->ortho_rt, this->zNear, this->zFar);
+            this->projection = sm::mat44<float>::orthographic (this->ortho_lb, this->ortho_rt, this->zNear, this->zFar);
             this->invproj = this->projection.inverse();
         }
 
