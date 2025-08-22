@@ -3,13 +3,12 @@
  */
 #pragma once
 
-#include <mplot/vec.h>
-#include <mplot/VisualModel.h>
-#include <mplot/mathconst.h>
 #include <array>
+#include <sm/vec>
+#include <mplot/VisualModel.h>
 
-namespace mplot {
-
+namespace mplot
+{
     //! This class creates the vertices for a simple sphere in a 3D scene.
     template<int glver = mplot::gl::version_4_1>
     class SphereVisual : public VisualModel<glver>
@@ -18,14 +17,14 @@ namespace mplot {
         SphereVisual() { this->mv_offset = {0.0, 0.0, 0.0}; }
 
         //! Initialise with offset, radius and a single colour.
-        SphereVisual(const vec<float, 3> _offset, const float _radius, const std::array<float, 3> _col)
+        SphereVisual(const sm::vec<float, 3> _offset, const float _radius, const std::array<float, 3> _col)
         {
             this->init (_offset, _radius, _col);
         }
 
         ~SphereVisual () {}
 
-        void init (const vec<float, 3> _offset, const float _radius, const std::array<float, 3> _col)
+        void init (const sm::vec<float, 3> _offset, const float _radius, const std::array<float, 3> _col)
         {
             this->mv_offset = _offset;
             this->viewmatrix.translate (this->mv_offset);

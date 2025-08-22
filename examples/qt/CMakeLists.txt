@@ -29,7 +29,7 @@ include_directories(${qtmorph_SOURCE_DIR})
 include_directories(BEFORE ${PROJECT_SOURCE_DIR})
 
 # Ensure our programs will get the correct links
-set(MPLOT_LIBS_GL OpenGL::GL glfw Freetype::Freetype)
+set(MPLOT_LIBS_GL OpenGL::GL Freetype::Freetype)
 set(MPLOT_LIBS_CORE ${HDF5_C_LIBRARIES})
 
 # Just about the simplest possible Qt morphologica program - draws the

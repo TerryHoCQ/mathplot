@@ -1228,26 +1228,43 @@ namespace mplot {
         void computeRing (sm::vec<float> ro, std::array<float, 3> rc, float r = 1.0f,
                           float t = 0.1f, int segments = 12)
         {
+            float r_in = r - (t * 0.5f);
+            float r_out = r + (t * 0.5f);
+            this->computeRingInOut (ro, rc, r_in, r_out, segments);
+        }
+
+        /*!
+         * Make a ring of radius r, comprised of flat segments, specifying inner and outer radii
+         *
+         * \param ro position of the centre of the ring
+         * \param rc The ring colour.
+         * \param r_in Inner radius of the ring
+         * \param r_out Outer radius of the ring
+         * \param segments Number of tube segments used to render the ring
+         */
+        void computeRingInOut (sm::vec<float> ro, std::array<float, 3> rc,
+                               float r_in = 1.0f, float r_out = 2.0f, int segments = 12)
+        {
             for (int j = 0; j < segments; j++) {
                 float segment = sm::mathconst<float>::two_pi * static_cast<float>(j) / segments;
                 // x and y of inner point
-                float xin = (r-(t*0.5f)) * std::cos(segment);
-                float yin = (r-(t*0.5f)) * std::sin(segment);
-                float xout = (r+(t*0.5f)) * std::cos(segment);
-                float yout = (r+(t*0.5f)) * std::sin(segment);
-                int segjnext = (j+1) % segments;
+                float xin = r_in * std::cos (segment);
+                float yin = r_in * std::sin (segment);
+                float xout = r_out * std::cos (segment);
+                float yout = r_out * std::sin (segment);
+                int segjnext = (j + 1) % segments;
                 float segnext = sm::mathconst<float>::two_pi * static_cast<float>(segjnext) / segments;
-                float xin_n = (r-(t*0.5f)) * std::cos(segnext);
-                float yin_n = (r-(t*0.5f)) * std::sin(segnext);
-                float xout_n = (r+(t*0.5f)) * std::cos(segnext);
-                float yout_n = (r+(t*0.5f)) * std::sin(segnext);
+                float xin_n = r_in * std::cos (segnext);
+                float yin_n = r_in * std::sin (segnext);
+                float xout_n = r_out * std::cos (segnext);
+                float yout_n = r_out * std::sin (segnext);
 
                 // Now draw a quad
                 sm::vec<float> c4 = { xin, yin, 0.0f };
                 sm::vec<float> c3 = { xout, yout, 0.0f };
                 sm::vec<float> c2 = { xout_n, yout_n, 0.0f };
                 sm::vec<float> c1 = { xin_n, yin_n, 0.0f };
-                this->computeFlatQuad (ro+c1, ro+c2, ro+c3, ro+c4, rc);
+                this->computeFlatQuad (ro + c1, ro + c2, ro + c3, ro + c4, rc);
             }
         }
 

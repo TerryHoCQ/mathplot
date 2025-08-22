@@ -4,27 +4,29 @@
 
 #pragma once
 
-#include <mplot/Config.h>
-#include <mplot/VisualModel.h>
-#include <mplot/vec.h>
-#include <mplot/tools.h>
-#include <mplot/TextFeatures.h>
-#include <mplot/TextGeometry.h>
 #include <string>
 #include <iostream>
 #include <vector>
 #include <array>
 #include <stdexcept>
 
-namespace mplot {
+#include <sm/vec>
+#include <sm/config>
 
+#include <mplot/VisualModel.h>
+#include <mplot/tools.h>
+#include <mplot/TextFeatures.h>
+#include <mplot/TextGeometry.h>
+
+namespace mplot
+{
     template<int glver = mplot::gl::version_4_1>
     class ConfigVisual : public VisualModel<glver>
     {
     public:
-        ConfigVisual (const mplot::Config* _conf,
+        ConfigVisual (const sm::config* _conf,
                       const std::vector<std::string>& _keys,
-                      const mplot::vec<float, 3>& _offset,
+                      const sm::vec<float, 3>& _offset,
                       const mplot::TextFeatures& _tfeatures)
         {
             // Set up...
@@ -40,7 +42,7 @@ namespace mplot {
             if (conf == nullptr) { return; }
             if (!conf->ready) { return; }
 
-            mplot::vec<float> toffset = {0,0,0};
+            sm::vec<float> toffset = {0,0,0};
 
             // No op, but add text labels for parameters in the config
             for (auto key : this->keys) {
@@ -56,8 +58,8 @@ namespace mplot {
         // probably don't want *everything* right?
         std::vector<std::string> keys;
 
-        // The Config thing that you'll get text from
-        const mplot::Config* conf = nullptr;
+        // The config thing that you'll get text from
+        const sm::config* conf = nullptr;
 
         // How to format the text
         mplot::TextFeatures tfeatures;

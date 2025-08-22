@@ -198,13 +198,7 @@ namespace mplot {
             }
 
             // Calculate model view transformation - transforming from "model space" to "worldspace".
-            sm::mat44<float> sceneview;
-            if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
-                // This line translates from model space to world space. Avoid in cyl?
-                sceneview.translate (this->scenetrans); // send backwards into distance
-            }
-            // And this rotation completes the transition from model to world
-            sceneview.prerotate (this->rotation);
+            this->computeSceneview();
 
             // Clear color buffer and **also depth buffer**
             glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -246,23 +240,20 @@ namespace mplot {
                 this->setContext(); // ...so re-acquire if we're managing it
 
                 if (this->options.test (visual_options::coordArrowsInScene) == true) {
-                    this->coordArrows->setSceneMatrix (sceneview);
+                    this->coordArrows->setSceneMatrix (this->sceneview);
                 } else {
                     this->positionCoordArrows();
                 }
                 this->coordArrows->render();
             }
 
-            sm::mat44<float> scenetransonly;
-            scenetransonly.translate (this->scenetrans);
-
             auto vmi = this->vm.begin();
             while (vmi != this->vm.end()) {
                 if ((*vmi)->twodimensional == true) {
                     // It's a two-d thing. Now what?
-                    (*vmi)->setSceneMatrix (scenetransonly);
+                    (*vmi)->setSceneMatrix (this->sceneview_tr);
                 } else {
-                    (*vmi)->setSceneMatrix (sceneview);
+                    (*vmi)->setSceneMatrix (this->sceneview);
                 }
                 (*vmi)->render();
                 ++vmi;
@@ -290,7 +281,6 @@ namespace mplot {
         }
 
     public:
-#ifdef GLAD_GL // Only define if GL was included with GLAD
         void init_glad (GLADloadfunc procaddressfn)
         {
             this->glfn_version = gladLoadGL (procaddressfn);
@@ -298,7 +288,6 @@ namespace mplot {
                 throw std::runtime_error ("Failed to initialize GLAD GL context");
             }
         }
-#endif
 
         //! Add a label _text to the scene at position _toffset. Font features are
         //! defined by the tfeatures. Return geometry of the text.
@@ -395,26 +384,7 @@ namespace mplot {
             glDisable (GL_CULL_FACE);
             mplot::gl::Util::checkError (__FILE__, __LINE__);
 
-            // If possible, read in scenetrans and rotation state from a special config file
-            try {
-                nlohmann::json vconf;
-                std::ifstream fi;
-                fi.open ("/tmp/Visual.json", std::ios::in);
-                fi >> vconf;
-                this->scenetrans[0] = vconf.contains("scenetrans_x") ? vconf["scenetrans_x"].get<float>() : this->scenetrans[0];
-                this->scenetrans[1] = vconf.contains("scenetrans_y") ? vconf["scenetrans_y"].get<float>() : this->scenetrans[1];
-                this->scenetrans[2] = vconf.contains("scenetrans_z") ? vconf["scenetrans_z"].get<float>() : this->scenetrans[2];
-                // Place the same numbers into scenetrans_default, too.
-                this->scenetrans_default[0] = this->scenetrans[0];
-                this->scenetrans_default[1] = this->scenetrans[1];
-                this->scenetrans_default[2] = this->scenetrans[2];
-                this->rotation.w = vconf.contains("scenerotn_w") ? vconf["scenerotn_w"].get<float>() : this->rotation.w;
-                this->rotation.x = vconf.contains("scenerotn_x") ? vconf["scenerotn_x"].get<float>() : this->rotation.x;
-                this->rotation.y = vconf.contains("scenerotn_y") ? vconf["scenerotn_y"].get<float>() : this->rotation.y;
-                this->rotation.z = vconf.contains("scenerotn_z") ? vconf["scenerotn_z"].get<float>() : this->rotation.z;
-            } catch (...) {
-                // No problem if we couldn't read /tmp/Visual.json
-            }
+            this->read_scenetrans_from_json();
 
             // Use coordArrowsOffset to set the location of the CoordArrows *scene*
             this->coordArrows = std::make_unique<mplot::CoordArrows<glver>>();

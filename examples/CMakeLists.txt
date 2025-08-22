@@ -271,6 +271,12 @@ if(HAVE_STD_FORMAT)
 
   add_executable(graph_line_xcross graph_line_xcross.cpp)
   target_link_libraries(graph_line_xcross OpenGL::GL glfw Freetype::Freetype)
+
+  add_executable(graph_histo graph_histo.cpp)
+  target_link_libraries(graph_histo OpenGL::GL glfw Freetype::Freetype)
+
+  add_executable(graph_distributions graph_distributions.cpp)
+  target_link_libraries(graph_distributions OpenGL::GL glfw Freetype::Freetype)
 endif()
 
 add_executable(graph_dynamic_x2 graph_dynamic_x2.cpp)
@@ -302,9 +308,6 @@ target_link_libraries(graph_change_xaxis OpenGL::GL glfw Freetype::Freetype)
 
 add_executable(graph_bar graph_bar.cpp)
 target_link_libraries(graph_bar OpenGL::GL glfw Freetype::Freetype)
-
-add_executable(graph_histo graph_histo.cpp)
-target_link_libraries(graph_histo OpenGL::GL glfw Freetype::Freetype)
 
 add_executable(graph_logist graph_logist.cpp)
 target_link_libraries(graph_logist OpenGL::GL glfw Freetype::Freetype)
@@ -410,6 +413,9 @@ target_link_libraries(rhombo OpenGL::GL glfw Freetype::Freetype)
 add_executable(rhombo_scene rhombo_scene.cpp)
 target_link_libraries(rhombo_scene OpenGL::GL glfw Freetype::Freetype)
 
+add_executable(rhombo_scene2 rhombo_scene2.cpp)
+target_link_libraries(rhombo_scene2 OpenGL::GL glfw Freetype::Freetype)
+
 add_executable(quads quads.cpp)
 target_link_libraries(quads OpenGL::GL glfw Freetype::Freetype)
 
@@ -498,4 +504,7 @@ if(HAVE_STD_FORMAT)
 
   add_executable(zernike zernike.cpp)
   target_link_libraries(zernike OpenGL::GL glfw Freetype::Freetype)
+
+  add_executable(vonmises vonmises.cpp)
+  target_link_libraries(vonmises OpenGL::GL glfw Freetype::Freetype)
 endif()

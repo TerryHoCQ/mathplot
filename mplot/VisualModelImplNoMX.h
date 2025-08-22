@@ -234,7 +234,7 @@ namespace mplot {
             if (tfeatures.centre_horz == true) {
                 mplot::TextGeometry tg = tmup->getTextGeometry(_text);
                 sm::vec<float, 3> centred_locn = _toffset;
-                centred_locn[0] = -tg.half_width();
+                centred_locn[0] -= tg.half_width();
                 tmup->setupText (_text, centred_locn+this->mv_offset, tfeatures.colour);
             } else {
                 tmup->setupText (_text, _toffset+this->mv_offset, tfeatures.colour);
@@ -269,7 +269,7 @@ namespace mplot {
             if (tfeatures.centre_horz == true) {
                 mplot::TextGeometry tg = tmup->getTextGeometry(_text);
                 sm::vec<float, 3> centred_locn = _toffset;
-                centred_locn[0] = -tg.half_width();
+                centred_locn[0] -= tg.half_width();
                 tmup->setupText (_text, centred_locn+this->mv_offset, tfeatures.colour);
             } else {
                 tmup->setupText (_text, _toffset+this->mv_offset, tfeatures.colour);

@@ -3,16 +3,19 @@
 #include <iostream>
 #include <functional>
 
-#include <QtWidgets/QOpenGLWidget>
-#include <QOpenGLFunctions_4_1_Core> // problem is that this loads GL headers, so we don't load glad, further on
-#include <QSurfaceFormat>
-#include <QMouseEvent>
-#include <QWheelEvent>
+class QOpenGLWidget;
 
 // VisualOwnable is going to be owned by the QOpenGLWidget
 // Define mplot::win_t before #including mplot/VisualOwnableNoMX.h
 namespace mplot { using win_t = QOpenGLWidget; }
 #include <mplot/VisualOwnableNoMX.h>
+
+#include <QtWidgets/QOpenGLWidget>
+#include <QOpenGLContext>
+#include <QSurfaceFormat>
+#include <QMouseEvent>
+#include <QWheelEvent>
+
 // We need to be able to convert from Qt keycodes to mplot keycodes
 #include <mplot/qt/keycodes.h>
 
@@ -22,8 +25,16 @@ namespace mplot {
         // This must match the QOpenGLFunctions_4_1_Core class you derive from
         constexpr int gl_version = mplot::gl::version_4_1;
 
+        struct OpenGLProcAddressHelper {
+            inline static QOpenGLContext *ctx;
+
+            static QFunctionPointer getProcAddress(const char *name) {
+                return ctx->getProcAddress(name);
+            }
+        };
+
         // A mplot::VisualOwnable-based widget
-        struct viswidget : public QOpenGLWidget, protected QOpenGLFunctions_4_1_Core
+        struct viswidget : public QOpenGLWidget
         {
             // Unlike the GLFW or mplot-in-a-QWindow schemes, we hold the mplot::VisualOwnable
             // inside the widget.
@@ -59,7 +70,8 @@ namespace mplot {
             void initializeGL() override
             {
                 // Make sure we can call gl functions
-                initializeOpenGLFunctions();
+                OpenGLProcAddressHelper::ctx = context();
+                v.init_glad(OpenGLProcAddressHelper::getProcAddress);
                 // Switch on multisampling anti-aliasing (with the num samples set in constructor)
                 glEnable (GL_MULTISAMPLE);
                 // Initialise mplot::VisualOwnable

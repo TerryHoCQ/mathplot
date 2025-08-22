@@ -111,4 +111,12 @@ namespace mplot {
         numstyles
     };
 
+    //! When plotting an sm::histo, should we show counts, proportions or probability densities?
+    enum class histo_view
+    {
+        densities,
+        proportions,
+        counts
+    };
+
 } // namespace mplot
