@@ -43,8 +43,7 @@ namespace mplot::compoundray
         constexpr sm::vec<float> ux = { 1.0f, 0.0f, 0.0f };
         constexpr sm::vec<float> uy = { 0.0f, 1.0f, 0.0f };
         constexpr sm::vec<float> uz = { 0.0f, 0.0f, 1.0f };
-        sm::mat44<float> world_transform;
-        world_transform.frombasis (ux, uz, -uy);
+        sm::mat44<float> world_transform = sm::mat44<float>::frombasis (ux, uz, -uy);
         return mplot::compoundray::mat44_to_Matrix4x4 (world_transform);
     }
 
@@ -158,8 +157,7 @@ namespace mplot::compoundray
         sm::vec<float> camls_zv = { camls_z.x, camls_z.y, camls_z.z };
 
         // Start with setting the matrix from the localspace basis vectors
-        sm::mat44<float> camera_space;
-        camera_space.frombasis (camls_xv, camls_yv, camls_zv);
+        sm::mat44<float> camera_space = sm::mat44<float>::frombasis (camls_xv, camls_yv, camls_zv);
 
         // Translate camera_space by the camera position, obtained from compound-ray
         float3 campos = thescene->getCamera()->getPosition();
