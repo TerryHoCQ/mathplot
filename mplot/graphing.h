@@ -13,7 +13,7 @@
 #include <limits>
 #include <deque>
 #include <iostream>
-#ifdef MORPH_HAVE_STD_FORMAT
+#ifdef MPLOT_HAVE_STD_FORMAT
 # include <format>
 #else
 # include <sstream>
@@ -51,7 +51,7 @@ namespace mplot::graphing {
             rounded = sm::algo::round_to_col (num, min_col);
         }
 
-#ifdef MORPH_HAVE_STD_FORMAT
+#ifdef MPLOT_HAVE_STD_FORMAT
         std::string s = "0";
         if (num != F{0}) {
             if (num_sigcols.max > 3) {
