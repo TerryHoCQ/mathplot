@@ -344,7 +344,9 @@ namespace mplot {
             // the screen
             this->coordArrows->setSceneTranslation (v0);
             // Apply rotation to the coordArrows model
-            this->coordArrows->setViewRotation (this->sceneview.rotation());
+            sm::quaternion<float> svrq = this->sceneview.rotation();
+            svrq.renormalize();
+            this->coordArrows->setViewRotation (svrq);
         }
 
         // Update the coordinate axes labels
