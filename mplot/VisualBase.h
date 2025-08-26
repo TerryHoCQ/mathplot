@@ -947,6 +947,7 @@ namespace mplot {
 
             if (_key == key::z && (mods & keymod::control) && action == keyaction::press) {
                 sm::quaternion<float> rotn = this->sceneview.rotation();
+                rotn.renormalize();
                 sm::vec<float> scenetrans = this->sceneview.translation();
                 std::cout << "Scenetrans setup code:\n    v.setSceneTrans (sm::vec<float,3>{ float{"
                           << scenetrans.x() << "}, float{"
