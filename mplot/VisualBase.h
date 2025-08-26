@@ -1168,6 +1168,20 @@ namespace mplot {
                 // Calculate new rotation axis as weighted sum
                 this->rotationAxis = (mouseMoveWorld * rotamount); // rotationAxis is in world frame
                 this->rotationAxis.renormalize();
+                std::cout << "rotationAxis = " << rotationAxis << std::endl;
+
+                // NOW transform rotationAxis due to current orientation?
+                sm::quaternion<float> svrq = this->sceneview.rotation();
+                svrq.renormalize();
+                svrq.invert();
+                svrq.renormalize();
+                this->rotationAxis = svrq * this->rotationAxis;
+                this->rotationAxis.renormalize();
+                std::cout << "New rotationAxis = " << rotationAxis << std::endl;
+
+                // not this:
+                //this->rotationAxis = (this->sceneview * this->rotationAxis).less_one_dim();
+                //this->rotationAxis.renormalize();
 
                 // rotation_delta is a rotation in the world frame of reference
                 this->rotation_delta.set_rotation (this->rotationAxis, -rotamount * sm::mathconst<float>::deg2rad);
