@@ -5,7 +5,7 @@ if(NOT APPLE AND NOT WIN32)
   add_subdirectory(gl_compute)
 endif()
 
-# Examples showing how to use morphologica with Qt. Compiled only if
+# Examples showing how to use mathplot with Qt. Compiled only if
 # find_package found Qt5
 if(Qt5_FOUND)
   add_subdirectory(qt)
@@ -19,7 +19,7 @@ if (OpenGL_EGL_FOUND)
   add_subdirectory(pi)
 endif()
 
-# All #includes in test programs have to be #include <morph/header.h>
+# All #includes in test programs have to be #include <mplot/header.h>
 include_directories(BEFORE ${PROJECT_SOURCE_DIR})
 
 # Screenshots used in the documentation/reference website
@@ -32,7 +32,7 @@ endif()
 # libarmadillo (because the classes use sm::BezCurve).
 #
 if(ARMADILLO_FOUND)
-  # Basic morph::Visual class example
+  # Basic mplot::Visual class example
   add_executable(visual visual.cpp)
   target_link_libraries(visual OpenGL::GL glfw Freetype::Freetype)
 
@@ -154,7 +154,7 @@ target_link_libraries(helloversion OpenGL::GL glfw Freetype::Freetype)
 add_executable(myvisual myvisual.cpp)
 target_link_libraries(myvisual OpenGL::GL glfw Freetype::Freetype)
 
-# morph::Grid is runtime-configured
+# mplot::Grid is runtime-configured
 add_executable(grid_simple grid_simple.cpp)
 target_link_libraries(grid_simple OpenGL::GL glfw Freetype::Freetype)
 
@@ -176,7 +176,7 @@ target_compile_definitions(grid_ortho PUBLIC ORTHOGRAPHIC=1)
 target_link_libraries(grid_ortho OpenGL::GL glfw Freetype::Freetype)
 
 # similar to grid_simple but with a random value for the pixel which highlight better the different perspective
-# morph::Grid is runtime-configured
+# mplot::Grid is runtime-configured
 add_executable(grid_simple_rand grid_simple_rand.cpp)
 target_link_libraries(grid_simple_rand OpenGL::GL glfw Freetype::Freetype)
 
@@ -436,7 +436,7 @@ target_link_libraries(jsonconfig)
 add_executable(randvec randvec.cpp)
 target_link_libraries(randvec OpenGL::GL glfw Freetype::Freetype)
 
-# Demo of morph's bootstrap implementation
+# Demo of sm::math's bootstrap implementation
 add_executable(bootstrap bootstrap.cpp)
 target_link_libraries(bootstrap OpenGL::GL glfw Freetype::Freetype)
 

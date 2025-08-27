@@ -1,6 +1,6 @@
 # CTests
 
-# All #includes in test programs have to be #include "morph/header.h"
+# All #includes in test programs have to be #include "mplot/header.h"
 include_directories(BEFORE ${PROJECT_SOURCE_DIR})
 
 if(ARMADILLO_FOUND)
@@ -50,7 +50,7 @@ if(${glfw3_FOUND})
   target_link_libraries(testVisRemoveModel OpenGL::GL glfw Freetype::Freetype)
 
   if(ARMADILLO_FOUND)
-    # Test elliptical HexGrid code (visualized with morph::Visual)
+    # Test elliptical HexGrid code (visualized with mplot::Visual)
     add_executable(test_ellipseboundary test_ellipseboundary.cpp)
     target_link_libraries(test_ellipseboundary OpenGL::GL glfw Freetype::Freetype)
 
@@ -68,7 +68,7 @@ add_test(testColourMap testColourMap)
 add_executable(testrgbhsv testrgbhsv.cpp)
 add_test(testrgbhsv testrgbhsv)
 
-# morph::tools
+# mplot::tools
 add_executable(testTools testTools.cpp)
 add_test(testTools testTools)
 
