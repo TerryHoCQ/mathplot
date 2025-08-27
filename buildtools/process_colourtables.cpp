@@ -74,17 +74,17 @@ int main()
     cpp_content4 << "// Section for examples/colourmaps_crameri.cpp\n";
     if (tt == ctabletype::Crameri) {
         hpp << "// Scientific Colour Maps from Fabio Crameri (see https://zenodo.org/records/8409685)\n"
-            << "// Converted into C++ lookup tables for morphologica by Seb James\n\n"
+            << "// Converted into C++ lookup tables for mathplot by Seb James\n\n"
             << "#pragma once\n\n"
             << "#include <array>\n\n"
-            << "namespace morph {\n"
+            << "namespace mplot {\n"
             << "  namespace crameri {\n";
     } else {
         hpp << "// CET Colour maps from https://colorcet.com/gallery.html\n"
-            << "// Converted into C++ lookup tables for morphologica by Seb James\n\n"
+            << "// Converted into C++ lookup tables for mathplot by Seb James\n\n"
             << "#pragma once\n\n"
             << "#include <array>\n\n"
-            << "namespace morph {\n"
+            << "namespace mplot {\n"
             << "  namespace cet {\n";
     }
 
@@ -171,7 +171,7 @@ int main()
         cpp_content4 << "    cmap_types.push_back (mplot::ColourMapType::" << name_upperfirst << ");\n";
     }
     hpp << "  } // namespace " << nspacename << "\n";
-    hpp << "} // namespace morph\n";
+    hpp << "} // namespace mplot\n";
 
     hpp.close();
     cpp_content0.close();
