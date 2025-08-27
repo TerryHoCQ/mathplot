@@ -3,7 +3,7 @@ if(WIN32)
   add_executable(incbin incbin.c)
 endif()
 
-# Permit #include <morph/header.h>
+# Permit #include <mplot/header.h>
 include_directories(BEFORE ${PROJECT_SOURCE_DIR})
 if(NOT WIN32)
   # Colourmap processing is not Windows compatible

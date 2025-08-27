@@ -2,7 +2,7 @@
 # OpenGL 3.1 ES examples
 #
 
-# Ensure we can #include <morph/header.h>
+# Ensure we can #include <mplot/header.h>
 include_directories(BEFORE ${PROJECT_SOURCE_DIR})
 
 if(ARMADILLO_FOUND)

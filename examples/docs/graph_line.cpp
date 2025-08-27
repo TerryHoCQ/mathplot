@@ -4,8 +4,8 @@
 #include <format>
 #include <sm/vec>
 #include <sm/vvec>
-#include <morph/Visual.h>
-#include <morph/GraphVisual.h>
+#include <mplot/Visual.h>
+#include <mplot/GraphVisual.h>
 
 int main()
 {

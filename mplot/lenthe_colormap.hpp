@@ -4,7 +4,7 @@
  * colorspace.hpp header into this file.
  *
  * All the code is wrapped in a lenthe namespace so that it is clear when I use it in
- * morph::ColourMap.
+ * mplot::ColourMap.
  */
 
 /*************************************************************************************/

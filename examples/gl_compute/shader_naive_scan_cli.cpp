@@ -5,7 +5,7 @@
  * objects to transfer data to and from the GPU)
  *
  * This differs from shader_naive_scan.cpp in that it derives its compute_manager from
- * morph::gl::compute_manager_cli, which allows you to perform compute shader
+ * mplot::gl::compute_manager_cli, which allows you to perform compute shader
  * computations without any display at all. It uses EGL to achieve this.
  */
 
