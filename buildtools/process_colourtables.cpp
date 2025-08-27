@@ -12,7 +12,7 @@
 #include <format>
 #include <cstdlib>
 #include <cstring>
-#include <morph/tools.h>
+#include <mplot/tools.h>
 
 enum class ctabletype {
     Crameri,
@@ -24,10 +24,10 @@ int main()
 {
     ctabletype tt = ctabletype::unknown;
     // First get a directory listing and make sure we're in a compatible folder of colour maps
-    if (morph::tools::fileExists ("+README_ScientificColourMaps.pdf")) {
+    if (mplot::tools::fileExists ("+README_ScientificColourMaps.pdf")) {
         // Hint: Obtain ScientificColourMaps8.zip from https://www.fabiocrameri.ch/colourmaps/
         tt = ctabletype::Crameri;
-    } else if (morph::tools::fileExists ("CET-C1.csv")) {
+    } else if (mplot::tools::fileExists ("CET-C1.csv")) {
         // Hint: Obtain CETperceptual_csv_0_1.zip from https://colorcet.com/download/index.html
         tt = ctabletype::CET;
     } else {
@@ -40,7 +40,7 @@ int main()
     std::vector<std::string> dirs;
     std::vector<std::string> table_files;
     std::string basedir = "./";
-    morph::tools::readDirectoryTree (dirs, basedir);
+    mplot::tools::readDirectoryTree (dirs, basedir);
     if (tt == ctabletype::Crameri) {
         for (auto dir : dirs) {
             std::cerr << "Got file " << dir << std::endl;
@@ -68,9 +68,9 @@ int main()
     std::ofstream cpp_content4 ("colourmap_example.cpp", std::ios::out|std::ios::trunc);
 
     cpp_content0 << "// Section for ColourMapType enum\n";
-    cpp_content1 << "// Section for morph::ColourMap::colourMapTypeToStr\n";
-    cpp_content2 << "// Section for morph::ColourMap::strToColourMapType\n";
-    cpp_content3 << "// Section for morph::ColourMap::convert switch\n";
+    cpp_content1 << "// Section for mplot::ColourMap::colourMapTypeToStr\n";
+    cpp_content2 << "// Section for mplot::ColourMap::strToColourMapType\n";
+    cpp_content3 << "// Section for mplot::ColourMap::convert switch\n";
     cpp_content4 << "// Section for examples/colourmaps_crameri.cpp\n";
     if (tt == ctabletype::Crameri) {
         hpp << "// Scientific Colour Maps from Fabio Crameri (see https://zenodo.org/records/8409685)\n"
@@ -95,14 +95,14 @@ int main()
 
         // Obtain name from fpath
         std::string name = fpath;
-        morph::tools::stripUnixPath (name);
-        morph::tools::stripFileSuffix (name);
+        mplot::tools::stripUnixPath (name);
+        mplot::tools::stripFileSuffix (name);
         if (name.empty()) {
             std::cerr << "No name.\n";
             return -1;
         }
         std::string name_lower = name;
-        morph::tools::toLowerCase (name_lower);
+        mplot::tools::toLowerCase (name_lower);
 
         std::ifstream ifile (fpath, std::ios::in);
         if (!ifile.is_open()) {
@@ -138,7 +138,7 @@ int main()
         unsigned int lastline = nlines - 1;
         for (std::string line; std::getline(ifile, line);) {
             // Process line into csv
-            std::vector<std::string> tokens = morph::tools::stringToVector (line, (commas ? "," : " "));
+            std::vector<std::string> tokens = mplot::tools::stringToVector (line, (commas ? "," : " "));
             if (tokens.size() != 3) {
                 std::cerr << "text format error: != 3 values in line '" << line << "', (got "<< tokens.size() << ")\n";
                 return -1;
@@ -152,23 +152,23 @@ int main()
         // Content output.
         cpp_content0 << "        " << name_upperfirst << ",\n";
 
-        cpp_content1 << "            case morph::ColourMapType::" << name_upperfirst << ":\n"
+        cpp_content1 << "            case mplot::ColourMapType::" << name_upperfirst << ":\n"
                      << "            {\n"
                      << "                s = \"" << name_upperfirst << "\";\n"
                      << "                break;\n"
                      << "            }\n";
 
-        cpp_content2 << "            case morph::crc32 (\"" << name_upperfirst << "\"sv):\n"
-                     << "                cmt = morph::ColourMapType::" << name_upperfirst << "; break;\n";
+        cpp_content2 << "            case mplot::crc32 (\"" << name_upperfirst << "\"sv):\n"
+                     << "                cmt = mplot::ColourMapType::" << name_upperfirst << "; break;\n";
 
         cpp_content3 << "            case ColourMapType::"<< name_upperfirst << ":\n"
                      << "            {\n"
-                     << "                size_t datum_i = static_cast<size_t>( std::abs (std::round (datum * static_cast<float>(morph::" << nspacename << "::cm_"<< name_upperfirst << ".size()-1))));\n"
-                     << "                c = morph::" << nspacename << "::cm_" << name_upperfirst << "[datum_i];\n"
+                     << "                size_t datum_i = static_cast<size_t>( std::abs (std::round (datum * static_cast<float>(mplot::" << nspacename << "::cm_"<< name_upperfirst << ".size()-1))));\n"
+                     << "                c = mplot::" << nspacename << "::cm_" << name_upperfirst << "[datum_i];\n"
                      << "                break;\n"
                      << "            }\n";
 
-        cpp_content4 << "    cmap_types.push_back (morph::ColourMapType::" << name_upperfirst << ");\n";
+        cpp_content4 << "    cmap_types.push_back (mplot::ColourMapType::" << name_upperfirst << ");\n";
     }
     hpp << "  } // namespace " << nspacename << "\n";
     hpp << "} // namespace morph\n";
