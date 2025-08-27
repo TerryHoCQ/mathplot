@@ -1166,23 +1166,25 @@ namespace mplot {
                 // have to project into the model frame to determine how to rotate the model!
                 float rotamount = mouseMoveWorld.length() * 40.0f; // chosen in degrees
                 // Calculate new rotation axis as weighted sum
-                this->rotationAxis = (mouseMoveWorld * rotamount); // rotationAxis is in world frame
-                this->rotationAxis.renormalize();
-                std::cout << "\Mouse-commanded rotationAxis = " << rotationAxis << std::endl;
+                //this->rotationAxis = (mouseMoveWorld/* * rotamount*/); // rotationAxis is in world frame
+                mouseMoveWorld.renormalize();
+                std::cout << "\nMouse-commanded rotationAxis = " << mouseMoveWorld << " (length "
+                          << mouseMoveWorld.length() << "), amount: " << -rotamount << " deg\n";
 
                 // NOW transform rotationAxis due to current orientation?
-                sm::quaternion<float> svrq = this->sceneview.rotation();
-                svrq.invert();
-                svrq.renormalize();
-                std::cout << " inverse scene rotation: " << svrq << std::endl;
-
+                sm::quaternion<float> cur = this->sceneview.rotation();
+                std::cout << "         scene rotation: " << cur << std::endl;
+                sm::quaternion<float> curinv = cur.inverse(); // inverse or invert, same result
+                curinv.renormalize();
+                std::cout << " inverse scene rotation: " << curinv << std::endl;
                 // Change rotationAxis and thus rotation_delta
-                this->rotationAxis = svrq * this->rotationAxis;
+                this->rotationAxis = curinv * mouseMoveWorld; // This operation?
                 this->rotationAxis.renormalize();
-                std::cout << " New rotationAxis = " << rotationAxis << std::endl;
-
+                std::cout << " New rotationAxis = " << this->rotationAxis <<" (length "<< this->rotationAxis.length() << ")\n";
                 // rotation_delta is a rotation in the world frame of reference
+                std::cout << " Rotn amount = " <<  (-rotamount * sm::mathconst<float>::deg2rad) << " radians\n";
                 this->rotation_delta.set_rotation (this->rotationAxis, -rotamount * sm::mathconst<float>::deg2rad);
+                this->rotation_delta.renormalize();
 
                 needs_render = true;
 
