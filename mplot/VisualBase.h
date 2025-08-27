@@ -683,19 +683,19 @@ namespace mplot {
         void computeSceneview_about_scene_origin()
         {
             sm::mat44<float> sv_tr;
-            sm::mat44<float> sv_rot;
+            sm::mat44<float> sv_rot; // starts with no rotation
             if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
                 sv_tr.translate (this->scenetrans_delta);
                 // A rotation delta in world frame about the 'screen centre'
                 sv_rot.pretranslate (this->savedSceneview.translation());
-                sv_rot.rotate (this->rotation_delta);
+                sv_rot.rotate (this->rotation_delta); // apply rotation to sv_rot
                 sv_rot.pretranslate (-this->savedSceneview.translation());
             } else {
                 // Only rotate in cyl view
                 sv_rot.rotate (this->rotation_delta);
             }
 
-            this->sceneview = sv_tr * this->savedSceneview * sv_rot;
+            this->sceneview = sv_tr * this->savedSceneview * sv_rot; // replace sceneview with savedSceneView * sv_rot
             this->sceneview_tr = sv_tr * this->savedSceneview_tr;
         }
 
@@ -1168,20 +1168,18 @@ namespace mplot {
                 // Calculate new rotation axis as weighted sum
                 this->rotationAxis = (mouseMoveWorld * rotamount); // rotationAxis is in world frame
                 this->rotationAxis.renormalize();
-                std::cout << "rotationAxis = " << rotationAxis << std::endl;
+                std::cout << "\Mouse-commanded rotationAxis = " << rotationAxis << std::endl;
 
                 // NOW transform rotationAxis due to current orientation?
                 sm::quaternion<float> svrq = this->sceneview.rotation();
-                svrq.renormalize();
                 svrq.invert();
                 svrq.renormalize();
+                std::cout << " inverse scene rotation: " << svrq << std::endl;
+
+                // Change rotationAxis and thus rotation_delta
                 this->rotationAxis = svrq * this->rotationAxis;
                 this->rotationAxis.renormalize();
-                std::cout << "New rotationAxis = " << rotationAxis << std::endl;
-
-                // not this:
-                //this->rotationAxis = (this->sceneview * this->rotationAxis).less_one_dim();
-                //this->rotationAxis.renormalize();
+                std::cout << " New rotationAxis = " << rotationAxis << std::endl;
 
                 // rotation_delta is a rotation in the world frame of reference
                 this->rotation_delta.set_rotation (this->rotationAxis, -rotamount * sm::mathconst<float>::deg2rad);
