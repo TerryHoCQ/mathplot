@@ -344,7 +344,9 @@ namespace mplot {
             // the screen
             this->coordArrows->setSceneTranslation (v0);
             // Apply rotation to the coordArrows model
-            this->coordArrows->setViewRotation (this->sceneview.rotation());
+            sm::quaternion<float> svrq = this->sceneview.rotation();
+            svrq.renormalize();
+            this->coordArrows->setViewRotation (svrq);
         }
 
         // Update the coordinate axes labels
@@ -945,6 +947,7 @@ namespace mplot {
 
             if (_key == key::z && (mods & keymod::control) && action == keyaction::press) {
                 sm::quaternion<float> rotn = this->sceneview.rotation();
+                rotn.renormalize();
                 sm::vec<float> scenetrans = this->sceneview.translation();
                 std::cout << "Scenetrans setup code:\n    v.setSceneTrans (sm::vec<float,3>{ float{"
                           << scenetrans.x() << "}, float{"
