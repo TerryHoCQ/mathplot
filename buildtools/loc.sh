@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Count lines of code in morph
+# Count lines of code in mathplot
 find . \( -path './*.[h]' -or -path './*.hpp' -or -path './*.cpp' \) \
-     -or \( -path './morph/GL3' -or -path './build' -or -path './include' -or -path './morph/healpix' \) -prune \
+     -or \( -path './mplot/jcvoronoi' -or -path './build' -or -path './mplot/fonts' -or -path './mplot/lodepng.h' -or -path './include' -or -path './mplot/healpix' \) -prune \
      | xargs wc -l
