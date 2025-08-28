@@ -107,6 +107,17 @@ namespace mplot {
         //! Initialize vertex buffer objects and vertex array object. Empty for 'text only' VisualModels.
         virtual void initializeVertices() = 0;
 
+        //! Process vertices and find the bounding box
+        void update_bb()
+        {
+            if (this->vertexPositions.size() % 3 != 0) {
+                throw std::runtime_error ("vertexPositions size is not divisible by 3");
+            }
+            for (std::size_t i = 0; i < this->vertexPositions.size(); i += 3) {
+                this->bb.update (sm::vec<float>{ vertexPositions[i], vertexPositions[i+1], vertexPositions[i+2] });
+            }
+        }
+
         /*!
          * Re-initialize the buffers. Client code might have appended to
          * vertexPositions/Colors/Normals and indices before calling this method.
@@ -142,6 +153,7 @@ namespace mplot {
             // NB: Do NOT call clearTexts() here! We're only updating the model itself.
             this->idx = 0u;
             this->initializeVertices();
+            this->update_bb();
             this->reinit_buffers();
         }
 
@@ -160,6 +172,7 @@ namespace mplot {
             this->clearTexts();
             this->idx = 0u;
             this->initializeVertices();
+            this->update_bb();
             this->reinit_buffers();
         }
 
@@ -179,6 +192,7 @@ namespace mplot {
         {
             if (this->setContext != nullptr) { this->setContext (this->parentVis); }
             this->initializeVertices();
+            this->update_bb();
             this->postVertexInitRequired = true;
             // Release context after creating and finalizing this VisualModel. On Visual::render(),
             // context will be re-acquired.
@@ -501,6 +515,9 @@ namespace mplot {
         //! An additional scaling applied to viewmatrix to scale the size of the model [see render()]
         sm::mat44<float> model_scaling = {};
 
+        //! A range can be used for a bounding box for this VisualModel
+        sm::range<sm::vec<float>> bb;
+
         /*!
          * The spatial offset of this VisualModel within the mplot::Visual 'scene
          * view'. Note that this is not incorporated into the computation of the
@@ -593,6 +610,13 @@ namespace mplot {
 
         //! Set up a vertex buffer object - bind, buffer and set vertex array object attribute
         virtual void setupVBO (GLuint& buf, std::vector<float>& dat, unsigned int bufferAttribPosition) = 0;
+
+    protected:
+        /**
+         * START vertex/index computation code
+         *
+         * ALL methods below this point are for computing vertices
+         */
 
         /*!
          * Create a tube from \a start to \a end, with radius \a r and a colour which

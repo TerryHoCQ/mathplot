@@ -35,7 +35,7 @@ int main()
         std::deque<float> ticks = mplot::graphing::maketicks (a1, a2, a1, a2, nticks);
         std::cout << "i+-1 ";
         print_ticks (ticks);
-        if (nticks.includes (ticks.size()) == false) { --rtn; }
+        if (nticks.contains (ticks.size()) == false) { --rtn; }
     }
 
     std::cout << "\n\n";
@@ -45,7 +45,7 @@ int main()
         std::deque<float> ticks = mplot::graphing::maketicks (a1, a2, a1, a2, nticks);
         std::cout << "i+-2 ";
         print_ticks (ticks);
-        if (nticks.includes (ticks.size()) == false) { --rtn; }
+        if (nticks.contains (ticks.size()) == false) { --rtn; }
     }
 
     std::cout << "\n\n";
@@ -56,7 +56,7 @@ int main()
         std::deque<float> ticks = mplot::graphing::maketicks (a1, a2+f, a1, a2+f, nticks);
         std::cout << "i ";
         print_ticks (ticks);
-        if (nticks.includes (ticks.size()) == false) { --rtn; }
+        if (nticks.contains (ticks.size()) == false) { --rtn; }
     }
 
     std::cout << "\n\n";
@@ -66,7 +66,7 @@ int main()
             std::deque<float> ticks = mplot::graphing::maketicks (a1, l, a1, l, nticks);
             std::cout << nticks << " ticks, data " << a1 << "-" << l << ": ";
             print_ticks (ticks);
-            if (nticks.includes (ticks.size()) == false) { --rtn; }
+            if (nticks.contains (ticks.size()) == false) { --rtn; }
         }
     }
 

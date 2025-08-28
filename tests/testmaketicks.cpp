@@ -33,7 +33,7 @@ int main()
         std::deque<float> ticks = mplot::graphing::maketicks (a1, a2, a1, a2, nticks);
         std::cout << "i+-1 ";
         print_ticks (ticks);
-        if (nticks.includes (ticks.size()) == false) { --rtn; }
+        if (nticks.contains (ticks.size()) == false) { --rtn; }
     }
 
     std::cout << "\n\n";
@@ -43,7 +43,7 @@ int main()
         std::deque<float> ticks = mplot::graphing::maketicks (a1, a2, a1, a2, nticks);
         std::cout << "i+-2 ";
         print_ticks (ticks);
-        if (nticks.includes (ticks.size()) == false) { --rtn; }
+        if (nticks.contains (ticks.size()) == false) { --rtn; }
     }
 
     std::cout << "\n\n";
