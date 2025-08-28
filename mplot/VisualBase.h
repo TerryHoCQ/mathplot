@@ -826,9 +826,6 @@ namespace mplot {
         //! Screen coordinates of the position of the last mouse press
         sm::vec<float,2> mousePressPosition = { 0.0f, 0.0f };
 
-        //! The current rotation axis. World frame.
-        sm::vec<float, 3> rotationAxis = { 0.0f, 0.0f, 0.0f };
-
         //! Add additional rotation to the scene
         sm::quaternion<float> rotation_delta;
 
@@ -1111,8 +1108,7 @@ namespace mplot {
         //! Rotate the scene about axis by angle (angle in radians)
         void rotate_scene (const sm::vec<float>& axis, const float angle)
         {
-            this->rotationAxis = axis;
-            sm::quaternion<float> rotnQuat (this->rotationAxis, -angle);
+            sm::quaternion<float> rotnQuat (axis, -angle);
             this->sceneview.prerotate (rotnQuat);
         }
 
@@ -1152,8 +1148,9 @@ namespace mplot {
                 sm::vec<float, 4> v0 = this->invproj * p0;
                 sm::vec<float, 4> v1 = this->invproj * p1;
 
-                // This computes the difference between v0 and v1, the 2 mouse positions in the world
-                // space. Note the swap between x and y
+                // This computes the difference between v0 and v1, the 2 mouse positions in the
+                // world space. Note the swap between x and y. mouseMoveWorld is the rotation axis
+                // in the viewer's frame of reference
                 if (this->state.test (visual_state::rotateModMode)) {
                     // Sort of "rotate the page" mode.
                     mouseMoveWorld[2] = -((v1[1] / v1[3]) - (v0[1] / v0[3])) + ((v1[0] / v1[3]) - (v0[0] / v0[3]));
@@ -1162,15 +1159,10 @@ namespace mplot {
                     mouseMoveWorld[0] = -((v1[1] / v1[3]) - (v0[1] / v0[3]));
                 }
 
-                // Rotation axis is perpendicular to the mouse position difference vector BUT we
-                // have to project into the model frame to determine how to rotate the model!
-                float rotamount = mouseMoveWorld.length() * 40.0f; // chosen in degrees
-                // Calculate new rotation axis as weighted sum
-                this->rotationAxis = (mouseMoveWorld * rotamount); // rotationAxis is in world frame
-                this->rotationAxis.renormalize();
-
-                // rotation_delta is a rotation in the world frame of reference
-                this->rotation_delta.set_rotation (this->rotationAxis, -rotamount * sm::mathconst<float>::deg2rad);
+                // Now transform the rotation axis due to the scene orientation (the saved one)
+                sm::vec<float> rotationAxis = this->savedSceneview.rotation().invert() * mouseMoveWorld;
+                // rotation_delta is the mouse-commanded rotation in the scene frame of reference
+                this->rotation_delta.set_rotation (rotationAxis, mouseMoveWorld.length() * -40.0f * sm::mathconst<float>::deg2rad);
 
                 needs_render = true;
 
