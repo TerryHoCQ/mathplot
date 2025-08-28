@@ -1159,11 +1159,10 @@ namespace mplot {
                     mouseMoveWorld[0] = -((v1[1] / v1[3]) - (v0[1] / v0[3]));
                 }
 
-                float rotamount = mouseMoveWorld.length() * 40.0f; // chosen in degrees
                 // Now transform the rotation axis due to the scene orientation (the saved one)
                 sm::vec<float> rotationAxis = this->savedSceneview.rotation().invert() * mouseMoveWorld;
                 // rotation_delta is the mouse-commanded rotation in the scene frame of reference
-                this->rotation_delta.set_rotation (rotationAxis, -rotamount * sm::mathconst<float>::deg2rad);
+                this->rotation_delta.set_rotation (rotationAxis, mouseMoveWorld.length() * -40.0f * sm::mathconst<float>::deg2rad);
 
                 needs_render = true;
 
