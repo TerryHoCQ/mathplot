@@ -15,7 +15,6 @@ install(
   lenthe_colormap.hpp
   loadpng.h
   lodepng.h
-  Mnist.h
   ReadCurves.h
   tools.h
   unicode.h

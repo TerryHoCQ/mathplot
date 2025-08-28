@@ -158,9 +158,6 @@ target_link_libraries(myvisual OpenGL::GL glfw Freetype::Freetype)
 add_executable(grid_simple grid_simple.cpp)
 target_link_libraries(grid_simple OpenGL::GL glfw Freetype::Freetype)
 
-add_executable(grid_mnist grid_mnist.cpp)
-target_link_libraries(grid_mnist OpenGL::GL glfw Freetype::Freetype)
-
 add_executable(grid_flat_dynamic grid_flat_dynamic.cpp)
 target_link_libraries(grid_flat_dynamic OpenGL::GL glfw Freetype::Freetype)
 
