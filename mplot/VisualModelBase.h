@@ -542,6 +542,9 @@ namespace mplot {
         void show_bb (const bool val) { this->flags.set (vm_bools::show_bb, val); }
         void compute_bb (const bool val) { this->flags.set (vm_bools::compute_bb, val); }
 
+        //! A range can be used for a bounding box for this VisualModel
+        sm::range<sm::vec<float>> bb;
+
     protected:
 
         //! The model-specific view matrix.
@@ -550,9 +553,6 @@ namespace mplot {
         sm::mat44<float> scenematrix = {};
         //! An additional scaling applied to viewmatrix to scale the size of the model [see render()]
         sm::mat44<float> model_scaling = {};
-
-        //! A range can be used for a bounding box for this VisualModel
-        sm::range<sm::vec<float>> bb;
 
         /*!
          * The spatial offset of this VisualModel within the mplot::Visual 'scene

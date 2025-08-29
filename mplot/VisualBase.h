@@ -711,8 +711,41 @@ namespace mplot {
             sm::mat44<float> sv_rot;
             if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
                 sv_tr.translate (this->scenetrans_delta);
+
                 // A rotation delta in world frame about the 'screen centre'
                 sm::vec<float> screencentre = { 0.0f, 0.0f, this->savedSceneview.translation().z() + this->scenetrans_delta.z() };
+
+                sm::vec<float> zero_location = this->savedSceneview.translation() + this->scenetrans_delta;
+                // Can I get a better screencentre?
+                //
+                // Another way to get the z value is to find the model that intersects
+                // with a line from {0,0,z} to {0,0,-z}
+                //
+                // for each model, check if the line intersects. Choose the model that
+                // is closest and use its location + bb middle to get z.
+                //
+                // I need to incorporate the rotation
+                auto vmi = this->vm.begin();
+                while (vmi != this->vm.end()) {
+                    if ((*vmi)->flags.test (mplot::vm_bools::compute_bb) == true) {
+                        sm::vec<> mo = (*vmi)->get_mv_offset() + zero_location;
+                        sm::vec<> bbmin = (*vmi)->bb.min + mo;
+                        sm::vec<> bbmax = (*vmi)->bb.max + mo;
+                        //std::cout << "VM: Offset BB min/max: " << bbmin << " -> " << bbmax << std::endl;
+                        if (bbmin[0] < 0.0f && bbmax[0] > 0.0f && bbmin[1] < 0.0f && bbmax[1] > 0.0f) {
+                            //std::cout << "  show_bb (true)...\n";
+                            (*vmi)->show_bb (true);
+                            // This visual model is at the screencentre
+                            sm::vec<> model_mid = (*vmi)->get_mv_offset() + (*vmi)->bb.mid();
+                            screencentre += model_mid;
+                        } else {
+                            (*vmi)->show_bb (false);
+                        }
+                    }
+                    ++vmi;
+                }
+
+                std::cout << "screencentre is " << screencentre << std::endl;
                 sv_rot.pretranslate (-screencentre);
                 sv_rot.rotate (this->rotation_delta);
                 sv_rot.translate (screencentre);
@@ -1074,6 +1107,12 @@ namespace mplot {
 
             if (_key == key::j && (action == keyaction::press || action == keyaction::repeat) && (mods & keymod::control)) {
                 this->options.flip (visual_options::showBoundingBoxes);
+                // Update all the VisualModels now:
+                auto vmi = this->vm.begin();
+                while (vmi != this->vm.end()) {
+                    (*vmi)->show_bb (this->options.test (visual_options::showBoundingBoxes));
+                    ++vmi;
+                }
             }
 
             if (this->state.test (visual_state::sceneLocked) == false
