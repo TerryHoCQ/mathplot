@@ -76,12 +76,12 @@ namespace mplot {
             this->setupScaling();
 
             sm::quaternion<float> rq;
-            if (this->data_z_direction != this->uz) {
+            if (this->data_z_direction != sm::vec<>::uz()) {
                 // Find the rotation between data_z_direction and uz
                 this->dcoords.resize (ncoords);
-                sm::vec<float> r_axis = this->data_z_direction.cross (this->uz);
+                sm::vec<float> r_axis = this->data_z_direction.cross (sm::vec<>::uz());
                 r_axis.renormalize();
-                float r_angle = this->data_z_direction.angle (this->uz, r_axis);
+                float r_angle = this->data_z_direction.angle (sm::vec<>::uz(), r_axis);
                 rq.rotate(r_axis, r_angle);
                 for (size_t i = 0; i < ncoords; ++i) {
                     this->dcoords[i] = rq * (*this->dataCoords)[i];
@@ -223,7 +223,7 @@ namespace mplot {
             this->site_indices.resize (ncoords, 0);
             this->triangle_count_sum = 0;
 
-            if (this->data_z_direction != this->uz) {
+            if (this->data_z_direction != sm::vec<>::uz()) {
                 // inverse rotate
                 sm::vec<float> t0 = {0.0f};
                 sm::vec<float> t1 = {0.0f};
@@ -271,7 +271,7 @@ namespace mplot {
             // Draw optional objects
             if (this->debug_edges) {
                 // Now scan through the edges drawing tubes for debug
-                if (this->data_z_direction != this->uz) {
+                if (this->data_z_direction != sm::vec<>::uz()) {
                     // Apply rotations then compute
                     sm::vec<float> t0 = {0.0f};
                     sm::vec<float> t1 = {0.0f};
@@ -302,7 +302,7 @@ namespace mplot {
             }
 
             if (this->show_voronoi2d) {
-                if (this->data_z_direction != this->uz) {
+                if (this->data_z_direction != sm::vec<>::uz()) {
                     // Apply rotations then compute
                     sm::vec<float> t0 = {0.0f};
                     sm::vec<float> t1 = {0.0f};
@@ -440,7 +440,7 @@ namespace mplot {
 
         //! What direction should be considered 'z' when converting the data into a voronoi diagram?
         //! The data values will be rotated before the Voronoi pass, then rotated back.
-        sm::vec<float> data_z_direction = this->uz;
+        sm::vec<float> data_z_direction = sm::vec<>::uz();
 
         //! You can add a little extra to the rectangle that is auto-detected from the
         //! datacoordinate ranges. This defaults to epsilon to give the best possible

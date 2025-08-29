@@ -476,16 +476,16 @@ namespace mplot {
             float tlen2 = this->r * 0.05f;
             float tthk = this->r * 0.005f;
 
-            this->computeCone (vpf0 + (this->uz * tthk/2),
-                               vpf0 + (this->uz * tlen),
+            this->computeCone (vpf0 + (sm::vec<>::uz() * tthk/2),
+                               vpf0 + (sm::vec<>::uz() * tlen),
                                0.0f, mplot::colour::blue2, tthk);
 
-            this->computeCone (vpf0 + this->ux * tthk * 1.1f + this->uz * tthk,
-                               vpf0 + this->ux * tlen2 + this->uz * tthk,
+            this->computeCone (vpf0 + sm::vec<>::ux() * tthk * 1.1f + sm::vec<>::uz() * tthk,
+                               vpf0 + sm::vec<>::ux() * tlen2 + sm::vec<>::uz() * tthk,
                                0.0f, mplot::colour::crimson, tthk/2);
 
-            this->computeCone (vpf0 + this->uy * tthk * 1.1f + this->uz * tthk,
-                               vpf0 + this->uy * tlen2 + this->uz * tthk,
+            this->computeCone (vpf0 + sm::vec<>::uy() * tthk * 1.1f + sm::vec<>::uz() * tthk,
+                               vpf0 + sm::vec<>::uy() * tlen2 + sm::vec<>::uz() * tthk,
                                0.0f, mplot::colour::springgreen2, tthk/2);
         }
 
