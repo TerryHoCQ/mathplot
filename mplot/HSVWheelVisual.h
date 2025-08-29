@@ -28,7 +28,7 @@ namespace mplot {
             this->tf.fontres = 48;
             this->tf.colour = this->framecolour;
             // Like graphs, hsv wheels don't rotate by default. If you want yours to, set this false in your client code.
-            this->twodimensional = true;
+            this->twodimensional (true);
         }
 
         void setTextColour (const std::array<float, 3>& c)

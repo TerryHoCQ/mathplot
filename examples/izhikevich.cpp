@@ -169,7 +169,7 @@ int main()
     // Graph membrane voltage vs. time
     auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({-0.5,-0.5,0}));
     vis.bindmodel (gv);
-    gv->twodimensional = twodee;
+    gv->twodimensional (twodee);
     gv->setsize (1,0.8);
     gv->xlabel = "t";
     gv->ylabel = "v";
@@ -181,7 +181,7 @@ int main()
     // Graph u(t)
     auto gu = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({-0.5,0.6,0}));
     vis.bindmodel (gu);
-    gu->twodimensional = twodee;
+    gu->twodimensional (twodee);
     gu->setsize (1,0.5);
     gu->xlabel = "t";
     gu->ylabel = "u";
@@ -195,7 +195,7 @@ int main()
     ds.showlines = false;
     auto gp = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({0.9,-0.5,0}));
     vis.bindmodel (gp);
-    gp->twodimensional = twodee;
+    gp->twodimensional (twodee);
     gp->setsize (1.6,1.6);
 
     // Fix plotting range

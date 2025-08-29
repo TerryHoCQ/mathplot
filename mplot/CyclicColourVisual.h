@@ -30,7 +30,7 @@ namespace mplot {
             this->tf.fontsize = 0.15f;
             this->tf.fontres = 36;
             this->tf.colour = this->framecolour;
-            this->twodimensional = true;
+            this->twodimensional (true);
             this->labels.clear();
             this->labels = { unicode::toUtf8(unicode::pi)+std::string("/2"), unicode::toUtf8(unicode::pi),
                              std::string("3")+unicode::toUtf8(unicode::pi)+std::string("/2"), "0" };

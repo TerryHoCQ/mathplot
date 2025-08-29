@@ -281,7 +281,7 @@ int main()
     sm::vec<float> izoff = {-4, 1, 0};
     auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({0,0,0})+izoff);
     v.bindmodel (gv);
-    gv->twodimensional = twodee;
+    gv->twodimensional (twodee);
     gv->setsize (1,0.8);
     gv->xlabel = "t";
     gv->ylabel = "v";
@@ -295,7 +295,7 @@ int main()
     // Graph u(t)
     auto gu = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({0,1.1,0})+izoff);
     v.bindmodel (gu);
-    gu->twodimensional = twodee;
+    gu->twodimensional (twodee);
     gu->setsize (1,0.5);
     gu->xlabel = "t";
     gu->ylabel = "u";
@@ -312,7 +312,7 @@ int main()
     ds.showlines = false;
     auto gp = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({1.5,0,0})+izoff);
     v.bindmodel (gp);
-    gp->twodimensional = twodee;
+    gp->twodimensional (twodee);
     gp->setsize (1.6, 1.6);
     gp->xlabel = "v";
     gp->ylabel = "u";
