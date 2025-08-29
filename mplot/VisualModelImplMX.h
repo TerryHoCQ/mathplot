@@ -193,15 +193,6 @@ namespace mplot {
             this->setupVBO (this->vbos[this->colVBO], this->vertexColors, visgl::colLoc);
             _glfn->BindVertexArray(0);  // carefully unbind and rebind
             mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
-#if 0
-            // Optional bounding box? But don't re-colour?
-            if (this->flags.test (vm_bools::compute_bb)) {
-                _glfn->BindVertexArray (this->vao_bb);  // carefully unbind and rebind
-                this->setupVBO (this->vbos_bb[this->colVBO], this->vcol_bb, visgl::colLoc);
-                _glfn->BindVertexArray(0);  // carefully unbind and rebind
-                mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
-            }
-#endif
         }
 
         void clearTexts() { this->texts.clear(); }
