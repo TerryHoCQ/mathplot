@@ -127,15 +127,9 @@ namespace mplot {
                 throw std::runtime_error ("vertexPositions size is not divisible by 3");
             }
             this->bb.search_init();
-            std::cout << "Initial BB: " << this->bb << std::endl;
             for (std::size_t i = 0; i < this->vertexPositions.size(); i += 3) {
                 sm::vec<float> _v = { vertexPositions[i], vertexPositions[i+1], vertexPositions[i+2] };
-                std::cout << "Vertex for BB: " << _v;
-                if (this->bb.update (_v)) {
-                    std::cout << " updated range to " << this->bb << std::endl;
-                } else {
-                    std::cout << " did not change range" << std::endl;
-                }
+                this->bb.update (_v);
             }
 
             if (this->flgs.test (vm_bools::show_bb) == true) { this->computeBoundingBox(); }
@@ -543,6 +537,10 @@ namespace mplot {
 
         // State/options flags
         sm::flags<vm_bools> flgs = flgs_defaults();
+
+        // Setters for flags
+        void show_bb (const bool val) { this->flgs.set (vm_bools::show_bb, val); }
+        void compute_bb (const bool val) { this->flgs.set (vm_bools::compute_bb, val); }
 
     protected:
 
@@ -2725,18 +2723,17 @@ namespace mplot {
         void computeBoundingBox()
         {
             // Draw a frame of tubes from bb.min to bb.max
-            float x0 = this->bb.min[0];
-            float y0 = this->bb.min[1];
-            float z0 = this->bb.min[2];
+            const float& x0 = this->bb.min[0];
+            const float& y0 = this->bb.min[1];
+            const float& z0 = this->bb.min[2];
 
-            float x1 = this->bb.max[0];
-            float y1 = this->bb.max[1];
-            float z1 = this->bb.max[2];
+            const float& x1 = this->bb.max[0];
+            const float& y1 = this->bb.max[1];
+            const float& z1 = this->bb.max[2];
 
             sm::vec<float> os = { 0.0f };
 
             const sm::vec<float>& c0 = this->bb.min;
-            //sm::vec<float> c0 = { x0, y0, z0 };
             sm::vec<float> c1 = { x1, y0, z0 };
             sm::vec<float> c2 = { x1, y1, z0 };
             sm::vec<float> c3 = { x0, y1, z0 };
@@ -2744,7 +2741,6 @@ namespace mplot {
             sm::vec<float> c4 = { x0, y0, z1 };
             sm::vec<float> c5 = { x1, y0, z1 };
             const sm::vec<float>& c6 = this->bb.max;
-            //sm::vec<float> c6 = { x1, y1, z1 };
             sm::vec<float> c7 = { x0, y1, z1 };
 
             constexpr int segs = 4;

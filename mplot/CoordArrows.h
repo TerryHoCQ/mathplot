@@ -28,7 +28,7 @@ namespace mplot {
         //! Must make the boilerplate bindmodel call before calling init() (for text handling)
         void init (const sm::vec<float, 3> _lengths, const float _thickness, const float _em)
         {
-            this->flgs.set (mplot::vm_bools::compute_bb, false);
+            this->compute_bb (false);
             this->lengths = _lengths;
             this->thickness = _thickness;
             this->em = _em;
@@ -37,7 +37,7 @@ namespace mplot {
         //! You can call this AS well as the first init overload to set the axis vectors
         void init (const sm::vec<float, 3> _x, const sm::vec<float, 3> _y, const sm::vec<float, 3> _z)
         {
-            this->flgs.set (mplot::vm_bools::compute_bb, false);
+            this->compute_bb (false);
             this->x_axis = _x;
             this->y_axis = _y;
             this->z_axis = _z;
