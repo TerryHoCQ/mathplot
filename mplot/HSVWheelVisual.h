@@ -62,7 +62,7 @@ namespace mplot {
         void drawFrame()
         {
             // Draw an approximation of a circle.
-            this->computeFlatCircleLine (sm::vec<float>{0,0,this->z}, this->uz, this->radius + this->framelinewidth/2.0f,
+            this->computeFlatCircleLine (sm::vec<float>{0,0,this->z}, sm::vec<>::uz(), this->radius + this->framelinewidth/2.0f,
                                          this->framelinewidth, this->framecolour, this->numsegs);
         }
 
@@ -125,13 +125,13 @@ namespace mplot {
                     std::array<float, 3> col_in = this->cm.convert_angular (colour_angle, norm_r_in);
 
                     float t = j * sm::mathconst<float>::two_pi/static_cast<float>(this->numsegs);
-                    sm::vec<float> c_in = this->uy * sin(t) * r_in + this->ux * cos(t) * r_in;
+                    sm::vec<float> c_in = sm::vec<>::uy() * sin(t) * r_in + sm::vec<>::ux() * cos(t) * r_in;
                     this->vertex_push (centre+c_in, this->vertexPositions);
-                    this->vertex_push (this->uz, this->vertexNormals);
+                    this->vertex_push (sm::vec<>::uz(), this->vertexNormals);
                     this->vertex_push (col_in, this->vertexColors);
-                    sm::vec<float> c_out = this->uy * sin(t) * r_out + this->ux * cos(t) * r_out;
+                    sm::vec<float> c_out = sm::vec<>::uy() * sin(t) * r_out + sm::vec<>::ux() * cos(t) * r_out;
                     this->vertex_push (centre+c_out, this->vertexPositions);
-                    this->vertex_push (this->uz, this->vertexNormals);
+                    this->vertex_push (sm::vec<>::uz(), this->vertexNormals);
                     this->vertex_push (col_out, this->vertexColors);
                 }
                 // Added 2*segments vertices to vertexPositions

@@ -107,19 +107,19 @@ namespace mplot {
 
             this->computeFlatLine ({-this->framelinewidth,            -(this->framelinewidth*0.5f), this->z},
                                    {extents.x()+this->framelinewidth, -(this->framelinewidth*0.5f), this->z},
-                                   this->uz, this->framecolour, this->framelinewidth);
+                                   sm::vec<>::uz(), this->framecolour, this->framelinewidth);
 
             this->computeFlatLine ({extents.x()+this->framelinewidth*0.5f, 0.0f,        this->z},
                                    {extents.x()+this->framelinewidth*0.5f, extents.y(), this->z},
-                                   this->uz, this->framecolour, this->framelinewidth);
+                                   sm::vec<>::uz(), this->framecolour, this->framelinewidth);
 
             this->computeFlatLine ({extents.x()+this->framelinewidth, extents.y()+(this->framelinewidth*0.5f), this->z},
                                    {-this->framelinewidth,            extents.y()+(this->framelinewidth*0.5f), this->z},
-                                   this->uz, this->framecolour, this->framelinewidth);
+                                   sm::vec<>::uz(), this->framecolour, this->framelinewidth);
 
             this->computeFlatLine ({-this->framelinewidth*0.5f, extents.y(), this->z},
                                    {-this->framelinewidth*0.5f, 0.0f,        this->z},
-                                   this->uz, this->framecolour, this->framelinewidth);
+                                   sm::vec<>::uz(), this->framecolour, this->framelinewidth);
         }
 
         // Draw the tick marks on each axis
@@ -134,14 +134,14 @@ namespace mplot {
                     // above
                     for (auto t : this->tick_posns) {
                         this->computeFlatLine ({static_cast<float>(t), width+framelinewidth*0.5f,    this->z},
-                                               {static_cast<float>(t), width+framelinewidth*0.5f+tl, this->z}, this->uz,
+                                               {static_cast<float>(t), width+framelinewidth*0.5f+tl, this->z}, sm::vec<>::uz(),
                                                this->framecolour, this->framelinewidth*0.5f);
                     }
                 } else {
                     // left
                     for (auto t : this->tick_posns) {
                         this->computeFlatLine ({-framelinewidth*0.5f,    static_cast<float>(t), this->z},
-                                               {-framelinewidth*0.5f-tl, static_cast<float>(t), this->z}, this->uz,
+                                               {-framelinewidth*0.5f-tl, static_cast<float>(t), this->z}, sm::vec<>::uz(),
                                                this->framecolour, this->framelinewidth*0.5f);
                     }
                 }
@@ -154,14 +154,14 @@ namespace mplot {
                     // below
                     for (auto t : this->tick_posns) {
                         this->computeFlatLine ({static_cast<float>(t), -framelinewidth*0.5f,      this->z},
-                                               {static_cast<float>(t), -(framelinewidth*0.5f)-tl, this->z}, this->uz,
+                                               {static_cast<float>(t), -(framelinewidth*0.5f)-tl, this->z}, sm::vec<>::uz(),
                                                this->framecolour, this->framelinewidth*0.5f);
                     }
                 } else {
                     // right
                     for (auto t : this->tick_posns) {
                         this->computeFlatLine ({width+framelinewidth*0.5f,    static_cast<float>(t), this->z},
-                                               {width+framelinewidth*0.5f+tl, static_cast<float>(t), this->z}, this->uz,
+                                               {width+framelinewidth*0.5f+tl, static_cast<float>(t), this->z}, sm::vec<>::uz(),
                                                this->framecolour, this->framelinewidth*0.5f);
                     }
                 }

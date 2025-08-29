@@ -69,7 +69,7 @@ namespace mplot {
             this->vertex_push (fq2.plus_one_dim(), this->vertexPositions);
             for (unsigned int vi = 0; vi < 4; ++vi) {
                 this->vertex_push (_col, this->vertexColors);
-                this->vertex_push (this->uz, this->vertexNormals);
+                this->vertex_push (sm::vec<>::uz(), this->vertexNormals);
             }
             this->indices.push_back (this->idx);
             this->indices.push_back (this->idx+1);
@@ -419,7 +419,7 @@ namespace mplot {
                     this->vertex_push (corner.plus_one_dim(), this->vertexPositions);
                     for (unsigned int vi = 0; vi < 3; ++vi) {
                         this->vertex_push (_col, this->vertexColors);
-                        this->vertex_push (this->uz, this->vertexNormals);
+                        this->vertex_push (sm::vec<>::uz(), this->vertexNormals);
                         this->indices.push_back (this->idx++);
                     }
                 } else {
@@ -430,7 +430,7 @@ namespace mplot {
                     this->vertex_push (corner_2.plus_one_dim(), this->vertexPositions);
                     for (unsigned int vi = 0; vi < 4; ++vi) {
                         this->vertex_push (_col, this->vertexColors);
-                        this->vertex_push (this->uz, this->vertexNormals);
+                        this->vertex_push (sm::vec<>::uz(), this->vertexNormals);
                     }
                     this->indices.push_back (this->idx);
                     this->indices.push_back (this->idx+1);
@@ -688,13 +688,13 @@ namespace mplot {
                 constexpr sm::vec<float, 2> hoffs = {bwid/2.0f, 0.0f};
                 constexpr sm::vec<float, 2> hoffs2 = {bwid, 0.0f};
                 this->computeFlatLine ((bot_p-voffs-hoffs2).plus_one_dim(), (bot_q-voffs+hoffs2).plus_one_dim(),
-                                       this->uz, mplot::colour::black, bwid);
+                                       sm::vec<>::uz(), mplot::colour::black, bwid);
                 this->computeFlatLine ((right_p+hoffs).plus_one_dim(), (right_q+hoffs).plus_one_dim(),
-                                       this->uz, mplot::colour::black, bwid);
+                                       sm::vec<>::uz(), mplot::colour::black, bwid);
                 this->computeFlatLine ((top_p+voffs-hoffs2).plus_one_dim(), (top_q+voffs+hoffs2).plus_one_dim(),
-                                       this->uz, mplot::colour::black, bwid);
+                                       sm::vec<>::uz(), mplot::colour::black, bwid);
                 this->computeFlatLine ((left_p-hoffs).plus_one_dim(), (left_q-hoffs).plus_one_dim(),
-                                       this->uz, mplot::colour::black, bwid);
+                                       sm::vec<>::uz(), mplot::colour::black, bwid);
 
                 // Also show the v_front vector
                 sm::vec<float> vfstart = { -2.0f * this->v_front.length(), 0, 0};
@@ -703,7 +703,7 @@ namespace mplot {
                 // Draw a unit 1 ruler, too
                 this->computeFlatLine ((left_p + sm::vec<float, 2>{0,-0.1}).plus_one_dim(),
                                        (left_p + sm::vec<float, 2>{1,-0.1}).plus_one_dim(),
-                                       this->uz, mplot::colour::crimson, 0.01f);
+                                       sm::vec<>::uz(), mplot::colour::crimson, 0.01f);
             }
         }
 

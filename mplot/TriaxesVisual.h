@@ -97,21 +97,21 @@ namespace mplot {
             // (Specifying radius = axislinewidth/root(2) and 45 degree rotation)
             this->computeTube ({ -0.5f*axislinewidth,                   0, 0 }, // start
                                { this->axis_ends[0]+0.5f*axislinewidth, 0, 0 }, // end
-                               -this->uy, this->uz,
+                               -sm::vec<>::uy(), sm::vec<>::uz(),
                                this->axiscolour, this->axiscolour,
                                sm::mathconst<float>::one_over_root_2*this->axislinewidth,
                                4, sm::mathconst<float>::pi_over_4);
             // y
             this->computeTube ({ 0, -0.5f*axislinewidth,                   0 },
                                { 0, this->axis_ends[1]+0.5f*axislinewidth, 0 },
-                               this->ux, this->uz,
+                               sm::vec<>::ux(), sm::vec<>::uz(),
                                this->axiscolour, this->axiscolour,
                                sm::mathconst<float>::one_over_root_2*this->axislinewidth,
                                4, sm::mathconst<float>::pi_over_4);
             // z
             this->computeTube ({0, 0, -0.5f*axislinewidth},
                                {0, 0, this->axis_ends[2]+0.5f*axislinewidth},
-                               this->ux, this->uy,
+                               sm::vec<>::ux(), sm::vec<>::uy(),
                                this->axiscolour, this->axiscolour,
                                sm::mathconst<float>::one_over_root_2*this->axislinewidth,
                                4, sm::mathconst<float>::pi_over_4);
@@ -121,39 +121,39 @@ namespace mplot {
                 // x
                 this->computeTube ({ -0.5f*axislinewidth,                   0, this->axis_ends[2] },
                                    { this->axis_ends[0]+0.5f*axislinewidth, 0, this->axis_ends[2] },
-                                   -this->uy, this->uz,
+                                   -sm::vec<>::uy(), sm::vec<>::uz(),
                                    this->axiscolour2, this->axiscolour2,
                                    sm::mathconst<float>::one_over_root_2*this->axislinewidth,
                                    4, sm::mathconst<float>::pi_over_4);
                 this->computeTube ({ -0.5f*axislinewidth,                   this->axis_ends[1], 0 },
                                    { this->axis_ends[0]+0.5f*axislinewidth, this->axis_ends[1], 0 },
-                                   -this->uy, this->uz,
+                                   -sm::vec<>::uy(), sm::vec<>::uz(),
                                    this->axiscolour2, this->axiscolour2,
                                    sm::mathconst<float>::one_over_root_2*this->axislinewidth,
                                    4, sm::mathconst<float>::pi_over_4);
                 // y
                 this->computeTube ({ 0, -0.5f*axislinewidth,                   this->axis_ends[2] },
                                    { 0, this->axis_ends[1]+0.5f*axislinewidth, this->axis_ends[2] },
-                                   this->ux, this->uz,
+                                   sm::vec<>::ux(), sm::vec<>::uz(),
                                    this->axiscolour2, this->axiscolour2,
                                    sm::mathconst<float>::one_over_root_2*this->axislinewidth,
                                    4, sm::mathconst<float>::pi_over_4);
                 this->computeTube ({ this->axis_ends[0], -0.5f*axislinewidth,                   0 },
                                    { this->axis_ends[0], this->axis_ends[1]+0.5f*axislinewidth, 0 },
-                                   this->ux, this->uz,
+                                   sm::vec<>::ux(), sm::vec<>::uz(),
                                    this->axiscolour2, this->axiscolour2,
                                    sm::mathconst<float>::one_over_root_2*this->axislinewidth,
                                    4, sm::mathconst<float>::pi_over_4);
                 // z
                 this->computeTube ({ this->axis_ends[0], 0, -0.5f*axislinewidth },
                                    { this->axis_ends[0], 0, this->axis_ends[2]+0.5f*axislinewidth },
-                                   this->ux, this->uy,
+                                   sm::vec<>::ux(), sm::vec<>::uy(),
                                    this->axiscolour2, this->axiscolour2,
                                    sm::mathconst<float>::one_over_root_2*this->axislinewidth,
                                    4, sm::mathconst<float>::pi_over_4);
                 this->computeTube ({ 0, this->axis_ends[1], -0.5f*axislinewidth },
                                    { 0, this->axis_ends[1], this->axis_ends[2]+0.5f*axislinewidth },
-                                   this->ux, this->uy,
+                                   sm::vec<>::ux(), sm::vec<>::uy(),
                                    this->axiscolour2, this->axiscolour2,
                                    sm::mathconst<float>::one_over_root_2*this->axislinewidth,
                                    4, sm::mathconst<float>::pi_over_4);
@@ -172,19 +172,19 @@ namespace mplot {
             // x ticks
             for (auto xt : this->xtick_posns) {
                 this->computeFlatLine ({(float)xt, 0.0f, 0.0f},
-                                       {(float)xt, tl,   0.0f}, this->uz,
+                                       {(float)xt, tl,   0.0f}, sm::vec<>::uz(),
                                        this->axiscolour, this->axislinewidth*0.5f);
             }
             // y ticks
             for (auto yt : this->ytick_posns) {
                 this->computeFlatLine ({tl, (float)yt, 0.0f},
-                                       {0.0f, (float)yt, 0.0f}, this->uz,
+                                       {0.0f, (float)yt, 0.0f}, sm::vec<>::uz(),
                                        this->axiscolour, this->axislinewidth*0.5f);
             }
             // z ticks
             for (auto zt : this->ztick_posns) {
                 this->computeFlatLine ({tl, 0.0f, (float)zt},
-                                       {0.0f, 0.0f, (float)zt}, this->uy,
+                                       {0.0f, 0.0f, (float)zt}, sm::vec<>::uy(),
                                        this->axiscolour, this->axislinewidth*0.5f);
             }
         }
@@ -270,7 +270,7 @@ namespace mplot {
                         0.5f*this->axis_ends[1] - downshift, 0 }};
 
             if (geom.width() > 2*this->fontsize) {
-                sm::quaternion<float> leftrot(this->uz, sm::mathconst<float>::pi_over_2);
+                sm::quaternion<float> leftrot(sm::vec<>::uz(), sm::mathconst<float>::pi_over_2);
                 lbl->setupText (this->ylabel, leftrot, lblpos+this->mv_offset, this->axiscolour);
             } else {
                 lbl->setupText (this->ylabel, lblpos+this->mv_offset, this->axiscolour);

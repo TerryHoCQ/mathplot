@@ -574,13 +574,6 @@ namespace mplot {
         //! vertex buffer objects
         enum VBOPos { posnVBO, normVBO, colVBO, idxVBO, numVBO };
 
-        //! A unit vector in the x direction
-        sm::vec<float, 3> ux = { 1.0f, 0.0f, 0.0f };
-        //! A unit vector in the y direction
-        sm::vec<float, 3> uy = { 0.0f, 1.0f, 0.0f };
-        //! A unit vector in the z direction
-        sm::vec<float, 3> uz = { 0.0f, 0.0f, 1.0f };
-
         /*
          * Compute positions and colours of vertices for the hexes and store in these:
          */
@@ -2334,9 +2327,9 @@ namespace mplot {
 
             // First find the rotation to make __uz into the actual unit z dirn
             sm::quaternion<float> rotn;
-            sm::vec<float> basis_rotn_axis = __uz.cross (this->uz);
+            sm::vec<float> basis_rotn_axis = __uz.cross (sm::vec<>::uz());
             if (basis_rotn_axis.length() > 0.0f) {
-                float basis_rotn_angle = __uz.angle (this->uz, basis_rotn_axis);
+                float basis_rotn_angle = __uz.angle (sm::vec<>::uz(), basis_rotn_axis);
                 rotn.rotate (basis_rotn_axis, basis_rotn_angle);
             } // else nothing to do  - basis rotn is null
 
@@ -2354,10 +2347,10 @@ namespace mplot {
             // direction to force the end point to be on the x axis
             sm::vec<float> plane_x = e_b; // - s_b but s_b is (0,0,0) by defn
             plane_x.renormalize();
-            sm::vec<float> plane_y = this->uz.cross (plane_x);
+            sm::vec<float> plane_y = sm::vec<>::uz().cross (plane_x);
             plane_y.renormalize();
             // Find the in-plane coordinates in the rotated plane system
-            sm::vec<float> e_p = { plane_x.dot (e_b), plane_y.dot (e_b), this->uz.dot (e_b) };
+            sm::vec<float> e_p = { plane_x.dot (e_b), plane_y.dot (e_b), sm::vec<>::uz().dot (e_b) };
 
             // One epsilon is exacting
             if (std::abs(e_p[2]) > std::numeric_limits<float>::epsilon()) {
@@ -2366,8 +2359,8 @@ namespace mplot {
 
             // From e_p and e_b (which should both be in a 2D plane) figure out what
             // angle of rotation brings e_b into the x axis
-            float inplane_rotn_angle = e_b.angle (e_p, this->uz);
-            sm::quaternion<float> inplane_rotn (this->uz, inplane_rotn_angle);
+            float inplane_rotn_angle = e_b.angle (e_p, sm::vec<>::uz());
+            sm::quaternion<float> inplane_rotn (sm::vec<>::uz(), inplane_rotn_angle);
 
             // Apply the in-plane rotation to the basis rotation
             rotn.premultiply (inplane_rotn);
@@ -2390,11 +2383,11 @@ namespace mplot {
             sm::vec<float, 2> c_vec = e_p.less_one_dim();
             sm::vec<float, 2> n_vec = (n_p - e_p).less_one_dim();
 
-            sm::vec<float, 2> p_ortho = (/*s_p*/ - p_p).cross (this->uz).less_one_dim();
+            sm::vec<float, 2> p_ortho = (/*s_p*/ - p_p).cross (sm::vec<>::uz()).less_one_dim();
             p_ortho.renormalize();
-            sm::vec<float, 2> c_ortho = (e_p /*- s_p*/).cross (this->uz).less_one_dim();
+            sm::vec<float, 2> c_ortho = (e_p /*- s_p*/).cross (sm::vec<>::uz()).less_one_dim();
             c_ortho.renormalize();
-            sm::vec<float, 2> n_ortho = (n_p - e_p).cross (this->uz).less_one_dim();
+            sm::vec<float, 2> n_ortho = (n_p - e_p).cross (sm::vec<>::uz()).less_one_dim();
             n_ortho.renormalize();
 
             const float hw = w / 2.0f;

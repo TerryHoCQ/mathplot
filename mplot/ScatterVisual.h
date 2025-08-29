@@ -161,7 +161,7 @@ namespace mplot {
         markerstyle markers = mplot::markerstyle::sphere;
 
         // Marker direction, if relevant. Used for length of rod markers
-        sm::vec<float, 3> markerdirn = this->uz;
+        sm::vec<float, 3> markerdirn = sm::vec<>::uz();
 
         //! Change this to get larger or smaller spheres.
         Flt radiusFixed = Flt{0.05};
