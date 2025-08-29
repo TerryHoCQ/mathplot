@@ -40,6 +40,7 @@
 #include <sm/mathconst>
 #include <sm/base64>
 #include <sm/algo>
+#include <sm/flags>
 
 #include <mplot/VisualCommon.h>
 #include <mplot/colour.h>
@@ -50,6 +51,16 @@ namespace mplot {
     {
         float f;
         uint8_t bytes[sizeof(float)];
+    };
+
+    // State/options flags
+    enum class vm_bools : uint32_t
+    {
+        postVertexInitRequired,
+        twodimensional,
+        hide,
+        show_bb,        // If true, draw vertices/indices for the bounding box frame
+        compute_bb      // For some models, it's not useful to compute the bounding box (e.g. coordinate arrows)
     };
 
     //! Forward declaration of a Visual class
@@ -110,12 +121,24 @@ namespace mplot {
         //! Process vertices and find the bounding box
         void update_bb()
         {
+            if (this->flgs.test (vm_bools::compute_bb) == false) { return; }
+
             if (this->vertexPositions.size() % 3 != 0) {
                 throw std::runtime_error ("vertexPositions size is not divisible by 3");
             }
+            this->bb.search_init();
+            std::cout << "Initial BB: " << this->bb << std::endl;
             for (std::size_t i = 0; i < this->vertexPositions.size(); i += 3) {
-                this->bb.update (sm::vec<float>{ vertexPositions[i], vertexPositions[i+1], vertexPositions[i+2] });
+                sm::vec<float> _v = { vertexPositions[i], vertexPositions[i+1], vertexPositions[i+2] };
+                std::cout << "Vertex for BB: " << _v;
+                if (this->bb.update (_v)) {
+                    std::cout << " updated range to " << this->bb << std::endl;
+                } else {
+                    std::cout << " did not change range" << std::endl;
+                }
             }
+
+            if (this->flgs.test (vm_bools::show_bb) == true) { this->computeBoundingBox(); }
         }
 
         /*!
@@ -505,6 +528,21 @@ namespace mplot {
             if (this->parentVis != nullptr) { throw std::runtime_error ("VisualModel: Set the parent pointer once only!"); }
             this->parentVis = _vis;
         }
+
+        // Flags defaults.
+        constexpr sm::flags<vm_bools> flgs_defaults()
+        {
+            sm::flags<vm_bools> _flgs;
+            _flgs.set (vm_bools::postVertexInitRequired, false);
+            _flgs.set (vm_bools::twodimensional, false);
+            _flgs.set (vm_bools::hide, false);
+            _flgs.set (vm_bools::show_bb, true);
+            _flgs.set (vm_bools::compute_bb, true);
+            return _flgs;
+        }
+
+        // State/options flags
+        sm::flags<vm_bools> flgs = flgs_defaults();
 
     protected:
 
@@ -2681,6 +2719,94 @@ namespace mplot {
             sm::vec<float> py = o + sm::vec<float>{0, hy, 0};
             sm::vec<float> pz = o + sm::vec<float>{0, 0, dz};
             this->computeRhombus (o, px, py, pz, clr);
+        }
+
+        // Compute the bounding box frame
+        void computeBoundingBox()
+        {
+            // Draw a frame of tubes from bb.min to bb.max
+            float x0 = this->bb.min[0];
+            float y0 = this->bb.min[1];
+            float z0 = this->bb.min[2];
+
+            float x1 = this->bb.max[0];
+            float y1 = this->bb.max[1];
+            float z1 = this->bb.max[2];
+
+            sm::vec<float> os = { 0.0f };
+
+            const sm::vec<float>& c0 = this->bb.min;
+            //sm::vec<float> c0 = { x0, y0, z0 };
+            sm::vec<float> c1 = { x1, y0, z0 };
+            sm::vec<float> c2 = { x1, y1, z0 };
+            sm::vec<float> c3 = { x0, y1, z0 };
+
+            sm::vec<float> c4 = { x0, y0, z1 };
+            sm::vec<float> c5 = { x1, y0, z1 };
+            const sm::vec<float>& c6 = this->bb.max;
+            //sm::vec<float> c6 = { x1, y1, z1 };
+            sm::vec<float> c7 = { x0, y1, z1 };
+
+            constexpr int segs = 4;
+
+            // Frame tube radius
+            float r = this->bb.span().length() / 500.0f;
+
+            constexpr auto top_c =  mplot::colour::lightpink;
+            constexpr auto side_c = mplot::colour::grey82;
+            constexpr auto base_c = mplot::colour::lightsteelblue1;
+
+            // Base
+            this->computeTube (c0 + os, c1 + os,
+                               sm::vec<float>::uy(), sm::vec<float>::uz(),
+                               base_c, base_c, r, segs);
+
+            this->computeTube (c1 + os, c2 + os,
+                               -sm::vec<float>::ux(), sm::vec<float>::uz(),
+                               base_c, base_c, r, segs);
+
+            this->computeTube (c2 + os, c3 + os,
+                               -sm::vec<float>::uy(), sm::vec<float>::uz(),
+                               base_c, base_c, r, segs);
+
+            this->computeTube (c3 + os, c0 + os,
+                               sm::vec<float>::ux(), sm::vec<float>::uz(),
+                               base_c, base_c, r, segs);
+
+            // Top
+            this->computeTube (c4 + os, c5 + os,
+                               sm::vec<float>::uy(), sm::vec<float>::uz(),
+                               top_c, top_c, r, segs);
+
+            this->computeTube (c5 + os, c6 + os,
+                               -sm::vec<float>::ux(), sm::vec<float>::uz(),
+                               top_c, top_c, r, segs);
+
+            this->computeTube (c6 + os, c7 + os,
+                               -sm::vec<float>::uy(), sm::vec<float>::uz(),
+                               top_c, top_c, r, segs);
+
+            this->computeTube (c7 + os, c4 + os,
+                               sm::vec<float>::ux(), sm::vec<float>::uz(),
+                               top_c, top_c, r, segs);
+
+            // Sides
+            this->computeTube (c0 + os, c4 + os,
+                               sm::vec<float>::uy(), -sm::vec<float>::ux(),
+                               side_c, side_c, r, segs);
+
+            this->computeTube (c1 + os, c5 + os,
+                               sm::vec<float>::uy(), -sm::vec<float>::ux(),
+                               side_c, side_c, r, segs);
+
+            this->computeTube (c2 + os, c6 + os,
+                               sm::vec<float>::uy(), -sm::vec<float>::ux(),
+                               side_c, side_c, r, segs);
+
+            this->computeTube (c3 + os, c7 + os,
+                               sm::vec<float>::uy(), -sm::vec<float>::ux(),
+                               side_c, side_c, r, segs);
+
         }
     };
 
