@@ -40,6 +40,7 @@
 #include <sm/mathconst>
 #include <sm/base64>
 #include <sm/algo>
+#include <sm/flags>
 
 #include <mplot/VisualCommon.h>
 #include <mplot/colour.h>
@@ -50,6 +51,16 @@ namespace mplot {
     {
         float f;
         uint8_t bytes[sizeof(float)];
+    };
+
+    // State/options flags
+    enum class vm_bools : uint32_t
+    {
+        postVertexInitRequired,
+        twodimensional,
+        hide,
+        show_bb,        // If true, draw vertices/indices for the bounding box frame
+        compute_bb      // For some models, it's not useful to compute the bounding box (e.g. coordinate arrows)
     };
 
     //! Forward declaration of a Visual class
@@ -107,6 +118,22 @@ namespace mplot {
         //! Initialize vertex buffer objects and vertex array object. Empty for 'text only' VisualModels.
         virtual void initializeVertices() = 0;
 
+        //! Process vertices and find the bounding box
+        void update_bb()
+        {
+            if (this->flags.test (vm_bools::compute_bb) == false) { return; }
+
+            if (this->vertexPositions.size() % 3 != 0) {
+                throw std::runtime_error ("VisualModelBase: vertexPositions size is not divisible by 3");
+            }
+            this->bb.search_init();
+            for (std::size_t i = 0; i < this->vertexPositions.size(); i += 3) {
+                this->bb.update (sm::vec<float>{ vertexPositions[i], vertexPositions[i+1], vertexPositions[i+2] });
+            }
+            // After finding the bounding box, make up the vertices to display it:
+            this->computeBoundingBox();
+        }
+
         /*!
          * Re-initialize the buffers. Client code might have appended to
          * vertexPositions/Colors/Normals and indices before calling this method.
@@ -142,6 +169,7 @@ namespace mplot {
             // NB: Do NOT call clearTexts() here! We're only updating the model itself.
             this->idx = 0u;
             this->initializeVertices();
+            this->update_bb();
             this->reinit_buffers();
         }
 
@@ -160,6 +188,7 @@ namespace mplot {
             this->clearTexts();
             this->idx = 0u;
             this->initializeVertices();
+            this->update_bb();
             this->reinit_buffers();
         }
 
@@ -179,6 +208,7 @@ namespace mplot {
         {
             if (this->setContext != nullptr) { this->setContext (this->parentVis); }
             this->initializeVertices();
+            this->update_bb();
             this->postVertexInitRequired = true;
             // Release context after creating and finalizing this VisualModel. On Visual::render(),
             // context will be re-acquired.
@@ -452,6 +482,7 @@ namespace mplot {
 
         //! The current indices index
         GLuint idx = 0u;
+        GLuint idx_bb = 0u;
 
         //! Set scaling in all dimensions
         void setSizeScale (const float scl)
@@ -492,6 +523,25 @@ namespace mplot {
             this->parentVis = _vis;
         }
 
+        // Flags defaults.
+        constexpr sm::flags<vm_bools> flags_defaults()
+        {
+            sm::flags<vm_bools> _flags;
+            _flags.set (vm_bools::postVertexInitRequired, false);
+            _flags.set (vm_bools::twodimensional, false);
+            _flags.set (vm_bools::hide, false);
+            _flags.set (vm_bools::show_bb, false);
+            _flags.set (vm_bools::compute_bb, true);
+            return _flags;
+        }
+
+        // State/options flags
+        sm::flags<vm_bools> flags = flags_defaults();
+
+        // Setters for flags
+        void show_bb (const bool val) { this->flags.set (vm_bools::show_bb, val); }
+        void compute_bb (const bool val) { this->flags.set (vm_bools::compute_bb, val); }
+
     protected:
 
         //! The model-specific view matrix.
@@ -500,6 +550,9 @@ namespace mplot {
         sm::mat44<float> scenematrix = {};
         //! An additional scaling applied to viewmatrix to scale the size of the model [see render()]
         sm::mat44<float> model_scaling = {};
+
+        //! A range can be used for a bounding box for this VisualModel
+        sm::range<sm::vec<float>> bb;
 
         /*!
          * The spatial offset of this VisualModel within the mplot::Visual 'scene
@@ -547,6 +600,14 @@ namespace mplot {
         //! CPU-side data for vertex colours
         std::vector<float> vertexColors = {};
 
+        // OpenGL arrays for the bounding box, if needed
+        GLuint vao_bb = 0;
+        std::unique_ptr<GLuint[]> vbos_bb;
+        std::vector<GLuint> indices_bb = {};
+        std::vector<float> vpos_bb = {};
+        std::vector<float> vnorm_bb = {};
+        std::vector<float> vcol_bb = {};
+
         static constexpr float _max = std::numeric_limits<float>::max();
         static constexpr float _low = std::numeric_limits<float>::lowest();
 
@@ -554,7 +615,7 @@ namespace mplot {
         // to be output by Visual::savegltf()
 
         //! Max values of 0th, 1st and 2nd coordinates in vertexPositions
-        sm::vec<float, 3> vpos_maxes = { _low, _low, _low };
+        sm::vec<float, 3> vpos_maxes = { _low, _low, _low }; // fixme: same as bounding box!
         //! Min values in vertexPositions
         sm::vec<float, 3> vpos_mins = { _max, _max, _max };
         sm::vec<float, 3> vcol_maxes = { _low, _low, _low };
@@ -593,6 +654,13 @@ namespace mplot {
 
         //! Set up a vertex buffer object - bind, buffer and set vertex array object attribute
         virtual void setupVBO (GLuint& buf, std::vector<float>& dat, unsigned int bufferAttribPosition) = 0;
+
+    protected:
+        /**
+         * START vertex/index computation code
+         *
+         * ALL methods below this point are for computing vertices
+         */
 
         /*!
          * Create a tube from \a start to \a end, with radius \a r and a colour which
@@ -634,11 +702,12 @@ namespace mplot {
          * \param segments Number of segments used to render the tube
          * \param rotation A rotation in the _ux/_uy plane to orient the vertices of the
          * tube. Useful if this is to be a short tube used as a graph marker.
+         * \param bb If true, write into the bounding box arrays, not the main ones
          */
         void computeTube (sm::vec<float> start, sm::vec<float> end,
                           sm::vec<float> _ux, sm::vec<float> _uy,
                           std::array<float, 3> colStart, std::array<float, 3> colEnd,
-                          float r = 1.0f, int segments = 12, float rotation = 0.0f)
+                          float r = 1.0f, int segments = 12, float rotation = 0.0f, bool bb = false)
         {
             // The vector from start to end defines direction of the tube
             sm::vec<float> vstart = start;
@@ -648,113 +717,120 @@ namespace mplot {
             sm::vec<float> v = _uy.cross(_ux);
             v.renormalize();
 
+            // If bounding box, populate different buffers:
+            std::vector<float>& vp = bb ? this->vpos_bb : this->vertexPositions;
+            std::vector<float>& vn = bb ? this->vnorm_bb : this->vertexNormals;
+            std::vector<float>& vc = bb ? this->vcol_bb : this->vertexColors;
+            std::vector<GLuint>& idcs = bb ? this->indices_bb : this->indices;
+            GLuint& _idx = bb ? this->idx_bb : this->idx;
+
             // Push the central point of the start cap - this is at location vstart
-            this->vertex_push (vstart, this->vertexPositions);
-            this->vertex_push (-v, this->vertexNormals);
-            this->vertex_push (colStart, this->vertexColors);
+            this->vertex_push (vstart, vp);
+            this->vertex_push (-v, vn);
+            this->vertex_push (colStart, vc);
 
             // Start cap vertices (a triangle fan)
             for (int j = 0; j < segments; j++) {
                 // t is the angle of the segment
                 float t = rotation + j * sm::mathconst<float>::two_pi/(float)segments;
                 sm::vec<float> c = _ux * std::sin(t) * r + _uy * std::cos(t) * r;
-                this->vertex_push (vstart+c, this->vertexPositions);
-                this->vertex_push (-v, this->vertexNormals);
-                this->vertex_push (colStart, this->vertexColors);
+                this->vertex_push (vstart+c, vp);
+                this->vertex_push (-v, vn);
+                this->vertex_push (colStart, vc);
             }
 
             // Intermediate, near start cap. Normals point in direction c
             for (int j = 0; j < segments; j++) {
                 float t = rotation + j * sm::mathconst<float>::two_pi/(float)segments;
                 sm::vec<float> c = _ux * std::sin(t) * r + _uy * std::cos(t) * r;
-                this->vertex_push (vstart+c, this->vertexPositions);
+                this->vertex_push (vstart+c, vp);
                 c.renormalize();
-                this->vertex_push (c, this->vertexNormals);
-                this->vertex_push (colStart, this->vertexColors);
+                this->vertex_push (c, vn);
+                this->vertex_push (colStart, vc);
             }
 
             // Intermediate, near end cap. Normals point in direction c
             for (int j = 0; j < segments; j++) {
                 float t = rotation + (float)j * sm::mathconst<float>::two_pi/(float)segments;
                 sm::vec<float> c = _ux * std::sin(t) * r + _uy * std::cos(t) * r;
-                this->vertex_push (vend+c, this->vertexPositions);
+                this->vertex_push (vend+c, vp);
                 c.renormalize();
-                this->vertex_push (c, this->vertexNormals);
-                this->vertex_push (colEnd, this->vertexColors);
+                this->vertex_push (c, vn);
+                this->vertex_push (colEnd, vc);
             }
 
             // Bottom cap vertices
             for (int j = 0; j < segments; j++) {
                 float t = rotation + (float)j * sm::mathconst<float>::two_pi/(float)segments;
                 sm::vec<float> c = _ux * std::sin(t) * r + _uy * std::cos(t) * r;
-                this->vertex_push (vend+c, this->vertexPositions);
-                this->vertex_push (v, this->vertexNormals);
-                this->vertex_push (colEnd, this->vertexColors);
+                this->vertex_push (vend+c, vp);
+                this->vertex_push (v, vn);
+                this->vertex_push (colEnd, vc);
             }
 
             // Bottom cap. Push centre vertex as the last vertex.
-            this->vertex_push (vend, this->vertexPositions);
-            this->vertex_push (v, this->vertexNormals);
-            this->vertex_push (colEnd, this->vertexColors);
+            this->vertex_push (vend, vp);
+            this->vertex_push (v, vn);
+            this->vertex_push (colEnd, vc);
 
             // Number of vertices = segments * 4 + 2.
             int nverts = (segments * 4) + 2;
 
             // After creating vertices, push all the indices.
-            GLuint capMiddle = this->idx;
-            GLuint capStartIdx = this->idx + 1u;
-            GLuint endMiddle = this->idx + (GLuint)nverts - 1u;
+            GLuint capMiddle = _idx;
+            GLuint capStartIdx = _idx + 1u;
+            GLuint endMiddle = _idx + (GLuint)nverts - 1u;
             GLuint endStartIdx = capStartIdx + (3u * segments);
 
             // Start cap indices
             for (int j = 0; j < segments-1; j++) {
-                this->indices.push_back (capMiddle);
-                this->indices.push_back (capStartIdx + j);
-                this->indices.push_back (capStartIdx + 1 + j);
+                idcs.push_back (capMiddle);
+                idcs.push_back (capStartIdx + j);
+                idcs.push_back (capStartIdx + 1 + j);
             }
             // Last one
-            this->indices.push_back (capMiddle);
-            this->indices.push_back (capStartIdx + segments - 1);
-            this->indices.push_back (capStartIdx);
+            idcs.push_back (capMiddle);
+            idcs.push_back (capStartIdx + segments - 1);
+            idcs.push_back (capStartIdx);
 
             // Middle sections
             for (int lsection = 0; lsection < 3; ++lsection) {
-                capStartIdx = this->idx + 1 + lsection*segments;
+                capStartIdx = _idx + 1 + lsection*segments;
                 endStartIdx = capStartIdx + segments;
                 for (int j = 0; j < segments; j++) {
-                    this->indices.push_back (capStartIdx + j);
+                    idcs.push_back (capStartIdx + j);
                     if (j == (segments-1)) {
-                        this->indices.push_back (capStartIdx);
+                        idcs.push_back (capStartIdx);
                     } else {
-                        this->indices.push_back (capStartIdx + 1 + j);
+                        idcs.push_back (capStartIdx + 1 + j);
                     }
-                    this->indices.push_back (endStartIdx + j);
-                    this->indices.push_back (endStartIdx + j);
+                    idcs.push_back (endStartIdx + j);
+                    idcs.push_back (endStartIdx + j);
                     if (j == (segments-1)) {
-                        this->indices.push_back (endStartIdx);
+                        idcs.push_back (endStartIdx);
                     } else {
-                        this->indices.push_back (endStartIdx + 1 + j);
+                        idcs.push_back (endStartIdx + 1 + j);
                     }
                     if (j == (segments-1)) {
-                        this->indices.push_back (capStartIdx);
+                        idcs.push_back (capStartIdx);
                     } else {
-                        this->indices.push_back (capStartIdx + j + 1);
+                        idcs.push_back (capStartIdx + j + 1);
                     }
                 }
             }
 
             // bottom cap
             for (int j = 0; j < segments-1; j++) {
-                this->indices.push_back (endMiddle);
-                this->indices.push_back (endStartIdx + j);
-                this->indices.push_back (endStartIdx + 1 + j);
+                idcs.push_back (endMiddle);
+                idcs.push_back (endStartIdx + j);
+                idcs.push_back (endStartIdx + 1 + j);
             }
-            this->indices.push_back (endMiddle);
-            this->indices.push_back (endStartIdx + segments - 1);
-            this->indices.push_back (endStartIdx);
+            idcs.push_back (endMiddle);
+            idcs.push_back (endStartIdx + segments - 1);
+            idcs.push_back (endStartIdx);
 
             // Update idx
-            this->idx += nverts;
+            _idx += nverts;
         } // end computeTube with ux/uy vectors for faces
 
         /*!
@@ -2657,6 +2733,52 @@ namespace mplot {
             sm::vec<float> py = o + sm::vec<float>{0, hy, 0};
             sm::vec<float> pz = o + sm::vec<float>{0, 0, dz};
             this->computeRhombus (o, px, py, pz, clr);
+        }
+
+        // Compute the bounding box frame
+        void computeBoundingBox()
+        {
+            // Draw a frame of tubes from bb.min to bb.max
+            const float& x0 = this->bb.min[0];
+            const float& y0 = this->bb.min[1];
+            const float& z0 = this->bb.min[2];
+
+            const float& x1 = this->bb.max[0];
+            const float& y1 = this->bb.max[1];
+            const float& z1 = this->bb.max[2];
+
+            const sm::vec<float>& c0 = this->bb.min;
+            sm::vec<float> c1 = { x1, y0, z0 };
+            sm::vec<float> c2 = { x1, y1, z0 };
+            sm::vec<float> c3 = { x0, y1, z0 };
+
+            sm::vec<float> c4 = { x0, y0, z1 };
+            sm::vec<float> c5 = { x1, y0, z1 };
+            const sm::vec<float>& c6 = this->bb.max;
+            sm::vec<float> c7 = { x0, y1, z1 };
+
+            constexpr int segs = 4;
+            constexpr float zrot = 0.0f;
+            constexpr auto cl =  mplot::colour::grey90;
+
+            // Frame tube radius
+            float r = this->bb.span().length() / 500.0f;
+
+            // Base
+            this->computeTube (c0, c1, sm::vec<float>::uy(), sm::vec<float>::uz(), cl, cl, r, segs, zrot, true);
+            this->computeTube (c1, c2, -sm::vec<float>::ux(), sm::vec<float>::uz(), cl, cl, r, segs, zrot, true);
+            this->computeTube (c2, c3, -sm::vec<float>::uy(), sm::vec<float>::uz(), cl, cl, r, segs, zrot, true);
+            this->computeTube (c3, c0, sm::vec<float>::ux(), sm::vec<float>::uz(), cl, cl, r, segs, zrot, true);
+            // Top
+            this->computeTube (c4, c5, sm::vec<float>::uy(), sm::vec<float>::uz(), cl, cl, r, segs, zrot, true);
+            this->computeTube (c5, c6, -sm::vec<float>::ux(), sm::vec<float>::uz(), cl, cl, r, segs, zrot, true);
+            this->computeTube (c6, c7, -sm::vec<float>::uy(), sm::vec<float>::uz(), cl, cl, r, segs, zrot, true);
+            this->computeTube (c7, c4, sm::vec<float>::ux(), sm::vec<float>::uz(), cl, cl, r, segs, zrot, true);
+            // Sides
+            this->computeTube (c0, c4, sm::vec<float>::uy(), -sm::vec<float>::ux(), cl, cl, r, segs, zrot, true);
+            this->computeTube (c1, c5, sm::vec<float>::uy(), -sm::vec<float>::ux(), cl, cl, r, segs, zrot, true);
+            this->computeTube (c2, c6, sm::vec<float>::uy(), -sm::vec<float>::ux(), cl, cl, r, segs, zrot, true);
+            this->computeTube (c3, c7, sm::vec<float>::uy(), -sm::vec<float>::ux(), cl, cl, r, segs, zrot, true);
         }
     };
 

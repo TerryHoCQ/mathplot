@@ -129,9 +129,9 @@ namespace mplot {
 
                 // there are n_vertex colours, and n_data data points.
                 if (this->colourFaces == true) {
-                    if (n_cvals != 3 * 3 * n_data) { throw std::runtime_error ("data is not right size");  }
+                    if (n_cvals != 3 * 3 * n_data) { throw std::runtime_error ("GeodesicVisual: data is not right size");  }
                 } else {
-                    if (n_cvals != 3 * n_data) { throw std::runtime_error ("data is not right size");  }
+                    if (n_cvals != 3 * n_data) { throw std::runtime_error ("GeodesicVisual: data is not right size");  }
                 }
 
                 // Re-colour
@@ -149,9 +149,9 @@ namespace mplot {
 
                 // there are n_vertex colours, and n_data data points.
                 if (this->colourFaces == true) {
-                    if (n_cvals != 3 * 3 * n_data) { throw std::runtime_error ("data is not right size");  }
+                    if (n_cvals != 3 * 3 * n_data) { throw std::runtime_error ("GeodesicVisual: data is not right size");  }
                 } else {
-                    if (n_cvals != 3 * n_data) { throw std::runtime_error ("data is not right size");  }
+                    if (n_cvals != 3 * n_data) { throw std::runtime_error ("GeodesicVisual: data is not right size");  }
                 }
 
                 // Scale data

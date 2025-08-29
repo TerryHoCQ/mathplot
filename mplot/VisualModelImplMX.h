@@ -73,7 +73,7 @@ namespace mplot {
         //! Common code to call after the vertices have been set up. GL has to have been initialised.
         void postVertexInit() final
         {
-            GladGLContext* _glfn = this->get_glfn(this->parentVis);
+            GladGLContext* _glfn = this->get_glfn (this->parentVis);
 
             // Do gl memory allocation of vertex array once only
             if (this->vbos == nullptr) {
@@ -89,10 +89,10 @@ namespace mplot {
             }
 
             // Set up the indices buffer - bind and buffer the data in this->indices
-            _glfn->BindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbos[this->idxVBO]);
+            _glfn->BindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos[this->idxVBO]);
 
             std::size_t sz = this->indices.size() * sizeof(GLuint);
-            _glfn->BufferData(GL_ELEMENT_ARRAY_BUFFER, sz, this->indices.data(), GL_STATIC_DRAW);
+            _glfn->BufferData (GL_ELEMENT_ARRAY_BUFFER, sz, this->indices.data(), GL_STATIC_DRAW);
 
             // Binds data from the "C++ world" to the OpenGL shader world for
             // "position", "normalin" and "color"
@@ -104,6 +104,38 @@ namespace mplot {
             // Unbind only the vertex array (not the buffers, that causes GL_INVALID_ENUM errors)
             _glfn->BindVertexArray(0); // carefully unbind and rebind
             mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
+
+            /*
+             * Now do the same for the bounding box
+             */
+            if (this->flags.test (vm_bools::compute_bb)) {
+
+                if (this->vbos_bb == nullptr) { _glfn->GenVertexArrays (1, &this->vao_bb); }
+                _glfn->BindVertexArray (this->vao_bb);
+
+                // Create the vertex buffer objects (once only)
+                if (this->vbos_bb == nullptr) {
+                    this->vbos_bb = std::make_unique<GLuint[]>(this->numVBO);
+                    _glfn->GenBuffers (this->numVBO, this->vbos_bb.get());
+                }
+
+                // Set up the indices buffer - bind and buffer the data in this->indices
+                _glfn->BindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos_bb[this->idxVBO]);
+
+                std::size_t sz = this->indices_bb.size() * sizeof(GLuint);
+                _glfn->BufferData (GL_ELEMENT_ARRAY_BUFFER, sz, this->indices_bb.data(), GL_STATIC_DRAW);
+
+                // Binds data from the "C++ world" to the OpenGL shader world for
+                // "position", "normalin" and "color"
+                // (bind, buffer and set vertex array object attribute)
+                this->setupVBO (this->vbos_bb[this->posnVBO], this->vpos_bb, visgl::posnLoc);
+                this->setupVBO (this->vbos_bb[this->normVBO], this->vnorm_bb, visgl::normLoc);
+                this->setupVBO (this->vbos_bb[this->colVBO], this->vcol_bb, visgl::colLoc);
+
+                // Unbind only the vertex array (not the buffers, that causes GL_INVALID_ENUM errors)
+                _glfn->BindVertexArray(0); // carefully unbind and rebind
+                mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
+            }
 
             this->postVertexInitRequired = false;
         }
@@ -120,18 +152,34 @@ namespace mplot {
             GladGLContext* _glfn = this->get_glfn(this->parentVis);
             if (this->setContext != nullptr) { this->setContext (this->parentVis); }
             if (this->postVertexInitRequired == true) { this->postVertexInit(); }
+
             // Now re-set up the VBOs
             _glfn->BindVertexArray (this->vao);                                    // carefully unbind and rebind
-            _glfn->BindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbos[this->idxVBO]);  // carefully unbind and rebind
+            _glfn->BindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos[this->idxVBO]);  // carefully unbind and rebind
 
             std::size_t sz = this->indices.size() * sizeof(GLuint);
-            _glfn->BufferData(GL_ELEMENT_ARRAY_BUFFER, sz, this->indices.data(), GL_STATIC_DRAW);
+            _glfn->BufferData (GL_ELEMENT_ARRAY_BUFFER, sz, this->indices.data(), GL_STATIC_DRAW);
             this->setupVBO (this->vbos[this->posnVBO], this->vertexPositions, visgl::posnLoc);
             this->setupVBO (this->vbos[this->normVBO], this->vertexNormals, visgl::normLoc);
             this->setupVBO (this->vbos[this->colVBO], this->vertexColors, visgl::colLoc);
 
             _glfn->BindVertexArray(0);                                // carefully unbind and rebind
             mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);  // carefully unbind and rebind
+
+            // Optional bounding box
+            if (this->flags.test (vm_bools::compute_bb)) {
+                _glfn->BindVertexArray (this->vao_bb);
+                _glfn->BindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos_bb[this->idxVBO]);
+
+                std::size_t sz = this->indices_bb.size() * sizeof(GLuint);
+                _glfn->BufferData (GL_ELEMENT_ARRAY_BUFFER, sz, this->indices_bb.data(), GL_STATIC_DRAW);
+                this->setupVBO (this->vbos_bb[this->posnVBO], this->vpos_bb, visgl::posnLoc);
+                this->setupVBO (this->vbos_bb[this->normVBO], this->vnorm_bb, visgl::normLoc);
+                this->setupVBO (this->vbos_bb[this->colVBO], this->vcol_bb, visgl::colLoc);
+
+                _glfn->BindVertexArray(0);
+                mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
+            }
         }
 
         //! reinit ONLY vertexColors buffer
@@ -192,6 +240,13 @@ namespace mplot {
 
                 // Unbind the VAO
                 _glfn->BindVertexArray(0);
+
+                // Do the bounding box optionally
+                if (this->flags.test (vm_bools::compute_bb) && this->flags.test (vm_bools::show_bb) && !this->indices_bb.empty()) {
+                    _glfn->BindVertexArray (this->vao_bb);
+                    _glfn->DrawElements (GL_TRIANGLES, static_cast<unsigned int>(this->indices_bb.size()), GL_UNSIGNED_INT, 0);
+                    _glfn->BindVertexArray(0);
+                }
             }
             mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
 

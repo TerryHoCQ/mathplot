@@ -80,7 +80,9 @@ namespace mplot {
         //! If true (the default), then call swapBuffers() at the end of render()
         renderSwapsBuffers,
         //! If true, rotation is about scene origin, rather than screen centre
-        rotateAboutSceneOrigin
+        rotateAboutSceneOrigin,
+        //! If true, draw all the bounding boxes around the VisualModels
+        showBoundingBoxes
     };
 
     //! Whether to render with perspective or orthographic (or even a cylindrical projection)
@@ -419,6 +421,9 @@ namespace mplot {
 
         //! If you set this to true, then the mouse movements won't change scenetrans or rotation.
         void sceneLocked (const bool val) { this->state.set (visual_state::sceneLocked, val); }
+
+        //! Show bounding boxes?
+        void showBoundingBoxes (const bool val) { this->options.set (visual_options::showBoundingBoxes, val); }
 
         //! Can change this to orthographic
         perspective_type ptype = perspective_type::perspective;
@@ -900,6 +905,7 @@ namespace mplot {
                           << "Ctrl-z: Show the current scenetrans/rotation and save to /tmp/Visual.json\n"
                           << "Ctrl-u: Reduce zNear cutoff plane\n"
                           << "Ctrl-i: Increase zNear cutoff plane\n"
+                          << "Ctrl-j: Toggle bounding boxes\n"
                           << "F1-F10: Select model index (with shift: toggle hide)\n"
                           << "Shift-Left: Decrease opacity of selected model\n"
                           << "Shift-Right: Increase opacity of selected model\n"
@@ -1064,6 +1070,10 @@ namespace mplot {
                 std::cout << "Rotating about "
                           << (this->options.test (visual_options::rotateAboutSceneOrigin) ? "scene origin" : "screen centre")
                           << std::endl;
+            }
+
+            if (_key == key::j && (action == keyaction::press || action == keyaction::repeat) && (mods & keymod::control)) {
+                this->options.flip (visual_options::showBoundingBoxes);
             }
 
             if (this->state.test (visual_state::sceneLocked) == false

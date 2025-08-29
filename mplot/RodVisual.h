@@ -47,7 +47,7 @@ namespace mplot {
             this->end_col = _end_col;
         }
 
-        static constexpr bool use_oriented_tube = false;
+        static constexpr bool use_oriented_tube = true;
         //! Initialize vertex buffer objects and vertex array object.
         void initializeVertices()
         {

@@ -20,23 +20,21 @@ int main()
 
     mplot::Visual v(1024, 768, "Visualization");
     v.zNear = 0.001;
-    v.showCoordArrows (true);
-    v.coordArrowsInScene (true);
+    //v.showCoordArrows (true);
+    //v.coordArrowsInScene (true);
     // For a white background:
     v.backgroundWhite();
     // Switch on a mix of diffuse/ambient lighting
     v.lightingEffects(true);
 
     try {
-        sm::vec<float, 3> offset = { 0.0, 0.0, 0.0 };
+        constexpr sm::vec<float, 3> colour1 = { 1.0, 0.0, 0.0 };
+        constexpr sm::vec<float, 3> colour2 = { 0.0, 0.9, 0.4 };
 
+        sm::vec<float, 3> offset = { 0.0, 0.0, 0.0 };
         sm::vec<float, 3> start = { 0, 0, 0 };
         sm::vec<float, 3> end = { 0.25, 0, 0 };
-
-        sm::vec<float, 3> colour1 = { 1.0, 0.0, 0.0 };
-        sm::vec<float, 3> colour2 = { 0.0, 0.9, 0.4 };
-
-        std::unique_ptr<mplot::VisualModel<>> rvm = std::make_unique<mplot::RodVisual<>> (offset, start, end, 0.1f, colour1, colour2);
+        std::unique_ptr<mplot::VisualModel<>> rvm = std::make_unique<mplot::RodVisual<>> (offset, start, end, 0.1f, colour1, colour1);
         v.bindmodel (rvm);
         rvm->finalize();
         v.addVisualModel (rvm);
