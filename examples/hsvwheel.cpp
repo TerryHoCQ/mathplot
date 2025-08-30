@@ -112,7 +112,7 @@ int main()
     hsvw_vis->setColour (mplot::colour::white);
     hsvw_vis->radius = 3.5f;
     hsvw_vis->tf.fontsize = 0.4f;
-    hsvw_vis->twodimensional = false;
+    hsvw_vis->twodimensional (false);
     hsvw_vis->cm = hsv_visp->colourMap;
     hsvw_vis->finalize();
     v.addVisualModel (hsvw_vis);
@@ -141,7 +141,7 @@ int main()
     hsvw_vis->framelinewidth = 0.1f;
     hsvw_vis->radius = 3.5f;
     hsvw_vis->tf.fontsize = 0.4f;
-    hsvw_vis->twodimensional = false;
+    hsvw_vis->twodimensional (false);
     hsvw_vis->cm = hsv_vis2p->colourMap;
     hsvw_vis->finalize();
     v.addVisualModel (hsvw_vis);
@@ -168,7 +168,7 @@ int main()
     hsvw_vis->framelinewidth = 0.2f;
     hsvw_vis->radius = 3.5f;
     hsvw_vis->tf.fontsize = 0.4f;
-    hsvw_vis->twodimensional = false;
+    hsvw_vis->twodimensional (false);
     hsvw_vis->cm = hsv_vis3p->colourMap;
     hsvw_vis->finalize();
     v.addVisualModel (hsvw_vis);

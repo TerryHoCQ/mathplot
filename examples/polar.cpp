@@ -29,7 +29,7 @@ int main()
     pv->ticklabelgap = 0.05f;
     pv->numrings = N;
     pv->numsegs = N;
-    pv->twodimensional = false;
+    pv->twodimensional (false);
 
     // Make a function that increases radially near theta == 0 and theta == pi/2 and is 0 everywhere else
     sm::vvec<double> data;

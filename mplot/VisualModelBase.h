@@ -57,10 +57,10 @@ namespace mplot {
     enum class vm_bools : uint32_t
     {
         postVertexInitRequired,
-        twodimensional,
-        hide,
-        show_bb,        // If true, draw vertices/indices for the bounding box frame
-        compute_bb      // For some models, it's not useful to compute the bounding box (e.g. coordinate arrows)
+        twodimensional,         // If true, then this VisualModel should always be viewed in a plane - it's a 2D model
+        hide,                   // If true, then calls to VisualModel::render should return
+        show_bb,                // If true, draw vertices/indices for the bounding box frame
+        compute_bb              // For some models, it's not useful to compute the bounding box (e.g. coordinate arrows)
     };
 
     //! Forward declaration of a Visual class
@@ -111,7 +111,6 @@ namespace mplot {
             model->releaseContext = &mplot::VisualBase<glver>::release_context;
         }
 
-        bool postVertexInitRequired = false;
         //! Common code to call after the vertices have been set up. GL has to have been initialised.
         virtual void postVertexInit() = 0;
 
@@ -209,7 +208,7 @@ namespace mplot {
             if (this->setContext != nullptr) { this->setContext (this->parentVis); }
             this->initializeVertices();
             this->update_bb();
-            this->postVertexInitRequired = true;
+            this->flags.set (vm_bools::postVertexInitRequired, true);
             // Release context after creating and finalizing this VisualModel. On Visual::render(),
             // context will be re-acquired.
             if (this->releaseContext != nullptr) { this->releaseContext (this->parentVis); }
@@ -335,9 +334,9 @@ namespace mplot {
         }
 
         // The hide attribute accessors
-        void setHide (const bool _h = true) { this->hide = _h; }
-        void toggleHide() { this->hide = this->hide ? false : true; }
-        float hidden() const { return this->hide; }
+        void setHide (const bool _h = true) { this->flags.set (vm_bools::hide, _h); }
+        void toggleHide() { this->flags.flip (vm_bools::hide); }
+        float hidden() const { return this->flags.test (vm_bools::hide); }
 
         /*
          * Methods used by Visual::savegltf()
@@ -477,9 +476,6 @@ namespace mplot {
         }
         // end Visual::savegltf() methods
 
-        //! If true, then this VisualModel should always be viewed in a plane - it's a 2D model
-        bool twodimensional = false;
-
         //! The current indices index
         GLuint idx = 0u;
         GLuint idx_bb = 0u;
@@ -541,6 +537,9 @@ namespace mplot {
         // Setters for flags
         void show_bb (const bool val) { this->flags.set (vm_bools::show_bb, val); }
         void compute_bb (const bool val) { this->flags.set (vm_bools::compute_bb, val); }
+
+        void twodimensional (const bool val) { this->flags.set (vm_bools::twodimensional, val); }
+        bool twodimensional() const { return this->flags.test (vm_bools::twodimensional); }
 
     protected:
 
@@ -622,8 +621,6 @@ namespace mplot {
 
         //! A model-wide alpha value for the shader
         float alpha = 1.0f;
-        //! If true, then calls to VisualModel::render should return
-        bool hide = false;
 
         // The mplot::VisualBase in which this model exists.
         mplot::VisualBase<glver>* parentVis = nullptr;

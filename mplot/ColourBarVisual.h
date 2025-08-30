@@ -53,7 +53,7 @@ namespace mplot {
             this->tf.fontres = 48;
             this->tf.colour = this->framecolour;
             // Like graphs, colourbars don't rotate by default. If you want yours to, set this false in your client code.
-            this->twodimensional = true;
+            this->twodimensional (true);
         }
 
         //! Set the colour of the frame, ticks and text

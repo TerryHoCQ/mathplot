@@ -29,7 +29,7 @@ namespace mplot
             this->tf.fontres = 48;
             this->tf.colour = this->framecolour;
             // Like graphs, Polar visuals don't rotate by default. If you want yours to, set this false in your client code.
-            this->twodimensional = true;
+            this->twodimensional (true);
 
             this->zScale.identity_scaling();
             this->colourScale.do_autoscale = true;

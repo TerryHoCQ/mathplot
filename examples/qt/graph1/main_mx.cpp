@@ -23,7 +23,7 @@ int main (int argc, char **argv)
     // This mandatory line of boilerplate code sets the parent pointer in GraphVisual and binds some functions
     widget.v.bindmodel (gv);
     // Allow 3D
-    gv->twodimensional = false;
+    gv->twodimensional (false);
     // Data for the x axis. A vvec is like std::vector, but with built-in maths methods
     sm::vvec<double> x;
     // This works like numpy's linspace() (the 3 args are "start", "end" and "num"):

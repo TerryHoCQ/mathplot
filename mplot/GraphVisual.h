@@ -52,7 +52,7 @@ namespace mplot {
             this->ord2_scale.do_autoscale = true;
             this->abscissa_scale.do_autoscale = true;
             // Graphs don't rotate by default. If you want yours to, set this false in your client code.
-            this->twodimensional = true;
+            this->twodimensional (true);
         }
 
         //! Set true for any optional debugging

@@ -77,7 +77,7 @@ int main()
         gv->xlabel = "r";
         gv->ylabel = "x";
         gv->setdata (absc, ord, ds);
-        gv->twodimensional = false;
+        gv->twodimensional (false);
         gv->finalize();
 
         // Add the GraphVisual to the mplot::Visual scene

@@ -65,7 +65,7 @@ mplot::VisualModel<>* addmap (myvisual& v, mplot::ColourMapType display_map_type
         auto gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
         v.bindmodel (gv);
         gv->gridVisMode = mplot::GridVisMode::Triangles;
-        gv->twodimensional = true;
+        gv->twodimensional (true);
         gv->setScalarData (&data);
         gv->cm = nextmap;
         gv->zScale.null_scaling();
