@@ -716,6 +716,8 @@ namespace mplot {
                 sm::vec<float> screencentre = { 0.0f, 0.0f, this->savedSceneview.translation().z() + this->scenetrans_delta.z() };
 
                 sm::vec<float> zero_location = this->savedSceneview.translation() + this->scenetrans_delta;
+                std::cout << "Zero locn: " << zero_location << std::endl;
+
                 // Can I get a better screencentre?
                 //
                 // Another way to get the z value is to find the model that intersects
@@ -725,19 +727,35 @@ namespace mplot {
                 // is closest and use its location + bb middle to get z.
                 //
                 // I need to incorporate the rotation
+
+                sm::vec<> v1 = { 0.0f, 0.0f, -1000.0f };
+                sm::vec<> v2 = -v1;
+                v1 = (this->sceneview * v1).less_one_dim();
+                v2 = (this->sceneview * v2).less_one_dim();
+                sm::vec<> v3 = -v1; // If approx equiv, then less computation
+                std::cout << "Transformed line: " << v1 << " to " << v2 << " or " << v3 << "\n";
+
                 auto vmi = this->vm.begin();
                 while (vmi != this->vm.end()) {
                     if ((*vmi)->flags.test (mplot::vm_bools::compute_bb) == true) {
+                        // In this loop, need to take the vm's move offset and transform it
                         sm::vec<> mo = (*vmi)->get_mv_offset() + zero_location;
+                        std::cout << "Move offset: " << mo << std::endl;
+                        // No transform of bb, just use the approximate size that it defines
                         sm::vec<> bbmin = (*vmi)->bb.min + mo;
                         sm::vec<> bbmax = (*vmi)->bb.max + mo;
                         //std::cout << "VM: Offset BB min/max: " << bbmin << " -> " << bbmax << std::endl;
+
+                        // Here I want 'if v1-v2 goes through BB'. v1 to v2 is just
+                        // another range. So we want a range.intersects (line) method.
                         if (bbmin[0] < 0.0f && bbmax[0] > 0.0f && bbmin[1] < 0.0f && bbmax[1] > 0.0f) {
-                            //std::cout << "  show_bb (true)...\n";
+                            std::cout << "  show_bb (true)...\n";
                             (*vmi)->show_bb (true);
                             // This visual model is at the screencentre
                             sm::vec<> model_mid = (*vmi)->get_mv_offset() + (*vmi)->bb.mid();
+
                             screencentre += model_mid;
+
                         } else {
                             (*vmi)->show_bb (false);
                         }
