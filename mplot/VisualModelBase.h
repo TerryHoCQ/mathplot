@@ -154,6 +154,13 @@ namespace mplot {
             this->indices.clear();
             this->clearTexts();
             this->idx = 0u;
+            // Clear bounding box
+            this->vpos_bb.clear();
+            this->vnorm_bb.clear();
+            this->vcol_bb.clear();
+            this->indices_bb.clear();
+            this->idx_bb = 0u;
+
             this->reinit_buffers();
         }
 
@@ -166,6 +173,14 @@ namespace mplot {
             this->vertexNormals.clear();
             this->vertexColors.clear();
             this->indices.clear();
+
+            // Clear any bounding box too
+            this->vpos_bb.clear();
+            this->vnorm_bb.clear();
+            this->vcol_bb.clear();
+            this->indices_bb.clear();
+            this->idx_bb = 0u;
+
             // NB: Do NOT call clearTexts() here! We're only updating the model itself.
             this->idx = 0u;
             this->initializeVertices();
@@ -185,8 +200,17 @@ namespace mplot {
             this->vertexNormals.clear();
             this->vertexColors.clear();
             this->indices.clear();
+
             this->clearTexts();
             this->idx = 0u;
+
+            // Clear any bounding box too
+            this->vpos_bb.clear();
+            this->vnorm_bb.clear();
+            this->vcol_bb.clear();
+            this->indices_bb.clear();
+            this->idx_bb = 0u;
+
             this->initializeVertices();
             this->update_bb();
             this->reinit_buffers();
@@ -544,6 +568,7 @@ namespace mplot {
 
         //! A range can be used for a bounding box for this VisualModel
         sm::range<sm::vec<float>> bb;
+        std::array<float, 3> colour_bb = mplot::colour::grey90;
 
     protected:
 
@@ -2759,7 +2784,7 @@ namespace mplot {
 
             constexpr int segs = 4;
             constexpr float zrot = 0.0f;
-            constexpr auto cl =  mplot::colour::grey90;
+            auto cl = this->colour_bb;
 
             // Frame tube radius
             float r = this->bb.span().length() / 500.0f;

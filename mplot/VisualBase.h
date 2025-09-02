@@ -32,6 +32,7 @@
 
 #include <nlohmann/json.hpp>
 #include <mplot/CoordArrows.h>
+#include <mplot/RodVisual.h>
 #include <mplot/tools.h>
 
 
@@ -71,6 +72,8 @@ namespace mplot {
         showCoordArrows,
         //! If true, then place the coordinate arrows at the origin of the scene, rather than offset.
         coordArrowsInScene,
+        //! User frame (for debug)
+        showUserFrame,
         //! Set to true to show the title text within the scene
         showTitle,
         //! Set true to output some user information to stdout (e.g. user requested quit)
@@ -380,6 +383,7 @@ namespace mplot {
             _options.set (visual_options::renderSwapsBuffers);
             // For now, default to rotating about scene origin, as we ever did (Ctrl-k to change)
             _options.set (visual_options::rotateAboutSceneOrigin);
+
             return _options;
         }
 
@@ -406,6 +410,9 @@ namespace mplot {
 
         //! If true, then place the coordinate arrows at the origin of the scene, rather than offset.
         void coordArrowsInScene (const bool val) { this->options.set (visual_options::coordArrowsInScene, val); }
+
+        //! Show the user frame?
+        void showUserFrame (const bool val) { this->options.set (visual_options::showUserFrame, val); }
 
         //! Set to true to show the title text within the scene
         void showTitle (const bool val) { this->options.set (visual_options::showTitle, val); }
@@ -728,35 +735,62 @@ namespace mplot {
                 //
                 // I need to incorporate the rotation
 
-                sm::vec<> v1 = { 0.0f, 0.0f, -100.0f };
-                sm::vec<> v2 = -v1;
-                v1 = (this->sceneview * v1).less_one_dim();
-                v2 = (this->sceneview * v2).less_one_dim();
-                std::cout << "\nTransformed line: " << v1 << " to " << v2 << "\n";
-                //sm::range<sm::vec<>> linebb = { v1, v2 };
-                sm::range<sm::vec<>> modelbb;
+                sm::vec<> v1 = { 0.1f, 0.1f, -10.0f }; // To match values set in this->userFrame for now
+                sm::vec<> v2 = { 0.1f, 0.1f, 10.0f };
+                std::cout << "\nOur line: " << v1 << " to " << v2 << "\n";
 
+                // For later use
+                auto svi = this->sceneview.inverse();
+
+                sm::range<sm::vec<>> modelbb;
+                std::stringstream cmdss;
+                std::stringstream jsonss;
+                uint32_t ci = 0;
+                cmdss << "./examples/tube_box ";
+                jsonss << "{\n";
                 auto vmi = this->vm.begin();
                 while (vmi != this->vm.end()) {
                     if ((*vmi)->flags.test (mplot::vm_bools::compute_bb) == true) {
 
                         // What frame of ref?
                         modelbb = (*vmi)->bb;
-                        std::cout << "  model mv_offset: " << (*vmi)->get_mv_offset() << std::endl;
-                        modelbb -= (*vmi)->get_mv_offset();
-
-                        if (sm::algo::aabb_line_intersect (modelbb, v1, v2)) {
+                        auto xformed_move = (svi * -(*vmi)->get_mv_offset()).less_one_dim();
+                        modelbb += xformed_move;
+                        // transform modelbb using sceneview. NO! Transform the *location* of the bounding box, but not the box itself.
+                        //std::cout << "  bb mid before: " << modelbb.mid() << "... ";
+                        //modelbb.min = (svi * modelbb.min).less_one_dim();
+                        //modelbb.max = (svi * modelbb.max).less_one_dim();
+                        std::cout << "  bb mid after: " << modelbb.mid() << "\n";
+                        cmdss << "-co:b" << ci << "=\"" << modelbb.min << "\" -co:b" << (ci + 1) << "=\"" << modelbb.max << "\" ";
+                        if (ci != 0) { jsonss << ",\n"; }
+                        jsonss << "  \"b" << (ci + 1) << "\": [" << modelbb.min.str_comma_separated() << "],\n";
+                        jsonss << "  \"b" << (ci + 2) << "\": [" << modelbb.max.str_comma_separated() << "]";
+                        ci += 2;
+                        if (sm::algo::aabb_line_intersect<float, 0> (modelbb, v1, v2)) {
                             (*vmi)->show_bb (true);
-                            std::cout << "  Intersect! modelbb.mid(): " << modelbb.mid() << std::endl;
+                            auto mm = modelbb.mid();
+                            std::cout << "  Intersect! modelbb.mid(): " << mm << std::endl;
+                            //screencentre = mm; // Will need screencentre to slowly morph to approximation when model is lost
                         } else {
-                            std::cout << "  no intersect: model " << modelbb << " with line " << v1 << "->" << v2 << std::endl;
+                            //std::cout << "  no intersect: model " << modelbb << " with line " << v1 << "->" << v2 << std::endl;
                             (*vmi)->show_bb (false);
                         }
                     }
                     ++vmi;
                 }
+                jsonss << "\n}\n";
 
-                //std::cout << "screencentre is " << screencentre << std::endl;
+                std::cout << cmdss.str() << std::endl;
+
+                //std::cout << jsonss.str() << std::endl;
+                std::ofstream fout;
+                fout.open ("/tmp/tube_box.json", std::ios::out | std::ios::trunc);
+                if (fout.is_open()) {
+                    fout << jsonss.str();
+                    fout.close();
+                }
+
+                std::cout << "  screencentre is " << screencentre << std::endl;
                 sv_rot.pretranslate (-screencentre);
                 sv_rot.rotate (this->rotation_delta);
                 sv_rot.translate (screencentre);
@@ -842,6 +876,10 @@ namespace mplot {
 
         //! A little model of the coordinate axes.
         std::unique_ptr<mplot::CoordArrows<glver>> coordArrows;
+
+        //! Show the user's frame of reference as a model in the scene coords (for debug)
+        std::unique_ptr<mplot::RodVisual<glver>> userFrame;
+
 
         //! Position coordinate arrows on screen. Configurable at mplot::Visual construction.
         sm::vec<float, 2> coordArrowsOffset = { -0.8f, -0.8f };

@@ -63,9 +63,16 @@ namespace mplot {
             } else {
                 // Can alternatively use the 'oriented' tube
                 this->computeTube (this->start_coord, this->end_coord,
-                                   {0,1,0}, {0,0,1},
+                                   face_uy, face_uz,
                                    this->start_col, this->end_col, this->radius, 6, sm::mathconst<float>::pi_over_6);
             }
+        }
+
+        void update (const sm::vec<float, 3>& s, const sm::vec<float, 3>& e)
+        {
+            this->start_coord = s;
+            this->end_coord = e;
+            this->reinit();
         }
 
         //! The position of the start of the rod, given with respect to the parent's offset
@@ -74,6 +81,9 @@ namespace mplot {
         sm::vec<float, 3> end_coord = {1.0f, 0.0f, 0.0f};
         //! The radius of the rod
         float radius = 1.0f;
+
+        sm::vec<float, 3> face_uy = sm::vec<float, 3>::uy();
+        sm::vec<float, 3> face_uz = sm::vec<float, 3>::uz();
 
         //! The colours of the rod.
         std::array<float, 3> start_col = {1.0f, 0.0f, 0.0f};
