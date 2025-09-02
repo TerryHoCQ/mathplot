@@ -732,8 +732,8 @@ namespace mplot {
                 sm::vec<> v2 = -v1;
                 v1 = (this->sceneview * v1).less_one_dim();
                 v2 = (this->sceneview * v2).less_one_dim();
-                std::cout << "Transformed line: " << v1 << " to " << v2 << "\n";
-                sm::range<sm::vec<>> linebb = { v1, v2 };
+                std::cout << "\nTransformed line: " << v1 << " to " << v2 << "\n";
+                //sm::range<sm::vec<>> linebb = { v1, v2 };
                 sm::range<sm::vec<>> modelbb;
 
                 auto vmi = this->vm.begin();
@@ -742,14 +742,14 @@ namespace mplot {
 
                         // What frame of ref?
                         modelbb = (*vmi)->bb;
-                        std::cout << "model mv_offset: " << (*vmi)->get_mv_offset() << std::endl;
+                        std::cout << "  model mv_offset: " << (*vmi)->get_mv_offset() << std::endl;
                         modelbb -= (*vmi)->get_mv_offset();
 
-                        if (modelbb.intersects (linebb)) {
+                        if (sm::algo::aabb_line_intersect (modelbb, v1, v2)) {
                             (*vmi)->show_bb (true);
-                            std::cout << "  rotate about model centre in scene at " << modelbb.mid() << std::endl;
+                            std::cout << "  Intersect! modelbb.mid(): " << modelbb.mid() << std::endl;
                         } else {
-                            std::cout << "  no intersect: model " << modelbb << " with line " << linebb << std::endl;
+                            std::cout << "  no intersect: model " << modelbb << " with line " << v1 << "->" << v2 << std::endl;
                             (*vmi)->show_bb (false);
                         }
                     }
