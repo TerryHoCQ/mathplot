@@ -365,6 +365,13 @@ namespace mplot {
             this->coordArrows->reinit();
         }
 
+        void updateCoordLengths (const sm::vec<float, 3>& _lengths, const float _thickness = 1.0f)
+        {
+            this->coordArrows->lengths = _lengths;
+            this->coordArrows->thickness = _thickness;
+            this->coordArrows->reinit();
+        }
+
         // state defaults. All state is false by default
         constexpr sm::flags<visual_state> state_defaults()
         {
@@ -877,18 +884,39 @@ namespace mplot {
         //! A little model of the coordinate axes.
         std::unique_ptr<mplot::CoordArrows<glver>> coordArrows;
 
+        //! Position coordinate arrows on screen. Configurable at mplot::Visual construction.
+        sm::vec<float, 2> coordArrowsOffset = { -0.8f, -0.8f };
+
+        //! Create the CoordArrows VisualModel
+        void createCoordArrows()
+        {
+            // Use coordArrowsOffset to set the location of the CoordArrows *scene*
+            this->coordArrows = std::make_unique<mplot::CoordArrows<glver>>();
+            // For CoordArrows, because we don't add via Visual::addVisualModel(), we
+            // have to set the get_shaderprogs function here:
+            this->bindmodel (this->coordArrows);
+            // And NOW we can proceed to init (lengths, thickness, em size for labels):
+            this->coordArrows->init (sm::vec<>{0.1f, 0.1f, 0.1f}, 1.0f, 0.01f);
+            this->coordArrows->finalize(); // VisualModel::finalize releases context (normally this is the right thing)...
+            this->setContext();            // ...but we've got more work to do, so re-acquire context (if we're managing it)
+        }
+
         //! Show the user's frame of reference as a model in the scene coords (for debug)
         std::unique_ptr<mplot::RodVisual<glver>> userFrame;
 
-
-        //! Position coordinate arrows on screen. Configurable at mplot::Visual construction.
-        sm::vec<float, 2> coordArrowsOffset = { -0.8f, -0.8f };
-        //! Length of coordinate arrows. Configurable at mplot::Visual construction.
-        sm::vec<float, 3> coordArrowsLength = { 0.1f, 0.1f, 0.1f };
-        //! A factor used to slim (<1) or thicken (>1) the thickness of the axes of the CoordArrows.
-        float coordArrowsThickness = 1.0f;
-        //! Text size for x,y,z.
-        float coordArrowsEm = 0.01f;
+        //! Create the userFrame VisualModel (a line on the screen)
+        void createUserFrame()
+        {
+            this->userFrame = std::make_unique<mplot::RodVisual<glver>>();
+            this->bindmodel (this->userFrame);
+            this->userFrame->init (sm::vec<float, 3>{},
+                                   sm::vec<float, 3>{0.1f, 0.1f, -10.0f}, sm::vec<float, 3>{0.1f, 0.1f, 10.0f}, 0.05f,
+                                   mplot::colour::turquoise2, mplot::colour::turquoise4);
+            this->userFrame->face_uy = sm::vec<>::ux();
+            this->userFrame->face_uz = sm::vec<>::uy();
+            this->userFrame->finalize();
+            this->setContext(); // see createCoordArrows() for comments
+        }
 
         /*
          * Variables to manage projection and rotation of the scene

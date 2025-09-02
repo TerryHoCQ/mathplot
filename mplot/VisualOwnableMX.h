@@ -435,25 +435,9 @@ namespace mplot {
 
             this->read_scenetrans_from_json();
 
-            // Use coordArrowsOffset to set the location of the CoordArrows *scene*
-            this->coordArrows = std::make_unique<mplot::CoordArrows<glver>>();
-            // For CoordArrows, because we don't add via Visual::addVisualModel(), we
-            // have to set the get_shaderprogs function here:
-            this->bindmodel (this->coordArrows);
-            // And NOW we can proceed to init:
-            this->coordArrows->init (this->coordArrowsLength, this->coordArrowsThickness, this->coordArrowsEm);
-            this->coordArrows->finalize(); // VisualModel::finalize releases context (normally this is the right thing)...
-            this->setContext();            // ...but we've got more work to do, so re-acquire context (if we're managing it)
+            this->createCoordArrows();
 
-            this->userFrame = std::make_unique<mplot::RodVisual<glver>>();
-            this->bindmodel (this->userFrame);
-            this->userFrame->init (sm::vec<float, 3>{},
-                                   sm::vec<float, 3>{0.1f, 0.1f, -10.0f}, sm::vec<float, 3>{0.1f, 0.1f, 10.0f}, 0.05f,
-                                   mplot::colour::turquoise2, mplot::colour::turquoise4);
-            this->userFrame->face_uy = sm::vec<>::ux();
-            this->userFrame->face_uz = sm::vec<>::uy();
-            this->userFrame->finalize(); // VisualModel::finalize releases context (normally this is the right thing)...
-            this->setContext();          // ...but we've got more work to do, so re-acquire context (if we're managing it)
+            this->createUserFrame();
 
             mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
 

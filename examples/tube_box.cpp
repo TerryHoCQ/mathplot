@@ -1,6 +1,7 @@
 /*
- * Visualize a Rod and a box with a bb
+ * Visualize a rod and boxes (for debugging of rotations about scene objects)
  */
+
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -33,8 +34,10 @@ int main (int argc, char** argv)
     sm::vec<float, 3> b8 = conf.getvec<float, 3> ("b8");
 
     mplot::Visual v(1024, 768, "Tube and box");
+
     v.lightingEffects (true);
-    v.showUserFrame (false);
+    v.coordArrowsInScene (true);
+    v.updateCoordLengths ({ 2.0f, 2.0f, 3.0f }, 0.8f);
 
     try {
         sm::vec<float, 3> offset = { 0.0, 0.0,  0.0 };
@@ -50,10 +53,9 @@ int main (int argc, char** argv)
         v.addVisualModel (rvm);
 
         mplot::ColourMap<float> cm (mplot::ColourMapType::Jet);
-
         auto cl = cm.convert (0/3.0f);
+
         // The 'boxes'
-        std::cout << "boxA from " << b1 << " to " << b2 << std::endl;
         rvm = std::make_unique<mplot::RodVisual<>>(offset, b1, b2, 0.05f, cl);
         v.bindmodel (rvm);
         rvm->show_bb (true);
@@ -62,7 +64,6 @@ int main (int argc, char** argv)
         auto boxA = v.addVisualModel (rvm);
 
         cl = cm.convert (1/3.0f);
-        std::cout << "boxB from " << b3 << " to " << b4 << std::endl;
         rvm = std::make_unique<mplot::RodVisual<>>(offset, b3, b4, 0.05f, cl);
         v.bindmodel (rvm);
         rvm->show_bb (true);
@@ -79,7 +80,6 @@ int main (int argc, char** argv)
         auto boxC = v.addVisualModel (rvm);
 
         cl = cm.convert (3/3.0f);
-        std::cout << "boxD from " << b7 << " to " << b8 << std::endl;
         rvm = std::make_unique<mplot::RodVisual<>>(offset, b7, b8, 0.05f, cl);
         v.bindmodel (rvm);
         rvm->show_bb (true);
