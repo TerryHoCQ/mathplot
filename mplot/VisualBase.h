@@ -1125,6 +1125,16 @@ namespace mplot {
                 this->zNear *= 2;
                 std::cout << "zNear increased to " << this->zNear << std::endl;
             }
+            if (this->state.test (visual_state::sceneLocked) == false
+                && _key == key::left_bracket && (mods & keymod::control) && action == keyaction::press) {
+                this->zFar /= 2;
+                std::cout << "zFar reduced to " << this->zFar << std::endl;
+            }
+            if (this->state.test (visual_state::sceneLocked) == false
+                && _key == key::right_bracket && (mods & keymod::control) && action == keyaction::press) {
+                this->zFar *= 2;
+                std::cout << "zFar increased to " << this->zFar << std::endl;
+            }
 
             if (_key == key::y && (mods & keymod::control) && action == keyaction::press) {
                 if (this->ptype == mplot::perspective_type::perspective) {
