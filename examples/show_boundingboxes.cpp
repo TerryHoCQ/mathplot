@@ -63,10 +63,10 @@ int main (int argc, char** argv)
         sm::vec<float, 3> b1 = conf.getvec<float, 3> (tag1);
         sm::vec<float, 3> b2 = conf.getvec<float, 3> (tag2);
 
-        rvm = std::make_unique<mplot::RodVisual<>>(offset, b1, b2, 0.05f, cm.convert (i / static_cast<float>(n_models)));
+        rvm = std::make_unique<mplot::RodVisual<>>(offset, b1, b2, 0.05f, cm.convert (i / static_cast<float>(n_models - 1)));
         v.bindmodel (rvm);
         rvm->show_bb (true);
-        rvm->colour_bb = cm.convert (i / static_cast<float>(n_models));
+        rvm->colour_bb = cm.convert (i / static_cast<float>(n_models - 1));
         rvm->finalize();
         pointers[i] = v.addVisualModel (rvm);
     }
