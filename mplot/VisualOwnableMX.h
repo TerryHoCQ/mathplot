@@ -261,7 +261,6 @@ namespace mplot {
 
             auto vmi = this->vm.begin();
             while (vmi != this->vm.end()) {
-                (*vmi)->show_bb (this->options.test (visual_options::showBoundingBoxes)); // yes or no?
                 if ((*vmi)->twodimensional() == true) {
                     // It's a two-d thing. Use the companion 'scene trans only' matrix, which avoids any rotations
                     (*vmi)->setSceneMatrix (this->sceneview_tr);
