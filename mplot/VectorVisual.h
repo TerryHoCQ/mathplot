@@ -7,6 +7,7 @@
 #include <array>
 #include <sm/vec>
 #include <mplot/colour.h>
+#include <mplot/ColourMap.h>
 #include <mplot/VisualModel.h>
 
 namespace mplot {
