@@ -85,7 +85,12 @@ namespace mplot {
         //! If true, rotation is about scene origin, rather than screen centre
         rotateAboutSceneOrigin,
         //! If true, draw all the bounding boxes around the VisualModels
-        showBoundingBoxes
+        showBoundingBoxes,
+        //! If true, write bounding boxes out to a json file /tmp/mathplot_bounding_boxes.json that
+        //! can be read with the debug_boundingboxes program
+        boundingBoxesToJson,
+        //! If true, then turn on the bounding box for the most central VM
+        highlightCentralVM
     };
 
     //! Whether to render with perspective or orthographic (or even a cylindrical projection)
@@ -718,70 +723,17 @@ namespace mplot {
             this->sceneview_tr = sv_tr * this->savedSceneview_tr;
         }
 
-        // Rotate about screen centre
-        void computeSceneview_about_screen_centre()
+        // Rotate about screen centre (really most central and closest VisualModel)
+        void computeSceneview_about_central_vm()
         {
             sm::mat44<float> sv_tr;
             sm::mat44<float> sv_rot;
             if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
                 sv_tr.translate (this->scenetrans_delta);
-
                 // A rotation delta in world frame about the 'screen centre'
-                sm::vec<float> screencentre = { 0.0f, 0.0f, this->savedSceneview.translation().z() + this->scenetrans_delta.z() };
-
-                sm::vec<> v1 = { 0.1f, 0.1f, -10.0f }; // To match values set in this->userFrame for now
-                sm::vec<> v2 = { 0.1f, 0.1f, 10.0f };
-                sm::vvec<sm::vec<float>> possible_centres;
-
-                sm::range<sm::vec<>> modelbb;
-                std::stringstream jsonss;
-                uint32_t ci = 0;
-                jsonss << "{\n";
-                auto vmi = this->vm.begin();
-                while (vmi != this->vm.end()) {
-                    if ((*vmi)->flags.test (mplot::vm_bools::compute_bb) == true) {
-
-                        modelbb = (*vmi)->bb;
-                        // Transform the location of each bounding box using sceneview
-                        sm::vec<float> xformed_move = (this->savedSceneview * (*vmi)->get_mv_offset()).less_one_dim();
-                        modelbb += xformed_move;
-
-                        if (ci != 0) { jsonss << ",\n"; }
-                        jsonss << "  \"b" << (ci + 1) << "\": [" << modelbb.min.str_comma_separated() << "],\n";
-                        jsonss << "  \"b" << (ci + 2) << "\": [" << modelbb.max.str_comma_separated() << "]";
-                        ci += 2;
-
-                        if (sm::algo::aabb_line_intersect<float, 0> (modelbb, v1, v2)) {
-                            (*vmi)->show_bb (true);
-                            possible_centres.push_back (xformed_move);
-                        } else {
-                            (*vmi)->show_bb (false);
-                        }
-                    }
-                    ++vmi;
-                }
-                jsonss << "\n}\n";
-
-                std::ofstream fout;
-                fout.open ("/tmp/tube_box.json", std::ios::out | std::ios::trunc);
-                if (fout.is_open()) {
-                    fout << jsonss.str();
-                    fout.close();
-                }
-
-
-                if (possible_centres.size() > 0) {
-                    screencentre = possible_centres[0];
-                    for (auto pc : possible_centres) {
-                        if (pc[2] > screencentre[2]) {
-                            screencentre = pc;
-                        }
-                    }
-                }
-
-                sv_rot.pretranslate (-screencentre);
+                sv_rot.pretranslate (-this->rotation_centre);
                 sv_rot.rotate (this->rotation_delta);
-                sv_rot.translate (screencentre);
+                sv_rot.translate (this->rotation_centre);
 
             } else {
                 // Only rotate in cyl view
@@ -789,6 +741,7 @@ namespace mplot {
             }
 
             this->sceneview = sv_tr * sv_rot * this->savedSceneview;
+            //this->sceneview = sv_tr * this->savedSceneview * sv_rot; // Definitely wrong
             this->sceneview_tr = sv_tr * this->savedSceneview_tr;
         }
 
@@ -797,7 +750,7 @@ namespace mplot {
             if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
                 // Calculate model view transformation - transforming from "model space" to "worldspace".
                 if (this->options.test (visual_options::rotateAboutSceneOrigin) == false) {
-                    this->computeSceneview_about_screen_centre();
+                    this->computeSceneview_about_central_vm();
                 } else {
                     this->computeSceneview_about_scene_origin();
                 }
@@ -893,13 +846,17 @@ namespace mplot {
         float text_z = -1.0f;
 
         //! Screen coordinates of the position of the last mouse press
-        sm::vec<float,2> mousePressPosition = { 0.0f, 0.0f };
+        sm::vec<float, 2> mousePressPosition = { 0.0f, 0.0f };
 
         //! Add additional rotation to the scene
         sm::quaternion<float> rotation_delta;
 
         //! The default rotation of the scene, to reconstruct the default sceneview matrix/reset rotation.
         sm::quaternion<float> rotation_default;
+
+        //! A coordinate in the scene about which to perform a mouse-driven rotation. May be set to
+        //! the centre of the closest VisualModel object.
+        sm::vec<float, 3> rotation_centre = {};
 
         //! The projection matrix is a member of this class. Value is set during setPerspective() or setOrthographic()
         sm::mat44<float> projection;
@@ -1192,6 +1149,67 @@ namespace mplot {
             this->sceneview.prerotate (rotnQuat);
         }
 
+        //! Find the rotation centre
+        void find_rotation_centre_about_closest_vm()
+        {
+            // A rotation delta in world frame about the 'screen centre'. This is a default:
+            this->rotation_centre = { 0.0f, 0.0f, this->savedSceneview.translation().z() + this->scenetrans_delta.z() };
+
+            constexpr sm::vec<> v1 = { 0.0f, 0.0f, -100.0f };
+            constexpr sm::vec<> v2 = { 0.0f, 0.0f, 100.0f };
+            sm::vvec<sm::vec<float>> possible_centres;
+
+            sm::range<sm::vec<>> modelbb;
+
+            // There's an option to write out the bounding box corners to a file that can be
+            // displayed with debug_boundingboxes.cpp
+            std::ofstream fout;
+            uint32_t ci = 0;
+            if (options.test (visual_options::boundingBoxesToJson)) {
+                fout.open ("/tmp/mathplot_bounding_boxes.json", std::ios::out | std::ios::trunc);
+                if (fout.is_open()) { fout << "{\n"; }
+            }
+
+            auto vmi = this->vm.begin();
+            while (vmi != this->vm.end()) {
+                if ((*vmi)->flags.test (mplot::vm_bools::compute_bb) == true) {
+                    modelbb = (*vmi)->bb;
+                    // Transform the location of each bounding box using sceneview
+                    sm::vec<float> xformed_move = (this->savedSceneview * (*vmi)->get_mv_offset()).less_one_dim();
+                    modelbb += xformed_move;
+
+                    if (options.test (visual_options::boundingBoxesToJson) && fout.is_open()) {
+                        if (ci != 0) { fout << ",\n"; }
+                        fout << "  \"b" << (ci + 1) << "\": [" << modelbb.min.str_comma_separated() << "],\n";
+                        fout << "  \"b" << (ci + 2) << "\": [" << modelbb.max.str_comma_separated() << "]";
+                        ci += 2;
+                    }
+
+                    if (sm::algo::aabb_line_intersect<float, 0> (modelbb, v1, v2)) {
+                        if (options.test (visual_options::highlightCentralVM)) { (*vmi)->show_bb (true); }
+                        possible_centres.push_back (xformed_move);
+                    } else {
+                        if (options.test (visual_options::highlightCentralVM)) { (*vmi)->show_bb (false); }
+                    }
+                }
+                ++vmi;
+            }
+
+            if (options.test (visual_options::boundingBoxesToJson) && fout.is_open()) {
+                fout << "\n}\n";
+                fout.close();
+            }
+
+            // Find the possible centre closest to viewer
+            if (possible_centres.size() > 0) {
+                this->rotation_centre = possible_centres[0];
+                for (auto pc : possible_centres) {
+                    // Test possible centre is closer to user (greater z, but should probably make sure it isn't -ve)
+                    if (pc[2] > this->rotation_centre[2]) { this->rotation_centre = pc; }
+                }
+            }
+        }
+
         virtual bool cursor_position_callback (double x, double y)
         {
             this->cursorpos[0] = static_cast<float>(x);
@@ -1239,13 +1257,14 @@ namespace mplot {
                 }
 
                 // Now transform the rotation axis due to the scene orientation (the saved one)
-                sm::vec<float> rotationAxis = this->savedSceneview.rotation().invert() * mouseMoveWorld;
+                if (this->options.test (visual_options::rotateAboutSceneOrigin) == false) {
+                    // For 'rotate about model', we use the unmodified mouseMoveWorld as the rotation axis
+                } else {
+                    // For 'rotate about scene origin', transform the rotation axis due to the saved scene orientation
+                    mouseMoveWorld = this->savedSceneview.rotation().invert() * mouseMoveWorld;
+                }
                 // rotation_delta is the mouse-commanded rotation in the scene frame of reference
-                this->rotation_delta.set_rotation (rotationAxis, mouseMoveWorld.length() * -40.0f * sm::mathconst<float>::deg2rad);
-
-                //if (this->options.test (visual_options::rotateAboutSceneOrigin) == false) {
-                    // Determine rotation centre here (once for any rotation)
-                //}
+                this->rotation_delta.set_rotation (mouseMoveWorld, mouseMoveWorld.length() * -40.0f * sm::mathconst<float>::deg2rad);
 
                 needs_render = true;
 
@@ -1309,6 +1328,11 @@ namespace mplot {
                 // On mouse button release, zero the deltas:
                 this->scenetrans_delta.zero();
                 this->rotation_delta.reset();
+            }
+
+            // Find the rotation centre
+            if (this->options.test (visual_options::rotateAboutSceneOrigin) == false) {
+                this->find_rotation_centre_about_closest_vm();
             }
 
             if (button == mplot::mousebutton::left) { // Primary button means rotate

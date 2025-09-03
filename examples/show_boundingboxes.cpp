@@ -1,5 +1,9 @@
 /*
- * Visualize a rod and boxes (for debugging of rotations about scene objects)
+ * Visualize bounding boxes from user's view. Requires another mathplot program running with:
+ *
+ * v.options.set (mplot::visual_options::boundingBoxesToJson, true);
+ *
+ * The geodesic.cpp program provides an example.
  */
 
 #include <iostream>
@@ -20,7 +24,9 @@ int main (int argc, char** argv)
 {
     int rtn = -1;
 
-    sm::config conf("/tmp/tube_box.json");
+    std::string jsonpath = "/tmp/mathplot_bounding_boxes.json";
+
+    sm::config conf(jsonpath);
     conf.process_args (argc, argv);
 
     // Pass on cmd line
@@ -33,7 +39,7 @@ int main (int argc, char** argv)
     sm::vec<float, 3> b7 = conf.getvec<float, 3> ("b7");
     sm::vec<float, 3> b8 = conf.getvec<float, 3> ("b8");
 
-    mplot::Visual v(1024, 768, "Tube and box");
+    mplot::Visual v(1024, 768, "Bounding boxes from another mathplot");
 
     v.lightingEffects (true);
     v.coordArrowsInScene (true);
@@ -90,7 +96,7 @@ int main (int argc, char** argv)
         while (!v.readyToFinish()) {
             v.waitevents (0.03);
             try {
-                sm::config conf("/tmp/tube_box.json");
+                sm::config conf(jsonpath);
                 if (conf.ready) {
                     sm::vec<float, 3> _b1 = conf.getvec<float, 3> ("b1");
                     sm::vec<float, 3> _b2 = conf.getvec<float, 3> ("b2");

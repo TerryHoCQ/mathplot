@@ -254,9 +254,8 @@ namespace mplot {
                 this->coordArrows->render();
             }
 
-            // New User frame thing
-            if (this->options.test (visual_options::showUserFrame)) {
-                this->coordArrows->setSceneMatrix (this->sceneview);
+            // Show the user frame of reference
+            if (this->options.test (visual_options::showUserFrame) && this->userFrame) {
                 this->userFrame->render();
             }
 
@@ -445,10 +444,11 @@ namespace mplot {
             this->coordArrows->finalize(); // VisualModel::finalize releases context (normally this is the right thing)...
             this->setContext();            // ...but we've got more work to do, so re-acquire context (if we're managing it)
 
+            // Create 'user frame of reference object'
             this->userFrame = std::make_unique<mplot::RodVisual<glver>>();
             this->bindmodel (this->userFrame);
             this->userFrame->init (sm::vec<float, 3>{},
-                                   sm::vec<float, 3>{0.1f, 0.1f, -10.0f}, sm::vec<float, 3>{0.1f, 0.1f, 10.0f}, 0.05f,
+                                   sm::vec<float, 3>{0.0f, 0.0f, -100.0f}, sm::vec<float, 3>{0.1f, 0.1f, 1.0f}, 0.05f,
                                    mplot::colour::turquoise2, mplot::colour::turquoise4);
             this->userFrame->face_uy = sm::vec<>::ux();
             this->userFrame->face_uz = sm::vec<>::uy();

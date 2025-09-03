@@ -20,8 +20,12 @@ int main()
 
     mplot::Visual v(1024, 768, "Geodesic Polyhedra (ordered vertices/faces)");
     v.showCoordArrows (true);
-    v.showUserFrame (true);
+
+    // Geometry debugging:
+    v.showUserFrame (false);
     v.options.set (mplot::visual_options::rotateAboutSceneOrigin, false);
+    v.options.set (mplot::visual_options::highlightCentralVM, true);
+    v.options.set (mplot::visual_options::boundingBoxesToJson, true);
 
     try {
         sm::vec<float, 3> offset = { 0.0, 0.0, 0.0 };
