@@ -29,15 +29,8 @@ int main (int argc, char** argv)
     sm::config conf(jsonpath);
     conf.process_args (argc, argv);
 
-    // Pass on cmd line
-    sm::vec<float, 3> b1 = conf.getvec<float, 3> ("b1");
-    sm::vec<float, 3> b2 = conf.getvec<float, 3> ("b2");
-    sm::vec<float, 3> b3 = conf.getvec<float, 3> ("b3");
-    sm::vec<float, 3> b4 = conf.getvec<float, 3> ("b4");
-    sm::vec<float, 3> b5 = conf.getvec<float, 3> ("b5");
-    sm::vec<float, 3> b6 = conf.getvec<float, 3> ("b6");
-    sm::vec<float, 3> b7 = conf.getvec<float, 3> ("b7");
-    sm::vec<float, 3> b8 = conf.getvec<float, 3> ("b8");
+    uint32_t n = conf.get<uint32_t>("n", 0);
+    uint32_t n_models = n / 2;
 
     mplot::Visual v(1024, 768, "Bounding boxes from another mathplot");
 
@@ -45,79 +38,54 @@ int main (int argc, char** argv)
     v.coordArrowsInScene (true);
     v.updateCoordLengths ({ 2.0f, 2.0f, 3.0f }, 0.8f);
 
-    try {
-        sm::vec<float, 3> offset = { 0.0, 0.0,  0.0 };
-        sm::vec<float, 3> start =  { 0.1, 0.1,  10 };
-        sm::vec<float, 3> end =    { 0.1, 0.1, -10 };
+    constexpr sm::vec<float, 3> offset = { 0.0, 0.0,  0.0 };
+    sm::vec<float, 3> start =  { 0.1, 0.1,  100 };
+    sm::vec<float, 3> end =    { 0.1, 0.1, -100 };
 
-        // The 'rod' acting as our user line. Maroon is end, which is z = -10.
-        auto rvm = std::make_unique<mplot::RodVisual<>> (offset, start, end, 0.05f, mplot::colour::black, mplot::colour::maroon3);
-        v.bindmodel (rvm);
-        rvm->face_uy = sm::vec<>::ux();
-        rvm->face_uz = sm::vec<>::uy();
-        rvm->finalize();
-        v.addVisualModel (rvm);
+    // The 'rod' acting as our user line. Maroon is end, which is z = -10.
+    auto rvm = std::make_unique<mplot::RodVisual<>> (offset, start, end, 0.05f, mplot::colour::black, mplot::colour::maroon3);
+    v.bindmodel (rvm);
+    rvm->face_uy = sm::vec<>::ux();
+    rvm->face_uz = sm::vec<>::uy();
+    rvm->finalize();
+    v.addVisualModel (rvm);
 
-        mplot::ColourMap<float> cm (mplot::ColourMapType::Jet);
-        auto cl = cm.convert (0/3.0f);
+    mplot::ColourMap<float> cm (mplot::ColourMapType::Jet);
 
-        // The 'boxes'
-        rvm = std::make_unique<mplot::RodVisual<>>(offset, b1, b2, 0.05f, cl);
-        v.bindmodel (rvm);
-        rvm->show_bb (true);
-        rvm->colour_bb = cl;
-        rvm->finalize();
-        auto boxA = v.addVisualModel (rvm);
+    std::vector<mplot::RodVisual<>*> pointers (n_models, nullptr);
 
-        cl = cm.convert (1/3.0f);
-        rvm = std::make_unique<mplot::RodVisual<>>(offset, b3, b4, 0.05f, cl);
-        v.bindmodel (rvm);
-        rvm->show_bb (true);
-        rvm->colour_bb = cl;
-        rvm->finalize();
-        auto boxB = v.addVisualModel (rvm);
+    // The 'boxes'
+    for (uint32_t i = 0; i < n_models; ++i) {
 
-        cl = cm.convert (2/3.0f);
-        rvm = std::make_unique<mplot::RodVisual<>>(offset, b5, b6, 0.05f, cl);
+        // Pass on cmd line
+        std::string tag1 = "b" + std::to_string(i * 2 + 1);
+        std::string tag2 = "b" + std::to_string(i * 2 + 2);
+        sm::vec<float, 3> b1 = conf.getvec<float, 3> (tag1);
+        sm::vec<float, 3> b2 = conf.getvec<float, 3> (tag2);
+
+        rvm = std::make_unique<mplot::RodVisual<>>(offset, b1, b2, 0.05f, cm.convert (i / static_cast<float>(n_models)));
         v.bindmodel (rvm);
         rvm->show_bb (true);
-        rvm->colour_bb = cl;
+        rvm->colour_bb = cm.convert (i / static_cast<float>(n_models));
         rvm->finalize();
-        auto boxC = v.addVisualModel (rvm);
+        pointers[i] = v.addVisualModel (rvm);
+    }
 
-        cl = cm.convert (3/3.0f);
-        rvm = std::make_unique<mplot::RodVisual<>>(offset, b7, b8, 0.05f, cl);
-        v.bindmodel (rvm);
-        rvm->show_bb (true);
-        rvm->colour_bb = cl;
-        rvm->finalize();
-        auto boxD = v.addVisualModel (rvm);
-
-        while (!v.readyToFinish()) {
-            v.waitevents (0.03);
-            try {
-                sm::config conf(jsonpath);
-                if (conf.ready) {
-                    sm::vec<float, 3> _b1 = conf.getvec<float, 3> ("b1");
-                    sm::vec<float, 3> _b2 = conf.getvec<float, 3> ("b2");
-                    boxA->update (_b1, _b2);
-                    sm::vec<float, 3> _b3 = conf.getvec<float, 3> ("b3");
-                    sm::vec<float, 3> _b4 = conf.getvec<float, 3> ("b4");
-                    boxB->update (_b3, _b4);
-                    sm::vec<float, 3> _b5 = conf.getvec<float, 3> ("b5");
-                    sm::vec<float, 3> _b6 = conf.getvec<float, 3> ("b6");
-                    boxC->update (_b5, _b6);
-                    sm::vec<float, 3> _b7 = conf.getvec<float, 3> ("b7");
-                    sm::vec<float, 3> _b8 = conf.getvec<float, 3> ("b8");
-                    boxD->update (_b7, _b8);
+    while (!v.readyToFinish()) {
+        v.waitevents (0.03);
+        try {
+            sm::config conf(jsonpath);
+            if (conf.ready) {
+                for (uint32_t i = 0; i < n_models; ++i) {
+                    std::string tag1 = "b" + std::to_string(i * 2 + 1);
+                    std::string tag2 = "b" + std::to_string(i * 2 + 2);
+                    sm::vec<float, 3> _b1 = conf.getvec<float, 3> (tag1);
+                    sm::vec<float, 3> _b2 = conf.getvec<float, 3> (tag2);
+                    pointers[i]->update (_b1, _b2);
                 }
-            } catch (const std::exception& e) {}
-            v.render();
-        }
-
-    } catch (const std::exception& e) {
-        std::cerr << "Caught exception: " << e.what() << std::endl;
-        rtn = -1;
+            }
+        } catch (const std::exception& e) {}
+        v.render();
     }
 
     return rtn;
