@@ -1152,14 +1152,13 @@ namespace mplot {
         //! Find the rotation centre
         void find_rotation_centre_about_closest_vm()
         {
-            // A rotation delta in world frame about the 'screen centre'. This is a default:
-            this->rotation_centre = { 0.0f, 0.0f, this->savedSceneview.translation().z() + this->scenetrans_delta.z() };
-
             constexpr sm::vec<> v1 = { 0.0f, 0.0f, -100.0f };
             constexpr sm::vec<> v2 = { 0.0f, 0.0f, 100.0f };
-            sm::vvec<sm::vec<float>> possible_centres;
 
-            sm::range<sm::vec<>> modelbb;
+            // A rotation delta in world frame about the 'screen centre'. This is a default:
+            if (this->rotation_centre == sm::vec<>{}) {
+                this->rotation_centre = { 0.0f, 0.0f, this->savedSceneview.translation().z() + this->scenetrans_delta.z() };
+            }
 
             // There's an option to write out the bounding box corners to a file that can be
             // displayed with debug_boundingboxes.cpp
@@ -1170,18 +1169,18 @@ namespace mplot {
                 if (fout.is_open()) { fout << "{\n"; }
             }
 
+            sm::vvec<sm::vec<float>> possible_centres;
             auto vmi = this->vm.begin();
             while (vmi != this->vm.end()) {
                 if ((*vmi)->flags.test (mplot::vm_bools::compute_bb) == true) {
-                    modelbb = (*vmi)->bb;
+                    sm::range<sm::vec<>> modelbb = (*vmi)->bb;
                     // Transform the location of each bounding box using sceneview
                     sm::vec<float> xformed_move = (this->savedSceneview * (*vmi)->get_mv_offset()).less_one_dim();
                     modelbb += xformed_move;
 
                     if (options.test (visual_options::boundingBoxesToJson) && fout.is_open()) {
-                        if (ci != 0) { fout << ",\n"; }
                         fout << "  \"b" << (ci + 1) << "\": [" << modelbb.min.str_comma_separated() << "],\n";
-                        fout << "  \"b" << (ci + 2) << "\": [" << modelbb.max.str_comma_separated() << "]";
+                        fout << "  \"b" << (ci + 2) << "\": [" << modelbb.max.str_comma_separated() << "],\n";
                         ci += 2;
                     }
 
@@ -1196,16 +1195,26 @@ namespace mplot {
             }
 
             if (options.test (visual_options::boundingBoxesToJson) && fout.is_open()) {
-                fout << "\n}\n";
+                fout << "  \"n\": " << ci << "\n}\n";
                 fout.close();
             }
 
             // Find the possible centre closest to viewer
             if (possible_centres.size() > 0) {
-                this->rotation_centre = possible_centres[0];
+                // Find a z-negative possible centre to start with
+                bool havestart = false;
                 for (auto pc : possible_centres) {
-                    // Test possible centre is closer to user (greater z, but should probably make sure it isn't -ve)
-                    if (pc[2] > this->rotation_centre[2]) { this->rotation_centre = pc; }
+                    if (pc[2] < 0.0f) {
+                        this->rotation_centre = pc;
+                        havestart = true;
+                        break;
+                    }
+                }
+                // Assuming we have a start, find another that has z < 0 (i.e. is visible) and if it's closer to viewer, use it
+                if (havestart == true) {
+                    for (auto pc : possible_centres) {
+                        if (pc[2] < 0.0f && pc[2] > this->rotation_centre[2]) { this->rotation_centre = pc; }
+                    }
                 }
             }
         }
