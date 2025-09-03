@@ -741,7 +741,6 @@ namespace mplot {
             }
 
             this->sceneview = sv_tr * sv_rot * this->savedSceneview;
-            //this->sceneview = sv_tr * this->savedSceneview * sv_rot; // Definitely wrong
             this->sceneview_tr = sv_tr * this->savedSceneview_tr;
         }
 
