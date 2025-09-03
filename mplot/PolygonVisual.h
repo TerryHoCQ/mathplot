@@ -52,7 +52,7 @@ namespace mplot {
             pend[2] += this->thickness;
             // Figure out ux, uy from position and vertex. Let ux be like dirn to vertex
             this->_ux = this->vertex - this->position;
-            this->_uy = this->_ux.cross(this->uz);
+            this->_uy = this->_ux.cross(sm::vec<>::uz());
             this->computeTube (this->position, pend, this->_ux, this->_uy,
                                this->col, this->col,
                                this->radius, this->n);
@@ -70,8 +70,8 @@ namespace mplot {
         int n = 4;
 
         // Some axes
-        sm::vec<float> _ux = {1,0,0};
-        sm::vec<float> _uy = {0,1,0};
+        sm::vec<float> _ux = sm::vec<>::ux();
+        sm::vec<float> _uy = sm::vec<>::uy();
 
         //! The colour of the thing.
         std::array<float, 3> col = {1.0f, 0.0f, 0.0f};

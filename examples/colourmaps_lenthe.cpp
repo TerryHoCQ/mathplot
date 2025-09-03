@@ -90,7 +90,7 @@ int main()
         gv->cm.setType (cmap_type);
         gv->zScale.null_scaling();
         gv->addLabel (mplot::ColourMap<float>::colourMapTypeToStr (cmap_type), {0, -0.1, 0}, mplot::TextFeatures(0.05f));
-        gv->twodimensional = true;
+        gv->twodimensional (true);
         gv->finalize();
         v.addVisualModel (gv);
 

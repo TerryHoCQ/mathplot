@@ -255,7 +255,8 @@ namespace mplot {
 
             auto vmi = this->vm.begin();
             while (vmi != this->vm.end()) {
-                if ((*vmi)->twodimensional == true) {
+                (*vmi)->show_bb (this->options.test (visual_options::showBoundingBoxes));
+                if ((*vmi)->twodimensional() == true) {
                     // It's a two-d thing. Now what?
                     (*vmi)->setSceneMatrix (this->sceneview_tr);
                 } else {

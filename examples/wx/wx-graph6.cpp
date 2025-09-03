@@ -77,7 +77,7 @@ public:
             // This mandatory line of boilerplate code sets the parent pointer in GraphVisual and binds some functions
             this->canvas->v.bindmodel (gv);
             // Allow 3D
-            gv->twodimensional = false;
+            gv->twodimensional (false);
             // This works like numpy's linspace() (the 3 args are "start", "end" and "num"):
             this->x.linspace (-sm::mathconst<double>::pi, sm::mathconst<double>::pi, 100);
 

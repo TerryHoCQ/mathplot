@@ -11,8 +11,8 @@
 #include <mplot/VisualDataModel.h>
 #include <mplot/GraphVisual.h>
 
-namespace mplot {
-
+namespace mplot
+{
     template <typename F, int glver = mplot::gl::version_4_1>
     struct PolarVisual : public VisualDataModel<F, glver>
     {
@@ -29,7 +29,7 @@ namespace mplot {
             this->tf.fontres = 48;
             this->tf.colour = this->framecolour;
             // Like graphs, Polar visuals don't rotate by default. If you want yours to, set this false in your client code.
-            this->twodimensional = true;
+            this->twodimensional (true);
 
             this->zScale.identity_scaling();
             this->colourScale.do_autoscale = true;
@@ -62,7 +62,7 @@ namespace mplot {
         {
             // Draw an approximation of a circle. Passing -uy as the inplane vector ensures
             // flatcircle line aligns with colour drawn by fillFrameWithColour()
-            this->computeFlatCircleLine (sm::vec<float>{0,0,this->z}, this->uz, -this->uy, this->radius + this->framelinewidth/2.0f,
+            this->computeFlatCircleLine (sm::vec<float>{0,0,this->z}, sm::vec<>::uz(), -sm::vec<>::uy(), this->radius + this->framelinewidth/2.0f,
                                          this->framelinewidth, this->framecolour, this->numsegs);
         }
 
@@ -125,18 +125,18 @@ namespace mplot {
                     float outer_z = this->dcopy[ring * this->numsegs + j];
                     float inner_z = this->dcopy[(ring - 1) * this->numsegs + j];
 
-                    sm::vec<float> c_in = this->uy * sin(t) * r_in + this->ux * cos(t) * r_in;
+                    sm::vec<float> c_in = sm::vec<>::uy() * sin(t) * r_in + sm::vec<>::ux() * cos(t) * r_in;
                     c_in[2] = inner_z;
 
                     this->vertex_push (c_in, this->vertexPositions);
-                    this->vertex_push (this->uz, this->vertexNormals);
+                    this->vertex_push (sm::vec<>::uz(), this->vertexNormals);
                     this->vertex_push (clr, this->vertexColors);
 
-                    sm::vec<float> c_out = this->uy * sin(t) * r_out + this->ux * cos(t) * r_out;
+                    sm::vec<float> c_out = sm::vec<>::uy() * sin(t) * r_out + sm::vec<>::ux() * cos(t) * r_out;
                     c_out[2] = outer_z;
 
                     this->vertex_push (c_out, this->vertexPositions);
-                    this->vertex_push (this->uz, this->vertexNormals);
+                    this->vertex_push (sm::vec<>::uz(), this->vertexNormals);
                     this->vertex_push (clr, this->vertexColors);
                 }
                 // Added 2*segments vertices to vertexPositions

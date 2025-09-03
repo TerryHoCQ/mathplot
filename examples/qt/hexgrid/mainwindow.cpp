@@ -79,7 +79,7 @@ void MainWindow::on_pushButton_clicked()
     // Bind the new (Graph)VisualModel to the mplot::Visual associated with the viswidget
     static_cast<mplot::qt::viswidget*>(this->p_vw)->v.bindmodel (gv);
 
-    gv->twodimensional = false;
+    gv->twodimensional (false);
     sm::vvec<double> x;
     x.linspace (-1.5, 1.5, 25);
     gv->setdata (x, x.pow(2));

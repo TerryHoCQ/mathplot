@@ -48,7 +48,7 @@ int main()
             pv->numrings = N;
             pv->numsegs = N;
             pv->addLabel (std::format ("n{}, m{}", n, m), sm::vec<float>{0.2,-0.58,0}, mplot::TextFeatures(0.08f));
-            pv->twodimensional = false;
+            pv->twodimensional (false);
 
             sm::vvec<double> Vnm_real;
             for (auto rh : rho) {

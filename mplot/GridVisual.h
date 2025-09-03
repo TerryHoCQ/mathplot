@@ -180,17 +180,17 @@ namespace mplot {
                     sm::vec<float> rb = { right + this->centering_offset[0], bot + this->centering_offset[0], this->grid_z_offset };
 
                     // draw the vertical from bottom left to top left
-                    this->computeFlatLine (lb, lt, rb, rt, this->uz, this->grid_colour, gridthick_y);
+                    this->computeFlatLine (lb, lt, rb, rt, sm::vec<>::uz(), this->grid_colour, gridthick_y);
                     // draw the horizontal from bottom left to bottom right
-                    this->computeFlatLine (rb, lb, rt, lt, this->uz, this->grid_colour, gridthick_x);
+                    this->computeFlatLine (rb, lb, rt, lt, sm::vec<>::uz(), this->grid_colour, gridthick_x);
 
                     // complete the last right border (from bottom right to top right)
                     if (right >= cg_extents[1]) {
-                        this->computeFlatLine (rt, rb, lt, lb, this->uz, this->grid_colour, gridthick_y);
+                        this->computeFlatLine (rt, rb, lt, lb, sm::vec<>::uz(), this->grid_colour, gridthick_y);
                     }
                     // complete the last top border (from top left to top right)
                     if (top >= cg_extents[3]) {
-                        this->computeFlatLine (lt, rt, lb, rb, this->uz, this->grid_colour, gridthick_x);
+                        this->computeFlatLine (lt, rt, lb, rb, sm::vec<>::uz(), this->grid_colour, gridthick_x);
                     }
                 }
             }

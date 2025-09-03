@@ -107,7 +107,7 @@ int main()
     gv->cm.setType (cmap_2d_types[0]);
     gv->zScale.null_scaling();
     gv->addLabel (mplot::ColourMap<float>::colourMapTypeToStr (cmap_2d_types[0]), {0, -0.1, 0}, mplot::TextFeatures(0.05f));
-    gv->twodimensional = true;
+    gv->twodimensional (true);
     gv->finalize();
     v.addVisualModel (gv);
 
@@ -120,7 +120,7 @@ int main()
     gv->cm.setType (cmap_2d_types[1]);
     gv->zScale.null_scaling();
     gv->addLabel ("Duochrome red-green", {0, -0.1, 0}, mplot::TextFeatures(0.05f));
-    gv->twodimensional = true;
+    gv->twodimensional (true);
     gv->finalize();
     v.addVisualModel (gv);
 
@@ -134,7 +134,7 @@ int main()
     gv->cm.setHueRB();
     gv->zScale.null_scaling();
     gv->addLabel ("Duochrome red-blue", {0, -0.1, 0}, mplot::TextFeatures(0.05f));
-    gv->twodimensional = true;
+    gv->twodimensional (true);
     gv->finalize();
     v.addVisualModel (gv);
 

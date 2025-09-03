@@ -145,7 +145,7 @@ int main (int argc, char** argv)
     sm::vec<float> spatOff = {1.2f, -0.5f, 0.0f};
     auto graph1 = std::make_unique<mplot::GraphVisual<F>> (spatOff);
     v.bindmodel (graph1);
-    graph1->twodimensional = true;
+    graph1->twodimensional (true);
     graph1->setlimits (0, 1000, -10, 1);
     graph1->policy = mplot::stylepolicy::lines;
     graph1->ylabel = "log(T)";
@@ -158,7 +158,7 @@ int main (int argc, char** argv)
     spatOff[0] += 1.1f;
     auto graph2 = std::make_unique<mplot::GraphVisual<F>> (spatOff);
     v.bindmodel (graph2);
-    graph2->twodimensional = true;
+    graph2->twodimensional (true);
     graph2->setlimits (0, 1000, -1.0f, 1.0f);
     graph2->policy = mplot::stylepolicy::lines;
     graph2->ylabel = "obj value";

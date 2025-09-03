@@ -52,7 +52,7 @@ namespace mplot {
             this->ord2_scale.do_autoscale = true;
             this->abscissa_scale.do_autoscale = true;
             // Graphs don't rotate by default. If you want yours to, set this false in your client code.
-            this->twodimensional = true;
+            this->twodimensional (true);
         }
 
         //! Set true for any optional debugging
@@ -1150,7 +1150,7 @@ namespace mplot {
                             auto point_to_point = (*this->graphDataCoords[dsi])[i] - (*this->graphDataCoords[dsi])[i-1];
                             if (point_to_point.length() > this->datastyles[dsi].markergap * 2.0f) {
                                 // Draw solid lines between marker points with gaps between line and marker
-                                this->computeFlatLine ((*this->graphDataCoords[dsi])[i-1], (*this->graphDataCoords[dsi])[i], this->uz,
+                                this->computeFlatLine ((*this->graphDataCoords[dsi])[i-1], (*this->graphDataCoords[dsi])[i], sm::vec<>::uz(),
                                                        this->datastyles[dsi].linecolour,
                                                        this->datastyles[dsi].linewidth, this->datastyles[dsi].markergap);
                             }
@@ -1158,7 +1158,7 @@ namespace mplot {
                             // We are appending a line to an existing graph, so compute a single line with rounded ends
                             this->computeFlatLineRnd ((*this->graphDataCoords[dsi])[i-1], // start
                                                       (*this->graphDataCoords[dsi])[i],   // end
-                                                      this->uz,
+                                                      sm::vec<>::uz(),
                                                       this->datastyles[dsi].linecolour,
                                                       this->datastyles[dsi].linewidth, 0.0f, true, false);
                         } else {
@@ -1171,7 +1171,7 @@ namespace mplot {
                                 // First and only line
                                 this->computeFlatLine ((*this->graphDataCoords[dsi])[i-1], // start
                                                        (*this->graphDataCoords[dsi])[i],   // end
-                                                       this->uz,
+                                                       sm::vec<>::uz(),
                                                        this->datastyles[dsi].linecolour,
                                                        this->datastyles[dsi].linewidth);
                             } else if (i == 1+coords_start) {
@@ -1179,21 +1179,21 @@ namespace mplot {
                                 this->computeFlatLineN ((*this->graphDataCoords[dsi])[i-1], // start
                                                         (*this->graphDataCoords[dsi])[i],   // end
                                                         (*this->graphDataCoords[dsi])[i+1], // next
-                                                        this->uz,
+                                                        sm::vec<>::uz(),
                                                         this->datastyles[dsi].linecolour,
                                                         this->datastyles[dsi].linewidth);
                             } else if (i == (coords_end-1)) {
                                 // last line
                                 this->computeFlatLineP ((*this->graphDataCoords[dsi])[i-1], (*this->graphDataCoords[dsi])[i],
                                                         (*this->graphDataCoords[dsi])[i-2],
-                                                        this->uz,
+                                                        sm::vec<>::uz(),
                                                         this->datastyles[dsi].linecolour,
                                                         this->datastyles[dsi].linewidth);
                             } else {
                                 // An intermediate line
                                 this->computeFlatLine ((*this->graphDataCoords[dsi])[i-1], (*this->graphDataCoords[dsi])[i],
                                                        (*this->graphDataCoords[dsi])[i-2], (*this->graphDataCoords[dsi])[i+1],
-                                                       this->uz,
+                                                       sm::vec<>::uz(),
                                                        this->datastyles[dsi].linecolour,
                                                        this->datastyles[dsi].linewidth);
                             }
@@ -1305,7 +1305,7 @@ namespace mplot {
                     // draw short line at lpos (rounded ends)
                     sm::vec<float, 3> abit = { 0.5f * toffset[0], 0.0f, 0.0f };
                     this->computeFlatLineRnd (lpos - abit, lpos + abit,
-                                              this->uz,
+                                              sm::vec<>::uz(),
                                               this->datastyles[dsi].linecolour,
                                               this->datastyles[dsi].linewidth);
 
@@ -1365,7 +1365,7 @@ namespace mplot {
             }
 
             if (geom.width() > 2*this->fontsize) {
-                sm::quaternion<float> leftrot(this->uz, sm::mathconst<float>::pi_over_2);
+                sm::quaternion<float> leftrot(sm::vec<>::uz(), sm::mathconst<float>::pi_over_2);
                 lbl2->setupText (this->ylabel, leftrot, lblpos+this->mv_offset, this->axiscolour);
             } else {
                 lbl2->setupText (this->ylabel, lblpos+this->mv_offset, this->axiscolour);
@@ -1389,7 +1389,7 @@ namespace mplot {
                             0.5f*this->height - downshift, 0 }};
 
                 if (geom.width() > 2*this->fontsize) {
-                    sm::quaternion<float> leftrot(this->uz, sm::mathconst<float>::pi_over_2);
+                    sm::quaternion<float> leftrot(sm::vec<>::uz(), sm::mathconst<float>::pi_over_2);
                     lbl3->setupText (this->ylabel2, leftrot, lblpos+this->mv_offset, this->axiscolour);
                 } else {
                     lbl3->setupText (this->ylabel2, lblpos+this->mv_offset, this->axiscolour);
@@ -1510,21 +1510,21 @@ namespace mplot {
             float _y0_mdl = this->ord1_scale.transform_one (0);
             this->computeFlatLine ({_x0_mdl, -(this->axislinewidth*0.5f),             -this->thickness},
                                    {_x0_mdl, this->height+(this->axislinewidth*0.5f), -this->thickness},
-                                   this->uz, this->axiscolour, this->axislinewidth*0.7f);
+                                   sm::vec<>::uz(), this->axiscolour, this->axislinewidth*0.7f);
             // Horz zero
             this->computeFlatLine ({0,           _y0_mdl, -this->thickness},
                                    {this->width, _y0_mdl, -this->thickness},
-                                   this->uz, this->axiscolour, this->axislinewidth*0.7f);
+                                   sm::vec<>::uz(), this->axiscolour, this->axislinewidth*0.7f);
 
             for (auto xt : this->xtick_posns) {
                 // Want to place lines in screen units. So transform the data units
                 this->computeFlatLine ({(float)xt, _y0_mdl,                      -this->thickness},
-                                       {(float)xt, _y0_mdl - this->ticklength,   -this->thickness}, this->uz,
+                                       {(float)xt, _y0_mdl - this->ticklength,   -this->thickness}, sm::vec<>::uz(),
                                        this->axiscolour, this->axislinewidth*0.5f);
             }
             for (auto yt : this->ytick_posns) {
                 this->computeFlatLine ({_x0_mdl,                    (float)yt, -this->thickness},
-                                       {_x0_mdl - this->ticklength, (float)yt, -this->thickness}, this->uz,
+                                       {_x0_mdl - this->ticklength, (float)yt, -this->thickness}, sm::vec<>::uz(),
                                        this->axiscolour, this->axislinewidth*0.5f);
             }
         }
@@ -1546,11 +1546,11 @@ namespace mplot {
                 // y axis
                 this->computeFlatLine ({0, -(this->axislinewidth*0.5f),             -this->thickness},
                                        {0, this->height + this->axislinewidth*0.5f, -this->thickness},
-                                       this->uz, this->axiscolour, this->axislinewidth);
+                                       sm::vec<>::uz(), this->axiscolour, this->axislinewidth);
                 // x axis
                 this->computeFlatLine ({0,           0, -this->thickness},
                                        {this->width, 0, -this->thickness},
-                                       this->uz, this->axiscolour, this->axislinewidth);
+                                       sm::vec<>::uz(), this->axiscolour, this->axislinewidth);
 
                 // Draw left and bottom ticks
                 float tl = -this->ticklength;
@@ -1559,12 +1559,12 @@ namespace mplot {
                 for (auto xt : this->xtick_posns) {
                     // Want to place lines in screen units. So transform the data units
                     this->computeFlatLine ({(float)xt, 0.0f, -this->thickness},
-                                           {(float)xt, tl,   -this->thickness}, this->uz,
+                                           {(float)xt, tl,   -this->thickness}, sm::vec<>::uz(),
                                            this->axiscolour, this->axislinewidth*0.5f);
                 }
                 for (auto yt : this->ytick_posns) {
                     this->computeFlatLine ({0.0f, (float)yt, -this->thickness},
-                                           {tl,   (float)yt, -this->thickness}, this->uz,
+                                           {tl,   (float)yt, -this->thickness}, sm::vec<>::uz(),
                                            this->axiscolour, this->axislinewidth*0.5f);
                 }
 
@@ -1577,11 +1577,11 @@ namespace mplot {
                 // right axis
                 this->computeFlatLine ({this->width, -this->axislinewidth*0.5f,               -this->thickness},
                                        {this->width, this->height+(this->axislinewidth*0.5f), -this->thickness},
-                                       this->uz, this->axiscolour, this->axislinewidth);
+                                       sm::vec<>::uz(), this->axiscolour, this->axislinewidth);
                 // top axis
                 this->computeFlatLine ({0,           this->height, -this->thickness},
                                        {this->width, this->height, -this->thickness},
-                                       this->uz, this->axiscolour, this->axislinewidth);
+                                       sm::vec<>::uz(), this->axiscolour, this->axislinewidth);
 
                 float tl = this->ticklength;
                 if (this->tickstyle == tickstyle::ticksin) {
@@ -1593,19 +1593,19 @@ namespace mplot {
                     for (auto xt : this->xtick_posns) {
                         // Want to place lines in screen units. So transform the data units
                         this->computeFlatLine ({(float)xt, this->height,      -this->thickness},
-                                               {(float)xt, this->height + tl, -this->thickness}, this->uz,
+                                               {(float)xt, this->height + tl, -this->thickness}, sm::vec<>::uz(),
                                                this->axiscolour, this->axislinewidth*0.5f);
                     }
                     for (auto yt : this->ytick_posns) {
                         this->computeFlatLine ({this->width,      (float)yt, -this->thickness},
-                                               {this->width + tl, (float)yt, -this->thickness}, this->uz,
+                                               {this->width + tl, (float)yt, -this->thickness}, sm::vec<>::uz(),
                                                this->axiscolour, this->axislinewidth*0.5f);
                     }
                 } else if (this->axisstyle == axisstyle::twinax || !this->ytick_posns2.empty()) {
                     // Draw ticks for y2
                     for (auto yt : this->ytick_posns2) {
                         this->computeFlatLine ({this->width,      (float)yt, -this->thickness},
-                                               {this->width + tl, (float)yt, -this->thickness}, this->uz,
+                                               {this->width + tl, (float)yt, -this->thickness}, sm::vec<>::uz(),
                                                this->axiscolour, this->axislinewidth*0.5f);
                     }
                 }
@@ -1691,9 +1691,9 @@ namespace mplot {
                 p1[2] += this->thickness/2.0f;
                 p2[2] += this->thickness/2.0f;
                 p2b[2] += this->thickness/2.0f;
-                this->computeFlatLineRnd (p1b, p1,  this->uz, style.linecolour, style.linewidth, 0.0f, false, true);
-                this->computeFlatLineRnd (p1,  p2,  this->uz, style.linecolour, style.linewidth, 0.0f, true, true);
-                this->computeFlatLineRnd (p2,  p2b, this->uz, style.linecolour, style.linewidth, 0.0f, true, false);
+                this->computeFlatLineRnd (p1b, p1,  sm::vec<>::uz(), style.linecolour, style.linewidth, 0.0f, false, true);
+                this->computeFlatLineRnd (p1,  p2,  sm::vec<>::uz(), style.linecolour, style.linewidth, 0.0f, true, true);
+                this->computeFlatLineRnd (p2,  p2b, sm::vec<>::uz(), style.linecolour, style.linewidth, 0.0f, true, false);
             }
         }
 
@@ -1722,10 +1722,10 @@ namespace mplot {
                 p1[2] += this->thickness;
                 p2[2] += this->thickness;
                 p2b[2] += this->thickness;
-                this->computeFlatLineRnd (p1b, p1,  this->uz, style.linecolour, outline_width, 0.0f, true, true);
-                this->computeFlatLineRnd (p1,  p2,  this->uz, style.linecolour, outline_width, 0.0f, true, true);
-                this->computeFlatLineRnd (p2,  p2b, this->uz, style.linecolour, outline_width, 0.0f, true, true);
-                this->computeFlatLineRnd (p2b, p1b, this->uz, style.linecolour, outline_width, 0.0f, true, true);
+                this->computeFlatLineRnd (p1b, p1,  sm::vec<>::uz(), style.linecolour, outline_width, 0.0f, true, true);
+                this->computeFlatLineRnd (p1,  p2,  sm::vec<>::uz(), style.linecolour, outline_width, 0.0f, true, true);
+                this->computeFlatLineRnd (p2,  p2b, sm::vec<>::uz(), style.linecolour, outline_width, 0.0f, true, true);
+                this->computeFlatLineRnd (p2b, p1b, sm::vec<>::uz(), style.linecolour, outline_width, 0.0f, true, true);
             }
         }
 
@@ -1807,7 +1807,7 @@ namespace mplot {
         void polygonMarker (sm::vec<float> p, int n, const mplot::DatasetStyle& style)
         {
             p[2] += this->thickness;
-            this->computeFlatPoly (p, this->ux, this->uy,
+            this->computeFlatPoly (p, sm::vec<>::ux(), sm::vec<>::uy(),
                                    style.markercolour,
                                    style.markersize*Flt{0.5}, n);
         }
@@ -1816,7 +1816,7 @@ namespace mplot {
         void polygonFlattop (sm::vec<float> p, int n, const mplot::DatasetStyle& style)
         {
             p[2] += this->thickness;
-            this->computeFlatPoly (p, this->ux, this->uy,
+            this->computeFlatPoly (p, sm::vec<>::ux(), sm::vec<>::uy(),
                                    style.markercolour,
                                    style.markersize*Flt{0.5}, n, sm::mathconst<float>::pi/static_cast<float>(n));
         }

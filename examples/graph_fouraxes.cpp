@@ -103,7 +103,7 @@ int main()
         gv->axisstyle = mplot::axisstyle::cross;
         gv->setthickness (0.002f);
         gv->finalize();
-        gv->twodimensional = false;
+        gv->twodimensional (false);
         v.addVisualModel (gv);
 
         v.keepOpen();

@@ -130,7 +130,7 @@ namespace mplot {
                 mplot::gl::Util::checkError (__FILE__, __LINE__);
             }
 
-            this->postVertexInitRequired = false;
+            this->flags.set (vm_bools::postVertexInitRequired, false);
         }
 
         //! Initialize vertex buffer objects and vertex array object. Empty for 'text only' VisualModels.
@@ -143,7 +143,7 @@ namespace mplot {
         void reinit_buffers() final
         {
             if (this->setContext != nullptr) { this->setContext (this->parentVis); }
-            if (this->postVertexInitRequired == true) { this->postVertexInit(); }
+            if (this->flags.test (vm_bools::postVertexInitRequired) == true) { this->postVertexInit(); }
             // Now re-set up the VBOs
             glBindVertexArray (this->vao);                              // carefully unbind and rebind
             glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos[this->idxVBO]); // carefully unbind and rebind
@@ -177,7 +177,7 @@ namespace mplot {
         void reinit_colour_buffer() final
         {
             if (this->setContext != nullptr) { this->setContext (this->parentVis); }
-            if (this->postVertexInitRequired == true) { this->postVertexInit(); }
+            if (this->flags.test (vm_bools::postVertexInitRequired) == true) { this->postVertexInit(); }
             // Now re-set up the VBOs
             glBindVertexArray (this->vao);  // carefully unbind and rebind
             this->setupVBO (this->vbos[this->colVBO], this->vertexColors, visgl::colLoc);
@@ -192,10 +192,10 @@ namespace mplot {
         //! obtained by the parent Visual::render call.
         void render() // not final
         {
-            if (this->hide == true) { return; }
+            if (this->hidden() == true) { return; }
 
             // Execute post-vertex init at render, as GL should be available.
-            if (this->postVertexInitRequired == true) { this->postVertexInit(); }
+            if (this->flags.test (vm_bools::postVertexInitRequired) == true) { this->postVertexInit(); }
 
             GLint prev_shader = 0;
 

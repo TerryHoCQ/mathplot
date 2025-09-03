@@ -29,16 +29,16 @@ namespace mplot {
 
             this->computeFlatLine (p[0],        p[1],
                                    p[0],        p[2],
-                                   this->uz, mplot::colour::black, lth);
+                                   sm::vec<>::uz(), mplot::colour::black, lth);
             this->computeFlatLine (p[1],        p[2],
                                    p[0],        p[3],
-                                   this->uz, mplot::colour::crimson, lth);
+                                   sm::vec<>::uz(), mplot::colour::crimson, lth);
             this->computeFlatLine (p[2],        p[3],
                                    p[1],        p[4],
-                                   this->uz, mplot::colour::goldenrod1, lth);
+                                   sm::vec<>::uz(), mplot::colour::goldenrod1, lth);
             this->computeFlatLine (p[3],        p[4],
                                    p[2],        p[4],
-                                   this->uz, mplot::colour::dodgerblue2, lth);
+                                   sm::vec<>::uz(), mplot::colour::dodgerblue2, lth);
 #else
             p[0] = {0,    0,   0};
             p[1] = {1,    0,   1};
@@ -46,10 +46,10 @@ namespace mplot {
 
             this->computeFlatLine (p[0],        p[1],
                                    p[0],        p[2],
-                                   this->uy, mplot::colour::black, lth);
+                                   sm::vec<>::uy(), mplot::colour::black, lth);
             this->computeFlatLine (p[1],        p[2],
                                    p[0],        p[2],
-                                   this->uy, mplot::colour::crimson, lth);
+                                   sm::vec<>::uy(), mplot::colour::crimson, lth);
 
 #endif
         }
