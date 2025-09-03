@@ -44,8 +44,8 @@ int main (int argc, char** argv)
         sm::vec<float, 3> start =  { 0.1, 0.1,  10 };
         sm::vec<float, 3> end =    { 0.1, 0.1, -10 };
 
-        // The 'rod' acting as our user line
-        auto rvm = std::make_unique<mplot::RodVisual<>> (offset, start, end, 0.05f, mplot::colour::maroon3);
+        // The 'rod' acting as our user line. Maroon is end, which is z = -10.
+        auto rvm = std::make_unique<mplot::RodVisual<>> (offset, start, end, 0.05f, mplot::colour::black, mplot::colour::maroon3);
         v.bindmodel (rvm);
         rvm->face_uy = sm::vec<>::ux();
         rvm->face_uz = sm::vec<>::uy();

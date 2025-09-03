@@ -729,57 +729,32 @@ namespace mplot {
                 // A rotation delta in world frame about the 'screen centre'
                 sm::vec<float> screencentre = { 0.0f, 0.0f, this->savedSceneview.translation().z() + this->scenetrans_delta.z() };
 
-                //sm::vec<float> zero_location = this->savedSceneview.translation() + this->scenetrans_delta;
-                //std::cout << "\nZero locn: " << zero_location << std::endl;
-
-                // Can I get a better screencentre?
-                //
-                // Another way to get the z value is to find the model that intersects
-                // with a line from {0,0,z} to {0,0,-z}
-                //
-                // for each model, check if the line intersects. Choose the model that
-                // is closest and use its location + bb middle to get z.
-                //
-                // I need to incorporate the rotation
-
                 sm::vec<> v1 = { 0.1f, 0.1f, -10.0f }; // To match values set in this->userFrame for now
                 sm::vec<> v2 = { 0.1f, 0.1f, 10.0f };
-                std::cout << "\nOur line: " << v1 << " to " << v2 << "\n";
-
-                // For later use
-                auto svi = this->sceneview.inverse();
+                sm::vvec<sm::vec<float>> possible_centres;
 
                 sm::range<sm::vec<>> modelbb;
-                std::stringstream cmdss;
                 std::stringstream jsonss;
                 uint32_t ci = 0;
-                cmdss << "./examples/tube_box ";
                 jsonss << "{\n";
                 auto vmi = this->vm.begin();
                 while (vmi != this->vm.end()) {
                     if ((*vmi)->flags.test (mplot::vm_bools::compute_bb) == true) {
 
-                        // What frame of ref?
                         modelbb = (*vmi)->bb;
-                        auto xformed_move = (svi * -(*vmi)->get_mv_offset()).less_one_dim();
+                        // Transform the location of each bounding box using sceneview
+                        sm::vec<float> xformed_move = (this->savedSceneview * (*vmi)->get_mv_offset()).less_one_dim();
                         modelbb += xformed_move;
-                        // transform modelbb using sceneview. NO! Transform the *location* of the bounding box, but not the box itself.
-                        //std::cout << "  bb mid before: " << modelbb.mid() << "... ";
-                        //modelbb.min = (svi * modelbb.min).less_one_dim();
-                        //modelbb.max = (svi * modelbb.max).less_one_dim();
-                        std::cout << "  bb mid after: " << modelbb.mid() << "\n";
-                        cmdss << "-co:b" << ci << "=\"" << modelbb.min << "\" -co:b" << (ci + 1) << "=\"" << modelbb.max << "\" ";
+
                         if (ci != 0) { jsonss << ",\n"; }
                         jsonss << "  \"b" << (ci + 1) << "\": [" << modelbb.min.str_comma_separated() << "],\n";
                         jsonss << "  \"b" << (ci + 2) << "\": [" << modelbb.max.str_comma_separated() << "]";
                         ci += 2;
+
                         if (sm::algo::aabb_line_intersect<float, 0> (modelbb, v1, v2)) {
                             (*vmi)->show_bb (true);
-                            auto mm = modelbb.mid();
-                            std::cout << "  Intersect! modelbb.mid(): " << mm << std::endl;
-                            //screencentre = mm; // Will need screencentre to slowly morph to approximation when model is lost
+                            possible_centres.push_back (xformed_move);
                         } else {
-                            //std::cout << "  no intersect: model " << modelbb << " with line " << v1 << "->" << v2 << std::endl;
                             (*vmi)->show_bb (false);
                         }
                     }
@@ -787,9 +762,6 @@ namespace mplot {
                 }
                 jsonss << "\n}\n";
 
-                std::cout << cmdss.str() << std::endl;
-
-                //std::cout << jsonss.str() << std::endl;
                 std::ofstream fout;
                 fout.open ("/tmp/tube_box.json", std::ios::out | std::ios::trunc);
                 if (fout.is_open()) {
@@ -797,10 +769,20 @@ namespace mplot {
                     fout.close();
                 }
 
-                std::cout << "  screencentre is " << screencentre << std::endl;
+
+                if (possible_centres.size() > 0) {
+                    screencentre = possible_centres[0];
+                    for (auto pc : possible_centres) {
+                        if (pc[2] > screencentre[2]) {
+                            screencentre = pc;
+                        }
+                    }
+                }
+
                 sv_rot.pretranslate (-screencentre);
                 sv_rot.rotate (this->rotation_delta);
                 sv_rot.translate (screencentre);
+
             } else {
                 // Only rotate in cyl view
                 sv_rot.rotate (this->rotation_delta);
@@ -1260,6 +1242,10 @@ namespace mplot {
                 sm::vec<float> rotationAxis = this->savedSceneview.rotation().invert() * mouseMoveWorld;
                 // rotation_delta is the mouse-commanded rotation in the scene frame of reference
                 this->rotation_delta.set_rotation (rotationAxis, mouseMoveWorld.length() * -40.0f * sm::mathconst<float>::deg2rad);
+
+                //if (this->options.test (visual_options::rotateAboutSceneOrigin) == false) {
+                    // Determine rotation centre here (once for any rotation)
+                //}
 
                 needs_render = true;
 
