@@ -21,8 +21,8 @@ namespace mplot::compoundray {
         //! If set true, then output additional glTF to make files compatible with compound-ray
         bool enable_compound_ray_gltf = true;
 
-        //! Path to the compound eye file (this file is part of compound-ray, not mplotologica)
-        std::string path_to_compound_eye = "eyes/1000-horizontallyAcute-variableDegree.eye";
+        //! Path to the compound eye file (this file is part of compound-ray, not mathplot)
+        std::string path_to_compound_eye = "eyes/poly.eye";
 
         //! We simply override the savegltf function to output in compound-ray format.
         void savegltf (const std::string& gltf_file)
@@ -53,27 +53,10 @@ namespace mplot::compoundray {
             fout << "\"extras\" : { \"background-shader\": \"simple_sky\" }, ";
         }
 
-        void compoundRayPanCam (std::ofstream& fout) const
-        {
-            fout << "    {\n"
-                 << "      \"name\" : \"regular-panoramic\",\n"
-                 << "      \"type\" : \"perspective\",\n"
-                 << "      \"perspective\" : {\n"
-                 << "        \"aspectRatio\" : 1.7777777777777777,\n"
-                 << "        \"yfov\" : 0.39959652046304894,\n"
-                 << "        \"zfar\" : 1000,\n"
-                 << "        \"znear\" : 0.10000000149011612\n"
-                 << "      },\n"
-                 << "      \"extras\" : {\n"
-                 << "        \"panoramic\" : \"true\"\n"
-                 << "      }\n"
-                 << "    }";
-        }
-
         void compoundRayEyeCam (std::ofstream& fout) const
         {
             fout << "    {\n"
-                 << "      \"name\" : \"simulated-compound-eye\",\n"
+                 << "      \"name\" : \"Camera\",\n"
                  << "      \"type\" : \"perspective\",\n"
                  << "      \"perspective\" : {\n"
                  << "        \"aspectRatio\" : 1.7777777777777777,\n"
@@ -94,36 +77,19 @@ namespace mplot::compoundray {
         {
             fout << "  \"cameras\" : [\n";
             // Output camera sections of the cameras array
-            this->compoundRayPanCam (fout);
-            fout << ",\n";
             this->compoundRayEyeCam (fout);
             fout << "\n"
                  << "  ],\n";
         }
 
-        //! Hardcoded camera nodes for compound-ray compatible gltf. This goes in the gltf "nodes"
+        //! Hardcoded camera node for compound-ray compatible gltf. This goes in the gltf "nodes"
         //! section.
         void compoundRayCameraNodes (std::ofstream& fout) const
         {
             fout << "    {\n"
-                 << "      \"camera\" : 0,\n"
-                 << "      \"name\" : \"regular-panoramic_Orientation\",\n"
-                 << "      \"rotation\" : [ -0.7071067690849304, 0, 0, 0.7071067690849304 ]\n"
-                 << "    },\n"
-                 << "    {\n"
-                 << "      \"children\" : [ 0 ],\n"
-                 << "      \"name\" : \"regular-panoramic\",\n"
-                 << "      \"rotation\" : [ 0.7071068286895752, 0, 0, 0.7071068286895752 ]\n"
-                 << "    },\n"
-                 << "    {\n"
-                 << "      \"camera\" : 1,\n"
-                 << "      \"name\" : \"simulated-compound-eye_Orientation\",\n"
-                 << "      \"rotation\" : [ -0.7071067690849304, 0, 0, 0.7071067690849304 ]\n"
-                 << "    },\n"
-                 << "    {\n"
-                 << "      \"children\" : [ 2 ],\n"
-                 << "      \"name\" : \"simulated-compound-eye\",\n"
-                 << "      \"rotation\" : [ 0.7071068286895752, 0, 0, 0.7071068286895752 ]\n"
+                 << "      \"camera\": 0,\n"
+                 << "      \"name\" : \"Camera\",\n"
+                 << "      \"rotation\" : [ 0, -0.7071068286895752, 0, 0.7071068286895752 ]\n"
                  << "    },\n";
         }
 
