@@ -367,9 +367,9 @@ namespace mplot {
          */
 
         //! Get mv_offset in a json-friendly string
-        std::string translation_str() { return this->mv_offset.str_mat(); }
+        std::string translation_str() { return this->viewmatrix.translation().str_mat(); }
         //! And a simple getter for mv_offset
-        sm::vec<float> get_mv_offset() { return this->mv_offset; }
+        sm::vec<float> get_mv_offset() { return this->viewmatrix.translation(); }
 
         //! Return the number of elements in this->indices
         std::size_t indices_size() { return this->indices.size(); }
@@ -571,9 +571,15 @@ namespace mplot {
 
     protected:
 
-        //! The model-specific view matrix.
+        //! The model-specific view matrix. Used to transform the pose of the model in the scene.
         sm::mat44<float> viewmatrix = {};
-        //! The model-specific scene view matrix.
+        /*!
+         * The model-specific scene view matrix. Each VisualModel has a copy of the
+         * scenematrix. It's set in Visual::render. It would be possible to use the parent
+         * relationship (or a callback) to obtain the scenematrix from the parent. The actual
+         * scenematrix used depends on whether the VisualModel is 'twodimensional' or not, but both
+         * are available from the parent Visual.
+         */
         sm::mat44<float> scenematrix = {};
         //! An additional scaling applied to viewmatrix to scale the size of the model [see render()]
         sm::mat44<float> model_scaling = {};
