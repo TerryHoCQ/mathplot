@@ -99,8 +99,11 @@ namespace mplot::compoundray {
             fout << "{\n  \"scenes\" : [ { ";
             if (this->enable_compound_ray_gltf == true) { compoundRayBackground (fout); }
             fout << "\"nodes\" : [ ";
+            // There's a camera node to include (exactly 1, although many camera nodes are possible):
+            fout << "0, ";
+            // Then the VM nodes:
             for (std::size_t vmi = 0u; vmi < this->vm.size(); ++vmi) {
-                fout << vmi << (vmi < this->vm.size()-1 ? ", " : "");
+                fout << (vmi + 1) << (vmi < this->vm.size() - 1 ? ", " : "");
             }
             fout << " ] } ],\n";
         }
