@@ -1,14 +1,14 @@
 // A scene of rhombohedrons useful for developing scene rotation by user control
 
 #include <sm/vec>
-#include <mplot/Visual.h>
+#include <mplot/compoundray/Visual.h>
 #include <mplot/RhomboVisual.h>
 #include <mplot/ColourMap.h>
 
 int main()
 {
     // Create a scene
-    mplot::Visual v(1024, 768, "Rhombohedrons");
+    mplot::compoundray::Visual v(1024, 768, "Rhombohedrons");
     v.lightingEffects (true);
 
     // Parameters of the model
