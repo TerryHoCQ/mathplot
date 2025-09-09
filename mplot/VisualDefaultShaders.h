@@ -1,5 +1,5 @@
-// This file is included by Vertex.cpp. It contains default vertex and fragment
-// shaders which get compiled in to libmplotologica.
+// This file is included by mplot::Visual. It contains default vertex and fragment
+// shaders which get compiled in to your mathplot program.
 
 #pragma once
 

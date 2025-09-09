@@ -153,7 +153,7 @@ namespace mplot {
         //  if this bit is set the caps lock key is enabled and the @ref
         static constexpr int caps_lock      = 0x0010;
         //  if this bit is set the num lock key is enabled and the a num lock input mode
-        //  should be enabled (may not be implemented for mplotologica)
+        //  should be enabled (may not be implemented for mathplot)
         static constexpr int num_lock       = 0x0020;
     };
 

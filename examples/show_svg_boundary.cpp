@@ -2,7 +2,7 @@
  * Read the given svg file (first argument on command line), then
  * create a HexGrid and show the boundary.
  *
- * Useful to demonstrate that the mplotologica code can read your
+ * Useful to demonstrate that the mathplot code can read your
  * Adobe Illustrator or Inkscape generated SVG file.
  *
  * Author: Seb James <seb.james@sheffield.ac.uk>

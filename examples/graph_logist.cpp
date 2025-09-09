@@ -7,7 +7,7 @@
 // Make an equation string for the legend
 std::string make_legend_str (double k, double x0)
 {
-    // We'll use mplotologica's awesome unicode chars for the subscript 0 on x0
+    // We'll use mathplot's awesome unicode chars for the subscript 0 on x0
     namespace uc = mplot::unicode;
 
     std::stringstream ktxt;

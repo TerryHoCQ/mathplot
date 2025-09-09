@@ -7,7 +7,7 @@
 
 int main()
 {
-    // We'll use mplotologica's awesome unicode chars
+    // We'll use mathplot's awesome unicode chars
     namespace uc = mplot::unicode;
     // Set up a mplot::Visual 'scene environment'.
     mplot::Visual v(1024, 768, "Logistic functions");

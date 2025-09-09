@@ -1,5 +1,5 @@
 // Scientific Colour Maps from Fabio Crameri (see https://zenodo.org/records/8409685)
-// Converted into C++ lookup tables for mplotologica by Seb James
+// Converted into C++ lookup tables for mathplot by Seb James
 
 #pragma once
 

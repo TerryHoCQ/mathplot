@@ -116,13 +116,13 @@ namespace mplot {
      * This contains code that is not OpenGL dependent. OpenGL dependent code is in
      * VisualOwnable or VisualOwnableMX.
      *
-     * For mplotologica program using GLFW windows, Inheritance chain will either be:
+     * For mathplot program using GLFW windows, Inheritance chain will either be:
      *
      *   VisualBase -> VisualOwnable -> VisualNoMX            for single context GL, global fn aliases
      *
      *   VisualBase -> VisualOwnableMX -> VisualMX -> Visual  for multi context, GL fn pointers (GLAD only)
      *
-     * mplotologica based widgets, such as the Qt compatible mplot::qt::viswidget have this:
+     * mathplot based widgets, such as the Qt compatible mplot::qt::viswidget have this:
      *
      *   VisualBase -> VisualOwnable -> viswidget             for single context GL, global fn aliases
      *
@@ -665,7 +665,7 @@ namespace mplot {
             fout << "  \"materials\" : [ { \"doubleSided\" : true } ],\n";
 
             fout << "  \"asset\" : {\n"
-                 << "    \"generator\" : \"https://github.com/ABRG-Models/mplotologica: mplot::Visual::savegltf() (ver "
+                 << "    \"generator\" : \"https://github.com/sebsjames/mathplot: mplot::Visual::savegltf() (ver "
                  << mplot::version_string() << ")\",\n"
                  << "    \"version\" : \"2.0\"\n" // This version is the *glTF* version.
                  << "  }\n";
@@ -1412,6 +1412,7 @@ namespace mplot {
                 this->cyl_cam_pos[0] += xoffset * this->scenetrans_stepsize;
 
                 // yoffset does the 'in-out zooming'
+                // How to make scenetrans_stepsize adaptive to the scale of the environment and change when close to objects?
                 sm::vec<float, 4> scroll_move_y = { 0.0f, static_cast<float>(yoffset) * this->scenetrans_stepsize, 0.0f, 1.0f };
                 this->scenetrans_delta[2] += scroll_move_y[1];
                 // Translate scroll_move_y then add it to cyl_cam_pos here

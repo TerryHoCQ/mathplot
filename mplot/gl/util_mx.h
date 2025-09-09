@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Common code for GL functionality in mplotologica programs that use multicontext GLAD headers.
+ * Common code for GL functionality in mathplot programs that use multicontext GLAD headers.
  *
  * Author: Seb James.
  */

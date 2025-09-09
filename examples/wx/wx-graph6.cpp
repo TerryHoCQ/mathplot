@@ -25,7 +25,7 @@ public:
     {
         auto sizer = new wxBoxSizer(wxVERTICAL);
 
-        // Adding the GL canvas, where all the mplotologica stuff will be drawn
+        // Adding the GL canvas, where all the mathplot stuff will be drawn
         sizer->Add (this->canvas, 1, wxEXPAND);
 
         auto bottomSizer = new wxBoxSizer(wxHORIZONTAL);

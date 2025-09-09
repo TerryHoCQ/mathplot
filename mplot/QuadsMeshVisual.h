@@ -91,7 +91,7 @@ namespace mplot {
 
             // I'm examining a set of vecs, which means I have to specify the compare
             // operation. See:
-            // https://abrg-models.github.io/mplotologica/ref/coremaths/vec/#comparison-operators
+            // https://sebsjames.github.io/maths/ref/vec/#comparison-operators
             auto _cmp = [](sm::vec<float,6> a, sm::vec<float,6> b){return a.lexical_lessthan(b);};
             std::set<sm::vec<float, 6>,  decltype(_cmp)> lastQuadLines(_cmp);
 

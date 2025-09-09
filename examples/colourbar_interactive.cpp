@@ -16,7 +16,7 @@
 #include <mplot/HexGridVisual.h>
 #include <mplot/ColourBarVisual.h>
 
-// This is the standard way to incorporate key-operations into a mplotologica program. See also myvisual.cpp.
+// This is the standard way to incorporate key-operations into a mathplot program. See also myvisual.cpp.
 struct myvisual final : public mplot::Visual<>
 {
     myvisual (int width, int height, const std::string& title) : mplot::Visual<> (width, height, title)

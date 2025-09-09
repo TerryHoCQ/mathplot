@@ -256,7 +256,7 @@ namespace mplot::compoundray {
         void gltf_asset (std::ofstream& fout) const
         {
             fout << "  \"asset\" : {\n"
-                 << "    \"generator\" : \"https://github.com/ABRG-Models/mplotologica [version "
+                 << "    \"generator\" : \"https://github.com/sebsjames/mathplot [version "
                  << mplot::version_string() << "]: mplot::VisualCompoundRay::savegltf()\",\n"
                  << "    \"version\" : \"2.0\"\n" // This version is the *glTF* version.
                  << "  }\n";

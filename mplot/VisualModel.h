@@ -26,7 +26,7 @@ namespace mplot {
      *
      * Some OpenGL models are derived directly from VisualModel; see for example mplot::CoordArrows.
      *
-     * Other models in mplotologica are derived via mplot::VisualDataModel, which adds a common
+     * Other models in mathplot are derived via mplot::VisualDataModel, which adds a common
      * mechanism for managing the data which is to be visualised by the final 'Visual' object (such
      * as mplot::HexGridVisual or mplot::ScatterVisual)
      *
