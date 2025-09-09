@@ -260,34 +260,22 @@ namespace mplot {
         void setSceneTranslation (const sm::vec<float>& v0)
         {
             this->scenematrix.setToIdentity();
-            this->sv_offset = v0;
-            this->scenematrix.translate (this->sv_offset);
-            this->scenematrix.prerotate (this->sv_rotation);
+            this->scenematrix.translate (v0);
             this->setSceneTranslationTexts (v0);
         }
 
         //! Set a translation (only) into the scene view matrix
-        void addSceneTranslation (const sm::vec<float>& v0)
-        {
-            this->sv_offset += v0;
-            this->scenematrix.translate (v0);
-        }
+        void addSceneTranslation (const sm::vec<float>& v0) { this->scenematrix.translate (v0); }
 
         //! Set a rotation (only) into the scene view matrix
         void setSceneRotation (const sm::quaternion<float>& r)
         {
             this->scenematrix.setToIdentity();
-            this->sv_rotation = r;
-            this->scenematrix.translate (this->sv_offset);
-            this->scenematrix.prerotate (this->sv_rotation);
+            this->scenematrix.prerotate (r);
         }
 
         //! Add a rotation to the scene view matrix
-        void addSceneRotation (const sm::quaternion<float>& r)
-        {
-            this->sv_rotation.premultiply (r);
-            this->scenematrix.prerotate (r);
-        }
+        void addSceneRotation (const sm::quaternion<float>& r) { this->scenematrix.prerotate (r); }
 
         //! Set a translation to the model view matrix
         void setViewTranslation (const sm::vec<float>& v0)
@@ -611,11 +599,6 @@ namespace mplot {
         sm::vec<float> mv_offset = { 0.0f, 0.0f, 0.0f };
         //! Model view rotation
         sm::quaternion<float> mv_rotation = {};
-
-        //! Scene view offset
-        sm::vec<float> sv_offset = { 0.0f, 0.0f, 0.0f };
-        //! Scene view rotation
-        sm::quaternion<float> sv_rotation = {};
 
         //! This enum contains the positions within the vbo array of the different
         //! vertex buffer objects
