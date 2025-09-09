@@ -107,11 +107,11 @@ namespace mplot {
             u_alpha_perp.set_angle (sm::mathconst<float>::pi_over_2 + sm::mathconst<float>::deg2rad * this->alpha);
 
             // Corners
-            sm::vec<float, 3> mv_offset = this->viewmatrix.translation();
-            sm::vec<float, 2> top_left =  sm::vec<float, 2>{ mv_offset[0],             mv_offset[1] + dims[1] };
-            sm::vec<float, 2> bot_left =  sm::vec<float, 2>{ mv_offset[0],             mv_offset[1]           }; // or mv_offset
-            sm::vec<float, 2> top_right = sm::vec<float, 2>{ mv_offset[0] + dims[0],   mv_offset[1] + dims[1] }; // or mv_offset + dims
-            sm::vec<float, 2> bot_right = sm::vec<float, 2>{ mv_offset[0] + dims[0],   mv_offset[1]           };
+            sm::vec<float, 3> _offset = this->viewmatrix.translation();
+            sm::vec<float, 2> top_left =  sm::vec<float, 2>{ _offset[0],             _offset[1] + dims[1] };
+            sm::vec<float, 2> bot_left =  sm::vec<float, 2>{ _offset[0],             _offset[1]           };
+            sm::vec<float, 2> top_right = sm::vec<float, 2>{ _offset[0] + dims[0],   _offset[1] + dims[1] };
+            sm::vec<float, 2> bot_right = sm::vec<float, 2>{ _offset[0] + dims[0],   _offset[1]           };
 
             // Line segments of the borders. Will need these for computing line crossings. each line segment is 'pq'
             sm::vec<float, 2> bot_p = bot_left;

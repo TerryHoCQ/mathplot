@@ -35,7 +35,7 @@ namespace mplot {
     struct VisualModelImpl : public mplot::VisualModelBase<glver>
     {
         VisualModelImpl() : mplot::VisualModelBase<glver>::VisualModelBase() {}
-        VisualModelImpl (const sm::vec<float>& _mv_offset) : mplot::VisualModelBase<glver>::VisualModelBase(_mv_offset) {}
+        VisualModelImpl (const sm::vec<float>& _offset) : mplot::VisualModelBase<glver>::VisualModelBase(_offset) {}
 
         //! destroy gl buffers in the deconstructor
         virtual ~VisualModelImpl()
@@ -357,8 +357,8 @@ namespace mplot {
             auto ti = this->texts.begin();
             while (ti != this->texts.end()) {
                 // Rotate the scene. Note this won't work if the VisualModel has a
-                // mv_offset that is away from the origin.
-                (*ti)->setSceneRotation (r); // Need this to rotate about mv_offset. BUT the
+                // translation away from the origin.
+                (*ti)->setSceneRotation (r); // Need this to rotate about _offset. BUT the
                                              // translation is already there in the text,
                                              // but in the MODEL view.
 

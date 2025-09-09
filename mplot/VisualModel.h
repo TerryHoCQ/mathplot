@@ -42,8 +42,8 @@ namespace mplot {
     template <int glver = mplot::gl::version_4_1>
     struct VisualModel : public mplot::VisualModelImpl<glver, mplot::gl::multicontext> {
         VisualModel() : mplot::VisualModelImpl<glver, mplot::gl::multicontext>::VisualModelImpl() {}
-        VisualModel(const sm::vec<float, 3>& _mv_offset)
-            : mplot::VisualModelImpl<glver, mplot::gl::multicontext>::VisualModelImpl(_mv_offset) {}
+        VisualModel(const sm::vec<float, 3>& _offset)
+            : mplot::VisualModelImpl<glver, mplot::gl::multicontext>::VisualModelImpl(_offset) {}
     };
 
 } // namespace mplot

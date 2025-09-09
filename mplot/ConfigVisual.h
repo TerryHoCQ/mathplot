@@ -29,9 +29,7 @@ namespace mplot
                       const sm::vec<float, 3>& _offset,
                       const mplot::TextFeatures& _tfeatures)
         {
-            // Set up...
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
             this->conf = _conf;
             this->keys = _keys;
             this->tfeatures = _tfeatures;

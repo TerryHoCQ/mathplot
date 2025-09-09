@@ -61,8 +61,8 @@ namespace mplot {
                 sm::vec<float> v1 = (*this->dataCoords)[i];
                 unsigned int e = (i < (ncoords-1) ? i+1 : 0);
                 sm::vec<float> v2 = (*this->dataCoords)[e];
-                sm::vec<float> mv_offset = this->viewmatrix.translation();
-                this->computeTube (mv_offset + v1, mv_offset + v2, clr, clr, this->radius, this->tseg);
+                sm::vec<float> _offset = this->viewmatrix.translation();
+                this->computeTube (_offset + v1, _offset + v2, clr, clr, this->radius, this->tseg);
             }
         }
 

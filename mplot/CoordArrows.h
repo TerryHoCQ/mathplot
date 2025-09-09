@@ -72,19 +72,19 @@ namespace mplot {
                 mplot::TextFeatures tfca(this->em, 48, false, mplot::colour::black, mplot::VisualFont::DVSansItalic);
 
                 // These texts are black by default
-                sm::vec<float> mv_offset = this->viewmatrix.translation();
+                sm::vec<float> _offset = this->viewmatrix.translation();
                 sm::vec<float> toffset = {};
-                toffset = mv_offset + this->x_axis * this->lengths[0];
+                toffset = _offset + this->x_axis * this->lengths[0];
                 toffset[0] += this->em;
                 auto vtm1 = this->makeVisualTextModel (tfca);
                 vtm1->setupText (this->x_label, toffset);
                 this->texts.push_back (std::move(vtm1));
-                toffset = mv_offset + this->y_axis * this->lengths[1];
+                toffset = _offset + this->y_axis * this->lengths[1];
                 toffset[0] += this->em;
                 auto vtm2 = this->makeVisualTextModel (tfca);
                 vtm2->setupText (this->y_label, toffset);
                 this->texts.push_back (std::move(vtm2));
-                toffset = mv_offset + this->z_axis * this->lengths[2];
+                toffset = _offset + this->z_axis * this->lengths[2];
                 toffset[0] += this->em;
                 auto vtm3 = this->makeVisualTextModel (tfca);
                 vtm3->setupText (this->z_label, toffset);
@@ -104,11 +104,9 @@ namespace mplot {
             this->idx = 0;
 
             // Draw four spheres to make up the coord frame, with centre at 0,0,0
-            // (mv_offset is applied in translation matrices)
             sm::vec<float, 3> reloffset = {};
             static constexpr sm::vec<float, 3> zerocoord = { 0.0f, 0.0f, 0.0f };
             this->computeSphere (zerocoord, centresphere_col, this->thickness * this->lengths[0] / 20.0f);
-
 
             // x
             reloffset = this->x_axis * this->lengths[0];

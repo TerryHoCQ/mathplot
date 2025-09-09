@@ -86,9 +86,9 @@ namespace mplot {
             this->model_scaling.setToIdentity();
         }
 
-        VisualModelBase (const sm::vec<float> _mv_offset)
+        VisualModelBase (const sm::vec<float> _offset)
         {
-            this->viewmatrix.translate (_mv_offset);
+            this->viewmatrix.translate (_offset);
             this->model_scaling.setToIdentity();
         }
 
@@ -262,6 +262,7 @@ namespace mplot {
             this->setSceneTranslationTexts (v0);
         }
 
+#ifdef __MAYBE_DEPRECATED__
         //! Set a translation (only) into the scene view matrix
         void addSceneTranslation (const sm::vec<float>& v0) { this->scenematrix.translate (v0); }
 
@@ -293,7 +294,7 @@ namespace mplot {
             this->viewmatrix.translate (os);
             this->viewmatrix.prerotate (r);
         }
-
+#endif
         virtual void setViewRotationTexts (const sm::quaternion<float>& r) = 0;
 
         //! Set a rotation (only) into the view
@@ -344,9 +345,9 @@ namespace mplot {
          * Methods used by Visual::savegltf()
          */
 
-        //! Get mv_offset in a json-friendly string
+        //! Get model translation in a json-friendly string
         std::string translation_str() { return this->viewmatrix.translation().str_mat(); }
-        //! And a simple getter for mv_offset
+        //! A getter for the viewmatrix translation of the origin (would be same as viewmatrix.translation)
         sm::vec<float> get_viewmatrix_origin() const
         {
             return (this->viewmatrix * sm::vec<float, 3>{0,0,0}).less_one_dim();
@@ -569,26 +570,15 @@ namespace mplot {
         //! The model-specific view matrix. Used to transform the pose of the model in the scene.
         sm::mat44<float> viewmatrix = {};
         /*!
-         * The model-specific scene view matrix. Each VisualModel has a copy of the
-         * scenematrix. It's set in Visual::render. It would be possible to use the parent
-         * relationship (or a callback) to obtain the scenematrix from the parent. The actual
-         * scenematrix used depends on whether the VisualModel is 'twodimensional' or not, but both
-         * are available from the parent Visual.
+         * The scene view matrix. Each VisualModel has a copy of the scenematrix. It's
+         * set in Visual::render. It would be possible to use the parent relationship
+         * (or a callback) to obtain the scenematrix from the parent. The actual
+         * scenematrix used depends on whether the VisualModel is 'twodimensional' or
+         * not, but both are available from the parent Visual.
          */
         sm::mat44<float> scenematrix = {};
         //! An additional scaling applied to viewmatrix to scale the size of the model [see render()]
         sm::mat44<float> model_scaling = {};
-
-        /*!
-         * The spatial offset of this VisualModel within the mplot::Visual 'scene
-         * view'. Note that this is not incorporated into the computation of the
-         * vertices, but is instead applied when the object is rendered as part of the
-         * model->world transformation - it's applied as a translation in
-         * VisualModel::viewmatrix.
-         */
-        //sm::vec<float> mv_offset = { 0.0f, 0.0f, 0.0f };
-        //! Model view rotation
-        //sm::quaternion<float> mv_rotation = {};
 
         //! This enum contains the positions within the vbo array of the different
         //! vertex buffer objects
