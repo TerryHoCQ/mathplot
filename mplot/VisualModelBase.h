@@ -369,9 +369,24 @@ namespace mplot {
         //! Get mv_offset in a json-friendly string
         std::string translation_str() { return this->viewmatrix.translation().str_mat(); }
         //! And a simple getter for mv_offset
-        sm::vec<float> get_mv_offset() { return this->viewmatrix.translation(); }
+        sm::vec<float> get_viewmatrix_origin() const
+        {
+            return (this->viewmatrix * sm::vec<float, 3>{0,0,0}).less_one_dim();
+        }
         //! The centre of mass of the bounding box may not be the VisualModel's origin
-        sm::vec<float> get_bb_centre() { return this->bb.mid(); }
+        sm::vec<float> get_viewmatrix_bb_centre() const
+        {
+            return (this->viewmatrix * this->bb.mid()).less_one_dim();
+        }
+
+        //! Apply the viewmatrix to the model's bounding box and return it
+        sm::range<sm::vec<float>> get_viewmatrix_modelbb() const
+        {
+            sm::range<sm::vec<float>> vmbb;
+            vmbb.min = (this->viewmatrix * this->bb.min).less_one_dim();
+            vmbb.max = (this->viewmatrix * this->bb.max).less_one_dim();
+            return vmbb;
+        }
 
         //! Return the number of elements in this->indices
         std::size_t indices_size() { return this->indices.size(); }

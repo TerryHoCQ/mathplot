@@ -1182,10 +1182,11 @@ namespace mplot {
             auto vmi = this->vm.begin();
             while (vmi != this->vm.end()) {
                 if ((*vmi)->flags.test (mplot::vm_bools::compute_bb) == true) {
-                    sm::range<sm::vec<>> modelbb = (*vmi)->bb;
-                    // Transform the location of each bounding box using sceneview
-                    sm::vec<float> xformed_move = (this->savedSceneview * (*vmi)->get_mv_offset()).less_one_dim();
-                    modelbb += xformed_move;
+
+                    // Transform BB first
+                    sm::range<sm::vec<>> modelbb = (*vmi)->get_viewmatrix_modelbb();
+                    modelbb.min = (this->savedSceneview * modelbb.min).less_one_dim();
+                    modelbb.max = (this->savedSceneview * modelbb.max).less_one_dim();
 
                     if (options.test (visual_options::boundingBoxesToJson) && fout.is_open()) {
                         fout << "  \"b" << (ci + 1) << "\": [" << modelbb.min.str_comma_separated() << "],\n";
@@ -1193,9 +1194,14 @@ namespace mplot {
                         ci += 2;
                     }
 
+                    std::cout << "Compare centre line through BB with mid " << modelbb.mid() << " [[[" << modelbb << "]]]" << v1 << "-" << v2 << std::endl;
                     if (sm::algo::aabb_line_intersect<float, 0> (modelbb, v1, v2)) {
                         if (options.test (visual_options::highlightCentralVM)) { (*vmi)->show_bb (true); }
-                        possible_centres.push_back (xformed_move + (*vmi)->get_bb_centre());
+                        // Possible centres are in the 'user frame' and assume that BB
+                        // is at modelorigin. But don't worry about that until the
+                        // modelbb in the wireframes match up
+                        std::cout << "ping\n";
+                        possible_centres.push_back (modelbb.mid());
                     } else {
                         if (options.test (visual_options::highlightCentralVM)) { (*vmi)->show_bb (false); }
                     }
