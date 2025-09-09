@@ -19,18 +19,16 @@ namespace mplot {
     class QuadsMeshVisual : public VisualDataModel<Flt, glver>
     {
     public:
-        QuadsMeshVisual(const std::vector<std::array<Flt,12>>* _quads,
-                        const sm::vec<float> _offset,
-                        const std::vector<Flt>* _data,
-                        const sm::scale<Flt>& _scale,
-                        ColourMapType _cmt,
-                        const float _hue = 0.0f,
-                        const float _sat = 1.0f,
-                        const float _radius = 0.05f)
+        QuadsMeshVisual (const std::vector<std::array<Flt,12>>* _quads,
+                         const sm::vec<float> _offset,
+                         const std::vector<Flt>* _data,
+                         const sm::scale<Flt>& _scale,
+                         ColourMapType _cmt,
+                         const float _hue = 0.0f,
+                         const float _sat = 1.0f,
+                         const float _radius = 0.05f)
         {
-            // Set up...
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
             this->colourScale = _scale;
             this->radius = _radius;
 
@@ -60,15 +58,15 @@ namespace mplot {
         }
 
         //! Version with std::array \a _offset
-        QuadsMeshVisual(const std::vector<std::array<Flt,12>>* _quads,
-                        const std::array<float, 3> _offset,
-                        const std::vector<Flt>* _data,
-                        const sm::scale<Flt>& _scale,
-                        ColourMapType _cmt,
-                        const float _hue = 0.0f)
+        QuadsMeshVisual (const std::vector<std::array<Flt,12>>* _quads,
+                         const std::array<float, 3> _offset,
+                         const std::vector<Flt>* _data,
+                         const sm::scale<Flt>& _scale,
+                         ColourMapType _cmt,
+                         const float _hue = 0.0f)
         {
             sm::vec<float> offset_vec;
-            offset_vec.set_from(_offset);
+            offset_vec.set_from (_offset);
             QuadsMeshVisual<Flt>(_quads, offset_vec, _data, _scale, _cmt, _hue);
         }
 

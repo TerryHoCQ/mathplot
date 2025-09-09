@@ -54,8 +54,7 @@ namespace mplot {
         {
             // Set up...
             sm::vec<float> pixel_offset = { _cg->getd()/2.0f, _cg->getv()/2.0f, 0.0f };
-            this->mv_offset = _offset + pixel_offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset + pixel_offset);
             // Defaults for z and colourScale
             this->zScale.setParams (1, 0);
             this->colourScale.do_autoscale = true;
@@ -71,7 +70,7 @@ namespace mplot {
             this->determine_datasize();
             if (this->datasize == 0) { return; }
 
-            // Optionally compute an offset to ensure that the cartgrid is centred about the mv_offset.
+            // Optionally compute an offset to ensure that the cartgrid is centred
             if (this->centralize == true) {
                 float left_lim = -this->cg->width()/2.0f;
                 float bot_lim = -this->cg->depth()/2.0f;
@@ -402,8 +401,7 @@ namespace mplot {
         CartVisMode cartVisMode = CartVisMode::RectInterp;
 
         //! Set this to true to adjust the positions that the CartGridVisual uses to plot
-        //! the cartgrid so that the cartgrid is centralised around the
-        //! VisualModel::mv_offset.
+        //! the cartgrid so that the cartgrid is centralised
         bool centralize = false;
 
         //! Set true to draw a border around the outside
@@ -419,10 +417,9 @@ namespace mplot {
         //! The cartgrid to visualize
         const sm::cartgrid* cg;
 
-        // A centering offset to make sure that the Cartgrid is centred on
-        // this->mv_offset. This is computed so that you *add* centering_offset to each
-        // computed x/y/z position for a rectangle, and this means that the rectangle
-        // will be centered around mv_offset.
+        // A centering offset to make sure that the Cartgrid is centred. This is
+        // computed so that you *add* centering_offset to each computed x/y/z position
+        // for a rectangle.
         sm::vec<float, 3> centering_offset = { 0.0f, 0.0f, 0.0f };
     };
 

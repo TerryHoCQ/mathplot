@@ -46,8 +46,7 @@ namespace mplot {
         //! Constructor which sets just the shader programs and the model view offset
         GraphVisual(const sm::vec<float> _offset)
         {
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
             this->ord1_scale.do_autoscale = true;
             this->ord2_scale.do_autoscale = true;
             this->abscissa_scale.do_autoscale = true;
@@ -1318,7 +1317,7 @@ namespace mplot {
                         this->marker (lpos, this->datastyles[dsi]);
                     }
                 }
-                legtexts[dsi]->setupText (this->datastyles[dsi].datalabel, lpos+toffset+this->mv_offset, this->axiscolour);
+                legtexts[dsi]->setupText (this->datastyles[dsi].datalabel, lpos + toffset + this->viewmatrix.translation(), this->axiscolour);
                 this->texts.push_back (std::move(legtexts[dsi]));
             }
         }
@@ -1339,7 +1338,7 @@ namespace mplot {
                 lblpos = {{0.5f * this->width - geom.half_width(),
                            -(this->axislabelgap+this->ticklabelgap+geom.height()+this->xtick_label_height), 0}};
             }
-            lbl->setupText (this->xlabel, lblpos+this->mv_offset, this->axiscolour);
+            lbl->setupText (this->xlabel, lblpos + this->viewmatrix.translation(), this->axiscolour);
             this->texts.push_back (std::move(lbl));
 
             // y axis label (have to rotate)
@@ -1366,9 +1365,9 @@ namespace mplot {
 
             if (geom.width() > 2*this->fontsize) {
                 sm::quaternion<float> leftrot(sm::vec<>::uz(), sm::mathconst<float>::pi_over_2);
-                lbl2->setupText (this->ylabel, leftrot, lblpos+this->mv_offset, this->axiscolour);
+                lbl2->setupText (this->ylabel, leftrot, lblpos + this->viewmatrix.translation(), this->axiscolour);
             } else {
-                lbl2->setupText (this->ylabel, lblpos+this->mv_offset, this->axiscolour);
+                lbl2->setupText (this->ylabel, lblpos + this->viewmatrix.translation(), this->axiscolour);
             }
             this->texts.push_back (std::move(lbl2));
 
@@ -1390,9 +1389,9 @@ namespace mplot {
 
                 if (geom.width() > 2*this->fontsize) {
                     sm::quaternion<float> leftrot(sm::vec<>::uz(), sm::mathconst<float>::pi_over_2);
-                    lbl3->setupText (this->ylabel2, leftrot, lblpos+this->mv_offset, this->axiscolour);
+                    lbl3->setupText (this->ylabel2, leftrot, lblpos + this->viewmatrix.translation(), this->axiscolour);
                 } else {
-                    lbl3->setupText (this->ylabel2, lblpos+this->mv_offset, this->axiscolour);
+                    lbl3->setupText (this->ylabel2, lblpos + this->viewmatrix.translation(), this->axiscolour);
                 }
                 this->texts.push_back (std::move(lbl3));
             }
@@ -1460,7 +1459,7 @@ namespace mplot {
                     mplot::TextGeometry geom = lbl->getTextGeometry (s);
                     this->xtick_label_height = geom.height() > this->xtick_label_height ? geom.height() : this->xtick_label_height;
                     sm::vec<float> lblpos = {(float)this->xtick_posns[i]-geom.half_width(), y_for_xticks-(this->ticklabelgap+geom.height()), 0};
-                    lbl->setupText (s, lblpos+this->mv_offset, this->axiscolour);
+                    lbl->setupText (s, lblpos + this->viewmatrix.translation(), this->axiscolour);
                     this->texts.push_back (std::move(lbl));
                 }
             }
@@ -1479,7 +1478,7 @@ namespace mplot {
                     if (this->axisstyle == axisstyle::twinax && this->datastyles.size() > 0) {
                         clr = this->datastyles[0].policy == stylepolicy::lines ? this->datastyles[0].linecolour : this->datastyles[0].markercolour;
                     }
-                    lbl->setupText (s, lblpos+this->mv_offset, clr);
+                    lbl->setupText (s, lblpos + this->viewmatrix.translation(), clr);
                     this->texts.push_back (std::move(lbl));
                 }
             }
@@ -1497,7 +1496,7 @@ namespace mplot {
                         clr = this->datastyles[1].policy == stylepolicy::lines ? this->datastyles[1].linecolour : this->datastyles[1].markercolour;
 
                     }
-                    lbl->setupText (s, lblpos+this->mv_offset, clr);
+                    lbl->setupText (s, lblpos + this->viewmatrix.translation(), clr);
                     this->texts.push_back (std::move(lbl));
                 }
             }

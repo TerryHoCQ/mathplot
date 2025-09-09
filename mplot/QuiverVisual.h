@@ -28,8 +28,7 @@ namespace mplot {
                      ColourMapType _cmt,
                      const float _hue = 0.0f) {
             // Set up...
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
 
             this->dataCoords = _coords;
             this->vectorData = _quivers;

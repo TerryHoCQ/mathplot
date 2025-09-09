@@ -17,11 +17,7 @@ template <int glver = mplot::gl::version_4_1>
 class PrimitiveVisual : public mplot::VisualModel<glver>
 {
 public:
-    PrimitiveVisual(const sm::vec<float> _offset)
-    {
-        this->mv_offset = _offset;
-        this->viewmatrix.translate (this->mv_offset);
-    }
+    PrimitiveVisual (const sm::vec<float> _offset) { this->viewmatrix.translate (_offset); }
 
     void initializeVertices()
     {

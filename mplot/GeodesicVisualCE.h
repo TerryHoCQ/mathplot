@@ -32,9 +32,7 @@ namespace mplot {
 
         void init (const sm::vec<float, 3> _offset, const float _radius)
         {
-            // Set up...
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
             this->radius = _radius;
         }
 

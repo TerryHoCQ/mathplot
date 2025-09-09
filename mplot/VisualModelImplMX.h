@@ -301,9 +301,9 @@ namespace mplot {
                 mplot::TextGeometry tg = tmup->getTextGeometry(_text);
                 sm::vec<float, 3> centred_locn = _toffset;
                 centred_locn[0] -= tg.half_width();
-                tmup->setupText (_text, centred_locn+this->mv_offset, tfeatures.colour);
+                tmup->setupText (_text, centred_locn + this->viewmatrix.translation(), tfeatures.colour);
             } else {
-                tmup->setupText (_text, _toffset+this->mv_offset, tfeatures.colour);
+                tmup->setupText (_text, _toffset + this->viewmatrix.translation(), tfeatures.colour);
             }
 
             this->texts.push_back (std::move(tmup));

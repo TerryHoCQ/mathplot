@@ -13,14 +13,9 @@ namespace mplot {
 
     //! A class to visualize a single vector
     template <int glver = mplot::gl::version_4_1>
-    class ConeVisual : public VisualModel<glver>
+    struct ConeVisual : public VisualModel<glver>
     {
-    public:
-        ConeVisual(const sm::vec<float> _offset)
-        {
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
-        }
+        ConeVisual (const sm::vec<float> _offset) { this->viewmatrix.translate (_offset); }
 
         //! Do the computations to initialize the vertices that will represent the Quivers.
         void initializeVertices()

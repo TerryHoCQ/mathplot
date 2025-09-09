@@ -27,11 +27,7 @@ namespace mplot {
     {
         static_assert (ndim > 0 && ndim <= 3, "1, 2 or 3 dimensions please.");
     public:
-        VectorVisual(const sm::vec<float> _offset) {
-            // Set up...
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
-        }
+        VectorVisual(const sm::vec<float> _offset) { this->viewmatrix.translate (_offset); }
 
         //! Do the computations to initialize the vertices that will represent the Quivers.
         void initializeVertices()

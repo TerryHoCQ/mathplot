@@ -48,8 +48,7 @@ namespace mplot {
     public:
         VoronoiVisual (const sm::vec<float> _offset)
         {
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
             this->zScale.setParams (1, 0);
             this->colourScale.do_autoscale = true;
             this->colourScale2.do_autoscale = true;

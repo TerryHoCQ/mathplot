@@ -72,18 +72,19 @@ namespace mplot {
                 mplot::TextFeatures tfca(this->em, 48, false, mplot::colour::black, mplot::VisualFont::DVSansItalic);
 
                 // These texts are black by default
+                sm::vec<float> mv_offset = this->viewmatrix.translation();
                 sm::vec<float> toffset = {};
-                toffset = this->mv_offset + this->x_axis * this->lengths[0];
+                toffset = mv_offset + this->x_axis * this->lengths[0];
                 toffset[0] += this->em;
                 auto vtm1 = this->makeVisualTextModel (tfca);
                 vtm1->setupText (this->x_label, toffset);
                 this->texts.push_back (std::move(vtm1));
-                toffset = this->mv_offset + this->y_axis * this->lengths[1];
+                toffset = mv_offset + this->y_axis * this->lengths[1];
                 toffset[0] += this->em;
                 auto vtm2 = this->makeVisualTextModel (tfca);
                 vtm2->setupText (this->y_label, toffset);
                 this->texts.push_back (std::move(vtm2));
-                toffset = this->mv_offset + this->z_axis * this->lengths[2];
+                toffset = mv_offset + this->z_axis * this->lengths[2];
                 toffset[0] += this->em;
                 auto vtm3 = this->makeVisualTextModel (tfca);
                 vtm3->setupText (this->z_label, toffset);

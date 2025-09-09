@@ -30,8 +30,7 @@ namespace mplot {
     public:
         TriFrameVisual(const sm::vec<float, 3> _offset)
         {
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
         }
 
         void initializeVertices()
@@ -62,7 +61,8 @@ namespace mplot {
                 sm::vec<float> v1 = (*this->dataCoords)[i];
                 unsigned int e = (i < (ncoords-1) ? i+1 : 0);
                 sm::vec<float> v2 = (*this->dataCoords)[e];
-                this->computeTube (this->mv_offset+v1, this->mv_offset+v2, clr, clr, this->radius, this->tseg);
+                sm::vec<float> mv_offset = this->viewmatrix.translation();
+                this->computeTube (mv_offset + v1, mv_offset + v2, clr, clr, this->radius, this->tseg);
             }
         }
 

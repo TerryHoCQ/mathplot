@@ -83,14 +83,12 @@ namespace mplot {
     {
         VisualModelBase()
         {
-            this->mv_offset = { 0.0f, 0.0f, 0.0f };
             this->model_scaling.setToIdentity();
         }
 
         VisualModelBase (const sm::vec<float> _mv_offset)
         {
-            this->mv_offset = _mv_offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_mv_offset);
             this->model_scaling.setToIdentity();
         }
 
@@ -281,25 +279,19 @@ namespace mplot {
         void setViewTranslation (const sm::vec<float>& v0)
         {
             this->viewmatrix.setToIdentity();
-            this->mv_offset = v0;
-            this->viewmatrix.translate (this->mv_offset);
-            this->viewmatrix.prerotate (this->mv_rotation);
+            this->viewmatrix.translate (v0);
         }
 
         //! Add a translation to the model view matrix
-        void addViewTranslation (const sm::vec<float>& v0)
-        {
-            this->mv_offset += v0;
-            this->viewmatrix.translate (v0);
-        }
+        void addViewTranslation (const sm::vec<float>& v0) { this->viewmatrix.translate (v0); }
 
         //! Set a rotation (only) into the view, but keep texts fixed
         void setViewRotationFixTexts (const sm::quaternion<float>& r)
         {
+            sm::vec<> os = this->viewmatrix.translation();
             this->viewmatrix.setToIdentity();
-            this->mv_rotation = r;
-            this->viewmatrix.translate (this->mv_offset);
-            this->viewmatrix.prerotate (this->mv_rotation);
+            this->viewmatrix.translate (os);
+            this->viewmatrix.prerotate (r);
         }
 
         virtual void setViewRotationTexts (const sm::quaternion<float>& r) = 0;
@@ -307,10 +299,10 @@ namespace mplot {
         //! Set a rotation (only) into the view
         void setViewRotation (const sm::quaternion<float>& r)
         {
+            sm::vec<> os = this->viewmatrix.translation();
             this->viewmatrix.setToIdentity();
-            this->mv_rotation = r;
-            this->viewmatrix.translate (this->mv_offset);
-            this->viewmatrix.prerotate (this->mv_rotation);
+            this->viewmatrix.translate (os);
+            this->viewmatrix.prerotate (r);
             this->setViewRotationTexts (r);
         }
 
@@ -319,7 +311,6 @@ namespace mplot {
         //! Apply a further rotation to the model view matrix
         void addViewRotation (const sm::quaternion<float>& r)
         {
-            this->mv_rotation.premultiply (r);
             this->viewmatrix.prerotate (r);
             this->addViewRotationTexts (r);
         }
@@ -327,7 +318,6 @@ namespace mplot {
         //! Apply a further rotation to the model view matrix, but keep texts fixed
         void addViewRotationFixTexts (const sm::quaternion<float>& r)
         {
-            this->mv_rotation.premultiply (r);
             this->viewmatrix.prerotate (r);
         }
 
@@ -596,9 +586,9 @@ namespace mplot {
          * model->world transformation - it's applied as a translation in
          * VisualModel::viewmatrix.
          */
-        sm::vec<float> mv_offset = { 0.0f, 0.0f, 0.0f };
+        //sm::vec<float> mv_offset = { 0.0f, 0.0f, 0.0f };
         //! Model view rotation
-        sm::quaternion<float> mv_rotation = {};
+        //sm::quaternion<float> mv_rotation = {};
 
         //! This enum contains the positions within the vbo array of the different
         //! vertex buffer objects
