@@ -1195,7 +1195,7 @@ namespace mplot {
 
                     if (sm::algo::aabb_line_intersect<float, 0> (modelbb, v1, v2)) {
                         if (options.test (visual_options::highlightCentralVM)) { (*vmi)->show_bb (true); }
-                        possible_centres.push_back (xformed_move);
+                        possible_centres.push_back (xformed_move + (*vmi)->get_bb_centre());
                     } else {
                         if (options.test (visual_options::highlightCentralVM)) { (*vmi)->show_bb (false); }
                     }

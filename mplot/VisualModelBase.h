@@ -370,6 +370,8 @@ namespace mplot {
         std::string translation_str() { return this->viewmatrix.translation().str_mat(); }
         //! And a simple getter for mv_offset
         sm::vec<float> get_mv_offset() { return this->viewmatrix.translation(); }
+        //! The centre of mass of the bounding box may not be the VisualModel's origin
+        sm::vec<float> get_bb_centre() { return this->bb.mid(); }
 
         //! Return the number of elements in this->indices
         std::size_t indices_size() { return this->indices.size(); }
