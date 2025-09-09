@@ -1161,11 +1161,11 @@ namespace mplot {
         //! Find the rotation centre
         void find_rotation_centre_about_closest_vm()
         {
-            constexpr sm::vec<> v1 = { 0.0f, 0.0f, -100.0f };
-            constexpr sm::vec<> v2 = { 0.0f, 0.0f, 100.0f };
+            constexpr sm::vec<float> v1 = { 0.0f, 0.0f, -100.0f };
+            constexpr sm::vec<float> v2 = { 0.0f, 0.0f, 100.0f };
 
             // A rotation delta in world frame about the 'screen centre'. This is a default:
-            if (this->rotation_centre == sm::vec<>{}) {
+            if (this->rotation_centre == sm::vec<float>{}) {
                 this->rotation_centre = { 0.0f, 0.0f, this->savedSceneview.translation().z() + this->scenetrans_delta.z() };
             }
 
@@ -1183,10 +1183,10 @@ namespace mplot {
             while (vmi != this->vm.end()) {
                 if ((*vmi)->flags.test (mplot::vm_bools::compute_bb) == true) {
 
-                    // Transform BB first
-                    sm::range<sm::vec<>> modelbb = (*vmi)->get_viewmatrix_modelbb();
-                    modelbb.min = (this->savedSceneview * modelbb.min).less_one_dim();
-                    modelbb.max = (this->savedSceneview * modelbb.max).less_one_dim();
+                    sm::range<sm::vec<float>> modelbb = (*vmi)->bb; // Get the VisualModel bounding box
+                    modelbb -= (*vmi)->bb.mid();                    // centre the bounding box about (VM frame's) origin
+                    sm::vec<float> tr_bb_centre = (this->savedSceneview * (*vmi)->get_viewmatrix_bb_centre()).less_one_dim();
+                    modelbb += tr_bb_centre;
 
                     if (options.test (visual_options::boundingBoxesToJson) && fout.is_open()) {
                         fout << "  \"b" << (ci + 1) << "\": [" << modelbb.min.str_comma_separated() << "],\n";
@@ -1194,14 +1194,9 @@ namespace mplot {
                         ci += 2;
                     }
 
-                    std::cout << "Compare centre line through BB with mid " << modelbb.mid() << " [[[" << modelbb << "]]]" << v1 << "-" << v2 << std::endl;
                     if (sm::algo::aabb_line_intersect<float, 0> (modelbb, v1, v2)) {
                         if (options.test (visual_options::highlightCentralVM)) { (*vmi)->show_bb (true); }
-                        // Possible centres are in the 'user frame' and assume that BB
-                        // is at modelorigin. But don't worry about that until the
-                        // modelbb in the wireframes match up
-                        std::cout << "ping\n";
-                        possible_centres.push_back (modelbb.mid());
+                        possible_centres.push_back (tr_bb_centre);
                     } else {
                         if (options.test (visual_options::highlightCentralVM)) { (*vmi)->show_bb (false); }
                     }
@@ -1230,7 +1225,7 @@ namespace mplot {
                     for (auto pc : possible_centres) {
                         if (pc[2] < 0.0f && pc[2] > this->rotation_centre[2]) { this->rotation_centre = pc; }
                     }
-                }
+                } // else could use closest?
             }
         }
 
