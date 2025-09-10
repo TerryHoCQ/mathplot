@@ -69,71 +69,46 @@ namespace mplot {
         //! Set the translation specified by \a v0 into the scene translation
         void setSceneTranslation (const sm::vec<float>& v0)
         {
-            this->sv_offset = v0;
             this->scenematrix.setToIdentity();
-            this->scenematrix.translate (this->sv_offset);
-            this->scenematrix.prerotate (this->sv_rotation);
+            this->scenematrix.translate (v0);
         }
 
         //! Set a translation (only) into the scene view matrix
-        void addSceneTranslation (const sm::vec<float>& v0)
-        {
-            this->sv_offset += v0;
-            this->scenematrix.translate (v0);
-        }
+        void addSceneTranslation (const sm::vec<float>& v0) { this->scenematrix.translate (v0); }
 
         //! Set a rotation (only) into the scene view matrix
         void setSceneRotation (const sm::quaternion<float>& r)
         {
-            this->sv_rotation = r;
+            auto _offset = this->scenematrix.translation();
             this->scenematrix.setToIdentity();
-            //std::cout << "Translate by sv_offset: "  << sv_offset << std::endl;
-            this->scenematrix.translate (this->sv_offset);
-            //std::cout << "Rotate by sv_rotn: "  << sv_rotation << std::endl;
-            this->scenematrix.prerotate (this->sv_rotation);
+            this->scenematrix.translate (_offset);
+            this->scenematrix.prerotate (r);
         }
 
         //! Add a rotation to the scene view matrix
-        void addSceneRotation (const sm::quaternion<float>& r)
-        {
-            this->sv_rotation.premultiply (r);
-            this->scenematrix.prerotate (r);
-        }
+        void addSceneRotation (const sm::quaternion<float>& r) { this->scenematrix.prerotate (r); }
 
         //! Set a translation to the model view matrix
         void setViewTranslation (const sm::vec<float>& v0)
         {
-            this->mv_offset = v0;
             this->viewmatrix.setToIdentity();
-            this->viewmatrix.translate (this->mv_offset);
-            this->viewmatrix.prerotate (this->mv_rotation);
+            this->viewmatrix.translate (v0);
         }
 
         //! Add a translation to the model view matrix
-        void addViewTranslation (const sm::vec<float>& v0)
-        {
-            this->mv_offset += v0;
-            this->viewmatrix.translate (v0);
-        }
+        void addViewTranslation (const sm::vec<float>& v0) { this->viewmatrix.translate (v0); }
 
         //! Set a rotation (only) into the model view matrix
         void setViewRotation (const sm::quaternion<float>& r)
         {
-            this->mv_rotation = r;
+            auto tr = this->viewmatrix.translation();
             this->viewmatrix.setToIdentity();
-            // Confirms that mv_offset contains the additional model offset
-            //std::cout << "VTM::setViewRotation: setting mv_offset " << mv_offset << std::endl;
-            this->viewmatrix.translate (this->mv_offset);
-            //std::cout << "VTM::setViewRotation: rotating mv_rotation " << mv_rotation << std::endl;
-            this->viewmatrix.prerotate (this->mv_rotation);
+            this->viewmatrix.translate (tr);
+            this->viewmatrix.prerotate (r);
         }
 
         //! Apply a further rotation to the model view matrix
-        void addViewRotation (const sm::quaternion<float>& r)
-        {
-            this->mv_rotation.premultiply (r);
-            this->viewmatrix.prerotate (r);
-        }
+        void addViewRotation (const sm::quaternion<float>& r) { this->viewmatrix.prerotate (r); }
 
         //! Compute the geometry for a sample text.
         virtual mplot::TextGeometry getTextGeometry (const std::string& _txt) = 0;
@@ -155,16 +130,11 @@ namespace mplot {
         {
             std::stringstream ss;
             for (auto c : txt) { ss << unicode::toUtf8 (c); }
-            ss << "--->\n";
-            ss << "mv_offset=       " << this->mv_offset << "\n"
-               << "mv_rotation=     " << this->mv_rotation << "\n"
+            ss << "--->\n"
                << "parent_rotation= " << this->parent_rotation << "\n"
-               << "sv_offset=       " << this->sv_offset << "\n"
-               << "sv_rotation=     " << this->sv_rotation << "\n"
                << "viewmatrix=\n" << this->viewmatrix << "\n"
                << "scenematrix=\n" << this->scenematrix << "\n"
                << "----------------------\n";
-
             return ss.str();
         }
 
@@ -268,24 +238,9 @@ namespace mplot {
         //! A scaling factor based on the desired width of an 'm'
         float fontscale = 1.0f; //  fontscale = tfeatures.fontsize/(float)tfeatures.fontres;
 
-        //! model-view offset within the scene. Any model-view offset of the parent
-        //! object should be incorporated into this offset. That is, if this
-        //! VisualTextModel is the letter 'x' within a CoordArrows VisualModel, then the
-        //! model-view offset here should be the CoordArrows model-view offset PLUS the
-        //! length of the CoordArrow x axis length.
-        sm::vec<float> mv_offset = { 0.0f };
-        //! The model-view rotation of this text object. mv_offset and mv_rotation are
-        //! together used to compute viewmatrix. Keep a copy so that it is easy to reset
-        //! the viewmatrix and recompute it with either a new offset or a new rotation.
-        sm::quaternion<float> mv_rotation = {};
-
         //! A rotation of the parent model
         sm::quaternion<float> parent_rotation = {};
 
-        //! Scene view offset
-        sm::vec<float> sv_offset = { 0.0f };
-        //! Scene view rotation
-        sm::quaternion<float> sv_rotation = {};
         //! The text-model-specific view matrix and a scene matrix
         sm::mat44<float> viewmatrix = {};
         //! Before, I wrote: We protect the scene matrix as updating it with the parent
