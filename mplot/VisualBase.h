@@ -12,6 +12,8 @@
 #include <string>
 #include <array>
 #include <vector>
+#include <map>
+#include <tuple>
 #include <memory>
 #include <functional>
 #include <cstddef>
@@ -72,7 +74,7 @@ namespace mplot {
         showCoordArrows,
         //! If true, then place the coordinate arrows at the origin of the scene, rather than offset.
         coordArrowsInScene,
-        //! User frame (for debug)
+        //! Show user frame of reference (for debug)
         showUserFrame,
         //! Set to true to show the title text within the scene
         showTitle,
@@ -89,8 +91,8 @@ namespace mplot {
         //! If true, write bounding boxes out to a json file /tmp/mathplot_bounding_boxes.json that
         //! can be read with the debug_boundingboxes program
         boundingBoxesToJson,
-        //! If true, then turn on the bounding box for the most central VM
-        highlightCentralVM
+        //! If true, then turn on the bounding box for the VM about which we are rotating
+        highlightRotationVM
     };
 
     //! Whether to render with perspective or orthographic (or even a cylindrical projection)
@@ -423,8 +425,9 @@ namespace mplot {
         //! If true, then place the coordinate arrows at the origin of the scene, rather than offset.
         void coordArrowsInScene (const bool val) { this->options.set (visual_options::coordArrowsInScene, val); }
 
-        //! Show the user frame?
-        void showUserFrame (const bool val) { this->options.set (visual_options::showUserFrame, val); }
+        //! Rotate about the nearest VisualModel?
+        void rotateAboutNearest (const bool val)
+        { this->options.set (mplot::visual_options::rotateAboutSceneOrigin, (val ? false : true)); }
 
         //! Set to true to show the title text within the scene
         void showTitle (const bool val) { this->options.set (visual_options::showTitle, val); }
@@ -1146,6 +1149,7 @@ namespace mplot {
             // Otherwise, find the centre of a visual model to rotate about
             constexpr sm::vec<float> v1 = { 0.0f, 0.0f, -100.0f };
             constexpr sm::vec<float> v2 = { 0.0f, 0.0f, 100.0f };
+            constexpr sm::vec<float> v2v1 = v1 - v2;
 
             // A rotation delta in world frame about the 'screen centre'. This is a default:
             if (this->rotation_centre == sm::vec<float>{}) {
@@ -1161,7 +1165,7 @@ namespace mplot {
                 if (fout.is_open()) { fout << "{\n"; }
             }
 
-            sm::vvec<sm::vec<float>> possible_centres;
+            std::multimap<float, std::tuple<sm::vec<float>, mplot::VisualModel<glver>*> > possible_centres;
             auto vmi = this->vm.begin();
             while (vmi != this->vm.end()) {
                 if ((*vmi)->flags.test (mplot::vm_bools::compute_bb) == true) {
@@ -1177,11 +1181,17 @@ namespace mplot {
                         ci += 2;
                     }
 
-                    if (sm::algo::aabb_line_intersect<float, 0> (modelbb, v1, v2)) {
-                        if (options.test (visual_options::highlightCentralVM)) { (*vmi)->show_bb (true); }
-                        possible_centres.push_back (tr_bb_centre);
-                    } else {
-                        if (options.test (visual_options::highlightCentralVM)) { (*vmi)->show_bb (false); }
+                    // Highlight central VM in any case. Really, want to highlight the selected possible centre.
+                    if (options.test (visual_options::highlightRotationVM)) { (*vmi)->show_bb (false); }
+
+                    // Find perpendicular distance from line to point pc
+                    sm::vec<float> cv = tr_bb_centre - v1;
+                    float th = v2v1.angle (cv);
+                    float pdist = cv.length() * std::sin (th);
+
+                    if (tr_bb_centre[2] < 0.0f) { // Only if in front of viewer (z must be negative)
+                        // Perp. distance as key, value is tuple of BB centre and visualmodel pointer
+                        possible_centres.insert ({ pdist, { tr_bb_centre, (*vmi).get() } });
                     }
                 }
                 ++vmi;
@@ -1192,23 +1202,10 @@ namespace mplot {
                 fout.close();
             }
 
-            // Find the possible centre closest to viewer
-            if (possible_centres.size() > 0) {
-                // Find a z-negative possible centre to start with
-                bool havestart = false;
-                for (auto pc : possible_centres) {
-                    if (pc[2] < 0.0f) {
-                        this->rotation_centre = pc;
-                        havestart = true;
-                        break;
-                    }
-                }
-                // Assuming we have a start, find another that has z < 0 (i.e. is visible) and if it's closer to viewer, use it
-                if (havestart == true) {
-                    for (auto pc : possible_centres) {
-                        if (pc[2] < 0.0f && pc[2] > this->rotation_centre[2]) { this->rotation_centre = pc; }
-                    }
-                } // else could use closest?
+            if (!possible_centres.empty()) {
+                const auto [rcentre, vmptr] = possible_centres.begin()->second;
+                this->rotation_centre = rcentre;
+                if (options.test (visual_options::highlightRotationVM)) { vmptr->show_bb (true); }
             }
         }
 
