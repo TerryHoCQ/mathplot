@@ -1400,17 +1400,18 @@ namespace mplot {
                 sm::vec<float, 4> scroll_move_y = { 0.0f, y_step, 0.0f, 1.0f };
 
                 this->scenetrans_delta[2] += scroll_move_y[1];
-                this->d_to_rotation_centre -= this->scenetrans_delta[2];
-
-                std::cout << "scroll_move_y[1] = " << scroll_move_y[1] << ", scenetrans_delta[2] is now " << this->scenetrans_delta[2]
-                          << ", d_to_rotation_centre is " << this->d_to_rotation_centre
-                          << " (zFar: " << this->zFar << ")\n";
 
                 if (this->d_to_rotation_centre > this->zFar && scroll_move_y[1] < 0.0f) {
                     // Cancel movement
                     this->scenetrans_delta[2] = 0.0f;
                     scroll_move_y[1] = 0.0f;
                 }
+
+                this->d_to_rotation_centre -= this->scenetrans_delta[2];
+
+                std::cout << "scroll_move_y[1] = " << scroll_move_y[1] << ", scenetrans_delta[2] is now " << this->scenetrans_delta[2]
+                          << ", d_to_rotation_centre is " << this->d_to_rotation_centre
+                          << " (zFar: " << this->zFar << ")\n";
 
                 // Translate scroll_move_y then add it to cyl_cam_pos here
                 sm::mat44<float> sceneview_rotn (this->sceneview.linear());
