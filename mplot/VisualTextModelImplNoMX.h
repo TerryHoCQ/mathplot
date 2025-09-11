@@ -135,28 +135,25 @@ namespace mplot {
         }
 
         //! For some reason, I can't place these setupText functions in the base class. Compiler
-        //! gets confused wtih std::string aka std::__cxx11::basic_string<char> and
+        //! gets confused with std::string aka std::__cxx11::basic_string<char> and
         //! std::__cxx11::basic_string<char32_t>
         //!{
         //! Set up a new text at a given position, with the given colour.
         void setupText (const std::string& _txt,
-                        const sm::vec<float> _mv_offset, std::array<float, 3> _clr = {0,0,0})
+                        const sm::vec<float> _offset, std::array<float, 3> _clr = {0,0,0})
         {
-            this->mv_offset = _mv_offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
             this->clr_text = _clr;
             this->setupText (_txt);
         }
 
         //! Set up a new text at a given position, with the given colour and a pre-rotation
         void setupText (const std::string& _txt,
-                        const sm::quaternion<float>& _rotation, const sm::vec<float> _mv_offset,
+                        const sm::quaternion<float>& _rotation, const sm::vec<float> _offset,
                         std::array<float, 3> _clr = {0,0,0})
         {
-            this->mv_rotation = _rotation;
-            this->viewmatrix.rotate (this->mv_rotation);
-            this->mv_offset = _mv_offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.rotate (_rotation);
+            this->viewmatrix.translate (_offset);
             this->clr_text = _clr;
             this->setupText (_txt);
         }
@@ -197,7 +194,7 @@ namespace mplot {
                 mplot::visgl::CharInfo ci = this->face->glchars[*c];
 
                 float xpos = letter_pos + ci.bearing.x() * this->fontscale;
-                float ypos = letter_y /*this->mv_offset[1]*/ - (ci.size.y() - ci.bearing.y()) * this->fontscale;
+                float ypos = letter_y - (ci.size.y() - ci.bearing.y()) * this->fontscale;
                 float w = ci.size.x() * this->fontscale;
                 float h = ci.size.y() * this->fontscale;
 
@@ -209,7 +206,7 @@ namespace mplot {
 
                 // What's the order of the vertices for the quads? It is:
                 // Bottom left, Top left, top right, bottom right.
-                std::array<float,12> tbox = { xpos,   ypos,     /*this->mv_offset[2]+*/text_epsilon,
+                std::array<float,12> tbox = { xpos,   ypos,     text_epsilon,
                                               xpos,   ypos+h,   text_epsilon,
                                               xpos+w, ypos+h,   text_epsilon,
                                               xpos+w, ypos,     text_epsilon };

@@ -12,7 +12,7 @@ namespace mplot {
     class IcosaVisual : public VisualModel<glver>
     {
     public:
-        IcosaVisual() { this->mv_offset = {0.0, 0.0, 0.0}; }
+        IcosaVisual() {}
 
         //! Initialise with offset, start and end coordinates, radius and a single colour.
         IcosaVisual(const sm::vec<float, 3> _offset,
@@ -28,9 +28,7 @@ namespace mplot {
                    const float _radius,
                    const std::array<float, 3> _col)
         {
-            // Set up...
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
             this->radius = _radius;
             for (auto& c : this->colours) { c = _col; }
         }

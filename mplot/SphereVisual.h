@@ -14,7 +14,7 @@ namespace mplot
     class SphereVisual : public VisualModel<glver>
     {
     public:
-        SphereVisual() { this->mv_offset = {0.0, 0.0, 0.0}; }
+        SphereVisual() {}
 
         //! Initialise with offset, radius and a single colour.
         SphereVisual(const sm::vec<float, 3> _offset, const float _radius, const std::array<float, 3> _col)
@@ -26,8 +26,7 @@ namespace mplot
 
         void init (const sm::vec<float, 3> _offset, const float _radius, const std::array<float, 3> _col)
         {
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
             this->radius = _radius;
             this->sphere_colour = _col;
         }

@@ -11,7 +11,7 @@ namespace mplot {
     class PolygonVisual : public VisualModel<glver>
     {
     public:
-        PolygonVisual() { this->mv_offset = {0.0, 0.0, 0.0}; }
+        PolygonVisual() {}
 
         PolygonVisual(const sm::vec<float, 3> _offset,
                       const sm::vec<float, 3> _position, const sm::vec<float, 3> _vertex,
@@ -26,10 +26,7 @@ namespace mplot {
                    const float _radius, const float _thickness,
                    const std::array<float, 3> _col, const int _n)
         {
-            // Set up...
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
-
+            this->viewmatrix.translate (_offset);
             this->position = _position;
             this->vertex = _vertex;
             this->radius = _radius;

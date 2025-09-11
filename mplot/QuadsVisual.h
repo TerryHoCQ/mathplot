@@ -25,9 +25,7 @@ namespace mplot {
                     ColourMapType _cmt,
                     const float _hue = 0.0f)
         {
-            // Set up...
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
             this->colourScale = _scale;
 
             // How to deal with quads? Each quad has a centroid. The coordinate of the

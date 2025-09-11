@@ -12,7 +12,7 @@ namespace mplot {
     class RodVisual : public VisualModel<glver>
     {
     public:
-        RodVisual() { this->mv_offset = {0.0, 0.0, 0.0}; }
+        RodVisual() {}
 
         //! Initialise with offset, start and end coordinates, radius and a single colour.
         RodVisual(const sm::vec<float, 3> _offset,
@@ -37,8 +37,7 @@ namespace mplot {
                    const std::array<float, 3> _start_col, const std::array<float, 3> _end_col)
         {
             // Set up...
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
 
             this->start_coord = _start_coord;
             this->end_coord = _end_coord;

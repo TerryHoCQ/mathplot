@@ -49,15 +49,11 @@ namespace mplot {
     class GratingVisual : public VisualModel<glver>
     {
     public:
-        GratingVisual() { this->mv_offset = {0.0, 0.0, 0.0}; }
+        GratingVisual() {}
         GratingVisual (const sm::vec<float, 3> _offset) { this->init (_offset); }
         ~GratingVisual () {}
 
-        void init (const sm::vec<float, 3> _offset)
-        {
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
-        }
+        void init (const sm::vec<float, 3> _offset) { this->viewmatrix.translate (_offset); }
 
         void draw_band (const sm::vec<float, 2>& fp1, const sm::vec<float, 2>& fq1,
                         const sm::vec<float, 2>& fp2, const sm::vec<float, 2>& fq2,
@@ -111,10 +107,11 @@ namespace mplot {
             u_alpha_perp.set_angle (sm::mathconst<float>::pi_over_2 + sm::mathconst<float>::deg2rad * this->alpha);
 
             // Corners
-            sm::vec<float, 2> top_left =  sm::vec<float, 2>{ this->mv_offset[0],             this->mv_offset[1] + dims[1] };
-            sm::vec<float, 2> bot_left =  sm::vec<float, 2>{ this->mv_offset[0],             this->mv_offset[1]           }; // or mv_offset
-            sm::vec<float, 2> top_right = sm::vec<float, 2>{ this->mv_offset[0] + dims[0],   this->mv_offset[1] + dims[1] }; // or mv_offset + dims
-            sm::vec<float, 2> bot_right = sm::vec<float, 2>{ this->mv_offset[0] + dims[0],   this->mv_offset[1]           };
+            sm::vec<float, 3> _offset = this->viewmatrix.translation();
+            sm::vec<float, 2> top_left =  sm::vec<float, 2>{ _offset[0],             _offset[1] + dims[1] };
+            sm::vec<float, 2> bot_left =  sm::vec<float, 2>{ _offset[0],             _offset[1]           };
+            sm::vec<float, 2> top_right = sm::vec<float, 2>{ _offset[0] + dims[0],   _offset[1] + dims[1] };
+            sm::vec<float, 2> bot_right = sm::vec<float, 2>{ _offset[0] + dims[0],   _offset[1]           };
 
             // Line segments of the borders. Will need these for computing line crossings. each line segment is 'pq'
             sm::vec<float, 2> bot_p = bot_left;

@@ -44,8 +44,7 @@ namespace mplot {
         //! \param _offset The offset within mplot::Visual space to place these axes
         ColourBarVisual (const sm::vec<float> _offset)
         {
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
             this->scale.do_autoscale = true;
             this->tickscale.do_autoscale = true;
             // Set default text features
@@ -189,7 +188,7 @@ namespace mplot {
                             this->width + this->ticklabelgap,
                             this->z
                         };
-                        lbl->setupText (s, lblpos+this->mv_offset, this->framecolour);
+                        lbl->setupText (s, lblpos + this->viewmatrix.translation(), this->framecolour);
                         this->texts.push_back (std::move(lbl));
                     }
                 } else {
@@ -205,7 +204,7 @@ namespace mplot {
                             static_cast<float>(this->tick_posns[i])-geom.half_height(),
                             this->z
                         };
-                        lbl->setupText (s, lblpos+this->mv_offset, this->framecolour);
+                        lbl->setupText (s, lblpos + this->viewmatrix.translation(), this->framecolour);
                         this->texts.push_back (std::move(lbl));
                     }
                 }
@@ -224,7 +223,7 @@ namespace mplot {
                             -(this->ticklabelgap + geom.height()),
                             this->z
                         };
-                        lbl->setupText (s, lblpos+this->mv_offset, this->framecolour);
+                        lbl->setupText (s, lblpos + this->viewmatrix.translation(), this->framecolour);
                         this->texts.push_back (std::move(lbl));
                     }
                 } else {
@@ -240,7 +239,7 @@ namespace mplot {
                             static_cast<float>(this->tick_posns[i])-geom.half_height(),
                             this->z
                         };
-                        lbl->setupText (s, lblpos+this->mv_offset, this->framecolour);
+                        lbl->setupText (s, lblpos + this->viewmatrix.translation(), this->framecolour);
                         this->texts.push_back (std::move(lbl));
                     }
                 }
@@ -294,7 +293,7 @@ namespace mplot {
                 }
             }
 
-            lbl->setupText (this->label, lblpos+this->mv_offset, this->framecolour);
+            lbl->setupText (this->label, lblpos + this->viewmatrix.translation(), this->framecolour);
             this->texts.push_back (std::move(lbl));
         }
 

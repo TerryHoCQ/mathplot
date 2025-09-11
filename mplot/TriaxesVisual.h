@@ -25,8 +25,7 @@ namespace mplot {
         //! \param _offset The offset within mplot::Visual space to place these axes
         TriaxesVisual (const sm::vec<float> _offset)
         {
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
             this->x_scale.do_autoscale = true;
             this->y_scale.do_autoscale = true;
             this->z_scale.do_autoscale = true;
@@ -213,7 +212,7 @@ namespace mplot {
                 this->xtick_height = geom.height() > this->xtick_height ? geom.height() : this->xtick_height;
                 this->xtick_width = geom.width() > this->xtick_width ? geom.width() : this->xtick_width;
                 sm::vec<float> lblpos = {(float)this->xtick_posns[i]-geom.half_width(), y_for_xticks-(this->ticklabelgap+geom.height()), 0};
-                lbl->setupText (s, lblpos+this->mv_offset, this->axiscolour);
+                lbl->setupText (s, lblpos + this->viewmatrix.translation(), this->axiscolour);
                 this->texts.push_back (std::move(lbl));
             }
 
@@ -224,7 +223,7 @@ namespace mplot {
                 this->ytick_height = geom.height() > this->ytick_height ? geom.height() : this->ytick_height;
                 this->ytick_width = geom.width() > this->ytick_width ? geom.width() : this->ytick_width;
                 sm::vec<float> lblpos = {x_for_yticks-this->ticklabelgap-geom.width(), (float)this->ytick_posns[i]-geom.half_height(), 0};
-                lbl->setupText (s, lblpos+this->mv_offset, this->axiscolour);
+                lbl->setupText (s, lblpos + this->viewmatrix.translation(), this->axiscolour);
                 this->texts.push_back (std::move(lbl));
             }
 
@@ -235,7 +234,7 @@ namespace mplot {
                 this->ztick_height = geom.height() > this->ztick_height ? geom.height() : this->ztick_height;
                 this->ztick_width = geom.width() > this->ztick_width ? geom.width() : this->ztick_width;
                 sm::vec<float> lblpos = {y_for_zticks-this->ticklabelgap-geom.width(), 0, (float)this->ztick_posns[i]};
-                lbl->setupText (s, lblpos+this->mv_offset, this->axiscolour);
+                lbl->setupText (s, lblpos + this->viewmatrix.translation(), this->axiscolour);
                 this->texts.push_back (std::move(lbl));
             }
         }
@@ -250,7 +249,7 @@ namespace mplot {
             sm::vec<float> lblpos;
             lblpos = {{0.5f * this->axis_ends[0] - geom.half_width(),
                        -(this->axislabelgap+this->ticklabelgap+geom.height()+this->xtick_height), 0}};
-            lbl->setupText (this->xlabel, lblpos+this->mv_offset, this->axiscolour);
+            lbl->setupText (this->xlabel, lblpos + this->viewmatrix.translation(), this->axiscolour);
             this->texts.push_back (std::move(lbl));
 
             // y axis label (have to rotate)
@@ -271,9 +270,9 @@ namespace mplot {
 
             if (geom.width() > 2*this->fontsize) {
                 sm::quaternion<float> leftrot(sm::vec<>::uz(), sm::mathconst<float>::pi_over_2);
-                lbl->setupText (this->ylabel, leftrot, lblpos+this->mv_offset, this->axiscolour);
+                lbl->setupText (this->ylabel, leftrot, lblpos + this->viewmatrix.translation(), this->axiscolour);
             } else {
-                lbl->setupText (this->ylabel, lblpos+this->mv_offset, this->axiscolour);
+                lbl->setupText (this->ylabel, lblpos + this->viewmatrix.translation(), this->axiscolour);
             }
             this->texts.push_back (std::move(lbl));
 
@@ -283,7 +282,7 @@ namespace mplot {
             lblpos = {{ -(this->axislabelgap+this->ticklabelgap+geom.width()+this->ztick_width),
                         0,
                         0.5f * this->axis_ends[1] - geom.half_height() }};
-            lbl->setupText (this->zlabel, lblpos+this->mv_offset, this->axiscolour);
+            lbl->setupText (this->zlabel, lblpos + this->viewmatrix.translation(), this->axiscolour);
             this->texts.push_back (std::move(lbl));
         }
 

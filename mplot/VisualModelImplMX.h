@@ -36,7 +36,7 @@ namespace mplot {
     struct VisualModelImpl : public mplot::VisualModelBase<glver>
     {
         VisualModelImpl() : mplot::VisualModelBase<glver>::VisualModelBase() {}
-        VisualModelImpl (const sm::vec<float>& _mv_offset) : mplot::VisualModelBase<glver>::VisualModelBase(_mv_offset) {}
+        VisualModelImpl (const sm::vec<float>& _offset) : mplot::VisualModelBase<glver>::VisualModelBase(_offset) {}
 
         //! destroy gl buffers in the deconstructor
         virtual ~VisualModelImpl() // clang gives -Wdelete-non-abstract-non-virtual-dtor without virtual
@@ -301,9 +301,9 @@ namespace mplot {
                 mplot::TextGeometry tg = tmup->getTextGeometry(_text);
                 sm::vec<float, 3> centred_locn = _toffset;
                 centred_locn[0] -= tg.half_width();
-                tmup->setupText (_text, centred_locn+this->mv_offset, tfeatures.colour);
+                tmup->setupText (_text, centred_locn + this->viewmatrix.translation(), tfeatures.colour);
             } else {
-                tmup->setupText (_text, _toffset+this->mv_offset, tfeatures.colour);
+                tmup->setupText (_text, _toffset + this->viewmatrix.translation(), tfeatures.colour);
             }
 
             this->texts.push_back (std::move(tmup));
@@ -336,9 +336,9 @@ namespace mplot {
                 mplot::TextGeometry tg = tmup->getTextGeometry(_text);
                 sm::vec<float, 3> centred_locn = _toffset;
                 centred_locn[0] -= tg.half_width();
-                tmup->setupText (_text, centred_locn+this->mv_offset, tfeatures.colour);
+                tmup->setupText (_text, centred_locn + this->viewmatrix.translation(), tfeatures.colour);
             } else {
-                tmup->setupText (_text, _toffset+this->mv_offset, tfeatures.colour);
+                tmup->setupText (_text, _toffset + this->viewmatrix.translation(), tfeatures.colour);
             }
 
             this->texts.push_back (std::move(tmup));
@@ -369,8 +369,8 @@ namespace mplot {
             auto ti = this->texts.begin();
             while (ti != this->texts.end()) {
                 // Rotate the scene. Note this won't work if the VisualModel has a
-                // mv_offset that is away from the origin.
-                (*ti)->setSceneRotation (r); // Need this to rotate about mv_offset. BUT the
+                // translation away from the origin.
+                (*ti)->setSceneRotation (r); // Need this to rotate about _offset. BUT the
                                              // translation is already there in the text,
                                              // but in the MODEL view.
 

@@ -22,8 +22,7 @@ namespace mplot
         //! \param _offset The offset within mplot::Visual space to place this model
         PolarVisual (const sm::vec<float> _offset)
         {
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
             // Set default text features
             this->tf.fontsize = 0.05f;
             this->tf.fontres = 48;
@@ -97,7 +96,7 @@ namespace mplot
                     lbl_r * std::sin (static_cast<float>(label_angles[i])) - geom.half_height(),
                     this->z
                 };
-                lbl->setupText (s, lblpos + this->mv_offset, this->tf.colour);
+                lbl->setupText (s, lblpos + this->viewmatrix.translation(), this->tf.colour);
                 this->texts.push_back (std::move(lbl));
             }
         }

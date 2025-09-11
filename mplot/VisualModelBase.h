@@ -83,14 +83,12 @@ namespace mplot {
     {
         VisualModelBase()
         {
-            this->mv_offset = { 0.0f, 0.0f, 0.0f };
             this->model_scaling.setToIdentity();
         }
 
-        VisualModelBase (const sm::vec<float> _mv_offset)
+        VisualModelBase (const sm::vec<float> _offset)
         {
-            this->mv_offset = _mv_offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
             this->model_scaling.setToIdentity();
         }
 
@@ -260,69 +258,52 @@ namespace mplot {
         void setSceneTranslation (const sm::vec<float>& v0)
         {
             this->scenematrix.setToIdentity();
-            this->sv_offset = v0;
-            this->scenematrix.translate (this->sv_offset);
-            this->scenematrix.prerotate (this->sv_rotation);
+            this->scenematrix.translate (v0);
             this->setSceneTranslationTexts (v0);
         }
 
+#ifdef __MAYBE_DEPRECATED__
         //! Set a translation (only) into the scene view matrix
-        void addSceneTranslation (const sm::vec<float>& v0)
-        {
-            this->sv_offset += v0;
-            this->scenematrix.translate (v0);
-        }
+        void addSceneTranslation (const sm::vec<float>& v0) { this->scenematrix.translate (v0); }
 
         //! Set a rotation (only) into the scene view matrix
         void setSceneRotation (const sm::quaternion<float>& r)
         {
             this->scenematrix.setToIdentity();
-            this->sv_rotation = r;
-            this->scenematrix.translate (this->sv_offset);
-            this->scenematrix.prerotate (this->sv_rotation);
+            this->scenematrix.prerotate (r);
         }
 
         //! Add a rotation to the scene view matrix
-        void addSceneRotation (const sm::quaternion<float>& r)
-        {
-            this->sv_rotation.premultiply (r);
-            this->scenematrix.prerotate (r);
-        }
+        void addSceneRotation (const sm::quaternion<float>& r) { this->scenematrix.prerotate (r); }
 
         //! Set a translation to the model view matrix
         void setViewTranslation (const sm::vec<float>& v0)
         {
             this->viewmatrix.setToIdentity();
-            this->mv_offset = v0;
-            this->viewmatrix.translate (this->mv_offset);
-            this->viewmatrix.prerotate (this->mv_rotation);
+            this->viewmatrix.translate (v0);
         }
 
         //! Add a translation to the model view matrix
-        void addViewTranslation (const sm::vec<float>& v0)
-        {
-            this->mv_offset += v0;
-            this->viewmatrix.translate (v0);
-        }
+        void addViewTranslation (const sm::vec<float>& v0) { this->viewmatrix.translate (v0); }
 
         //! Set a rotation (only) into the view, but keep texts fixed
         void setViewRotationFixTexts (const sm::quaternion<float>& r)
         {
+            sm::vec<> os = this->viewmatrix.translation();
             this->viewmatrix.setToIdentity();
-            this->mv_rotation = r;
-            this->viewmatrix.translate (this->mv_offset);
-            this->viewmatrix.prerotate (this->mv_rotation);
+            this->viewmatrix.translate (os);
+            this->viewmatrix.prerotate (r);
         }
-
+#endif
         virtual void setViewRotationTexts (const sm::quaternion<float>& r) = 0;
 
         //! Set a rotation (only) into the view
         void setViewRotation (const sm::quaternion<float>& r)
         {
+            sm::vec<> os = this->viewmatrix.translation();
             this->viewmatrix.setToIdentity();
-            this->mv_rotation = r;
-            this->viewmatrix.translate (this->mv_offset);
-            this->viewmatrix.prerotate (this->mv_rotation);
+            this->viewmatrix.translate (os);
+            this->viewmatrix.prerotate (r);
             this->setViewRotationTexts (r);
         }
 
@@ -331,7 +312,6 @@ namespace mplot {
         //! Apply a further rotation to the model view matrix
         void addViewRotation (const sm::quaternion<float>& r)
         {
-            this->mv_rotation.premultiply (r);
             this->viewmatrix.prerotate (r);
             this->addViewRotationTexts (r);
         }
@@ -339,7 +319,6 @@ namespace mplot {
         //! Apply a further rotation to the model view matrix, but keep texts fixed
         void addViewRotationFixTexts (const sm::quaternion<float>& r)
         {
-            this->mv_rotation.premultiply (r);
             this->viewmatrix.prerotate (r);
         }
 
@@ -366,9 +345,9 @@ namespace mplot {
          * Methods used by Visual::savegltf()
          */
 
-        //! Get mv_offset in a json-friendly string
+        //! Get model translation in a json-friendly string
         std::string translation_str() { return this->viewmatrix.translation().str_mat(); }
-        //! And a simple getter for mv_offset
+        //! A getter for the viewmatrix translation of the origin (would be same as viewmatrix.translation)
         sm::vec<float> get_viewmatrix_origin() const
         {
             return (this->viewmatrix * sm::vec<float, 3>{0,0,0}).less_one_dim();
@@ -591,31 +570,15 @@ namespace mplot {
         //! The model-specific view matrix. Used to transform the pose of the model in the scene.
         sm::mat44<float> viewmatrix = {};
         /*!
-         * The model-specific scene view matrix. Each VisualModel has a copy of the
-         * scenematrix. It's set in Visual::render. It would be possible to use the parent
-         * relationship (or a callback) to obtain the scenematrix from the parent. The actual
-         * scenematrix used depends on whether the VisualModel is 'twodimensional' or not, but both
-         * are available from the parent Visual.
+         * The scene view matrix. Each VisualModel has a copy of the scenematrix. It's
+         * set in Visual::render. It would be possible to use the parent relationship
+         * (or a callback) to obtain the scenematrix from the parent. The actual
+         * scenematrix used depends on whether the VisualModel is 'twodimensional' or
+         * not, but both are available from the parent Visual.
          */
         sm::mat44<float> scenematrix = {};
         //! An additional scaling applied to viewmatrix to scale the size of the model [see render()]
         sm::mat44<float> model_scaling = {};
-
-        /*!
-         * The spatial offset of this VisualModel within the mplot::Visual 'scene
-         * view'. Note that this is not incorporated into the computation of the
-         * vertices, but is instead applied when the object is rendered as part of the
-         * model->world transformation - it's applied as a translation in
-         * VisualModel::viewmatrix.
-         */
-        sm::vec<float> mv_offset = { 0.0f, 0.0f, 0.0f };
-        //! Model view rotation
-        sm::quaternion<float> mv_rotation = {};
-
-        //! Scene view offset
-        sm::vec<float> sv_offset = { 0.0f, 0.0f, 0.0f };
-        //! Scene view rotation
-        sm::quaternion<float> sv_rotation = {};
 
         //! This enum contains the positions within the vbo array of the different
         //! vertex buffer objects

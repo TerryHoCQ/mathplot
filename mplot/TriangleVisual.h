@@ -11,7 +11,7 @@ namespace mplot {
     class TriangleVisual : public VisualModel<glver>
     {
     public:
-        TriangleVisual() { this->mv_offset = {0.0, 0.0, 0.0}; }
+        TriangleVisual() {}
 
         //! Initialise with offset, three coordinates and a single colour.
         TriangleVisual(const sm::vec<float, 3> _offset,
@@ -26,8 +26,7 @@ namespace mplot {
                    const std::array<float, 3> _col)
         {
             // Set up...
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
             this->coord1 = _coord1;
             this->coord2 = _coord2;
             this->coord3 = _coord3;
