@@ -254,7 +254,6 @@ namespace mplot {
             this->setSceneTranslationTexts (v0);
         }
 
-#ifdef __MAYBE_DEPRECATED__
         //! Set a translation (only) into the scene view matrix
         void addSceneTranslation (const sm::vec<float>& v0) { this->scenematrix.translate (v0); }
 
@@ -286,7 +285,7 @@ namespace mplot {
             this->viewmatrix.translate (os);
             this->viewmatrix.prerotate (r);
         }
-#endif
+
         virtual void setViewRotationTexts (const sm::quaternion<float>& r) = 0;
 
         //! Set a rotation (only) into the view
