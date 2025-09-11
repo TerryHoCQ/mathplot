@@ -808,13 +808,13 @@ namespace mplot {
          */
 
         //! Current cursor position
-        sm::vec<float,2> cursorpos = { 0.0f, 0.0f };
+        sm::vec<float,2> cursorpos = {};
 
         //! The default z position for VisualModels should be 'away from the screen' (negative) so we can see them!
         constexpr static float zDefault = -5.0f;
 
         //! A delta scene translations
-        sm::vec<float, 3> scenetrans_delta = { 0.0f, 0.0f, 0.0f };
+        sm::vec<float, 3> scenetrans_delta = {};
 
         //! Default for scene translation. This is a scene position that can be reverted to, to
         //! 'reset the view'. This is copied into sceneview when user presses Ctrl-a.
@@ -824,7 +824,7 @@ namespace mplot {
         float text_z = -1.0f;
 
         //! Screen coordinates of the position of the last mouse press
-        sm::vec<float, 2> mousePressPosition = { 0.0f, 0.0f };
+        sm::vec<float, 2> mousePressPosition = {};
 
         //! Add additional rotation to the scene
         sm::quaternion<float> rotation_delta;
