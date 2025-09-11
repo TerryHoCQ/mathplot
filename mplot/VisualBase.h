@@ -1134,7 +1134,7 @@ namespace mplot {
             this->sceneview.prerotate (rotnQuat);
         }
 
-        //! Find the rotation centre
+        //! Find the rotation centre; either the scene origin or the centre of a perceptually nearby VM
         void find_rotation_centre()
         {
             // When rotating about scene origin, find translation of scene centre from screen centre
@@ -1332,7 +1332,6 @@ namespace mplot {
                 this->rotation_delta.reset();
             }
 
-            // Find the rotation centre
             this->find_rotation_centre();
 
             if (button == mplot::mousebutton::left) { // Primary button means rotate
