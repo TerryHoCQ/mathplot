@@ -728,9 +728,6 @@ namespace mplot {
         {
             if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
                 // Calculate model view transformation - transforming from "model space" to "worldspace".
-                if (this->options.test (visual_options::rotateAboutSceneOrigin) == true) {
-                    this->rotation_centre = this->savedSceneview.translation();
-                }
                 this->computeSceneview_about_rotation_centre();
             } // else don't change sceneview
 
@@ -1138,8 +1135,15 @@ namespace mplot {
         }
 
         //! Find the rotation centre
-        void find_rotation_centre_about_closest_vm()
+        void find_rotation_centre()
         {
+            // When rotating about scene origin, find translation of scene centre from screen centre
+            if (this->options.test (visual_options::rotateAboutSceneOrigin) == true) {
+                this->rotation_centre = this->savedSceneview.translation();
+                return;
+            }
+
+            // Otherwise, find the centre of a visual model to rotate about
             constexpr sm::vec<float> v1 = { 0.0f, 0.0f, -100.0f };
             constexpr sm::vec<float> v2 = { 0.0f, 0.0f, 100.0f };
 
@@ -1329,9 +1333,7 @@ namespace mplot {
             }
 
             // Find the rotation centre
-            if (this->options.test (visual_options::rotateAboutSceneOrigin) == false) {
-                this->find_rotation_centre_about_closest_vm();
-            }
+            this->find_rotation_centre();
 
             if (button == mplot::mousebutton::left) { // Primary button means rotate
                 this->state.set (visual_state::rotateModMode, ((mods & keymod::control) ? true : false));
