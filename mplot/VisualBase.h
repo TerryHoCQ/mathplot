@@ -439,7 +439,7 @@ namespace mplot {
         void renderSwapsBuffers (const bool val) {  this->options.set (visual_options::renderSwapsBuffers, val); }
 
         //! How big should the steps in scene translation be when scrolling?
-        float scenetrans_stepsize = 0.1f;
+        float scenetrans_stepsize = 0.01f;
 
         //! If you set this to true, then the mouse movements won't change scenetrans or rotation.
         void sceneLocked (const bool val) { this->state.set (visual_state::sceneLocked, val); }
@@ -789,7 +789,7 @@ namespace mplot {
         int window_h = 480;
 
         //! The title for the Visual. Used in window title and if saving out 3D model or png image.
-        std::string title = "mplot::Visual";
+        std::string title = "mathplot";
 
         //! The user's 'selected visual model'. For model specific changes to alpha and possibly colour
         unsigned int selectedVisualModel = 0u;
@@ -835,6 +835,9 @@ namespace mplot {
         //! A coordinate in the scene about which to perform a mouse-driven rotation. May be set to
         //! the centre of the closest VisualModel object.
         sm::vec<float, 3> rotation_centre = {};
+
+        // Distance to the 'rotation centre'
+        float d_to_rotation_centre = 5.0f;
 
         //! The projection matrix is a member of this class. Value is set during setPerspective() or setOrthographic()
         sm::mat44<float> projection;
@@ -1170,12 +1173,12 @@ namespace mplot {
             while (vmi != this->vm.end()) {
                 if ((*vmi)->flags.test (mplot::vm_bools::compute_bb) == true) {
 
-                    sm::range<sm::vec<float>> modelbb = (*vmi)->bb; // Get the VisualModel bounding box
-                    modelbb -= (*vmi)->bb.mid();                    // centre the bounding box about (VM frame's) origin
                     sm::vec<float> tr_bb_centre = (this->savedSceneview * (*vmi)->get_viewmatrix_bb_centre()).less_one_dim();
-                    modelbb += tr_bb_centre;
 
                     if (options.test (visual_options::boundingBoxesToJson) && fout.is_open()) {
+                        sm::range<sm::vec<float>> modelbb = (*vmi)->bb; // Get the VisualModel bounding box
+                        modelbb -= (*vmi)->bb.mid();                    // centre the bounding box about (VM frame's) origin
+                        modelbb += tr_bb_centre;
                         fout << "  \"b" << (ci + 1) << "\": [" << modelbb.min.str_comma_separated() << "],\n";
                         fout << "  \"b" << (ci + 2) << "\": [" << modelbb.max.str_comma_separated() << "],\n";
                         ci += 2;
@@ -1186,8 +1189,7 @@ namespace mplot {
 
                     // Find perpendicular distance from line to point pc
                     sm::vec<float> cv = tr_bb_centre - v1;
-                    float th = v2v1.angle (cv);
-                    float pdist = cv.length() * std::sin (th);
+                    float pdist = cv.length() * std::sin (v2v1.angle (cv));
 
                     if (tr_bb_centre[2] < 0.0f) { // Only if in front of viewer (z must be negative)
                         // Perp. distance as key, value is tuple of BB centre and visualmodel pointer
@@ -1205,8 +1207,10 @@ namespace mplot {
             if (!possible_centres.empty()) {
                 const auto [rcentre, vmptr] = possible_centres.begin()->second;
                 this->rotation_centre = rcentre;
+                this->d_to_rotation_centre = this->rotation_centre.length();
+                std::cout << "d_to_rotation_centre; " << this->d_to_rotation_centre << std::endl;
                 if (options.test (visual_options::highlightRotationVM)) { vmptr->show_bb (true); }
-            }
+            } // else don't change rotation_centre
         }
 
         virtual bool cursor_position_callback (double x, double y)
@@ -1390,9 +1394,24 @@ namespace mplot {
                 this->cyl_cam_pos[0] += xoffset * this->scenetrans_stepsize;
 
                 // yoffset does the 'in-out zooming'
+
                 // How to make scenetrans_stepsize adaptive to the scale of the environment and change when close to objects?
-                sm::vec<float, 4> scroll_move_y = { 0.0f, static_cast<float>(yoffset) * this->scenetrans_stepsize, 0.0f, 1.0f };
+                float y_step = static_cast<float>(yoffset) * this->scenetrans_stepsize* this->d_to_rotation_centre;
+                sm::vec<float, 4> scroll_move_y = { 0.0f, y_step, 0.0f, 1.0f };
+
                 this->scenetrans_delta[2] += scroll_move_y[1];
+                this->d_to_rotation_centre -= this->scenetrans_delta[2];
+
+                std::cout << "scroll_move_y[1] = " << scroll_move_y[1] << ", scenetrans_delta[2] is now " << this->scenetrans_delta[2]
+                          << ", d_to_rotation_centre is " << this->d_to_rotation_centre
+                          << " (zFar: " << this->zFar << ")\n";
+
+                if (this->d_to_rotation_centre > this->zFar && scroll_move_y[1] < 0.0f) {
+                    // Cancel movement
+                    this->scenetrans_delta[2] = 0.0f;
+                    scroll_move_y[1] = 0.0f;
+                }
+
                 // Translate scroll_move_y then add it to cyl_cam_pos here
                 sm::mat44<float> sceneview_rotn (this->sceneview.linear());
                 this->cyl_cam_pos += sceneview_rotn * scroll_move_y;
