@@ -492,17 +492,6 @@ namespace mplot {
         GLuint idx = 0u;
         GLuint idx_bb = 0u;
 
-        //! Set scaling in all dimensions
-        void setSizeScale (const float scl)
-        {
-            throw std::runtime_error ("VisualModelBase::setSizeScale(float): implement as transform on viewmatrix");
-        }
-        //! Set scaling in xy only
-        void setSizeScale (const float xscl, const float yscl)
-        {
-            throw std::runtime_error ("VisualModelBase::setSizeScale(float, float): implement as transform on viewmatrix");
-        }
-
         /*!
          * A function that will be runtime defined to get_shaderprogs from a pointer to
          * Visual (saving a boilerplate argument and avoiding that killer circular
