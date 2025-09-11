@@ -81,16 +81,8 @@ namespace mplot {
     template <int glver = mplot::gl::version_4_1>
     struct VisualModelBase
     {
-        VisualModelBase()
-        {
-            this->model_scaling.setToIdentity();
-        }
-
-        VisualModelBase (const sm::vec<float> _offset)
-        {
-            this->viewmatrix.translate (_offset);
-            this->model_scaling.setToIdentity();
-        }
+        VisualModelBase() {}
+        VisualModelBase (const sm::vec<float> _offset) { this->viewmatrix.translate (_offset); }
 
         /*!
          * Set up the passed-in VisualTextModel with functions that need access to the parent Visual attributes.
@@ -503,17 +495,12 @@ namespace mplot {
         //! Set scaling in all dimensions
         void setSizeScale (const float scl)
         {
-            this->model_scaling.setToIdentity();
-            this->model_scaling[0] = scl;
-            this->model_scaling[5] = scl;
-            this->model_scaling[10] = scl;
+            throw std::runtime_error ("VisualModelBase::setSizeScale(float): implement as transform on viewmatrix");
         }
         //! Set scaling in xy only
         void setSizeScale (const float xscl, const float yscl)
         {
-            this->model_scaling.setToIdentity();
-            this->model_scaling[0] = xscl;
-            this->model_scaling[5] = yscl;
+            throw std::runtime_error ("VisualModelBase::setSizeScale(float, float): implement as transform on viewmatrix");
         }
 
         /*!
@@ -570,18 +557,14 @@ namespace mplot {
         //! The model-specific view matrix. Used to transform the pose of the model in the scene.
         sm::mat44<float> viewmatrix = {};
         /*!
-         * The scene view matrix. Each VisualModel has a copy of the scenematrix. It's
-         * set in Visual::render. It would be possible to use the parent relationship
-         * (or a callback) to obtain the scenematrix from the parent. The actual
-         * scenematrix used depends on whether the VisualModel is 'twodimensional' or
-         * not, but both are available from the parent Visual.
+         * The scene view matrix. Each VisualModel has a copy of the scenematrix. It's set in
+         * Visual::render. Different VisualModels may have different scenematrices (for example, the
+         * CoordArrows has a different scenematrix from other VisualModels, and models marked
+         * 'twodimensional' also have a different scenematrix).
          */
         sm::mat44<float> scenematrix = {};
-        //! An additional scaling applied to viewmatrix to scale the size of the model [see render()]
-        sm::mat44<float> model_scaling = {};
 
-        //! This enum contains the positions within the vbo array of the different
-        //! vertex buffer objects
+        //! Contains the positions within the vbo array of the different vertex buffer objects
         enum VBOPos { posnVBO, normVBO, colVBO, idxVBO, numVBO };
 
         /*
