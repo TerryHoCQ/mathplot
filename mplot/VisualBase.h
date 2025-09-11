@@ -703,28 +703,8 @@ namespace mplot {
             this->invproj = this->projection.inverse();
         }
 
-        // Compute the sceneview matrix, always rotating about scene origin
-        void computeSceneview_about_scene_origin()
-        {
-            sm::mat44<float> sv_tr;
-            sm::mat44<float> sv_rot;
-            if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
-                sv_tr.translate (this->scenetrans_delta);
-                // A rotation delta in world frame about the 'screen centre'
-                sv_rot.pretranslate (this->savedSceneview.translation());
-                sv_rot.rotate (this->rotation_delta);
-                sv_rot.pretranslate (-this->savedSceneview.translation());
-            } else {
-                // Only rotate in cyl view
-                sv_rot.rotate (this->rotation_delta);
-            }
-
-            this->sceneview = sv_tr * this->savedSceneview * sv_rot;
-            this->sceneview_tr = sv_tr * this->savedSceneview_tr;
-        }
-
-        // Rotate about screen centre (really most central and closest VisualModel)
-        void computeSceneview_about_central_vm()
+        // Rotate about the point this->rotation_centre. Subroutine for computeSceneview.
+        void computeSceneview_about_rotation_centre()
         {
             sm::mat44<float> sv_tr;
             sm::mat44<float> sv_rot;
@@ -748,11 +728,10 @@ namespace mplot {
         {
             if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
                 // Calculate model view transformation - transforming from "model space" to "worldspace".
-                if (this->options.test (visual_options::rotateAboutSceneOrigin) == false) {
-                    this->computeSceneview_about_central_vm();
-                } else {
-                    this->computeSceneview_about_scene_origin();
+                if (this->options.test (visual_options::rotateAboutSceneOrigin) == true) {
+                    this->rotation_centre = this->savedSceneview.translation();
                 }
+                this->computeSceneview_about_rotation_centre();
             } // else don't change sceneview
 
             if (this->state.test (visual_state::scrolling)) {
