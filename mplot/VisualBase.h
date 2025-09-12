@@ -92,7 +92,9 @@ namespace mplot {
         //! can be read with the debug_boundingboxes program
         boundingBoxesToJson,
         //! If true, then turn on the bounding box for the VM about which we are rotating
-        highlightRotationVM
+        highlightRotationVM,
+        //! If true, rotate about axis in the style of Blender
+        rotateLikeBlender
     };
 
     //! Whether to render with perspective or orthographic (or even a cylindrical projection)
@@ -397,6 +399,8 @@ namespace mplot {
             _options.set (visual_options::renderSwapsBuffers);
             // For now, default to rotating about scene origin, as we ever did (Ctrl-k to change)
             _options.set (visual_options::rotateAboutSceneOrigin);
+            // For debugging: Actually plays badly with rotateAboutSceneOrigin
+            _options.set (visual_options::rotateLikeBlender);
 
             return _options;
         }
@@ -418,6 +422,9 @@ namespace mplot {
         float zNear = 0.001f;
         float zFar = 300.0f;
         float fov = 30.0f;
+
+        //! Which was is up in the scene? In OpenGL it's usually y, but may be changed to uz in some cases
+        sm::vec<float> up_axis = sm::vec<float>::uy();
 
         //! Setter for visual_options::showCoordArrows
         void showCoordArrows (const bool val) { this->options.set (visual_options::showCoordArrows, val); }
@@ -1291,15 +1298,32 @@ namespace mplot {
                 }
                 mouseMoveWorld *= mm_gain;
 
-                // Now transform the rotation axis due to the scene orientation (the saved one)
-                if (this->options.test (visual_options::rotateAboutSceneOrigin) == false) {
-                    // For 'rotate about model', we use the unmodified mouseMoveWorld as the rotation axis
+                if (this->options.test (visual_options::rotateLikeBlender) == false) {
+
+                    // Now transform the rotation axis due to the scene orientation (the saved one)
+                    if (this->options.test (visual_options::rotateAboutSceneOrigin) == false) {
+                        // For 'rotate about model', we use the unmodified mouseMoveWorld as the rotation axis
+                    } else {
+                        // For 'rotate about scene origin', transform the rotation axis due to the saved scene orientation
+                        mouseMoveWorld = this->savedSceneview.rotation().invert() * mouseMoveWorld;
+                    }
+                    // rotation_delta is the mouse-commanded rotation in the scene frame of reference
+                    this->rotation_delta.set_rotation (mouseMoveWorld, mouseMoveWorld.length() * -sm::mathconst<float>::deg2rad);
+
                 } else {
-                    // For 'rotate about scene origin', transform the rotation axis due to the saved scene orientation
-                    mouseMoveWorld = this->savedSceneview.rotation().invert() * mouseMoveWorld;
+
+                    if (this->state.test (visual_state::rotateModMode)) {
+                        // Do the missing axis somehow
+                        [[maybe_unused]] sm::quaternion<float> r2 (sm::vec<>::ux(), mouseMoveWorld[2] * -sm::mathconst<float>::deg2rad);
+                        this->rotation_delta = r2;
+                    } else {
+                        // For now, rotate about the scene up axis
+                        sm::vec<> mod_up = this->savedSceneview.rotation() * this->up_axis;
+                        sm::quaternion<float> r1 (mod_up, mouseMoveWorld[1] * -sm::mathconst<float>::deg2rad);
+                        sm::quaternion<float> r2 (sm::vec<>::ux(), mouseMoveWorld[0] * -sm::mathconst<float>::deg2rad);
+                        this->rotation_delta = r2 * r1;
+                    }
                 }
-                // rotation_delta is the mouse-commanded rotation in the scene frame of reference
-                this->rotation_delta.set_rotation (mouseMoveWorld, mouseMoveWorld.length() * -sm::mathconst<float>::deg2rad);
 
                 needs_render = true;
 
