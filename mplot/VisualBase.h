@@ -447,6 +447,9 @@ namespace mplot {
         //! Show bounding boxes?
         void showBoundingBoxes (const bool val) { this->options.set (visual_options::showBoundingBoxes, val); }
 
+        //! Highlight (with a bounding box) the VisualModel being used for rotation?
+        void highlightRotationVM (const bool val) { this->options.set (visual_options::highlightRotationVM, val); }
+
         //! Can change this to orthographic
         perspective_type ptype = perspective_type::perspective;
 
