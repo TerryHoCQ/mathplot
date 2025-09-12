@@ -864,7 +864,7 @@ namespace mplot {
         //! the centre of the closest VisualModel object.
         sm::vec<float, 3> rotation_centre = {};
 
-        // Distance to the 'rotation centre'
+        // Distance to the 'rotation centre'. Used to scale the effect of the scroll wheel
         float d_to_rotation_centre = 5.0f;
 
         //! The projection matrix is a member of this class. Value is set during setPerspective() or setOrthographic()
@@ -1199,7 +1199,8 @@ namespace mplot {
             std::multimap<float, std::tuple<sm::vec<float>, mplot::VisualModel<glver>*> > possible_centres;
             auto vmi = this->vm.begin();
             while (vmi != this->vm.end()) {
-                if ((*vmi)->flags.test (mplot::vm_bools::compute_bb) == true) {
+
+                if ((*vmi)->flags.test (mplot::vm_bools::compute_bb) && !(*vmi)->flags.test (mplot::vm_bools::twodimensional)) {
 
                     sm::vec<float> tr_bb_centre = (this->savedSceneview * (*vmi)->get_viewmatrix_bb_centre()).less_one_dim();
 
@@ -1236,7 +1237,6 @@ namespace mplot {
                 const auto [rcentre, vmptr] = possible_centres.begin()->second;
                 this->rotation_centre = rcentre;
                 this->d_to_rotation_centre = this->rotation_centre.length();
-                std::cout << "d_to_rotation_centre; " << this->d_to_rotation_centre << std::endl;
                 if (options.test (visual_options::highlightRotationVM)) { vmptr->show_bb (true); }
             } // else don't change rotation_centre
         }
@@ -1250,7 +1250,10 @@ namespace mplot {
 
             bool needs_render = false;
 
-            // This is "rotate the scene" model. Will need "rotate one visual" mode.
+            // Mouse-movement gain
+            constexpr float mm_gain = 160.0f;
+
+            // This is "rotate the scene" (and not "rotate one VisualModel")
             if (this->state.test (visual_state::rotateMode)) {
                 // Convert mousepress/cursor positions (in pixels) to the range -1 -> 1:
                 sm::vec<float, 2> p0_coord = this->mousePressPosition;
@@ -1267,7 +1270,7 @@ namespace mplot {
                 sm::vec<float, 4> pp = this->projection * point;
                 float coord_z = pp[2] / pp[3]; // divide by pp[3] is divide by/normalise by 'w'.
 
-                // Construct two points for the start and end of the mouse movement
+                // p0_coord/p1_coord in range -1 to 1, with a z value of 1.
                 sm::vec<float, 4> p0 = { p0_coord[0], p0_coord[1], coord_z, 1.0f };
                 sm::vec<float, 4> p1 = { p1_coord[0], p1_coord[1], coord_z, 1.0f };
 
@@ -1281,11 +1284,12 @@ namespace mplot {
                 // in the viewer's frame of reference
                 if (this->state.test (visual_state::rotateModMode)) {
                     // Sort of "rotate the page" mode.
-                    mouseMoveWorld[2] = -((v1[1] / v1[3]) - (v0[1] / v0[3])) + ((v1[0] / v1[3]) - (v0[0] / v0[3]));
+                    mouseMoveWorld[2] = (-(v1[1] - v0[1]) + (v1[0] - v0[0]));
                 } else {
-                    mouseMoveWorld[1] = -((v1[0] / v1[3]) - (v0[0] / v0[3]));
-                    mouseMoveWorld[0] = -((v1[1] / v1[3]) - (v0[1] / v0[3]));
+                    mouseMoveWorld[1] = -(v1[0] - v0[0]);
+                    mouseMoveWorld[0] = -(v1[1] - v0[1]);
                 }
+                mouseMoveWorld *= mm_gain;
 
                 // Now transform the rotation axis due to the scene orientation (the saved one)
                 if (this->options.test (visual_options::rotateAboutSceneOrigin) == false) {
@@ -1295,7 +1299,7 @@ namespace mplot {
                     mouseMoveWorld = this->savedSceneview.rotation().invert() * mouseMoveWorld;
                 }
                 // rotation_delta is the mouse-commanded rotation in the scene frame of reference
-                this->rotation_delta.set_rotation (mouseMoveWorld, mouseMoveWorld.length() * -40.0f * sm::mathconst<float>::deg2rad);
+                this->rotation_delta.set_rotation (mouseMoveWorld, mouseMoveWorld.length() * -sm::mathconst<float>::deg2rad);
 
                 needs_render = true;
 
@@ -1424,7 +1428,7 @@ namespace mplot {
                 // yoffset does the 'in-out zooming'
 
                 // How to make scenetrans_stepsize adaptive to the scale of the environment and change when close to objects?
-                float y_step = static_cast<float>(yoffset) * this->scenetrans_stepsize* this->d_to_rotation_centre;
+                float y_step = static_cast<float>(yoffset) * this->scenetrans_stepsize * this->d_to_rotation_centre;
                 sm::vec<float, 4> scroll_move_y = { 0.0f, y_step, 0.0f, 1.0f };
 
                 this->scenetrans_delta[2] += scroll_move_y[1];
@@ -1437,9 +1441,9 @@ namespace mplot {
 
                 this->d_to_rotation_centre -= this->scenetrans_delta[2];
 
-                std::cout << "scroll_move_y[1] = " << scroll_move_y[1] << ", scenetrans_delta[2] is now " << this->scenetrans_delta[2]
-                          << ", d_to_rotation_centre is " << this->d_to_rotation_centre
-                          << " (zFar: " << this->zFar << ")\n";
+                //std::cout << "scroll_move_y[1] = " << scroll_move_y[1] << ", scenetrans_delta[2] is now " << this->scenetrans_delta[2]
+                //          << ", d_to_rotation_centre is " << this->d_to_rotation_centre
+                //          << " (zFar: " << this->zFar << ")\n";
 
                 // Translate scroll_move_y then add it to cyl_cam_pos here
                 sm::mat44<float> sceneview_rotn (this->sceneview.linear());
