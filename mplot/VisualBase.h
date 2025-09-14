@@ -718,27 +718,6 @@ namespace mplot {
             this->invproj = this->projection.inverse();
         }
 
-        // Compute the sceneview matrix, always rotating about scene origin.  Looks *almost* the
-        // same as computeSceneview_about_rotation_centre but see order of matrix operations at end.
-        void computeSceneview_about_scene_origin()
-        {
-            sm::mat44<float> sv_tr;
-            sm::mat44<float> sv_rot;
-            if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
-                sv_tr.translate (this->scenetrans_delta);
-
-                sv_rot.pretranslate (this->savedSceneview.translation());
-                sv_rot.rotate (this->rotation_delta);
-                sv_rot.pretranslate (-this->savedSceneview.translation());
-            } else {
-                // Only rotate in cyl view
-                sv_rot.rotate (this->rotation_delta);
-            }
-
-            this->sceneview = sv_tr * this->savedSceneview * sv_rot;
-            this->sceneview_tr = sv_tr * this->savedSceneview_tr;
-        }
-
         // Rotate about the point this->rotation_centre. Subroutine for computeSceneview.
         void computeSceneview_about_rotation_centre()
         {
