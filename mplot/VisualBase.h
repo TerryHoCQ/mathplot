@@ -399,7 +399,7 @@ namespace mplot {
             _options.set (visual_options::renderSwapsBuffers);
             // For now, default to rotating about scene origin, as we ever did (Ctrl-k to change)
             _options.set (visual_options::rotateAboutSceneOrigin);
-            // For debugging: Actually plays badly with rotateAboutSceneOrigin
+
             _options.set (visual_options::rotateLikeBlender);
 
             return _options;
@@ -423,8 +423,10 @@ namespace mplot {
         float zFar = 300.0f;
         float fov = 30.0f;
 
-        //! Which was is up in the scene? In OpenGL it's usually y, but may be changed to uz in some cases
-        sm::vec<float> up_axis = sm::vec<float>::uy();
+        //! Which was is up in the scene? In OpenGL it's usually y, but may be changed to z in some cases
+        sm::vec<float> scene_up = sm::vec<float>::uy();
+        //! Which way goes to the 'right' across the screen? Usually x
+        sm::vec<float> scene_right = sm::vec<float>::ux();
 
         //! Setter for visual_options::showCoordArrows
         void showCoordArrows (const bool val) { this->options.set (visual_options::showCoordArrows, val); }
@@ -724,7 +726,7 @@ namespace mplot {
             sm::mat44<float> sv_rot;
             if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
                 sv_tr.translate (this->scenetrans_delta);
-                // A rotation delta in world frame about the 'screen centre'
+
                 sv_rot.pretranslate (this->savedSceneview.translation());
                 sv_rot.rotate (this->rotation_delta);
                 sv_rot.pretranslate (-this->savedSceneview.translation());
@@ -762,11 +764,7 @@ namespace mplot {
         {
             if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
                 // Calculate model view transformation - transforming from "model space" to "worldspace".
-                if (this->options.test (visual_options::rotateAboutSceneOrigin) == false) {
-                    this->computeSceneview_about_rotation_centre();
-                } else {
-                    this->computeSceneview_about_scene_origin();
-                }
+                this->computeSceneview_about_rotation_centre();
             } // else don't change sceneview
 
             if (this->state.test (visual_state::scrolling)) {
@@ -938,7 +936,7 @@ namespace mplot {
                           << "Ctrl-o: Reduce field of view\n"
                           << "Ctrl-p: Increase field of view\n"
                           << "Ctrl-y: Cycle perspective\n"
-                          << "Ctrl-k: Toggle rotate about screen centre or scene origin\n"
+                          << "Ctrl-k: Toggle rotate about central model or scene origin\n"
                           << "Ctrl-z: Show the current scenetrans/rotation and save to /tmp/Visual.json\n"
                           << "Ctrl-u: Reduce zNear cutoff plane\n"
                           << "Ctrl-i: Increase zNear cutoff plane\n"
@@ -1105,7 +1103,7 @@ namespace mplot {
             if (_key == key::k && (action == keyaction::press || action == keyaction::repeat) && (mods & keymod::control)) {
                 this->options.flip (visual_options::rotateAboutSceneOrigin);
                 std::cout << "Rotating about "
-                          << (this->options.test (visual_options::rotateAboutSceneOrigin) ? "scene origin" : "screen centre")
+                          << (this->options.test (visual_options::rotateAboutSceneOrigin) ? "scene origin" : "central model")
                           << std::endl;
             }
 
@@ -1163,9 +1161,36 @@ namespace mplot {
                 needs_render = true;
             }
 
+            if (_key == key::d && (mods & keymod::control) && action == keyaction::press) {
+                this->switch_scene_axes();
+            }
+
+            if (_key == key::b && (mods & keymod::control) && action == keyaction::press) {
+                this->options.flip (visual_options::rotateLikeBlender);
+                std::cout << "Rotating like "
+                          << (this->options.test (visual_options::rotateLikeBlender) ? "Blender" : "original")
+                          << std::endl;
+            }
+
             this->key_callback_extra (_key, scancode, action, mods);
 
             return needs_render;
+        }
+
+        // Switch between 'z' up and 'y' up
+        void switch_scene_axes()
+        {
+            if (this->scene_up == sm::vec<>::uy()) {
+                std::cout << "Changing 'scene up' to uz\n";
+                this->scene_up = sm::vec<>::uz();
+                this->scene_right = sm::vec<>::ux();
+            } else if (this->scene_up == sm::vec<>::uz()) {
+                std::cout << "Changing 'scene up' to uy\n";
+                this->scene_up = sm::vec<>::uy();
+                this->scene_right = sm::vec<>::ux();
+            } else {
+                std::cout << "Not changing user-specified 'scene up' from " << this->scene_up << "\n";
+            }
         }
 
         //! Rotate the scene about axis by angle (angle in radians)
@@ -1298,31 +1323,22 @@ namespace mplot {
                 }
                 mouseMoveWorld *= mm_gain;
 
-                if (this->options.test (visual_options::rotateLikeBlender) == false) {
-
-                    // Now transform the rotation axis due to the scene orientation (the saved one)
-                    if (this->options.test (visual_options::rotateAboutSceneOrigin) == false) {
-                        // For 'rotate about model', we use the unmodified mouseMoveWorld as the rotation axis
-                    } else {
-                        // For 'rotate about scene origin', transform the rotation axis due to the saved scene orientation
-                        mouseMoveWorld = this->savedSceneview.rotation().invert() * mouseMoveWorld;
-                    }
-                    // rotation_delta is the mouse-commanded rotation in the scene frame of reference
-                    this->rotation_delta.set_rotation (mouseMoveWorld, mouseMoveWorld.length() * -sm::mathconst<float>::deg2rad);
-
-                } else {
+                if (this->options.test (visual_options::rotateLikeBlender) == true) {
 
                     if (this->state.test (visual_state::rotateModMode)) {
-                        // Do the missing axis somehow
-                        [[maybe_unused]] sm::quaternion<float> r2 (sm::vec<>::ux(), mouseMoveWorld[2] * -sm::mathconst<float>::deg2rad);
-                        this->rotation_delta = r2;
+                        // What to do about rotate mod mode in this rotation scheme?
+                        this->rotation_delta.set_rotation (this->scene_right, mouseMoveWorld[2] * -sm::mathconst<float>::deg2rad);
                     } else {
                         // For now, rotate about the scene up axis
-                        sm::vec<> mod_up = this->savedSceneview.rotation() * this->up_axis;
+                        sm::vec<> mod_up = this->savedSceneview.rotation() * this->scene_up;
                         sm::quaternion<float> r1 (mod_up, mouseMoveWorld[1] * -sm::mathconst<float>::deg2rad);
-                        sm::quaternion<float> r2 (sm::vec<>::ux(), mouseMoveWorld[0] * -sm::mathconst<float>::deg2rad);
+                        sm::quaternion<float> r2 (this->scene_right, mouseMoveWorld[0] * -sm::mathconst<float>::deg2rad);
                         this->rotation_delta = r2 * r1;
                     }
+
+                } else {
+                    // rotation_delta is the mouse-commanded rotation in the scene frame of reference
+                    this->rotation_delta.set_rotation (mouseMoveWorld, mouseMoveWorld.length() * -sm::mathconst<float>::deg2rad);
                 }
 
                 needs_render = true;
