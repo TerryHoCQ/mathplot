@@ -23,6 +23,8 @@ int main()
     v.showCoordArrows (true);
     // Set the Visual to rotate about the nearest VisualModel (Change at runtime with Ctrl-k)
     v.rotateAboutNearest (true);
+    // In this example, use the 'rotate about a scene vertical axis' mode
+    v.rotateAboutVertical (true);
 
     try {
         sm::vec<float, 3> offset = {};
