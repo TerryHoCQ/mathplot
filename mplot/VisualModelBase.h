@@ -81,18 +81,8 @@ namespace mplot {
     template <int glver = mplot::gl::version_4_1>
     struct VisualModelBase
     {
-        VisualModelBase()
-        {
-            this->mv_offset = { 0.0f, 0.0f, 0.0f };
-            this->model_scaling.setToIdentity();
-        }
-
-        VisualModelBase (const sm::vec<float> _mv_offset)
-        {
-            this->mv_offset = _mv_offset;
-            this->viewmatrix.translate (this->mv_offset);
-            this->model_scaling.setToIdentity();
-        }
+        VisualModelBase() {}
+        VisualModelBase (const sm::vec<float> _offset) { this->viewmatrix.translate (_offset); }
 
         /*!
          * Set up the passed-in VisualTextModel with functions that need access to the parent Visual attributes.
@@ -153,6 +143,13 @@ namespace mplot {
             this->indices.clear();
             this->clearTexts();
             this->idx = 0u;
+            // Clear bounding box
+            this->vpos_bb.clear();
+            this->vnorm_bb.clear();
+            this->vcol_bb.clear();
+            this->indices_bb.clear();
+            this->idx_bb = 0u;
+
             this->reinit_buffers();
         }
 
@@ -165,6 +162,14 @@ namespace mplot {
             this->vertexNormals.clear();
             this->vertexColors.clear();
             this->indices.clear();
+
+            // Clear any bounding box too
+            this->vpos_bb.clear();
+            this->vnorm_bb.clear();
+            this->vcol_bb.clear();
+            this->indices_bb.clear();
+            this->idx_bb = 0u;
+
             // NB: Do NOT call clearTexts() here! We're only updating the model itself.
             this->idx = 0u;
             this->initializeVertices();
@@ -184,8 +189,17 @@ namespace mplot {
             this->vertexNormals.clear();
             this->vertexColors.clear();
             this->indices.clear();
+
             this->clearTexts();
             this->idx = 0u;
+
+            // Clear any bounding box too
+            this->vpos_bb.clear();
+            this->vnorm_bb.clear();
+            this->vcol_bb.clear();
+            this->indices_bb.clear();
+            this->idx_bb = 0u;
+
             this->initializeVertices();
             this->update_bb();
             this->reinit_buffers();
@@ -236,58 +250,40 @@ namespace mplot {
         void setSceneTranslation (const sm::vec<float>& v0)
         {
             this->scenematrix.setToIdentity();
-            this->sv_offset = v0;
-            this->scenematrix.translate (this->sv_offset);
-            this->scenematrix.prerotate (this->sv_rotation);
+            this->scenematrix.translate (v0);
             this->setSceneTranslationTexts (v0);
         }
 
         //! Set a translation (only) into the scene view matrix
-        void addSceneTranslation (const sm::vec<float>& v0)
-        {
-            this->sv_offset += v0;
-            this->scenematrix.translate (v0);
-        }
+        void addSceneTranslation (const sm::vec<float>& v0) { this->scenematrix.translate (v0); }
 
         //! Set a rotation (only) into the scene view matrix
         void setSceneRotation (const sm::quaternion<float>& r)
         {
             this->scenematrix.setToIdentity();
-            this->sv_rotation = r;
-            this->scenematrix.translate (this->sv_offset);
-            this->scenematrix.prerotate (this->sv_rotation);
+            this->scenematrix.prerotate (r);
         }
 
         //! Add a rotation to the scene view matrix
-        void addSceneRotation (const sm::quaternion<float>& r)
-        {
-            this->sv_rotation.premultiply (r);
-            this->scenematrix.prerotate (r);
-        }
+        void addSceneRotation (const sm::quaternion<float>& r) { this->scenematrix.prerotate (r); }
 
         //! Set a translation to the model view matrix
         void setViewTranslation (const sm::vec<float>& v0)
         {
             this->viewmatrix.setToIdentity();
-            this->mv_offset = v0;
-            this->viewmatrix.translate (this->mv_offset);
-            this->viewmatrix.prerotate (this->mv_rotation);
+            this->viewmatrix.translate (v0);
         }
 
         //! Add a translation to the model view matrix
-        void addViewTranslation (const sm::vec<float>& v0)
-        {
-            this->mv_offset += v0;
-            this->viewmatrix.translate (v0);
-        }
+        void addViewTranslation (const sm::vec<float>& v0) { this->viewmatrix.translate (v0); }
 
         //! Set a rotation (only) into the view, but keep texts fixed
         void setViewRotationFixTexts (const sm::quaternion<float>& r)
         {
+            sm::vec<> os = this->viewmatrix.translation();
             this->viewmatrix.setToIdentity();
-            this->mv_rotation = r;
-            this->viewmatrix.translate (this->mv_offset);
-            this->viewmatrix.prerotate (this->mv_rotation);
+            this->viewmatrix.translate (os);
+            this->viewmatrix.prerotate (r);
         }
 
         virtual void setViewRotationTexts (const sm::quaternion<float>& r) = 0;
@@ -295,10 +291,10 @@ namespace mplot {
         //! Set a rotation (only) into the view
         void setViewRotation (const sm::quaternion<float>& r)
         {
+            sm::vec<> os = this->viewmatrix.translation();
             this->viewmatrix.setToIdentity();
-            this->mv_rotation = r;
-            this->viewmatrix.translate (this->mv_offset);
-            this->viewmatrix.prerotate (this->mv_rotation);
+            this->viewmatrix.translate (os);
+            this->viewmatrix.prerotate (r);
             this->setViewRotationTexts (r);
         }
 
@@ -307,7 +303,6 @@ namespace mplot {
         //! Apply a further rotation to the model view matrix
         void addViewRotation (const sm::quaternion<float>& r)
         {
-            this->mv_rotation.premultiply (r);
             this->viewmatrix.prerotate (r);
             this->addViewRotationTexts (r);
         }
@@ -315,7 +310,6 @@ namespace mplot {
         //! Apply a further rotation to the model view matrix, but keep texts fixed
         void addViewRotationFixTexts (const sm::quaternion<float>& r)
         {
-            this->mv_rotation.premultiply (r);
             this->viewmatrix.prerotate (r);
         }
 
@@ -342,10 +336,27 @@ namespace mplot {
          * Methods used by Visual::savegltf()
          */
 
-        //! Get mv_offset in a json-friendly string
-        std::string translation_str() { return this->mv_offset.str_mat(); }
-        //! And a simple getter for mv_offset
-        sm::vec<float> get_mv_offset() { return this->mv_offset; }
+        //! Get model translation in a json-friendly string
+        std::string translation_str() { return this->viewmatrix.translation().str_mat(); }
+        //! A getter for the viewmatrix translation of the origin (would be same as viewmatrix.translation)
+        sm::vec<float> get_viewmatrix_origin() const
+        {
+            return (this->viewmatrix * sm::vec<float, 3>{0,0,0}).less_one_dim();
+        }
+        //! The centre of mass of the bounding box may not be the VisualModel's origin
+        sm::vec<float> get_viewmatrix_bb_centre() const
+        {
+            return (this->viewmatrix * this->bb.mid()).less_one_dim();
+        }
+
+        //! Apply the viewmatrix to the model's bounding box and return it
+        sm::range<sm::vec<float>> get_viewmatrix_modelbb() const
+        {
+            sm::range<sm::vec<float>> vmbb;
+            vmbb.min = (this->viewmatrix * this->bb.min).less_one_dim();
+            vmbb.max = (this->viewmatrix * this->bb.max).less_one_dim();
+            return vmbb;
+        }
 
         //! Return the number of elements in this->indices
         std::size_t indices_size() { return this->indices.size(); }
@@ -480,22 +491,6 @@ namespace mplot {
         GLuint idx = 0u;
         GLuint idx_bb = 0u;
 
-        //! Set scaling in all dimensions
-        void setSizeScale (const float scl)
-        {
-            this->model_scaling.setToIdentity();
-            this->model_scaling[0] = scl;
-            this->model_scaling[5] = scl;
-            this->model_scaling[10] = scl;
-        }
-        //! Set scaling in xy only
-        void setSizeScale (const float xscl, const float yscl)
-        {
-            this->model_scaling.setToIdentity();
-            this->model_scaling[0] = xscl;
-            this->model_scaling[5] = yscl;
-        }
-
         /*!
          * A function that will be runtime defined to get_shaderprogs from a pointer to
          * Visual (saving a boilerplate argument and avoiding that killer circular
@@ -538,39 +533,26 @@ namespace mplot {
         void show_bb (const bool val) { this->flags.set (vm_bools::show_bb, val); }
         void compute_bb (const bool val) { this->flags.set (vm_bools::compute_bb, val); }
 
+        //! A range can be used for a bounding box for this VisualModel
+        sm::range<sm::vec<float>> bb;
+        std::array<float, 3> colour_bb = mplot::colour::grey90;
+
         void twodimensional (const bool val) { this->flags.set (vm_bools::twodimensional, val); }
         bool twodimensional() const { return this->flags.test (vm_bools::twodimensional); }
 
     protected:
 
-        //! The model-specific view matrix.
+        //! The model-specific view matrix. Used to transform the pose of the model in the scene.
         sm::mat44<float> viewmatrix = {};
-        //! The model-specific scene view matrix.
-        sm::mat44<float> scenematrix = {};
-        //! An additional scaling applied to viewmatrix to scale the size of the model [see render()]
-        sm::mat44<float> model_scaling = {};
-
-        //! A range can be used for a bounding box for this VisualModel
-        sm::range<sm::vec<float>> bb;
-
         /*!
-         * The spatial offset of this VisualModel within the mplot::Visual 'scene
-         * view'. Note that this is not incorporated into the computation of the
-         * vertices, but is instead applied when the object is rendered as part of the
-         * model->world transformation - it's applied as a translation in
-         * VisualModel::viewmatrix.
+         * The scene view matrix. Each VisualModel has a copy of the scenematrix. It's set in
+         * Visual::render. Different VisualModels may have different scenematrices (for example, the
+         * CoordArrows has a different scenematrix from other VisualModels, and models marked
+         * 'twodimensional' also have a different scenematrix).
          */
-        sm::vec<float> mv_offset = { 0.0f, 0.0f, 0.0f };
-        //! Model view rotation
-        sm::quaternion<float> mv_rotation = {};
+        sm::mat44<float> scenematrix = {};
 
-        //! Scene view offset
-        sm::vec<float> sv_offset = { 0.0f, 0.0f, 0.0f };
-        //! Scene view rotation
-        sm::quaternion<float> sv_rotation = {};
-
-        //! This enum contains the positions within the vbo array of the different
-        //! vertex buffer objects
+        //! Contains the positions within the vbo array of the different vertex buffer objects
         enum VBOPos { posnVBO, normVBO, colVBO, idxVBO, numVBO };
 
         /*
@@ -2749,7 +2731,7 @@ namespace mplot {
 
             constexpr int segs = 4;
             constexpr float zrot = 0.0f;
-            constexpr auto cl =  mplot::colour::grey90;
+            auto cl = this->colour_bb;
 
             // Frame tube radius
             float r = this->bb.span().length() / 500.0f;

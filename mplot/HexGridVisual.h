@@ -66,8 +66,7 @@ namespace mplot {
         //! Simplest constructor. Use this in all new code!
         HexGridVisual(const sm::hexgrid* _hg, const sm::vec<float> _offset)
         {
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
             this->zScale.setParams (1, 0);
             this->colourScale.do_autoscale = true;
             this->colourScale2.do_autoscale = true;

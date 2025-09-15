@@ -1,5 +1,5 @@
 // CET Colour maps from https://colorcet.com/gallery.html
-// Converted into C++ lookup tables for mplotologica by Seb James
+// Converted into C++ lookup tables for mathplot by Seb James
 
 #pragma once
 

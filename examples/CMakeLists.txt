@@ -505,3 +505,6 @@ if(HAVE_STD_FORMAT)
   add_executable(vonmises vonmises.cpp)
   target_link_libraries(vonmises OpenGL::GL glfw Freetype::Freetype)
 endif()
+
+add_executable(show_boundingboxes show_boundingboxes.cpp)
+target_link_libraries(show_boundingboxes OpenGL::GL glfw Freetype::Freetype)

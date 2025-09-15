@@ -76,9 +76,10 @@ namespace mplot {
             // Explicitly deconstruct any owned VisualModels
             this->vm.clear();
             // Explicitly deconstruct coordArrows, textModel and texts here
-            this->coordArrows.reset(nullptr);
-            this->textModel.reset(nullptr);
-            for (auto& t : this->texts) { t.reset(nullptr); }
+            this->coordArrows.reset (nullptr);
+            this->userFrame.reset (nullptr);
+            this->textModel.reset (nullptr);
+            for (auto& t : this->texts) { t.reset (nullptr); }
 
             if (this->shaders.gprog) {
                 this->glfn->DeleteProgram (this->shaders.gprog);
@@ -240,7 +241,7 @@ namespace mplot {
             if (loc_p != -1) { this->glfn->UniformMatrix4fv (loc_p, 1, GL_FALSE, this->projection.mat.data()); }
 
             if ((this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective)
-                && this->options.test(visual_options::showCoordArrows)) {
+                && this->options.test (visual_options::showCoordArrows)) {
                 // Ensure coordarrows centre sphere will be visible on BG:
                 this->coordArrows->setColourForBackground (this->bgcolour); // releases context...
                 this->setContext(); // ...so re-acquire if we're managing it
@@ -253,9 +254,13 @@ namespace mplot {
                 this->coordArrows->render();
             }
 
+            // Show the user frame of reference
+            if (this->options.test (visual_options::showUserFrame) && this->userFrame) {
+                this->userFrame->render();
+            }
+
             auto vmi = this->vm.begin();
             while (vmi != this->vm.end()) {
-                (*vmi)->show_bb (this->options.test (visual_options::showBoundingBoxes));
                 if ((*vmi)->twodimensional() == true) {
                     // It's a two-d thing. Use the companion 'scene trans only' matrix, which avoids any rotations
                     (*vmi)->setSceneMatrix (this->sceneview_tr);
@@ -434,10 +439,21 @@ namespace mplot {
             // For CoordArrows, because we don't add via Visual::addVisualModel(), we
             // have to set the get_shaderprogs function here:
             this->bindmodel (this->coordArrows);
-            // And NOW we can proceed to init:
-            this->coordArrows->init (this->coordArrowsLength, this->coordArrowsThickness, this->coordArrowsEm);
+            // And NOW we can proceed to init (lengths, thickness, em size for labels):
+            this->coordArrows->init (sm::vec<>{0.1f, 0.1f, 0.1f}, 1.0f, 0.01f);
             this->coordArrows->finalize(); // VisualModel::finalize releases context (normally this is the right thing)...
             this->setContext();            // ...but we've got more work to do, so re-acquire context (if we're managing it)
+
+            // Create 'user frame of reference object'
+            this->userFrame = std::make_unique<mplot::RodVisual<glver>>();
+            this->bindmodel (this->userFrame);
+            this->userFrame->init (sm::vec<float, 3>{},
+                                   sm::vec<float, 3>{0.0f, 0.0f, -100.0f}, sm::vec<float, 3>{0.1f, 0.1f, 1.0f}, 0.05f,
+                                   mplot::colour::turquoise2, mplot::colour::turquoise4);
+            this->userFrame->face_uy = sm::vec<>::ux();
+            this->userFrame->face_uz = sm::vec<>::uy();
+            this->userFrame->finalize();
+            this->setContext(); // see createCoordArrows() for comments
 
             mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
 

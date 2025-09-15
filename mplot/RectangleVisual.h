@@ -13,7 +13,7 @@ namespace mplot {
     class RectangleVisual : public VisualModel<glver>
     {
     public:
-        RectangleVisual() { this->mv_offset = { 0.0f, 0.0f, 0.0f }; }
+        RectangleVisual() {}
 
         //! Initialise with offset, three coordinates and a single colour.
         RectangleVisual(const sm::vec<float, 3> _offset,
@@ -27,8 +27,7 @@ namespace mplot {
                    const sm::vec<float, 2> _dims, const float _angle,
                    const std::array<float, 3> _col)
         {
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
             this->dims = _dims;
             this->angle = _angle;
             this->col = _col;

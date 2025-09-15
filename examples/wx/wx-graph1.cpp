@@ -14,7 +14,7 @@
 #include <mplot/GraphVisual.h>
 
 // Choose an OpenGL version and pass this as a template argument to your mplot::wx::Frame and all of
-// your VisualModels. version_4_1 is the default across mplotologica. version_3_1_es allows your
+// your VisualModels. version_4_1 is the default across mathplot. version_3_1_es allows your
 // code to run on small ARM devices such as a Raspberry Pi.
 constexpr int gl_version = mplot::gl::version_4_1;
 
@@ -26,7 +26,7 @@ public:
     {
         auto sizer = new wxBoxSizer(wxVERTICAL);
 
-        // Adding the GL canvas, where all the mplotologica stuff will be drawn
+        // Adding the GL canvas, where all the mathplot stuff will be drawn
         sizer->Add (this->canvas, 1, wxEXPAND);
 
         auto bottomSizer = new wxBoxSizer(wxHORIZONTAL);

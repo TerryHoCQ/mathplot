@@ -19,18 +19,16 @@ namespace mplot {
     class QuadsMeshVisual : public VisualDataModel<Flt, glver>
     {
     public:
-        QuadsMeshVisual(const std::vector<std::array<Flt,12>>* _quads,
-                        const sm::vec<float> _offset,
-                        const std::vector<Flt>* _data,
-                        const sm::scale<Flt>& _scale,
-                        ColourMapType _cmt,
-                        const float _hue = 0.0f,
-                        const float _sat = 1.0f,
-                        const float _radius = 0.05f)
+        QuadsMeshVisual (const std::vector<std::array<Flt,12>>* _quads,
+                         const sm::vec<float> _offset,
+                         const std::vector<Flt>* _data,
+                         const sm::scale<Flt>& _scale,
+                         ColourMapType _cmt,
+                         const float _hue = 0.0f,
+                         const float _sat = 1.0f,
+                         const float _radius = 0.05f)
         {
-            // Set up...
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
             this->colourScale = _scale;
             this->radius = _radius;
 
@@ -60,15 +58,15 @@ namespace mplot {
         }
 
         //! Version with std::array \a _offset
-        QuadsMeshVisual(const std::vector<std::array<Flt,12>>* _quads,
-                        const std::array<float, 3> _offset,
-                        const std::vector<Flt>* _data,
-                        const sm::scale<Flt>& _scale,
-                        ColourMapType _cmt,
-                        const float _hue = 0.0f)
+        QuadsMeshVisual (const std::vector<std::array<Flt,12>>* _quads,
+                         const std::array<float, 3> _offset,
+                         const std::vector<Flt>* _data,
+                         const sm::scale<Flt>& _scale,
+                         ColourMapType _cmt,
+                         const float _hue = 0.0f)
         {
             sm::vec<float> offset_vec;
-            offset_vec.set_from(_offset);
+            offset_vec.set_from (_offset);
             QuadsMeshVisual<Flt>(_quads, offset_vec, _data, _scale, _cmt, _hue);
         }
 
@@ -91,7 +89,7 @@ namespace mplot {
 
             // I'm examining a set of vecs, which means I have to specify the compare
             // operation. See:
-            // https://abrg-models.github.io/mplotologica/ref/coremaths/vec/#comparison-operators
+            // https://sebsjames.github.io/maths/ref/vec/#comparison-operators
             auto _cmp = [](sm::vec<float,6> a, sm::vec<float,6> b){return a.lexical_lessthan(b);};
             std::set<sm::vec<float, 6>,  decltype(_cmp)> lastQuadLines(_cmp);
 

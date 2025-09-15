@@ -84,7 +84,7 @@ int main()
 {
     namespace uc = mplot::unicode;
 
-    mplot::Visual v(1920, 1080, "mplotologica showcase");
+    mplot::Visual v(1920, 1080, "mathplot showcase");
     v.setSceneTrans (sm::vec<float,3>({1.30124f, -0.730136f, -8.2f}));
     v.lightingEffects();
 

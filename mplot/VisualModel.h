@@ -26,7 +26,7 @@ namespace mplot {
      *
      * Some OpenGL models are derived directly from VisualModel; see for example mplot::CoordArrows.
      *
-     * Other models in mplotologica are derived via mplot::VisualDataModel, which adds a common
+     * Other models in mathplot are derived via mplot::VisualDataModel, which adds a common
      * mechanism for managing the data which is to be visualised by the final 'Visual' object (such
      * as mplot::HexGridVisual or mplot::ScatterVisual)
      *
@@ -42,8 +42,8 @@ namespace mplot {
     template <int glver = mplot::gl::version_4_1>
     struct VisualModel : public mplot::VisualModelImpl<glver, mplot::gl::multicontext> {
         VisualModel() : mplot::VisualModelImpl<glver, mplot::gl::multicontext>::VisualModelImpl() {}
-        VisualModel(const sm::vec<float, 3>& _mv_offset)
-            : mplot::VisualModelImpl<glver, mplot::gl::multicontext>::VisualModelImpl(_mv_offset) {}
+        VisualModel(const sm::vec<float, 3>& _offset)
+            : mplot::VisualModelImpl<glver, mplot::gl::multicontext>::VisualModelImpl(_offset) {}
     };
 
 } // namespace mplot

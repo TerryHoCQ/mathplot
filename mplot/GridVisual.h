@@ -66,8 +66,7 @@ namespace mplot {
             // Set up...
             this->options_defaults();
             sm::vec<float> pixel_offset = _grid->get_dx().plus_one_dim (0.0f);
-            this->mv_offset = _offset + pixel_offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset + pixel_offset);
             // Defaults for z and colourScale
             this->zScale.setParams (1, 0);
             this->colourScale.do_autoscale = true;
@@ -382,7 +381,7 @@ namespace mplot {
             this->determine_datasize();
             if (this->datasize == 0) { return; }
 
-            // Optionally compute an offset to ensure that the cartgrid is centred about the mv_offset.
+            // Optionally compute an offset to ensure that the cartgrid is centred about the viewmatrix translation
             if (this->options.test(gridvisual_flags::centralize) == true) {
                 this->centering_offset = -this->grid->centre().plus_one_dim();
             }
@@ -1022,7 +1021,7 @@ namespace mplot {
         }
 
         //! Set this to true to adjust the positions that the GridVisual uses to plot the grid so
-        //! that the grid is centralised around the VisualModel::mv_offset.
+        //! that the grid is centralised around the VisualModel's translation
         void centralize (bool flag_value = true)
         { this->options.set (gridvisual_flags::centralize, flag_value); }
 
@@ -1194,10 +1193,10 @@ namespace mplot {
         //! The sm::grid<> to visualize
         const sm::grid<I, C>* grid;
 
-        // A centering offset to make sure that the grid is centred on
-        // this->mv_offset. This is computed so that you *add* centering_offset to each
+        // A centering offset to make sure that the grid is centred on the VisualModels
+        // translation. This is computed so that you *add* centering_offset to each
         // computed x/y/z position for a rectangle, and this means that the rectangle
-        // will be centered around mv_offset.
+        // will be centered.
         sm::vec<float, 3> centering_offset = { 0.0f, 0.0f, 0.0f };
     };
 

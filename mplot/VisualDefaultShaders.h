@@ -1,5 +1,5 @@
-// This file is included by Vertex.cpp. It contains default vertex and fragment
-// shaders which get compiled in to libmplotologica.
+// This file is included by mplot::Visual. It contains default vertex and fragment
+// shaders which get compiled in to your mathplot program.
 
 #pragma once
 
@@ -99,9 +99,7 @@ namespace mplot {
 
     // The default vertex shader. To study this GLSL, see Visual.vert.glsl, which has
     // some code comments.
-    const char* defaultVtxShader = "uniform mat4 mvp_matrix;\n"
-    "uniform mat4 vp_matrix;\n"
-    "uniform mat4 m_matrix;\n"
+    const char* defaultVtxShader = "uniform mat4 m_matrix;\n"
     "uniform mat4 v_matrix;\n"
     "uniform mat4 p_matrix;\n"
     "uniform float alpha;\n"
@@ -203,9 +201,7 @@ namespace mplot {
     }
 
     // Cylindrical projection
-    const char* defaultCylShader = "uniform mat4 mvp_matrix;\n"
-    "uniform mat4 vp_matrix;\n"
-    "uniform mat4 m_matrix;\n"
+    const char* defaultCylShader = "uniform mat4 m_matrix;\n"
     "uniform mat4 v_matrix;\n"
     "uniform mat4 p_matrix;\n"
     "uniform float alpha;\n"

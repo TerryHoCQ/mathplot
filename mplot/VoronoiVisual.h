@@ -36,7 +36,7 @@ namespace mplot {
     class VoronoiVisual : public VisualDataModel<F, glver>
     {
         // Need a vec comparison function for a std::set of sm::vec or a std::map with a sm::vec key. See:
-        // https://abrg-models.github.io/mplotologica/ref/coremaths/vvec/#using-mplotvvec-as-a-key-in-stdmap-or-within-an-stdset
+        // https://sebsjames.github.io/maths/ref/vec/#using-smvec-as-a-key-in-stdmap-or-within-an-stdset
         struct veccmp
         {
             bool operator()(sm::vec<float> a, sm::vec<float> b) const
@@ -48,8 +48,7 @@ namespace mplot {
     public:
         VoronoiVisual (const sm::vec<float> _offset)
         {
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
             this->zScale.setParams (1, 0);
             this->colourScale.do_autoscale = true;
             this->colourScale2.do_autoscale = true;

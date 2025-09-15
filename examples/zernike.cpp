@@ -21,6 +21,7 @@ int main()
     using mc = sm::mathconst<double>;
 
     mplot::Visual<> v (1024, 768, "Zernike Polynomials");
+    v.rotateAboutNearest (true);
 
     constexpr std::size_t N = 100;
     sm::vvec<double> rho;

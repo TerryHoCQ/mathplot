@@ -65,7 +65,7 @@ namespace mplot
                 // write me for other orientations
                 lblpos = bar_centre;
             }
-            lbl->setupText (this->label, text_rotn, lblpos + this->mv_offset, this->text_features.colour);
+            lbl->setupText (this->label, text_rotn, lblpos + this->viewmatrix.translation(), this->text_features.colour);
             this->texts.push_back (std::move(lbl));
         }
 

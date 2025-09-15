@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Common code for GL functionality in mplotologica programs.
+ * Common code for GL functionality in mathplot programs.
  *
  * Author: Seb James.
  */

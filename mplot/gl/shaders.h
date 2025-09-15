@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Code for shader-related GL functionality in mplotologica programs.
+ * Code for shader-related GL functionality in mathplot programs.
  *
  * Note: You have to include a header like gl3.h or glext.h etc for the GL types and
  * functions BEFORE including this file.

@@ -22,7 +22,7 @@ public:
     MyFrame(const wxString &title) : mplot::wx::Frame<gl_version>(title)
     {
         auto sizer = new wxBoxSizer(wxVERTICAL);
-        // Adding ONLY the GL canvas, where all the mplotologica stuff will be drawn
+        // Adding ONLY the GL canvas, where all the mathplot stuff will be drawn
         sizer->Add (this->canvas, 1, wxEXPAND);
         SetSizerAndFit(sizer);
     }

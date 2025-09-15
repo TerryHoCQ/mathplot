@@ -28,10 +28,6 @@ namespace mplot
                         sm::vvec<sm::vec<float>> _colr)
         {
             this->viewmatrix = _model_transform;
-            // offset (and sometimes rotation) are usually passed in by client code and then used to
-            // populate this->viewmatrix, but here, just make sure they match the viewmatrix:
-            this->mv_offset = _model_transform.translation();
-            //this->mv_rotation = _model_transform.rotation();
             // Copy in the indices and vertices
             for (auto i : _ind) { this->indices.push_back (i); }
             for (auto p : _posn) { this->vertex_push (p, this->vertexPositions); }

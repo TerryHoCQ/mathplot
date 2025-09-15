@@ -3,7 +3,7 @@
  *
  * Awesome graphics code for high performance graphing and visualisation.
  *
- * This is one of the two main visual scene classes in mplotologica and derives from
+ * This is one of the two main visual scene classes in mathplot and derives from
  * mplot::VisualOwnableNoMX, adding window handling with GLFW3.
  *
  * This one assumes GL has been loaded with global function aliases (glCear, glEnable, etc)

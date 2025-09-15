@@ -20,24 +20,23 @@ namespace mplot::compoundray
     class EyeVisual : public mplot::VisualModel<glver>
     {
     public:
-        EyeVisual() { this->mv_offset = {0.0, 0.0, 0.0}; }
+        EyeVisual() {}
 
         //! Initialise with offset, start and end coordinates, radius and a single colour.
-        EyeVisual(const sm::vec<float, 3> _offset,
-                          std::vector<std::array<float, 3>>* _ommData,
-                          std::vector<Ommatidium>* _ommatidia)
+        EyeVisual (const sm::vec<float, 3> _offset,
+                   std::vector<std::array<float, 3>>* _ommData,
+                   std::vector<Ommatidium>* _ommatidia)
         {
             this->init (_offset, _ommData, _ommatidia);
         }
 
-        ~EyeVisual () {}
+        ~EyeVisual() {}
 
         void init (const sm::vec<float, 3> _offset,
                    std::vector<std::array<float, 3>>* _ommData,
                    std::vector<Ommatidium>* _ommatidia)
         {
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
             this->ommData = _ommData;
             this->ommatidia = _ommatidia;
         }

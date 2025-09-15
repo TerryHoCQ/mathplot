@@ -79,9 +79,7 @@ namespace mplot {
                             const float _val_sph,
                             const float _radius_sph)
         {
-            // Set up...
-            this->mv_offset = _offset;
-            this->viewmatrix.translate (this->mv_offset);
+            this->viewmatrix.translate (_offset);
 
             this->radius = _radius;
             this->sradius = _radius_sph;

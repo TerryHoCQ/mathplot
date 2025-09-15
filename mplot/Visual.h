@@ -3,7 +3,7 @@
  *
  * Awesome graphics code for high performance graphing and visualisation.
  *
- * This is the main visual scene class in mplotologica and derives from mplot::VisualNoMX, which
+ * This is the main visual scene class in mathplot and derives from mplot::VisualNoMX, which
  * derives from VisualOwnableMX, adding window handling with GLFW3.
  *
  * Created by Seb James on 2019/05/01
