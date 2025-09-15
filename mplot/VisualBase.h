@@ -462,6 +462,9 @@ namespace mplot {
         void rotateAboutNearest (const bool val)
         { this->options.set (mplot::visual_options::rotateAboutSceneOrigin, (val ? false : true)); }
 
+        //! Rotate about a vertical axis in the scene?
+        void rotateAboutVertical (const bool val) { this->options.set (visual_options::rotateAboutVertical, val); }
+
         //! Set to true to show the title text within the scene
         void showTitle (const bool val) { this->options.set (visual_options::showTitle, val); }
 
@@ -472,7 +475,7 @@ namespace mplot {
         void renderSwapsBuffers (const bool val) {  this->options.set (visual_options::renderSwapsBuffers, val); }
 
         //! How big should the steps in scene translation be when scrolling?
-        float scenetrans_stepsize = 0.01f;
+        float scenetrans_stepsize = 0.02f;
 
         //! If you set this to true, then the mouse movements won't change scenetrans or rotation.
         void sceneLocked (const bool val) { this->state.set (visual_state::sceneLocked, val); }
@@ -1485,7 +1488,7 @@ namespace mplot {
 
                 this->scenetrans_delta[2] += scroll_move_y[1];
 
-                if (this->d_to_rotation_centre > this->zFar && scroll_move_y[1] < 0.0f) {
+                if (this->d_to_rotation_centre > (this->zFar / 2.0f) && scroll_move_y[1] < 0.0f) {
                     // Cancel movement
                     this->scenetrans_delta[2] = 0.0f;
                     scroll_move_y[1] = 0.0f;
