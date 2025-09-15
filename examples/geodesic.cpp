@@ -1,6 +1,7 @@
 /*
- * Visualize an Icosahedron
+ * Visualize a sequence of icosahedral geodesics
  */
+
 #include <iostream>
 #include <fstream>
 #include <cmath>
