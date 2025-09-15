@@ -21,8 +21,8 @@ int main()
     v.fov = 15;
     // set the x/y offset. Try pressing 'z' in the app window to see what the current sceneTrans is
     v.setSceneTransXY (0.0f, 0.0f);
-    // Make this larger to "scroll in and out of the image" faster. 0.01f is the default in VisualBase.
-    v.scenetrans_stepsize = 0.01f;
+    // Make this larger to "scroll in and out of the image" faster. 0.02f is the default in VisualBase.
+    v.scenetrans_stepsize = 0.02f;
     // The coordinate arrows can be hidden
     v.showCoordArrows (true);
     // You can set the background (white, black, or any other colour)
