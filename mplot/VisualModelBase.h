@@ -487,6 +487,9 @@ namespace mplot {
         }
         // end Visual::savegltf() methods
 
+        // A VisualModel may be given a name
+        std::string name = {};
+
         //! The current indices index
         GLuint idx = 0u;
         GLuint idx_bb = 0u;

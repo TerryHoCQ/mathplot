@@ -37,7 +37,6 @@
 #include <mplot/RodVisual.h>
 #include <mplot/tools.h>
 
-
 #include <mplot/VisualDefaultShaders.h>
 
 // Use Lode Vandevenne's PNG encoder
@@ -716,6 +715,19 @@ namespace mplot {
         }
 
         void set_winsize (int _w, int _h) { this->window_w = _w; this->window_h = _h; }
+
+        // Accessing std::vector<std::unique_ptr<mplot::VisualModel<glver>>> vm; from external code
+        std::vector<std::unique_ptr<mplot::VisualModel<glver>>>::const_iterator next_vm_accessor;
+        void init_vm_accessor() { this->next_vm_accessor = this->vm.begin(); }
+        mplot::VisualModel<glver>* get_next_vm_accessor()
+        {
+            mplot::VisualModel<glver>* cvm = nullptr;
+            if (this->next_vm_accessor != this->vm.end()) {
+                cvm = (*this->next_vm_accessor).get();
+                this->next_vm_accessor++;
+            }
+            return cvm;
+        }
 
     protected:
 

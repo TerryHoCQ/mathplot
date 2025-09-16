@@ -140,6 +140,7 @@ namespace mplot::compoundray
             }
             auto vertvm = std::make_unique<mplot::VerticesVisual<>> (tfm, ind, posn, norm, colr);
             thevisual->bindmodel (vertvm);
+            vertvm->name = mymeshes[mi]->name;
             vertvm->finalize();
             thevisual->addVisualModel (vertvm);
         }
