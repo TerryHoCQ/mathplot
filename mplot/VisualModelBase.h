@@ -449,6 +449,25 @@ namespace mplot {
             }
             return base64::encode (_bytes);
         }
+        std::size_t next_vpos_idx = 0;
+        void init_vpos_accessor() { this->next_vpos_idx = 0; }
+        sm::vec<float, 3> get_next_vpos()
+        {
+            sm::vec<float, 3> pos;
+            pos.set_from (std::numeric_limits<float>::max());
+            if (this->next_vpos_idx < this->vertexPositions.size()) {
+                sm::vec<float, 4> tmp = {
+                    this->vertexPositions[this->next_vpos_idx],
+                    this->vertexPositions[this->next_vpos_idx + 1],
+                    this->vertexPositions[this->next_vpos_idx + 2]
+                };
+
+                pos = (this->viewmatrix * tmp).less_one_dim();
+                this->next_vpos_idx += 3;
+            }
+            return pos;
+        }
+
         std::size_t vcol_size() { return this->vertexColors.size(); }
         std::string vcol_max() { return this->vcol_maxes.str_mat(); }
         std::string vcol_min() { return this->vcol_mins.str_mat(); }
@@ -484,6 +503,20 @@ namespace mplot {
                 _bytes[b++] = fb.bytes[3];
             }
             return base64::encode (_bytes);
+        }
+        std::size_t next_vnorm_idx = 0;
+        void init_vnorm_accessor() { this->next_vnorm_idx = 0; }
+        sm::vec<float, 3> get_next_vnorm()
+        {
+            sm::vec<float, 3> pos;
+            pos.set_from (std::numeric_limits<float>::max());
+            if (this->next_vnorm_idx < this->vertexPositions.size()) {
+                pos = { this->vertexPositions[this->next_vnorm_idx],
+                    this->vertexPositions[this->next_vnorm_idx + 1],
+                    this->vertexPositions[this->next_vnorm_idx + 2] };
+                this->next_vnorm_idx += 3;
+            }
+            return pos;
         }
         // end Visual::savegltf() methods
 
