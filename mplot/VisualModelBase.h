@@ -20,6 +20,7 @@
 
 #include <iostream>
 #include <vector>
+#include <list>
 #include <array>
 #include <algorithm>
 #include <iterator>
@@ -211,6 +212,90 @@ namespace mplot {
             this->vertexNormals.reserve (3u * n_vertices);
             this->vertexColors.reserve (3u * n_vertices);
             this->indices.reserve (6u * n_vertices);
+        }
+
+        /*!
+         * Post-process vertices to generate a neighbour relationship mesh. The usual vertices and
+         * indices may not be useful to help a ground-based agent to navigate the surface defined by
+         * the mesh. This is because vertices may be duplicated at any location, so that adjacent
+         * faces can have different normals and colours.
+         *
+         * To help guide movement across a mesh, it would be useful to have a mesh that always gives
+         * neighbour relationships.
+         */
+        void vertex_postprocess()
+        {
+            std::cout << __func__ << " called\n";
+            // For each vertex, search for other vertices that have the same or almost the same location
+
+            // Treat vertexPositions as a vector of vec:
+            auto vp = reinterpret_cast<const std::vector<sm::vec<float, 3>>*>(&this->vertexPositions);
+            uint32_t vps = vp->size();
+
+            std::map<uint32_t, sm::vec<float, 3>> vp1;
+            for (uint32_t i = 0; i < vps; ++i) { vp1[i] = (*vp)[i]; }
+
+            //std::vector<uint32_t> ind1 = this->indices; // may need for
+
+            std::map<uint32_t, sm::vvec<uint32_t>> equiv1; // For each unique entry in vp1, list the
+                                                           // entries in vertexPositions that are in
+                                                           // the same location.
+            std::map<uint32_t, uint32_t> equiv2; // Just map em straight across?
+            // for cube this becomes
+            // 0: 0
+            // 1: 0
+            // 2: 0
+            // 3: 3
+            // 4: 3
+            // 5: 3
+            // etc
+
+            std::vector<sm::vvec<uint32_t>> edges1; // Same size as vp1. For each unique vertex in
+                                                    // vp1, list the vertices that are connected via
+                                                    // triangle edges in the OpenGL model
+
+            constexpr float vlen_thresh = 0.0f;
+
+            // Populate equiv1 in a redundant manner
+            for (uint32_t i = 0; i < vps; ++i) {
+                for (uint32_t j = 0; j < vps; ++j) {
+                    if (((*vp)[i] - (*vp)[j]).length() <= vlen_thresh) {
+                        equiv1[i].push_back (j);
+                    }
+                }
+            }
+            for (auto eq : equiv1) { std::cout << "eq " << eq.first << " = " << eq.second << std::endl; }
+
+            // Now prune out vp1 and equiv1
+            std::map<uint32_t, sm::vvec<uint32_t>>::iterator equiv1_i = equiv1.begin();
+            while (equiv1_i != equiv1.end()) {
+                if (equiv1_i->second.find_first_of (equiv1_i->first) > 0) {
+                    equiv1_i = equiv1.erase (equiv1_i);
+                } else {
+                    equiv1_i++;
+                }
+            }
+
+            for (auto eq : equiv1) { std::cout << "eq_after " << eq.first << " = " << eq.second << std::endl; }
+
+
+            // Lastly, generate edges1
+
+
+
+#if 0
+            for (uint32_t i = 0; i < vps; ++i) {
+                for (uint32_t j = i + 1; j < vps; ++j) {
+                    if ((vp1[i] - vp1[j]).length() <= vlen_thresh) {
+                        std::cout << "Merge v" << i << " and v" << j << "\n";
+                        // 1. Replace j with i in indices.
+                        for (uint32_t k = 0; k < this->indices.size(); ++k) {
+                            this->indices[k] = this->indices[k] == j ? i : this->indices[k];
+                        }
+                    }
+                }
+            }
+#endif
         }
 
         /*!
