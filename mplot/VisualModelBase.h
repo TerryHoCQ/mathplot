@@ -224,6 +224,8 @@ namespace mplot {
         // The edges that make up the same triangles as are shown with this->indices, but in terms of vp1.
         // Each edge must be two indices in *ascending numerical order*
         std::set<std::array<uint32_t, 2>> edges;
+        // Triangles too. Might be more useful than edges
+        sm::vvec<std::array<uint32_t, 3>> triangles;
 
         // Return index of vp1 that is closest to scene_coord. Can use vp1_to_indices to find the indices
         // into vertexPositions and vertexNormals that this index in the topographic mesh relates to.
@@ -248,7 +250,7 @@ namespace mplot {
         sm::vvec<uint32_t> neighbours (const uint32_t idx) const
         {
             sm::vvec<uint32_t> rtn;
-            // Search edges to find those that include idx and then pack up the other ends in a return thing
+            // Search edges to find those that include idx and then pack up the other ends in a return object
             for (auto e : this->edges) {
                 // we have e[0] and e[1]
                 if (e[0] == idx) {
@@ -257,6 +259,18 @@ namespace mplot {
                 } else if (e[1] == idx) {
                     // neighb is e[0]
                     rtn.push_back (e[0]);
+                }
+            }
+            return rtn;
+        }
+
+        sm::vvec<std::array<uint32_t, 3>> neighbour_triangles (const uint32_t idx) const
+        {
+            sm::vvec<std::array<uint32_t, 3>> rtn;
+            for (auto t: this->triangles) {
+                // If it includes idx, add it to rtn
+                if (t[0] == idx || t[1] == idx || t[2] == idx) {
+                    rtn.push_back (t);
                 }
             }
             return rtn;
@@ -374,15 +388,22 @@ namespace mplot {
                     e[1] = t;
                 }
                 this->edges.insert (e);
+
+                // Direct population of triangles
+                std::array<uint32_t, 3> t = { equiv_top[indices[i]], equiv_top[indices[i+1]], equiv_top[indices[i+2]] };
+                this->triangles.push_back (t);
             }
 
             if constexpr (debug) {
                 for (auto e : edges) {
                     std::cout << "Edge: " << e[0] << "," << e[1] << std::endl;
                 }
+                for (auto t : this->triangles) {
+                    std::cout << "Tri: " << t[0] << "," << t[1] << "," << t[2] << std::endl;
+                }
             }
 
-            std::cout << this->edges.size() << " edges in " << this->name << "\n";
+            std::cout << this->edges.size() << " edges and " << this->triangles.size() << " triangles in " << this->name << "\n";
         }
 
         /*!
