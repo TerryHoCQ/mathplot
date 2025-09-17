@@ -234,7 +234,6 @@ namespace mplot {
 
             constexpr float vlen_thresh = 0.0f;
 
-#if 1
             std::map<uint32_t, sm::vvec<uint32_t>> equiv; // For each unique entry in vp1, list the
                                                           // entries in vertexPositions that are in
                                                           // the same location.
@@ -246,49 +245,49 @@ namespace mplot {
             }
             // Prune duplicates
             std::erase_if (equiv, [](const auto& eq) { const auto& [k, v] = eq; return v.find_first_of (k) > 0; });
-            for (auto eq : equiv) { std::cout << "equiv[" << eq.first << "] = " << eq.second << std::endl; }
-            // Populate vp1, a vector of coordinates
-            std::vector<sm::vec<float, 3>> vp1 (equiv.size(), {0});
+
+            sm::vvec<uint32_t> equiv_inv (vps, 0);
+            // Make inverse of equiv to translate from original (indices, vertexPositions) index to new topographic mesh index
+            sm::vvec<uint32_t> equiv_top (vps, 0);
             uint32_t i = 0;
+            for (auto eq : equiv) {
+                std::cout << "equiv[" << eq.first << "] = " << eq.second << std::endl;
+                for (auto ev : eq.second) {
+                    equiv_inv[ev] = eq.first;
+                    equiv_top[ev] = i;
+                }
+                ++i;
+            }
+            for (auto eqi : equiv_inv) {
+                std::cout << "equiv_inv[] = " << eqi << std::endl;
+            }
+            for (auto eqi : equiv_top) {
+                std::cout << "equiv_top[] = " << eqi << std::endl;
+            }
+            // Can now populate vp1, a vector of coordinates, if required, or simply access (*vp) as needed using equiv.first
+            std::vector<sm::vec<float, 3>> vp1 (equiv.size(), {0});
+            i = 0;
             for (auto eq : equiv) { vp1[i++] = (*vp)[eq.first]; }
             for (i = 0; i < vp1.size(); ++i) {
                 std::cout << "vp1[" << i << "] = " << vp1[i] << std::endl;
             }
-#else
-            /*
-             * An alternative (using less memory + compute), BUT we do need to retain the info that
-             * v0 ~ [0,1,2] so that when at v0, we can look for all dirns
-             */
-            // Populate
-            std::map<uint32_t, uint32_t> equiv;
-            for (uint32_t i = 0; i < vps; ++i) {
-                for (uint32_t j = 0; j <= i; ++j) {
-                   if (((*vp)[i] - (*vp)[j]).length() <= vlen_thresh) {
-                       equiv[j] = i;
-                       std::cout << j << " ~ " << i << std::endl;
-                   }
-                }
-            }
-            // Reduce
-            std::set<uint32_t> ordered_vertices;
-            for (auto eq : equiv) { ordered_vertices.insert (eq.second); }
-            std::vector<uint32_t> vp1 (ordered_vertices.size(), 0);
-            uint32_t i = 0;
-            for (auto ov : ordered_vertices) {
-                std::cout << "ov = " << ov << std::endl;
-                vp1[i++] = ov;
-            }
-            i = 0; for (auto v : vp1) { std::cout << "vp1[" << i++ << "] = " << (*vp)[v] << std::endl; }
-#endif
 
             // Lastly, generate edges. For which we require use of indices, which is expressed in
-            // terms of the old indices. Which by the second method above, I have lost :-/ So use first method.
+            // terms of the old indices. That lookup is equiv_inv.
 
-            std::vector<sm::vvec<uint32_t>> edges; // Same size as vp1. For each unique vertex in
-                                                   // vp1, list the vertices that are connected via
-                                                   // triangle edges in the OpenGL model
-            //std::vector<uint32_t> ind1 = this->indices; // may need?
+            std::set<std::set<uint32_t>> edges;
+            for (uint32_t i = 0; i < this->indices.size(); i += 3) {
+                // Each three entries in indices is a triangle containing 3 edges
+                edges.insert (std::set<uint32_t>{ equiv_top[indices[i]], equiv_top[indices[i+1]] });
+                edges.insert (std::set<uint32_t>{ equiv_top[indices[i]], equiv_top[indices[i+2]] });
+                edges.insert (std::set<uint32_t>{ equiv_top[indices[i+1]], equiv_top[indices[i+2]] });
+            }
 
+            for (auto e : edges) {
+                std::cout << "Edge: ";
+                for (auto ei : e) { std::cout << ei << ","; }
+                std::cout << std::endl;
+            }
 
 #if 0
             for (uint32_t i = 0; i < vps; ++i) {
