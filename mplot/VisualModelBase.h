@@ -20,7 +20,8 @@
 
 #include <iostream>
 #include <vector>
-#include <list>
+#include <map>
+#include <set>
 #include <array>
 #include <algorithm>
 #include <iterator>
@@ -214,6 +215,76 @@ namespace mplot {
             this->indices.reserve (6u * n_vertices);
         }
 
+        // Minimum set of vertices to generate a topological mesh
+        std::vector<sm::vec<float, 3>> vp1;
+
+        // Maps index in vp1 to indices
+        sm::vvec<sm::vvec<uint32_t>> vp1_to_indices;
+
+        // The edges that make up the same triangles as are shown with this->indices, but in terms of vp1.
+        // Each edge must be two indices in *ascending numerical order*
+        std::set<std::array<uint32_t, 2>> edges;
+
+        // Return index of vp1 that is closest to scene_coord. Can use vp1_to_indices to find the indices
+        // into vertexPositions and vertexNormals that this index in the topographic mesh relates to.
+        uint32_t find_vp1_nearest (const sm::vec<float, 3>& scene_coord) const
+        {
+            uint32_t i = std::numeric_limits<uint32_t>::max();
+            // Brute force it. (But we have a mesh; can this guarantee a faster search? I don't think so)
+            float min_d = std::numeric_limits<float>::max();
+            for (uint32_t j = 0; j < this->vp1.size(); ++j) {
+                sm::vec<> vcoord = (this->viewmatrix * vp1[j]).less_one_dim();
+                //std::cout << "vcoord: " << vcoord;
+                float d = (scene_coord - vcoord).length();
+                //std::cout << ", distance " << d << " from " << scene_coord << std::endl;
+                if (d < min_d) {
+                    min_d = d;
+                    i = j;
+                }
+            }
+            return i;
+        }
+
+        sm::vvec<uint32_t> neighbours (const uint32_t idx) const
+        {
+            sm::vvec<uint32_t> rtn;
+            // Search edges to find those that include idx and then pack up the other ends in a return thing
+            for (auto e : this->edges) {
+                // we have e[0] and e[1]
+                if (e[0] == idx) {
+                    // neighb is e[1]
+                    rtn.push_back (e[1]);
+                } else if (e[1] == idx) {
+                    // neighb is e[0]
+                    rtn.push_back (e[0]);
+                }
+            }
+            return rtn;
+        }
+
+        // When you are at coord and want to move in a direction move *around the surface of the model*, return the new location.
+        sm::vec<float, 3> find_vp1 (const sm::vec<float, 3>& coord, const sm::vec<float, 3>& move)
+        {
+            uint32_t vp1_idx = this->find_vp1_nearest (coord);
+            return sm::vec<float, 3>{};
+        }
+
+        // Get a single position from vertexPositions, using the index into the vector<vec>
+        // interpretation of vertexPositions
+        sm::vec<float, 3> get_position (const uint32_t vec_idx) const
+        {
+            auto vp = reinterpret_cast<const std::vector<sm::vec<float, 3>>*>(&this->vertexPositions);
+            return (*vp)[vec_idx];
+        }
+
+        // Get a single normal from vertexNormals, using the index into the vector<vec>
+        // interpretation of vertexNormals
+        sm::vec<float, 3> get_normal (const uint32_t vec_idx) const
+        {
+            auto vn = reinterpret_cast<const std::vector<sm::vec<float, 3>>*>(&this->vertexNormals);
+            return (*vn)[vec_idx];
+        }
+
         /*!
          * Post-process vertices to generate a neighbour relationship mesh. The usual vertices and
          * indices may not be useful to help a ground-based agent to navigate the surface defined by
@@ -225,7 +296,9 @@ namespace mplot {
          */
         void vertex_postprocess()
         {
-            std::cout << __func__ << " called\n";
+            constexpr bool debug = true;
+
+            if constexpr (debug) { std::cout << __func__ << " called\n"; }
             // For each vertex, search for other vertices that have the same or almost the same location
 
             // Treat vertexPositions as a vector of vec:
@@ -234,9 +307,9 @@ namespace mplot {
 
             constexpr float vlen_thresh = 0.0f;
 
-            std::map<uint32_t, sm::vvec<uint32_t>> equiv; // For each unique entry in vp1, list the
-                                                          // entries in vertexPositions that are in
-                                                          // the same location.
+            // For each entry in vp1, list the entries in vertexPositions that are in the same locn
+            std::map<uint32_t, sm::vvec<uint32_t>> equiv;
+
             // Populate equiv
             for (uint32_t i = 0; i < vps; ++i) {
                 for (uint32_t j = 0; j < vps; ++j) {
@@ -246,62 +319,70 @@ namespace mplot {
             // Prune duplicates
             std::erase_if (equiv, [](const auto& eq) { const auto& [k, v] = eq; return v.find_first_of (k) > 0; });
 
-            sm::vvec<uint32_t> equiv_inv (vps, 0);
             // Make inverse of equiv to translate from original (indices, vertexPositions) index to new topographic mesh index
             sm::vvec<uint32_t> equiv_top (vps, 0);
+            this->vp1_to_indices.resize (equiv.size());
             uint32_t i = 0;
             for (auto eq : equiv) {
-                std::cout << "equiv[" << eq.first << "] = " << eq.second << std::endl;
+                if constexpr (debug) { std::cout << "equiv[" << eq.first << "] = " << eq.second << std::endl; }
+                this->vp1_to_indices[i] = eq.second;
                 for (auto ev : eq.second) {
-                    equiv_inv[ev] = eq.first;
                     equiv_top[ev] = i;
                 }
                 ++i;
             }
-            for (auto eqi : equiv_inv) {
-                std::cout << "equiv_inv[] = " << eqi << std::endl;
-            }
-            for (auto eqi : equiv_top) {
-                std::cout << "equiv_top[] = " << eqi << std::endl;
+            if constexpr (debug) {
+                for (auto eqi : equiv_top) {
+                    std::cout << "equiv_top[] = " << eqi << std::endl;
+                }
             }
             // Can now populate vp1, a vector of coordinates, if required, or simply access (*vp) as needed using equiv.first
-            std::vector<sm::vec<float, 3>> vp1 (equiv.size(), {0});
+            vp1.resize (equiv.size(), {0});
             i = 0;
             for (auto eq : equiv) { vp1[i++] = (*vp)[eq.first]; }
-            for (i = 0; i < vp1.size(); ++i) {
-                std::cout << "vp1[" << i << "] = " << vp1[i] << std::endl;
+            if constexpr (debug) {
+                for (i = 0; i < vp1.size(); ++i) {
+                    std::cout << "vp1[" << i << "] = " << vp1[i] << std::endl;
+                }
             }
 
             // Lastly, generate edges. For which we require use of indices, which is expressed in
-            // terms of the old indices. That lookup is equiv_inv.
+            // terms of the old indices. That lookup is equiv_top.
 
-            std::set<std::set<uint32_t>> edges;
             for (uint32_t i = 0; i < this->indices.size(); i += 3) {
-                // Each three entries in indices is a triangle containing 3 edges
-                edges.insert (std::set<uint32_t>{ equiv_top[indices[i]], equiv_top[indices[i+1]] });
-                edges.insert (std::set<uint32_t>{ equiv_top[indices[i]], equiv_top[indices[i+2]] });
-                edges.insert (std::set<uint32_t>{ equiv_top[indices[i+1]], equiv_top[indices[i+2]] });
+                // Each three entries in indices is a triangle containing 3 edges. NB: Edges must be listed in ascending order!
+                std::array<uint32_t, 2> e = { equiv_top[indices[i]], equiv_top[indices[i+1]] };
+                if (e[0] > e[1]) {
+                    uint32_t t = e[0];
+                    e[0] = e[1];
+                    e[1] = t;
+                }
+                this->edges.insert (e);
+
+                e = { equiv_top[indices[i]], equiv_top[indices[i+2]] };
+                if (e[0] > e[1]) {
+                    uint32_t t = e[0];
+                    e[0] = e[1];
+                    e[1] = t;
+                }
+                this->edges.insert (e);
+
+                e = { equiv_top[indices[i+1]], equiv_top[indices[i+2]] };
+                if (e[0] > e[1]) {
+                    uint32_t t = e[0];
+                    e[0] = e[1];
+                    e[1] = t;
+                }
+                this->edges.insert (e);
             }
 
-            for (auto e : edges) {
-                std::cout << "Edge: ";
-                for (auto ei : e) { std::cout << ei << ","; }
-                std::cout << std::endl;
-            }
-
-#if 0
-            for (uint32_t i = 0; i < vps; ++i) {
-                for (uint32_t j = i + 1; j < vps; ++j) {
-                    if ((vp1[i] - vp1[j]).length() <= vlen_thresh) {
-                        std::cout << "Merge v" << i << " and v" << j << "\n";
-                        // 1. Replace j with i in indices.
-                        for (uint32_t k = 0; k < this->indices.size(); ++k) {
-                            this->indices[k] = this->indices[k] == j ? i : this->indices[k];
-                        }
-                    }
+            if constexpr (debug) {
+                for (auto e : edges) {
+                    std::cout << "Edge: " << e[0] << "," << e[1] << std::endl;
                 }
             }
-#endif
+
+            std::cout << this->edges.size() << " edges in " << this->name << "\n";
         }
 
         /*!
