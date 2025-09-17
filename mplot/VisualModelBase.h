@@ -232,55 +232,62 @@ namespace mplot {
             auto vp = reinterpret_cast<const std::vector<sm::vec<float, 3>>*>(&this->vertexPositions);
             uint32_t vps = vp->size();
 
-            std::map<uint32_t, sm::vec<float, 3>> vp1;
-            for (uint32_t i = 0; i < vps; ++i) { vp1[i] = (*vp)[i]; }
-
-            //std::vector<uint32_t> ind1 = this->indices; // may need for
-
-            std::map<uint32_t, sm::vvec<uint32_t>> equiv1; // For each unique entry in vp1, list the
-                                                           // entries in vertexPositions that are in
-                                                           // the same location.
-            std::map<uint32_t, uint32_t> equiv2; // Just map em straight across?
-            // for cube this becomes
-            // 0: 0
-            // 1: 0
-            // 2: 0
-            // 3: 3
-            // 4: 3
-            // 5: 3
-            // etc
-
-            std::vector<sm::vvec<uint32_t>> edges1; // Same size as vp1. For each unique vertex in
-                                                    // vp1, list the vertices that are connected via
-                                                    // triangle edges in the OpenGL model
-
             constexpr float vlen_thresh = 0.0f;
 
-            // Populate equiv1 in a redundant manner
+#if 1
+            std::map<uint32_t, sm::vvec<uint32_t>> equiv; // For each unique entry in vp1, list the
+                                                          // entries in vertexPositions that are in
+                                                          // the same location.
+            // Populate equiv
             for (uint32_t i = 0; i < vps; ++i) {
                 for (uint32_t j = 0; j < vps; ++j) {
-                    if (((*vp)[i] - (*vp)[j]).length() <= vlen_thresh) {
-                        equiv1[i].push_back (j);
-                    }
+                    if (((*vp)[i] - (*vp)[j]).length() <= vlen_thresh) { equiv[i].push_back (j); }
                 }
             }
-            for (auto eq : equiv1) { std::cout << "eq " << eq.first << " = " << eq.second << std::endl; }
-
-            // Now prune out vp1 and equiv1
-            std::map<uint32_t, sm::vvec<uint32_t>>::iterator equiv1_i = equiv1.begin();
-            while (equiv1_i != equiv1.end()) {
-                if (equiv1_i->second.find_first_of (equiv1_i->first) > 0) {
-                    equiv1_i = equiv1.erase (equiv1_i);
-                } else {
-                    equiv1_i++;
+            // Prune duplicates
+            std::erase_if (equiv, [](const auto& eq) { const auto& [k, v] = eq; return v.find_first_of (k) > 0; });
+            for (auto eq : equiv) { std::cout << "equiv[" << eq.first << "] = " << eq.second << std::endl; }
+            // Populate vp1, a vector of coordinates
+            std::vector<sm::vec<float, 3>> vp1 (equiv.size(), {0});
+            uint32_t i = 0;
+            for (auto eq : equiv) { vp1[i++] = (*vp)[eq.first]; }
+            for (i = 0; i < vp1.size(); ++i) {
+                std::cout << "vp1[" << i << "] = " << vp1[i] << std::endl;
+            }
+#else
+            /*
+             * An alternative (using less memory + compute), BUT we do need to retain the info that
+             * v0 ~ [0,1,2] so that when at v0, we can look for all dirns
+             */
+            // Populate
+            std::map<uint32_t, uint32_t> equiv;
+            for (uint32_t i = 0; i < vps; ++i) {
+                for (uint32_t j = 0; j <= i; ++j) {
+                   if (((*vp)[i] - (*vp)[j]).length() <= vlen_thresh) {
+                       equiv[j] = i;
+                       std::cout << j << " ~ " << i << std::endl;
+                   }
                 }
             }
+            // Reduce
+            std::set<uint32_t> ordered_vertices;
+            for (auto eq : equiv) { ordered_vertices.insert (eq.second); }
+            std::vector<uint32_t> vp1 (ordered_vertices.size(), 0);
+            uint32_t i = 0;
+            for (auto ov : ordered_vertices) {
+                std::cout << "ov = " << ov << std::endl;
+                vp1[i++] = ov;
+            }
+            i = 0; for (auto v : vp1) { std::cout << "vp1[" << i++ << "] = " << (*vp)[v] << std::endl; }
+#endif
 
-            for (auto eq : equiv1) { std::cout << "eq_after " << eq.first << " = " << eq.second << std::endl; }
+            // Lastly, generate edges. For which we require use of indices, which is expressed in
+            // terms of the old indices. Which by the second method above, I have lost :-/ So use first method.
 
-
-            // Lastly, generate edges1
-
+            std::vector<sm::vvec<uint32_t>> edges; // Same size as vp1. For each unique vertex in
+                                                   // vp1, list the vertices that are connected via
+                                                   // triangle edges in the OpenGL model
+            //std::vector<uint32_t> ind1 = this->indices; // may need?
 
 
 #if 0
