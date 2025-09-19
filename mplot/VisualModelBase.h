@@ -31,6 +31,7 @@
 #include <cstddef>
 #include <cmath>
 #include <bitset>
+#include <tuple>
 
 #include <mplot/gl/version.h>
 
@@ -215,12 +216,14 @@ namespace mplot {
             this->indices.reserve (6u * n_vertices);
         }
 
+        /**
+         * Neighbour vertex mesh code
+         */
+
         // Minimum set of vertices to generate a topological mesh
         std::vector<sm::vec<float, 3>> vp1;
-
         // Maps index in vp1 to indices
         sm::vvec<sm::vvec<uint32_t>> vp1_to_indices;
-
         // The edges that make up the same triangles as are shown with this->indices, but in terms of vp1.
         // Each edge must be two indices in *ascending numerical order*
         std::set<std::array<uint32_t, 2>> edges;
@@ -299,6 +302,30 @@ namespace mplot {
             return (*vn)[vec_idx];
         }
 
+        // Find the location, and the triangle indices at which a ray between coord and the model
+        // centroid cross - the 'penetration point'. This is essentially ray casting and if it gets
+        // used extensively, should go into a compute shader.
+        std::tuple<sm::vec<float, 3>, std::array<uint32_t, 3>> find_triangle_crossing (const sm::vec<float, 3>& coord) const
+        {
+            sm::vec<float, 3> c = this->get_viewmatrix_bb_centre();
+            std::cout << "bb centre: " << c << std::endl;
+            std::cout << "coord: " << coord << std::endl;
+            std::cout << "c - coord: " << (c - coord) << std::endl;
+            sm::vec<float, 3> p = {};
+
+            for (auto tri : triangles) {
+                // Get vectors for each tri from vertexPositions or vp1
+                bool isect = sm::algo::ray_tri_intersection<float> (this->vp1[tri[0]], this->vp1[tri[1]], this->vp1[tri[2]],
+                                                                    coord, (c - coord), p);
+                if (isect) { return {p, tri}; }
+            }
+
+            // Failed to find, return container full of maxes
+            p.set_from (std::numeric_limits<float>::max());
+            constexpr uint32_t umax = std::numeric_limits<uint32_t>::max();
+            return {p , std::array<uint32_t, 3>{umax, umax, umax}};
+        }
+
         /*!
          * Post-process vertices to generate a neighbour relationship mesh. The usual vertices and
          * indices may not be useful to help a ground-based agent to navigate the surface defined by
@@ -308,7 +335,7 @@ namespace mplot {
          * To help guide movement across a mesh, it would be useful to have a mesh that always gives
          * neighbour relationships.
          */
-        void vertex_postprocess()
+        void vertex_postprocess() // make_neighbour_mesh() ?
         {
             constexpr bool debug = true;
 
@@ -405,6 +432,10 @@ namespace mplot {
 
             std::cout << this->edges.size() << " edges and " << this->triangles.size() << " triangles in " << this->name << "\n";
         }
+
+        /**
+         * End neighbour vertex mesh code
+         */
 
         /*!
          * A function to call initialiseVertices and postVertexInit after any necessary attributes
@@ -541,6 +572,8 @@ namespace mplot {
         {
             return (this->viewmatrix * this->bb.mid()).less_one_dim();
         }
+
+        sm::mat44<float> get_viewmatrix() const { return this->viewmatrix; }
 
         //! Apply the viewmatrix to the model's bounding box and return it
         sm::range<sm::vec<float>> get_viewmatrix_modelbb() const
