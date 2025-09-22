@@ -309,14 +309,15 @@ namespace mplot {
 
             for (auto tri : triangles) {
                 // Get vectors for each tri from vertexPositions or vp1
-                std::cout << "Test triangle "
-                          << this->vp1[tri[0]] << ", " << this->vp1[tri[1]] << ", " << this->vp1[tri[2]]
-                          << " with ray from "  << coord << ", dirn " << vdir << std::endl;
+
+                //std::cout << "Test triangle "
+                //          << this->vp1[tri[0]] << ", " << this->vp1[tri[1]] << ", " << this->vp1[tri[2]]
+                //          << " with ray from "  << coord << ", dirn " << vdir << std::endl;
 
                 bool isect = sm::algo::ray_tri_intersection<float> (this->vp1[tri[0]], this->vp1[tri[1]], this->vp1[tri[2]],
                                                                     coord, vdir, p);
                 if (isect) {
-                    std::cout << "Got intersection at point " << p << "!\n";
+                    // std::cout << "Got intersection at point " << p << "!\n";
                     return {p, tri};
                 }
             }
@@ -333,11 +334,7 @@ namespace mplot {
         // used extensively, should go into a compute shader.
         std::tuple<sm::vec<float, 3>, std::array<uint32_t, 3>> find_triangle_crossing (const sm::vec<float, 3>& coord) const
         {
-            sm::vec<float, 3> c = this->get_viewmatrix_bb_centre();
-            std::cout << "bb centre: " << c << std::endl;
-            std::cout << "coord: " << coord << std::endl;
-            std::cout << "c - coord: " << (c - coord) << std::endl;
-            return this->find_triangle_crossing (coord, (c - coord));
+            return this->find_triangle_crossing (coord, (this->bb.mid() - coord));
         }
 
         /*!
