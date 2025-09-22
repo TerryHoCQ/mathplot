@@ -17,6 +17,8 @@ class trivis : public VisualModel<glver>
 public:
     trivis (const sm::vec<float> _offset = {0,0,0}) : mplot::VisualModel<glver>::VisualModel (_offset) {}
 
+    static constexpr bool switch_tri_indices_order = false;
+
     //! Compute a triangle from 3 coordinates
     void computeTriangle()
     {
@@ -31,16 +33,17 @@ public:
             this->vertex_push (this->colours[i], this->vertexColors);
             this->vertex_push (this->normal, this->vertexNormals);
         }
-#define ORIG_ORDER 1
+
         // This is just index 0, 1, 2
         this->indices.push_back (this->idx);
-#ifdef ORIG_ORDER
-        this->indices.push_back (this->idx + 1);
-        this->indices.push_back (this->idx + 2);
-#else
-        this->indices.push_back (this->idx + 2);
-        this->indices.push_back (this->idx + 1);
-#endif
+
+        if constexpr (switch_tri_indices_order) { // for demo/debug
+            this->indices.push_back (this->idx + 2);
+            this->indices.push_back (this->idx + 1);
+        } else {
+            this->indices.push_back (this->idx + 1);
+            this->indices.push_back (this->idx + 2);
+        }
 
         this->idx += 3; // Move the index counter on for the next drawing
     }
@@ -56,22 +59,22 @@ public:
         this->addLabel (std::string("Index draw order: ") + indvv.str(), {0.0f, -0.6f, 0.0f}, mplot::TextFeatures(0.16f));
 
         this->addLabel (std::string("Vtx 0 ") + coords[0].str(), coords[0] + sm::vec<float>{-0.3f, -0.2f, 0.0f}, mplot::TextFeatures(0.1f));
-#ifdef ORIG_ORDER
-        this->addLabel (std::string("Vtx 1 ") + coords[1].str(), coords[1] + sm::vec<float>{-0.3f, -0.2f, 0.0f}, mplot::TextFeatures(0.1f));
-        this->addLabel (std::string("Vtx 2 ") + coords[2].str(), coords[2] + sm::vec<float>{-0.3f, 0.2f, 0.0f}, mplot::TextFeatures(0.1f));
-#else
-        this->addLabel (std::string("Vtx 2 ") + coords[1].str(), coords[1] + sm::vec<float>{-0.3f, -0.2f, 0.0f}, mplot::TextFeatures(0.1f));
-        this->addLabel (std::string("Vtx 1 ") + coords[2].str(), coords[2] + sm::vec<float>{-0.3f, 0.2f, 0.0f}, mplot::TextFeatures(0.1f));
-#endif
+
+        if constexpr (switch_tri_indices_order) { // for demo/debug
+            this->addLabel (std::string("Vtx 2 ") + coords[1].str(), coords[1] + sm::vec<float>{-0.3f, -0.2f, 0.0f}, mplot::TextFeatures(0.1f));
+            this->addLabel (std::string("Vtx 1 ") + coords[2].str(), coords[2] + sm::vec<float>{-0.3f, 0.2f, 0.0f}, mplot::TextFeatures(0.1f));
+        } else {
+            this->addLabel (std::string("Vtx 1 ") + coords[1].str(), coords[1] + sm::vec<float>{-0.3f, -0.2f, 0.0f}, mplot::TextFeatures(0.1f));
+            this->addLabel (std::string("Vtx 2 ") + coords[2].str(), coords[2] + sm::vec<float>{-0.3f, 0.2f, 0.0f}, mplot::TextFeatures(0.1f));
+        }
+
         this->addLabel ("Vertex normals: " + this->normal.str(), {0, -0.9, 0}, mplot::TextFeatures(0.16));
 
         // Add illustrative stuff
-#if 0
         for (unsigned int i = 0; i < 3U; ++i) {
             this->computeSphereGeo (this->coords[i], this->colours[i], 0.05f, 2);
             this->computeArrow (this->coords[i], this->coords[i] + this->normal, this->colours[i], 0.015f);
         }
-#endif
     }
 
     //! The positions of the vertices of the triangle
