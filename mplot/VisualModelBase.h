@@ -302,6 +302,32 @@ namespace mplot {
             return (*vn)[vec_idx];
         }
 
+        std::tuple<sm::vec<float, 3>, std::array<uint32_t, 3>> find_triangle_crossing (const sm::vec<float, 3>& coord,
+                                                                                       const sm::vec<float, 3>& vdir) const
+        {
+            sm::vec<float, 3> p = {};
+
+            for (auto tri : triangles) {
+                // Get vectors for each tri from vertexPositions or vp1
+                std::cout << "Test triangle "
+                          << this->vp1[tri[0]] << ", " << this->vp1[tri[1]] << ", " << this->vp1[tri[2]]
+                          << " with ray from "  << coord << ", dirn " << vdir << std::endl;
+
+                bool isect = sm::algo::ray_tri_intersection<float> (this->vp1[tri[0]], this->vp1[tri[1]], this->vp1[tri[2]],
+                                                                    coord, vdir, p);
+                if (isect) {
+                    std::cout << "Got intersection at point " << p << "!\n";
+                    return {p, tri};
+                }
+            }
+
+            // Failed to find, return container full of maxes
+            p.set_from (std::numeric_limits<float>::max());
+            constexpr uint32_t umax = std::numeric_limits<uint32_t>::max();
+            return {p , std::array<uint32_t, 3>{umax, umax, umax}};
+
+        }
+
         // Find the location, and the triangle indices at which a ray between coord and the model
         // centroid cross - the 'penetration point'. This is essentially ray casting and if it gets
         // used extensively, should go into a compute shader.
@@ -311,19 +337,7 @@ namespace mplot {
             std::cout << "bb centre: " << c << std::endl;
             std::cout << "coord: " << coord << std::endl;
             std::cout << "c - coord: " << (c - coord) << std::endl;
-            sm::vec<float, 3> p = {};
-
-            for (auto tri : triangles) {
-                // Get vectors for each tri from vertexPositions or vp1
-                bool isect = sm::algo::ray_tri_intersection<float> (this->vp1[tri[0]], this->vp1[tri[1]], this->vp1[tri[2]],
-                                                                    coord, (c - coord), p);
-                if (isect) { return {p, tri}; }
-            }
-
-            // Failed to find, return container full of maxes
-            p.set_from (std::numeric_limits<float>::max());
-            constexpr uint32_t umax = std::numeric_limits<uint32_t>::max();
-            return {p , std::array<uint32_t, 3>{umax, umax, umax}};
+            return this->find_triangle_crossing (coord, (c - coord));
         }
 
         /*!
@@ -373,8 +387,9 @@ namespace mplot {
                 ++i;
             }
             if constexpr (debug) {
+                uint32_t cntr = 0;
                 for (auto eqi : equiv_top) {
-                    std::cout << "equiv_top[] = " << eqi << std::endl;
+                    std::cout << "equiv_top[" << cntr++ << "] = " << eqi << std::endl;
                 }
             }
             // Can now populate vp1, a vector of coordinates, if required, or simply access (*vp) as needed using equiv.first
@@ -418,7 +433,24 @@ namespace mplot {
 
                 // Direct population of triangles
                 std::array<uint32_t, 3> t = { equiv_top[indices[i]], equiv_top[indices[i+1]], equiv_top[indices[i+2]] };
+
+                // The normal vector for this triangle is easy to get, as we're dealing with indices already
+                sm::vec<float> trinorm = this->get_normal (indices[i]) + this->get_normal (indices[i+1]) + this->get_normal (indices[i+2]) ;
+                trinorm.renormalize();
+                if constexpr (debug) { std::cout << "Triangle normal: " << trinorm << std::endl; }
+
+                // Check rotational sense of triangles
+                sm::vec<float, 3> n = (vp1[t[1]] - vp1[t[0]]).cross (vp1[t[2]] - vp1[t[0]]);
+                if (n.dot (trinorm) < 0.0f) {
+                    // need to swap order in t:
+                    if constexpr (debug) { std::cout << "Triangle reordered (corners 1 and 2 switched)\n"; }
+                    uint32_t ti = t[2];
+                    t[2] = t[1];
+                    t[1] = ti;
+                }
+
                 this->triangles.push_back (t);
+                // If required, can store trinorm into a container like triangle_normals with a push_back.
             }
 
             if constexpr (debug) {
