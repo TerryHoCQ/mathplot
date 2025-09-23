@@ -312,16 +312,14 @@ int main()
 
     auto start_wr = (vmi * start).less_one_dim(); // wr to tvp
     std::cout << "start_wr = " << start_wr << std::endl;
-    std::tuple<sm::vec<float, 3>,
-               std::array<uint32_t, 3>> tc = tvp->find_triangle_crossing (start_wr, dirn);
-    std::array<uint32_t, 3> ti = std::get<1>(tc); // triangle indices
+    auto [hit, ti, tn] = tvp->find_triangle_crossing (start_wr, dirn);
     if (ti[0] == std::numeric_limits<uint32_t>::max()) {
         std::cout << "NO HIT\n";
     } else {
         std::cout << "Indices: " << ti[0] << "," << ti[1] << "," << ti[2] << std::endl;
-        std::cout << "Contains hit " << std::get<0>(tc) << std::endl;
+        std::cout << "Contains hit " << hit << std::endl;
 
-        sv = std::make_unique<mplot::SphereVisual<>>(std::get<0>(tc), 0.07, mplot::colour::springgreen2);
+        sv = std::make_unique<mplot::SphereVisual<>>(hit, 0.07, mplot::colour::springgreen2);
         v.bindmodel (sv);
         sv->finalize();
         v.addVisualModel (sv);
@@ -329,16 +327,14 @@ int main()
 
     auto start_wr_bh = (vmi * start_bh).less_one_dim(); // wr to tvp
     std::cout << "start_wr = " << start_wr << std::endl;
-    std::tuple<sm::vec<float, 3>,
-               std::array<uint32_t, 3>> tc_bh = tvp->find_triangle_crossing (start_wr_bh, dirn_bh);
-    ti = std::get<1>(tc_bh); // triangle indices
-    if (ti[0] == std::numeric_limits<uint32_t>::max()) {
+    auto [hit_bh, ti_bh, tn_bh] = tvp->find_triangle_crossing (start_wr_bh, dirn_bh);
+    if (ti_bh[0] == std::numeric_limits<uint32_t>::max()) {
         std::cout << "NO HIT\n";
     } else {
-        std::cout << "Indices: " << ti[0] << "," << ti[1] << "," << ti[2] << std::endl;
-        std::cout << "Contains hit " << std::get<0>(tc_bh) << std::endl;
+        std::cout << "Indices: " << ti_bh[0] << "," << ti_bh[1] << "," << ti_bh[2] << std::endl;
+        std::cout << "Contains hit " << hit_bh << std::endl;
 
-        sv = std::make_unique<mplot::SphereVisual<>>(std::get<0>(tc), 0.07, mplot::colour::springgreen2);
+        sv = std::make_unique<mplot::SphereVisual<>>(hit_bh, 0.07, mplot::colour::springgreen2);
         v.bindmodel (sv);
         sv->finalize();
         v.addVisualModel (sv);
