@@ -228,8 +228,7 @@ namespace mplot {
         // Each edge must be two indices in *ascending numerical order*
         std::set<std::array<uint32_t, 2>> edges;
         // Triangles too. Might be more useful than edges
-        sm::vvec<std::array<uint32_t, 3>> triangles;
-        // to be: sm::vvec<std::tuple< std::array<uint32_t, 3>, sm::vec<float, 3> > > triangles;
+        sm::vvec<std::tuple< std::array<uint32_t, 3>, sm::vec<float, 3> > > triangles;
 
         // Return index of vp1 that is closest to scene_coord. Can use vp1_to_indices to find the indices
         // into vertexPositions and vertexNormals that this index in the topographic mesh relates to.
@@ -272,9 +271,10 @@ namespace mplot {
         {
             sm::vvec<std::array<uint32_t, 3>> rtn;
             for (auto t: this->triangles) {
+                auto [ti, tn] = t;
                 // If it includes idx, add it to rtn
-                if (t[0] == idx || t[1] == idx || t[2] == idx) {
-                    rtn.push_back (t);
+                if (ti[0] == idx || ti[1] == idx || ti[2] == idx) {
+                    rtn.push_back (ti);
                 }
             }
             return rtn;
@@ -308,12 +308,11 @@ namespace mplot {
         find_triangle_crossing (const sm::vec<float, 3>& coord, const sm::vec<float, 3>& vdir) const
         {
             sm::vec<float, 3> p = {};
-            sm::vec<float, 3> tnorm = {};
 
             for (auto tri : triangles) {
-                bool isect = sm::algo::ray_tri_intersection<float> (this->vp1[tri[0]], this->vp1[tri[1]], this->vp1[tri[2]], coord, vdir, p);
-                // tri will contain the normal vector
-                if (isect) { return {p, tri, tnorm}; }
+                auto [ti, tn] = tri;
+                bool isect = sm::algo::ray_tri_intersection<float> (this->vp1[ti[0]], this->vp1[ti[1]], this->vp1[ti[2]], coord, vdir, p);
+                if (isect) { return {p, ti, tn}; }
             }
 
             // Failed to find, return container full of maxes
@@ -441,7 +440,7 @@ namespace mplot {
                     t[1] = ti;
                 }
 
-                this->triangles.push_back (t);
+                this->triangles.push_back ({t, trinorm});
                 // If required, can store trinorm into a container like triangle_normals with a push_back.
             }
 
@@ -450,7 +449,8 @@ namespace mplot {
                     std::cout << "Edge: " << e[0] << "," << e[1] << std::endl;
                 }
                 for (auto t : this->triangles) {
-                    std::cout << "Tri: " << t[0] << "," << t[1] << "," << t[2] << std::endl;
+                    auto [ti, tn] = t;
+                    std::cout << "Tri: " << ti[0] << "," << ti[1] << "," << ti[2] << ", norm " << tn << std::endl;
                 }
             }
 
