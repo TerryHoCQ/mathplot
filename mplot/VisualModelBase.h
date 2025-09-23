@@ -20,8 +20,6 @@
 
 #include <iostream>
 #include <vector>
-#include <map>
-#include <set>
 #include <array>
 #include <algorithm>
 #include <iterator>
@@ -31,6 +29,8 @@
 #include <cstddef>
 #include <cmath>
 #include <bitset>
+#include <map>
+#include <set>
 #include <tuple>
 
 #include <mplot/gl/version.h>
@@ -227,8 +227,8 @@ namespace mplot {
         // The edges that make up the same triangles as are shown with this->indices, but in terms of vp1.
         // Each edge must be two indices in *ascending numerical order*
         std::set<std::array<uint32_t, 2>> edges;
-        // Triangles too. Might be more useful than edges
-        sm::vvec<std::tuple< std::array<uint32_t, 3>, sm::vec<float, 3> > > triangles;
+        // Triangles too. Might be more useful than edges.
+        sm::vvec<std::tuple<std::array<uint32_t, 3>, sm::vec<float, 3>>> triangles;
 
         // Return index of vp1 that is closest to scene_coord. Can use vp1_to_indices to find the indices
         // into vertexPositions and vertexNormals that this index in the topographic mesh relates to.
