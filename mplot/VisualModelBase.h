@@ -229,6 +229,7 @@ namespace mplot {
         std::set<std::array<uint32_t, 2>> edges;
         // Triangles too. Might be more useful than edges
         sm::vvec<std::array<uint32_t, 3>> triangles;
+        // to be: sm::vvec<std::tuple< std::array<uint32_t, 3>, sm::vec<float, 3> > > triangles;
 
         // Return index of vp1 that is closest to scene_coord. Can use vp1_to_indices to find the indices
         // into vertexPositions and vertexNormals that this index in the topographic mesh relates to.
@@ -302,37 +303,31 @@ namespace mplot {
             return (*vn)[vec_idx];
         }
 
-        std::tuple<sm::vec<float, 3>, std::array<uint32_t, 3>> find_triangle_crossing (const sm::vec<float, 3>& coord,
-                                                                                       const sm::vec<float, 3>& vdir) const
+        // Return a tuple containing crossing location, triangle identity (three indices) and triangle normal vector
+        std::tuple<sm::vec<float, 3>, std::array<uint32_t, 3>, sm::vec<float, 3>>
+        find_triangle_crossing (const sm::vec<float, 3>& coord, const sm::vec<float, 3>& vdir) const
         {
             sm::vec<float, 3> p = {};
+            sm::vec<float, 3> tnorm = {};
 
             for (auto tri : triangles) {
-                // Get vectors for each tri from vertexPositions or vp1
-
-                //std::cout << "Test triangle "
-                //          << this->vp1[tri[0]] << ", " << this->vp1[tri[1]] << ", " << this->vp1[tri[2]]
-                //          << " with ray from "  << coord << ", dirn " << vdir << std::endl;
-
-                bool isect = sm::algo::ray_tri_intersection<float> (this->vp1[tri[0]], this->vp1[tri[1]], this->vp1[tri[2]],
-                                                                    coord, vdir, p);
-                if (isect) {
-                    // std::cout << "Got intersection at point " << p << "!\n";
-                    return {p, tri};
-                }
+                bool isect = sm::algo::ray_tri_intersection<float> (this->vp1[tri[0]], this->vp1[tri[1]], this->vp1[tri[2]], coord, vdir, p);
+                // tri will contain the normal vector
+                if (isect) { return {p, tri, tnorm}; }
             }
 
             // Failed to find, return container full of maxes
             p.set_from (std::numeric_limits<float>::max());
             constexpr uint32_t umax = std::numeric_limits<uint32_t>::max();
-            return {p , std::array<uint32_t, 3>{umax, umax, umax}};
+            return {p , std::array<uint32_t, 3>{umax, umax, umax}, p};
 
         }
 
         // Find the location, and the triangle indices at which a ray between coord and the model
         // centroid cross - the 'penetration point'. This is essentially ray casting and if it gets
         // used extensively, should go into a compute shader.
-        std::tuple<sm::vec<float, 3>, std::array<uint32_t, 3>> find_triangle_crossing (const sm::vec<float, 3>& coord) const
+        std::tuple<sm::vec<float, 3>, std::array<uint32_t, 3>, sm::vec<float, 3>>
+        find_triangle_crossing (const sm::vec<float, 3>& coord) const
         {
             return this->find_triangle_crossing (coord, (this->bb.mid() - coord));
         }
