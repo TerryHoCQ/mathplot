@@ -990,7 +990,7 @@ namespace mplot {
             // Start cap vertices (a triangle fan)
             for (int j = 0; j < segments; j++) {
                 // t is the angle of the segment
-                float t = rotation + j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = rotation + j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = _ux * std::sin(t) * r + _uy * std::cos(t) * r;
                 this->vertex_push (vstart+c, vp);
                 this->vertex_push (-v, vn);
@@ -999,7 +999,7 @@ namespace mplot {
 
             // Intermediate, near start cap. Normals point in direction c
             for (int j = 0; j < segments; j++) {
-                float t = rotation + j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = rotation + j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = _ux * std::sin(t) * r + _uy * std::cos(t) * r;
                 this->vertex_push (vstart+c, vp);
                 c.renormalize();
@@ -1009,7 +1009,7 @@ namespace mplot {
 
             // Intermediate, near end cap. Normals point in direction c
             for (int j = 0; j < segments; j++) {
-                float t = rotation + (float)j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = rotation + (float)j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = _ux * std::sin(t) * r + _uy * std::cos(t) * r;
                 this->vertex_push (vend+c, vp);
                 c.renormalize();
@@ -1019,7 +1019,7 @@ namespace mplot {
 
             // Bottom cap vertices
             for (int j = 0; j < segments; j++) {
-                float t = rotation + (float)j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = rotation + (float)j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = _ux * std::sin(t) * r + _uy * std::cos(t) * r;
                 this->vertex_push (vend+c, vp);
                 this->vertex_push (v, vn);
@@ -1037,7 +1037,7 @@ namespace mplot {
             // After creating vertices, push all the indices.
             GLuint capMiddle = _idx;
             GLuint capStartIdx = _idx + 1u;
-            GLuint endMiddle = _idx + (GLuint)nverts - 1u;
+            GLuint endMiddle = _idx + static_cast<GLuint>(nverts) - 1u;
             GLuint endStartIdx = capStartIdx + (3u * segments);
 
             // Start cap indices
@@ -1211,7 +1211,7 @@ namespace mplot {
             // only need a single call to glDrawElements.
             for (int j = 0; j < segments; j++) {
                 // t is the angle of the segment
-                float t = j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r + v_x_inplane * std::cos(t) * r;
                 this->vertex_push (vstart+c, this->vertexPositions);
                 this->vertex_push (-v, this->vertexNormals);
@@ -1220,7 +1220,7 @@ namespace mplot {
 
             // Intermediate, near start cap. Normals point in direction c
             for (int j = 0; j < segments; j++) {
-                float t = j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r + v_x_inplane * std::cos(t) * r;
                 this->vertex_push (vstart+c, this->vertexPositions);
                 c.renormalize();
@@ -1230,7 +1230,7 @@ namespace mplot {
 
             // Intermediate, near end cap. Normals point in direction c
             for (int j = 0; j < segments; j++) {
-                float t = (float)j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = (float)j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r_end + v_x_inplane * std::cos(t) * r_end;
                 this->vertex_push (vend+c, this->vertexPositions);
                 c.renormalize();
@@ -1240,7 +1240,7 @@ namespace mplot {
 
             // Bottom cap vertices
             for (int j = 0; j < segments; j++) {
-                float t = (float)j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = (float)j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r_end + v_x_inplane * std::cos(t) * r_end;
                 this->vertex_push (vend+c, this->vertexPositions);
                 this->vertex_push (v, this->vertexNormals);
@@ -1258,7 +1258,7 @@ namespace mplot {
             // After creating vertices, push all the indices.
             GLuint capMiddle = this->idx;
             GLuint capStartIdx = this->idx + 1u;
-            GLuint endMiddle = this->idx + (GLuint)nverts - 1u;
+            GLuint endMiddle = this->idx + static_cast<GLuint>(nverts) - 1u;
             GLuint endStartIdx = capStartIdx + (3u * segments);
 
             // Start cap
@@ -1377,7 +1377,7 @@ namespace mplot {
             // c1(t) = ( (p1-x1).normalized std::sin(t) + v.normalized cross (p1-x1).normalized * std::cos(t) )
             // c1(t) = ( inplane std::sin(t) + v * inplane * std::cos(t)
             for (int j = 0; j < segments; j++) {
-                float t = j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r + v_x_inplane * std::cos(t) * r_mod;
                 this->vertex_push (vstart+c, this->vertexPositions);
                 c.renormalize();
@@ -1391,7 +1391,7 @@ namespace mplot {
             r_mod = r_end / v_x_inplane.cross (v).length();
 
             for (int j = 0; j < segments; j++) {
-                float t = (float)j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = (float)j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r_end + v_x_inplane * std::cos(t) * r_mod;
                 this->vertex_push (vend+c, this->vertexPositions);
                 c.renormalize();
@@ -1521,7 +1521,7 @@ namespace mplot {
             // Polygon vertices (a triangle fan)
             for (int j = 0; j < segments; j++) {
                 // t is the angle of the segment
-                float t = rotation + j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = rotation + j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = _ux * std::sin(t) * r + _uy * std::cos(t) * r;
                 this->vertex_push (vstart+c, this->vertexPositions);
                 this->vertex_push (-v, this->vertexNormals);
@@ -2154,7 +2154,7 @@ namespace mplot {
             // After creating vertices, push all the indices.
             GLuint capMiddle = this->idx;
             GLuint capStartIdx = this->idx + 1;
-            GLuint endMiddle = this->idx + (GLuint)nverts - 1u;
+            GLuint endMiddle = this->idx + static_cast<GLuint>(nverts) - 1u;
             GLuint endStartIdx = capStartIdx;
 
             // Base of the cone
@@ -2322,7 +2322,7 @@ namespace mplot {
             // After creating vertices, push all the indices.
             GLuint capMiddle = this->idx;
             GLuint capStartIdx = this->idx + 1u;
-            GLuint endMiddle = this->idx + (GLuint)nverts - 1u;
+            GLuint endMiddle = this->idx + static_cast<GLuint>(nverts) - 1u;
             GLuint endStartIdx = capStartIdx + (3u * segments);
 
             // Start cap indices
