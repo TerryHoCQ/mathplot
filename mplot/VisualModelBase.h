@@ -331,6 +331,28 @@ namespace mplot {
 
         }
 
+        // Find a triangle containing indices a and b that isn't 'not_this' and return, along with its normal.
+        std::tuple<std::array<uint32_t, 3>, sm::vec<float>>
+        find_other_triangle_containing (const uint32_t a, const uint32_t b, const std::array<uint32_t, 3>& not_this)
+        {
+            constexpr uint32_t umax = std::numeric_limits<uint32_t>::max();
+            std::array<uint32_t, 3> other = {umax, umax, umax};
+            constexpr float fmax = std::numeric_limits<float>::max();
+            sm::vec<float> other_n = {fmax, fmax, fmax};
+            for (auto tri : triangles) {
+                auto [ti, tn] = tri;
+                if (ti == not_this) { continue; }
+                if (ti[0] == a || ti[0] == b
+                    || ti[1] == a || ti[1] == b
+                    || ti[2] == a || ti[2] == b) {
+                    other = ti;
+                    other_n = tn;
+                    break;
+                }
+            }
+            return {other, other_n};
+        }
+
         // Find the location, and the triangle indices at which a ray between coord and the model
         // centroid cross - the 'penetration point'. This is essentially ray casting and if it gets
         // used extensively, should go into a compute shader.
