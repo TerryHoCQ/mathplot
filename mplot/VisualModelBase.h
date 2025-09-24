@@ -222,7 +222,7 @@ namespace mplot {
 
         // Minimum set of vertices to generate a topological mesh
         std::vector<sm::vec<float, 3>> vp1;
-        // Maps index in vp1 to indices
+        // Maps index in vp1 to the original this->indices index
         sm::vvec<sm::vvec<uint32_t>> vp1_to_indices;
         // The edges that make up the same triangles as are shown with this->indices, but in terms of vp1.
         // Each edge must be two indices in *ascending numerical order*
@@ -248,6 +248,15 @@ namespace mplot {
                 }
             }
             return i;
+        }
+
+        sm::vec<sm::vec<float, 3>, 3> triangle_vertices (const std::array<uint32_t, 3>& tri_indices)
+        {
+            sm::vec<sm::vec<float, 3>, 3> trivert;
+            trivert[0] = this->vp1[tri_indices[0]];
+            trivert[1] = this->vp1[tri_indices[1]];
+            trivert[2] = this->vp1[tri_indices[2]];
+            return trivert;
         }
 
         sm::vvec<uint32_t> neighbours (const uint32_t idx) const
