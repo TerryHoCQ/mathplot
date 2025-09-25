@@ -135,7 +135,11 @@ namespace mplot::compoundray {
             fout << "  \"meshes\" : [\n";
             // for each VisualModel:
             for (std::size_t vmi = 0u; vmi < this->vm.size(); ++vmi) {
-                fout << "    { \"primitives\" : [ { \"attributes\" : { \"POSITION\" : " << 1+vmi*4
+                fout << "    { ";
+                if (!this->vm[vmi]->name.empty()) {
+                    fout << "\"name\" : \"" << this->vm[vmi]->name << "\", ";
+                }
+                fout << "\"primitives\" : [ { \"attributes\" : { \"POSITION\" : " << 1+vmi*4
                      << ", \"COLOR_0\" : " << 2+vmi*4
                      << ", \"NORMAL\" : " << 3+vmi*4 << " }, \"indices\" : " << vmi*4 << ", \"material\": 0 } ] }"
                      << (vmi < this->vm.size()-1 ? ",\n" : "\n");

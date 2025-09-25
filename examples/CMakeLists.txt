@@ -416,6 +416,9 @@ target_link_libraries(rhombo_scene OpenGL::GL glfw Freetype::Freetype)
 add_executable(rhombo_scene2 rhombo_scene2.cpp)
 target_link_libraries(rhombo_scene2 OpenGL::GL glfw Freetype::Freetype)
 
+add_executable(cube cube.cpp)
+target_link_libraries(cube OpenGL::GL glfw Freetype::Freetype)
+
 add_executable(quads quads.cpp)
 target_link_libraries(quads OpenGL::GL glfw Freetype::Freetype)
 

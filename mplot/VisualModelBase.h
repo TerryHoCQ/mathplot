@@ -513,6 +513,9 @@ namespace mplot {
 
         //! Setter for the viewmatrix
         void setViewMatrix (const sm::mat44<float>& mv) { this->viewmatrix = mv; }
+        //! Pre or post-multiply
+        void postmultViewMatrix (const sm::mat44<float>& m) { this->viewmatrix = this->viewmatrix * m; }
+        void premultViewMatrix (const sm::mat44<float>& m) { this->viewmatrix = m * this->viewmatrix; }
 
         virtual void setSceneMatrixTexts (const sm::mat44<float>& sv) = 0;
 
