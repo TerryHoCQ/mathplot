@@ -23,7 +23,7 @@ int main()
     auto rv = std::make_unique<mplot::RhomboVisual<>> (offset, e1, e2, e3, colour1);
     v.bindmodel (rv);
     rv->name = "Cube.002";
-    rv->facecm = mplot::ColourMapType::Magma;
+    rv->facecm = mplot::ColourMapType::Rainbow; // Try Rainbow, Batlow, Tofino
     rv->finalize();
     v.addVisualModel (rv);
 
