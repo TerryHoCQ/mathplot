@@ -335,20 +335,29 @@ namespace mplot {
         std::tuple<std::array<uint32_t, 3>, sm::vec<float>>
         find_other_triangle_containing (const uint32_t a, const uint32_t b, const std::array<uint32_t, 3>& not_this)
         {
+            constexpr bool debug_normals = true;
+
             constexpr uint32_t umax = std::numeric_limits<uint32_t>::max();
             std::array<uint32_t, 3> other = {umax, umax, umax};
             constexpr float fmax = std::numeric_limits<float>::max();
             sm::vec<float> other_n = {fmax, fmax, fmax};
+            sm::vec<float> my_n = {fmax, fmax, fmax}; // debug
             for (auto tri : triangles) {
                 auto [ti, tn] = tri;
-                if (ti == not_this) { continue; }
-                if (ti[0] == a || ti[0] == b
-                    || ti[1] == a || ti[1] == b
-                    || ti[2] == a || ti[2] == b) {
+                if (ti == not_this) {
+                    if constexpr (debug_normals) { my_n = tn; }
+                    continue;
+                }
+                if ((ti[0] == a && (ti[1] == b || ti[2] == b))
+                    || (ti[1] == a && (ti[0] == b || ti[2] == b))
+                    || (ti[2] == a && (ti[0] == b || ti[1] == b))) {
                     other = ti;
                     other_n = tn;
-                    break;
+                    if constexpr (!debug_normals) { break; }
                 }
+            }
+            if constexpr (debug_normals) {
+                std::cout << "my_n: " << my_n << " and other_n: " << other_n << std::endl;
             }
             return {other, other_n};
         }
@@ -529,15 +538,21 @@ namespace mplot {
         virtual void setSceneTranslationTexts (const sm::vec<float>& v0) = 0;
 
         //! Set a translation into the scene and into any child texts
-        void setSceneTranslation (const sm::vec<float>& v0)
+        template <std::size_t N = 3> requires (N == 3) || (N == 4)
+        void setSceneTranslation (const sm::vec<float, N>& v0)
         {
             this->scenematrix.setToIdentity();
             this->scenematrix.translate (v0);
-            this->setSceneTranslationTexts (v0);
+            if constexpr (N == 4) {
+                this->setSceneTranslationTexts (v0.less_one_dim());
+            } else {
+                this->setSceneTranslationTexts (v0);
+            }
         }
 
         //! Set a translation (only) into the scene view matrix
-        void addSceneTranslation (const sm::vec<float>& v0) { this->scenematrix.translate (v0); }
+        template <std::size_t N = 3> requires (N == 3) || (N == 4)
+        void addSceneTranslation (const sm::vec<float, N>& v0) { this->scenematrix.translate (v0); }
 
         //! Set a rotation (only) into the scene view matrix
         void setSceneRotation (const sm::quaternion<float>& r)
@@ -550,14 +565,16 @@ namespace mplot {
         void addSceneRotation (const sm::quaternion<float>& r) { this->scenematrix.prerotate (r); }
 
         //! Set a translation to the model view matrix
-        void setViewTranslation (const sm::vec<float>& v0)
+        template <std::size_t N = 3> requires (N == 3) || (N == 4)
+        void setViewTranslation (const sm::vec<float, N>& v0)
         {
             this->viewmatrix.setToIdentity();
             this->viewmatrix.translate (v0);
         }
 
         //! Add a translation to the model view matrix
-        void addViewTranslation (const sm::vec<float>& v0) { this->viewmatrix.translate (v0); }
+        template <std::size_t N = 3> requires (N == 3) || (N == 4)
+        void addViewTranslation (const sm::vec<float, N>& v0) { this->viewmatrix.translate (v0); }
 
         //! Set a rotation (only) into the view, but keep texts fixed
         void setViewRotationFixTexts (const sm::quaternion<float>& r)
