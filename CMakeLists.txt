@@ -150,7 +150,7 @@ if(maths_contents)
   include_directories(${PROJECT_SOURCE_DIR}/maths)
 else()
   message(STATUS "Using maths from vcpkg)
-  find_path(SEBSJAMES_MATHS_INCLUDE_DIRS "sm/algo")
+  find_path(SEBSJAMES_MATHS_INCLUDE_DIRS "sm/algo" REQUIRED)
   include_directories(${SEBSJAMES_MATHS_INCLUDE_DIRS})
 endif()
 
