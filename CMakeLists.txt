@@ -150,8 +150,8 @@ if(maths_contents)
   include_directories(${PROJECT_SOURCE_DIR}/maths)
 else()
   message(STATUS "Using maths from vcpkg)
-  find_package(sebsjames_maths REQUIRED)
-  include_directories(${SEBSJAMES_MATHS_INCLUDE_DIR})
+  find_path(SEBSJAMES_MATHS_INCLUDE_DIRS "sm/algo")
+  include_directories(${SEBSJAMES_MATHS_INCLUDE_DIRS})
 endif()
 
 # Use packaged nlohmann json
@@ -186,7 +186,7 @@ add_subdirectory(mplot)
 
 # Unit testing using the ctest framework
 option(BUILD_TESTS "Build tests" OFF)
-if(BUILD_TESTS)
+if(BUILDe_TESTS)
   enable_testing()
   add_subdirectory(tests)
 endif(BUILD_TESTS)
