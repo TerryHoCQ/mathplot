@@ -144,8 +144,8 @@ include_directories(${FREETYPE_INCLUDE_DIRS})
 
 # Include the maths subdirectory (sebsjames/maths is git-submoduled)
 # If the subdirectory is not available, try to include maths from system
-file(GLOB maths_contents ${PROJECT_SOURCE_DIR}/maths/*)
-if(maths_contents)
+file(GLOB bundled_maths ${PROJECT_SOURCE_DIR}/maths/*)
+if(bundled_maths)
   message(STATUS "Using maths from git-submodule")
   include_directories(${PROJECT_SOURCE_DIR}/maths)
 else()
