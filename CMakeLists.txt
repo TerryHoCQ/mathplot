@@ -146,7 +146,7 @@ include_directories(${FREETYPE_INCLUDE_DIRS})
 # If the subdirectory is not available, try to include maths from system
 file(GLOB bundled_maths ${PROJECT_SOURCE_DIR}/maths/*)
 if(bundled_maths)
-  message(STATUS "Using maths from git-submodule")
+  message(STATUS "Using bundled maths")
   include_directories(${PROJECT_SOURCE_DIR}/maths)
 else()
   message(STATUS "Using maths from vcpkg")
