@@ -150,8 +150,8 @@ if(bundled_maths)
   include_directories(${PROJECT_SOURCE_DIR}/maths)
 else()
   message(STATUS "Using maths from vcpkg")
-  find_path(SEBSJAMES_MATHS_INCLUDE_DIRS "sm/algo" REQUIRED)
-  include_directories(${SEBSJAMES_MATHS_INCLUDE_DIRS})
+  find_path(MATHS_INCLUDE_DIRS "sm/algo" REQUIRED)
+  include_directories(${MATHS_INCLUDE_DIRS})
 endif()
 
 # Use packaged nlohmann json
