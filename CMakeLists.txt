@@ -143,15 +143,15 @@ find_package(Freetype REQUIRED)
 include_directories(${FREETYPE_INCLUDE_DIRS})
 
 # Include the maths subdirectory (sebsjames/maths is git-submoduled)
-# If the subdirectory is not available, use sebsjames-mathplot port from vcpkg.
+# If the subdirectory
 file(GLOB maths_contents ${PROJECT_SOURCE_DIR}/maths)
 if(maths_contents)
-  message(STATUS "Using maths from git submodule)
+  message(STATUS "Using maths from git-submodule)
   include_directories(${PROJECT_SOURCE_DIR}/maths)
 else()
   message(STATUS "Using maths from vcpkg)
-  find_package(sebsjames_mathplot REQUIRED)
-  include_directories(${SEBSJAMES_MATHPLOT_INCLUDE_DIR})
+  find_package(sebsjames_maths REQUIRED)
+  include_directories(${SEBSJAMES_MATHS_INCLUDE_DIR})
 endif()
 
 # Use packaged nlohmann json
