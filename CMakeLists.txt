@@ -186,7 +186,7 @@ add_subdirectory(mplot)
 
 # Unit testing using the ctest framework
 option(BUILD_TESTS "Build tests" OFF)
-if(BUILDe_TESTS)
+if(BUILD_TESTS)
   enable_testing()
   add_subdirectory(tests)
 endif(BUILD_TESTS)
