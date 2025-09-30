@@ -335,7 +335,7 @@ namespace mplot {
         std::tuple<std::array<uint32_t, 3>, sm::vec<float>>
         find_other_triangle_containing (const uint32_t a, const uint32_t b, const std::array<uint32_t, 3>& not_this)
         {
-            constexpr bool debug_normals = true;
+            constexpr bool debug_normals = false;
 
             constexpr uint32_t umax = std::numeric_limits<uint32_t>::max();
             std::array<uint32_t, 3> other = {umax, umax, umax};
