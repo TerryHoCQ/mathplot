@@ -143,7 +143,16 @@ find_package(Freetype REQUIRED)
 include_directories(${FREETYPE_INCLUDE_DIRS})
 
 # Include the maths subdirectory (sebsjames/maths is git-submoduled)
-include_directories(${PROJECT_SOURCE_DIR}/maths)
+# If the subdirectory is not available, try to include maths from system
+file(GLOB bundled_maths ${PROJECT_SOURCE_DIR}/maths/*)
+if(bundled_maths)
+  message(STATUS "Using bundled maths")
+  include_directories(${PROJECT_SOURCE_DIR}/maths)
+else()
+  message(STATUS "Using maths from vcpkg")
+  find_path(MATHS_INCLUDE_DIRS "sm/algo" REQUIRED)
+  include_directories(${MATHS_INCLUDE_DIRS})
+endif()
 
 # Use packaged nlohmann json
 find_package(nlohmann_json REQUIRED)
