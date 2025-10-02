@@ -46,7 +46,6 @@ namespace mplot {
             this->end_col = _end_col;
         }
 
-        static constexpr bool use_oriented_tube = true;
         //! Initialize vertex buffer objects and vertex array object.
         void initializeVertices()
         {
@@ -56,7 +55,7 @@ namespace mplot {
             this->indices.clear();
 
             // Draw a tube. That's it!
-            if constexpr (use_oriented_tube == false) {
+            if (use_oriented_tube == false) {
                 this->computeTube (this->start_coord, this->end_coord,
                                    this->start_col, this->end_col, this->radius, 12);
             } else {
@@ -80,7 +79,9 @@ namespace mplot {
         sm::vec<float, 3> end_coord = {1.0f, 0.0f, 0.0f};
         //! The radius of the rod
         float radius = 1.0f;
-
+        //! If true, use face_uz and face_uy to draw the tube, else get a square-ended tube
+        bool use_oriented_tube = true;
+        //! Face directions for the oriented tube
         sm::vec<float, 3> face_uy = sm::vec<float, 3>::uy();
         sm::vec<float, 3> face_uz = sm::vec<float, 3>::uz();
 
