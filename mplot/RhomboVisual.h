@@ -26,6 +26,72 @@ namespace mplot {
                 this->vertices_singlecolour();
             } else {
                 this->vertices_multicolour();
+                if (this->annotate) {
+                    sm::vec<> v1;
+                    sm::vec<> v2;
+                    sm::vec<> v3;
+                    sm::vec<> v4;
+                    auto vpptr = reinterpret_cast< std::vector<sm::vec<float, 3>>* >(&this->vertexPositions);
+                    // Show coordinates of vertices
+                    // Front face
+                    // 6 vertices of which 4 are our corners
+                    v1 = (*vpptr)[0];
+                    v2 = (*vpptr)[1];
+                    v3 = (*vpptr)[2];
+                    v4 = (*vpptr)[5];
+
+                    auto lbl = this->makeVisualTextModel (this->tf);
+                    mplot::TextGeometry geom = lbl->getTextGeometry (v1.str());
+                    auto loffset = sm::vec<>{-geom.width(),0,0};
+                    lbl->setupText (v1.str(), v1 + this->viewmatrix.translation() + loffset, this->tf.colour);
+                    this->texts.push_back (std::move(lbl));
+
+                    lbl = this->makeVisualTextModel (this->tf);
+                    geom = lbl->getTextGeometry (v2.str());
+                    lbl->setupText (v2.str(), v2 + this->viewmatrix.translation(), this->tf.colour);
+                    this->texts.push_back (std::move(lbl));
+
+                    lbl = this->makeVisualTextModel (this->tf);
+                    geom = lbl->getTextGeometry (v3.str());
+                    loffset = sm::vec<>{-geom.width(),0,0};
+                    lbl->setupText (v3.str(), v3 + this->viewmatrix.translation() + loffset, this->tf.colour);
+                    this->texts.push_back (std::move(lbl));
+
+                    lbl = this->makeVisualTextModel (this->tf);
+                    geom = lbl->getTextGeometry (v4.str());
+                    lbl->setupText (v4.str(), v4 + this->viewmatrix.translation(), this->tf.colour);
+                    this->texts.push_back (std::move(lbl));
+
+
+                    // Back face
+                    v1 = (*vpptr)[12 + 0];
+                    v2 = (*vpptr)[12 + 1];
+                    v3 = (*vpptr)[12 + 2];
+                    v4 = (*vpptr)[12 + 5];
+
+                    lbl = this->makeVisualTextModel (this->tf);
+                    geom = lbl->getTextGeometry (v1.str());
+                    loffset = sm::vec<>{-geom.width(),0,0};
+                    lbl->setupText (v1.str(), v1 + this->viewmatrix.translation() + loffset, this->tf.colour);
+                    this->texts.push_back (std::move(lbl));
+
+                    lbl = this->makeVisualTextModel (this->tf);
+                    geom = lbl->getTextGeometry (v2.str());
+                    lbl->setupText (v2.str(), v2 + this->viewmatrix.translation(), this->tf.colour);
+                    this->texts.push_back (std::move(lbl));
+
+                    lbl = this->makeVisualTextModel (this->tf);
+                    geom = lbl->getTextGeometry (v3.str());
+                    loffset = sm::vec<>{-geom.width(),0,0};
+                    lbl->setupText (v3.str(), v3 + this->viewmatrix.translation() + loffset, this->tf.colour);
+                    this->texts.push_back (std::move(lbl));
+
+                    lbl = this->makeVisualTextModel (this->tf);
+                    geom = lbl->getTextGeometry (v4.str());
+                    lbl->setupText (v4.str(), v4 + this->viewmatrix.translation(), this->tf.colour);
+                    this->texts.push_back (std::move(lbl));
+
+                }
             }
         }
 
@@ -178,6 +244,8 @@ namespace mplot {
         sm::vec<float, 3> edge3 = {0.0f, 0.0f, 0.0f};
         std::array<float, 3> col = {0.0f, 0.0f, 1.0f};
         mplot::ColourMapType facecm = mplot::ColourMapType::Fixed; // if so, use col
+        bool annotate = false;
+        mplot::TextFeatures tf; // for annotations if used
     };
 
 } // namespace mplot

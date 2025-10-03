@@ -24,6 +24,7 @@ int main()
     v.bindmodel (rv);
     rv->name = "Cube.002";
     rv->facecm = mplot::ColourMapType::Rainbow; // Try Rainbow, Batlow, Tofino
+    rv->annotate = true;
     rv->finalize();
     v.addVisualModel (rv);
 
