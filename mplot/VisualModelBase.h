@@ -316,15 +316,14 @@ namespace mplot {
         std::tuple<sm::vec<float, 3>, std::array<uint32_t, 3>, sm::vec<float, 3>>
         find_triangle_crossing (const sm::vec<float, 3>& coord, const sm::vec<float, 3>& vdir) const
         {
-            sm::vec<float, 3> p = {};
-
             for (auto tri : triangles) {
                 auto [ti, tn] = tri;
-                bool isect = sm::algo::ray_tri_intersection<float> (this->vp1[ti[0]], this->vp1[ti[1]], this->vp1[ti[2]], coord, vdir, p);
+                auto [isect, p] = sm::algo::ray_tri_intersection<float> (this->vp1[ti[0]], this->vp1[ti[1]], this->vp1[ti[2]], coord, vdir);
                 if (isect) { return {p, ti, tn}; }
             }
 
             // Failed to find, return container full of maxes
+            sm::vec<float, 3> p = {};
             p.set_from (std::numeric_limits<float>::max());
             constexpr uint32_t umax = std::numeric_limits<uint32_t>::max();
             return {p , std::array<uint32_t, 3>{umax, umax, umax}, p};
