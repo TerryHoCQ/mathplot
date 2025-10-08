@@ -13,6 +13,8 @@
 ![cmake mac 15 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-mac-15.yml/badge.svg)
 ![cmake windows 22 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-windows-2022.yml/badge.svg)
 
+[![Mentioned in Awesome C++](https://awesome.re/mentioned-badge.svg)](https://github.com/myd7349/awesome-cpp?tab=readme-ov-file#data-visualization)
+
 **Header-only library code to visualize C++ numerical simulations using modern OpenGL.**
 
 Mathplot is a library for drawing **3D data visualization** objects called `VisualModels`.
