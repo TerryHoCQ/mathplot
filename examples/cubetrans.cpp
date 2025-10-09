@@ -1,5 +1,7 @@
 // Draw a cube with RhomboVisual and then make up vectors to transform with mat44s
 
+#include <iostream>
+
 #include <sm/vec>
 #include <sm/mat44>
 #include <mplot/compoundray/Visual.h>
@@ -32,8 +34,8 @@ int main()
     rv->name = "Cube.002";
     rv->facecm = mplot::ColourMapType::Rainbow; // Try Rainbow, Batlow, Tofino
     rv->annotate = true;
+    rv->setAlpha (0.5f);
     rv->finalize();
-    v.addVisualModel (rv);
 
     // Native locations/vectors
     sm::vec<> l1 = { 0.8, 1, 0.5 }; // start location
@@ -55,33 +57,81 @@ int main()
     Eigen::Vector3f ed1_e (d1_e[0], d1_e[1], d1_e[2]);
 
     // mat44 transformation
-    sm::mat44<float> m1;
-    m1.translate (mv1);
-    m1.translate (-(l1 + mv1));
-    m1.rotate (ra, rotang);
-    //m1.translate (l1 + mv1);
-    //m1.translate (mv2);
+    sm::mat44<float> m1t;
+    sm::mat44<float> m1tor;
+    sm::mat44<float> m1r;
+    sm::mat44<float> m1torb;
+    sm::mat44<float> m1t2;
+    // sequence:
+    m1t.translate (mv1);
+    m1tor.translate (-(l1 + mv1));
+    m1r.rotate (ra, rotang);
+    m1torb.translate (l1 + mv1);
+    m1t2.translate (m1r * mv2);
+    // Combine by multiplication:
+    sm::mat44<float> m1 = m1t2 * m1torb * m1r * m1tor * m1t;
 
+    // Eigen transformation
+    Eigen::Transform<float, 3, Eigen::TransformTraits::Affine> em1t;
+    Eigen::Transform<float, 3, Eigen::TransformTraits::Affine> em1tor;
+    Eigen::Transform<float, 3, Eigen::TransformTraits::Affine> em1r;
+    Eigen::Transform<float, 3, Eigen::TransformTraits::Affine> em1torb;
+    Eigen::Transform<float, 3, Eigen::TransformTraits::Affine> em1t2;
+    em1t.setIdentity();
+    em1tor.setIdentity();
+    em1r.setIdentity();
+    em1torb.setIdentity();
+    em1t2.setIdentity();
+    // sequence:
+    em1t.translate (emv1);
+    em1tor.translate (-(el1 + emv1));
+    em1r.rotate (Eigen::AngleAxisf(rotang, era));
+    em1torb.translate (el1 + emv1);
+    em1t2.translate (em1r * emv2);
+    // Combine by multiplication:
+    Eigen::Transform<float, 3, Eigen::TransformTraits::Affine> em1 = em1t2 * em1torb * em1r * em1tor * em1t;
+
+    //em1 = em1t * em1r; IS NOT EQUAL TO:
+    //em1.rotate (Eigen::AngleAxisf(rotang, era));
+    //em1.translate (emv1);
+
+    //em1 = em1t * em1r; IS NOT EQUAL TO:
+    //em1.translate (emv1);
+    //em1.prerotate (Eigen::AngleAxisf(rotang, era));
+
+    //em1 = em1t * em1r; IS NOT EQUAL TO:
+    //em1.prerotate (Eigen::AngleAxisf(rotang, era));
+    //em1.translate (emv1);
+
+    //em1 = em1t * em1r; IS NOT EQUAL TO:
+    //em1.prerotate (Eigen::AngleAxisf(rotang, era)).translate (emv1);
+
+    // This is quivalent to em1 = em1t * em1r;
+    //em1.translate (emv1);
+    //em1.rotate (Eigen::AngleAxisf(rotang, era));
+
+    /**
+     * IN EIGEN:
+     *
+     * The order in which you call translate() and rotate() is the left to right order in whcih the
+     * matrices get multiplied
+     *
+     * THe prefix 'pre' refers to the left to right order of multiplications NOT the order in which
+     * the transforms are applied.
+     */
+
+    // Apply mat44
     sm::vec<> l2 = (m1 * l1).less_one_dim();
     sm::vec<> d2_s = (m1 * d1_s).less_one_dim();
     sm::vec<> d2_e = (m1 * d1_e).less_one_dim();
     sm::vec<> d2 = d2_e - d2_s;
-
-    // Eigen transformation
-    Eigen::Transform<float, 3, Eigen::TransformTraits::Affine> em1;
-    em1.setIdentity();
-    em1.translate (emv1);
-    em1.translate (-(el1 + emv1));
-    em1.rotate (Eigen::AngleAxisf(rotang, era));
-    //em1.translate (el1 + emv1);
-    //em1.translate (emv2);
-
+    // Apply Eigen
     Eigen::Vector3f el2 = (em1 * el1);
     Eigen::Vector3f ed2_s = em1 * ed1_s;
     Eigen::Vector3f ed2_e = em1 * ed1_e;
     Eigen::Vector3f ed2 = ed2_e - ed2_s;
+    // Convert Eigen vector results to sm::vec
     sm::vec<> eig_l2 = { el2[0], el2[1], el2[2] };
-    std::cout << "l2 = " << l2 << " whereas eig_l2 = " << eig_l2 << std::endl;
     sm::vec<> eig_d2 = { ed2[0], ed2[1], ed2[2] };
 
 
@@ -100,7 +150,7 @@ int main()
     vvm->finalize();
     v.addVisualModel (vvm);
 
-    sv = std::make_unique<mplot::SphereVisual<>>(l2, 0.01, mplot::colour::goldenrod3);
+    sv = std::make_unique<mplot::SphereVisual<>>(l2, 0.02, mplot::colour::goldenrod3);
     v.bindmodel (sv);
     sv->finalize();
     v.addVisualModel (sv);
@@ -129,6 +179,9 @@ int main()
     vvm->single_colour = mplot::colour::cadetblue1;
     vvm->finalize();
     v.addVisualModel (vvm);
+
+
+    v.addVisualModel (rv); // Cube last (F7 to select) to ensure we see other vectors through it.
 
     v.keepOpen();
 
