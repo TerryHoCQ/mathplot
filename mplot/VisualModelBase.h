@@ -253,9 +253,9 @@ namespace mplot {
         sm::vec<sm::vec<float, 3>, 3> triangle_vertices (const std::array<uint32_t, 3>& tri_indices)
         {
             sm::vec<sm::vec<float, 3>, 3> trivert;
-            trivert[0] = this->vp1[tri_indices[0]];
-            trivert[1] = this->vp1[tri_indices[1]];
-            trivert[2] = this->vp1[tri_indices[2]];
+            if (tri_indices[0] < this->vp1.size()) { trivert[0] = this->vp1[tri_indices[0]]; }
+            if (tri_indices[1] < this->vp1.size()) { trivert[1] = this->vp1[tri_indices[1]]; }
+            if (tri_indices[2] < this->vp1.size()) { trivert[2] = this->vp1[tri_indices[2]]; }
             return trivert;
         }
 
