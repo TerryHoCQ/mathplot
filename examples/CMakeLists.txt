@@ -420,7 +420,12 @@ add_executable(cube cube.cpp)
 target_link_libraries(cube OpenGL::GL glfw Freetype::Freetype)
 
 add_executable(cubetrans cubetrans.cpp)
+# Extra include here
+target_include_directories (cubetrans BEFORE PRIVATE /usr/include/eigen3)
 target_link_libraries(cubetrans OpenGL::GL glfw Freetype::Freetype)
+
+add_executable(cubetrans2 cubetrans2.cpp)
+target_link_libraries(cubetrans2 OpenGL::GL glfw Freetype::Freetype)
 
 add_executable(quads quads.cpp)
 target_link_libraries(quads OpenGL::GL glfw Freetype::Freetype)
