@@ -521,6 +521,8 @@ namespace mplot {
 
         //! Setter for the viewmatrix
         void setViewMatrix (const sm::mat44<float>& mv) { this->viewmatrix = mv; }
+        //! And a getter
+        sm::mat44<float> getViewMatrix() const { return this->viewmatrix; }
         //! Pre or post-multiply
         void postmultViewMatrix (const sm::mat44<float>& m) { this->viewmatrix = this->viewmatrix * m; }
         void premultViewMatrix (const sm::mat44<float>& m) { this->viewmatrix = m * this->viewmatrix; }
@@ -646,8 +648,6 @@ namespace mplot {
         {
             return (this->viewmatrix * this->bb.mid()).less_one_dim();
         }
-
-        sm::mat44<float> get_viewmatrix() const { return this->viewmatrix; }
 
         //! Apply the viewmatrix to the model's bounding box and return it
         sm::range<sm::vec<float>> get_viewmatrix_modelbb() const
