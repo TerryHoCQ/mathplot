@@ -165,6 +165,9 @@ namespace mplot {
         // Allowing a colour for each face. May be useful for debugging
         void vertices_multicolour()
         {
+            sm::vec<float> coroffs = {};
+            if (this->raise_corner) { coroffs = { 0, 0.2, 0 }; }
+
             // Compute the face normals
             sm::vec<float> _n1 = this->edge1.cross (this->edge2);
             _n1.renormalize();
@@ -177,7 +180,7 @@ namespace mplot {
             sm::vec<float> o = {0,0,0};
 
             // Push positions and normals for 24 vertices to make up the rhombohedron; *6* for each face.
-            // Front face needs 6 vertices
+            // Front face (z up) needs 6 vertices
             this->vertex_push (o,                              this->vertexPositions);
             this->vertex_push (o + this->edge1,                this->vertexPositions);
             this->vertex_push (o + this->edge3,                this->vertexPositions);
@@ -199,14 +202,20 @@ namespace mplot {
             this->vertex_push (o + this->edge2,                             this->vertexPositions);
             this->vertex_push (o + this->edge2,                             this->vertexPositions); // extra
             this->vertex_push (o + this->edge2 + this->edge1 + this->edge3, this->vertexPositions); // extra
-            this->vertex_push (o + this->edge2 + this->edge1,               this->vertexPositions);
-            for (unsigned short i = 0U; i < 6U; ++i) { this->vertex_push (-_n3, this->vertexNormals); }
+            this->vertex_push (o + this->edge2 + this->edge1 + coroffs,     this->vertexPositions);
+            for (unsigned short i = 0U; i < 3U; ++i) { this->vertex_push (-_n3, this->vertexNormals); }
+            if (this->raise_corner) {
+                for (unsigned short i = 0U; i < 3U; ++i) { this->vertex_push (-_n3, this->vertexNormals); }
+            } else {
+                sm::vec<float> _n4 = (edge2 - (edge1 + edge2 + edge3)).cross (edge1 + edge2 + coroffs - (edge1 + edge2 + edge3));
+                for (unsigned short i = 0U; i < 3U; ++i) { this->vertex_push (-_n4, this->vertexNormals); }
+            }
             // Bottom face
             this->vertex_push (o + this->edge2,                this->vertexPositions);
-            this->vertex_push (o + this->edge2 + this->edge1,  this->vertexPositions);
+            this->vertex_push (o + this->edge2 + this->edge1 + coroffs,  this->vertexPositions);
             this->vertex_push (o,                              this->vertexPositions);
             this->vertex_push (o,                              this->vertexPositions); // extra
-            this->vertex_push (o + this->edge2 + this->edge1,  this->vertexPositions); // extra
+            this->vertex_push (o + this->edge2 + this->edge1 + coroffs,  this->vertexPositions); // extra
             this->vertex_push (o + this->edge1,                this->vertexPositions);
             for (unsigned short i = 0U; i < 6U; ++i) { this->vertex_push (-_n1, this->vertexNormals); }
             // Left face
@@ -219,10 +228,10 @@ namespace mplot {
             for (unsigned short i = 0U; i < 6U; ++i) { this->vertex_push (-_n2, this->vertexNormals); }
             // Right face
             this->vertex_push (o + this->edge1,                             this->vertexPositions);
-            this->vertex_push (o + this->edge1 + this->edge2,               this->vertexPositions);
+            this->vertex_push (o + this->edge1 + this->edge2 + coroffs,               this->vertexPositions);
             this->vertex_push (o + this->edge1 + this->edge3,               this->vertexPositions);
             this->vertex_push (o + this->edge1 + this->edge3,               this->vertexPositions); // extra
-            this->vertex_push (o + this->edge1 + this->edge2,               this->vertexPositions); // extra
+            this->vertex_push (o + this->edge1 + this->edge2 + coroffs,               this->vertexPositions); // extra
             this->vertex_push (o + this->edge1 + this->edge2 + this->edge3, this->vertexPositions);
             for (unsigned short i = 0U; i < 6U; ++i) { this->vertex_push (_n2, this->vertexNormals); }
 
@@ -246,6 +255,7 @@ namespace mplot {
         mplot::ColourMapType facecm = mplot::ColourMapType::Fixed; // if so, use col
         bool annotate = false;
         mplot::TextFeatures tf; // for annotations if used
+        bool raise_corner = false;
     };
 
 } // namespace mplot
