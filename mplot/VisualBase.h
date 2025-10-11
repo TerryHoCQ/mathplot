@@ -165,8 +165,8 @@ namespace mplot {
          * environment is guaranteed to exist.
          */
         VisualBase() {
-            this->sceneview.translate (this->scenetrans_default);
-            this->sceneview_tr.translate (this->scenetrans_default);
+            this->sceneview.pretranslate (this->scenetrans_default);
+            this->sceneview_tr.pretranslate (this->scenetrans_default);
         }
 
         /*!
@@ -178,8 +178,8 @@ namespace mplot {
             , window_h(_height)
             , title(_title)
         {
-            this->sceneview.translate (this->scenetrans_default);
-            this->sceneview_tr.translate (this->scenetrans_default);
+            this->sceneview.pretranslate (this->scenetrans_default);
+            this->sceneview_tr.pretranslate (this->scenetrans_default);
             this->options.set (visual_options::versionStdout, _version_stdout);
             this->init_gl(); // abstract
         }
@@ -510,9 +510,9 @@ namespace mplot {
         void reset_sceneviews_to_scenetrans_default()
         {
             this->sceneview.setToIdentity();
-            this->sceneview.translate (this->scenetrans_default);
+            this->sceneview.pretranslate (this->scenetrans_default);
             this->sceneview_tr.setToIdentity();
-            this->sceneview_tr.translate (this->scenetrans_default);
+            this->sceneview_tr.pretranslate (this->scenetrans_default);
         }
 
         //! Set the scene's x and y values at the same time.
@@ -567,7 +567,7 @@ namespace mplot {
         void setSceneRotation (const sm::quaternion<float>& _rotn)
         {
             this->rotation_default = _rotn;
-            this->sceneview.prerotate (_rotn);
+            this->sceneview.rotate (_rotn);
         }
 
         void lightingEffects (const bool effects_on = true)
@@ -760,22 +760,20 @@ namespace mplot {
         // Rotate about the point this->rotation_centre. Subroutine for computeSceneview.
         void computeSceneview_about_rotation_centre()
         {
-            sm::mat44<float> sv_tr;
-            sm::mat44<float> sv_rot;
+            sm::mat44<float> sv;
             if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
-                sv_tr.translate (this->scenetrans_delta);
+                sv.translate (this->scenetrans_delta);
                 // A rotation delta in world frame about the 'screen centre'
-                sv_rot.pretranslate (-this->rotation_centre);
-                sv_rot.rotate (this->rotation_delta);
-                sv_rot.translate (this->rotation_centre);
-
+                sv.translate (this->rotation_centre);
+                sv.rotate (this->rotation_delta);
+                sv.translate (-this->rotation_centre);
             } else {
                 // Only rotate in cyl view
-                sv_rot.rotate (this->rotation_delta);
+                sv.rotate (this->rotation_delta);
             }
 
-            this->sceneview = sv_tr * sv_rot * this->savedSceneview;
-            this->sceneview_tr = sv_tr * this->savedSceneview_tr;
+            this->sceneview = sv * this->savedSceneview;
+            this->sceneview_tr = sv * this->savedSceneview_tr;
         }
 
         void computeSceneview()
@@ -819,10 +817,10 @@ namespace mplot {
                 this->rotation_default.z = vconf.contains("scenerotn_z") ? vconf["scenerotn_z"].get<float>() : this->rotation_default.z;
 
                 this->sceneview.setToIdentity();
-                this->sceneview.translate (this->scenetrans_default);
-                this->sceneview.prerotate (this->rotation_default);
+                this->sceneview.pretranslate (this->scenetrans_default);
+                this->sceneview.rotate (this->rotation_default);
                 this->sceneview_tr.setToIdentity();
-                this->sceneview_tr.translate (this->scenetrans_default);
+                this->sceneview_tr.pretranslate (this->scenetrans_default);
                 this->scenetrans_delta.zero();
                 this->rotation_delta.reset();
 
@@ -1111,9 +1109,9 @@ namespace mplot {
 
                 this->sceneview.setToIdentity();
                 this->sceneview_tr.setToIdentity();
-                this->sceneview.translate (this->scenetrans_default);
-                this->sceneview.prerotate (this->rotation_default);
-                this->sceneview_tr.translate (this->scenetrans_default);
+                this->sceneview.pretranslate (this->scenetrans_default);
+                this->sceneview.rotate (this->rotation_default);
+                this->sceneview_tr.pretranslate (this->scenetrans_default);
                 this->scenetrans_delta.zero();
                 this->rotation_delta.reset();
 
@@ -1221,7 +1219,7 @@ namespace mplot {
         void rotate_scene (const sm::vec<float>& axis, const float angle)
         {
             sm::quaternion<float> rotnQuat (axis, -angle);
-            this->sceneview.prerotate (rotnQuat);
+            this->sceneview.rotate (rotnQuat);
         }
 
         //! Find the rotation centre; either the scene origin or the centre of a perceptually nearby VM
