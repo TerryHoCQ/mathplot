@@ -82,7 +82,7 @@ namespace mplot {
     struct VisualModelBase
     {
         VisualModelBase() {}
-        VisualModelBase (const sm::vec<float> _offset) { this->viewmatrix.pretranslate (_offset); }
+        VisualModelBase (const sm::vec<float> _offset) { this->viewmatrix.translate (_offset); }
 
         /*!
          * Set up the passed-in VisualTextModel with functions that need access to the parent Visual attributes.
@@ -250,7 +250,7 @@ namespace mplot {
         void setSceneTranslation (const sm::vec<float>& v0)
         {
             this->scenematrix.setToIdentity();
-            this->scenematrix.pretranslate (v0);
+            this->scenematrix.translate (v0);
             this->setSceneTranslationTexts (v0);
         }
 
@@ -271,7 +271,7 @@ namespace mplot {
         void setViewTranslation (const sm::vec<float>& v0)
         {
             this->viewmatrix.setToIdentity();
-            this->viewmatrix.pretranslate (v0);
+            this->viewmatrix.translate (v0);
         }
 
         //! Add a translation to the model view matrix
@@ -282,7 +282,7 @@ namespace mplot {
         {
             sm::vec<> os = this->viewmatrix.translation();
             this->viewmatrix.setToIdentity();
-            this->viewmatrix.pretranslate (os);
+            this->viewmatrix.translate (os);
             this->viewmatrix.rotate (r);
         }
 
@@ -293,7 +293,7 @@ namespace mplot {
         {
             sm::vec<> os = this->viewmatrix.translation();
             this->viewmatrix.setToIdentity();
-            this->viewmatrix.pretranslate (os);
+            this->viewmatrix.translate (os);
             this->viewmatrix.rotate (r);
             this->setViewRotationTexts (r);
         }

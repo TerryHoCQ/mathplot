@@ -165,8 +165,8 @@ namespace mplot {
          * environment is guaranteed to exist.
          */
         VisualBase() {
-            this->sceneview.pretranslate (this->scenetrans_default);
-            this->sceneview_tr.pretranslate (this->scenetrans_default);
+            this->sceneview.translate (this->scenetrans_default);
+            this->sceneview_tr.translate (this->scenetrans_default);
         }
 
         /*!
@@ -178,8 +178,8 @@ namespace mplot {
             , window_h(_height)
             , title(_title)
         {
-            this->sceneview.pretranslate (this->scenetrans_default);
-            this->sceneview_tr.pretranslate (this->scenetrans_default);
+            this->sceneview.translate (this->scenetrans_default);
+            this->sceneview_tr.translate (this->scenetrans_default);
             this->options.set (visual_options::versionStdout, _version_stdout);
             this->init_gl(); // abstract
         }
@@ -510,9 +510,9 @@ namespace mplot {
         void reset_sceneviews_to_scenetrans_default()
         {
             this->sceneview.setToIdentity();
-            this->sceneview.pretranslate (this->scenetrans_default);
+            this->sceneview.translate (this->scenetrans_default);
             this->sceneview_tr.setToIdentity();
-            this->sceneview_tr.pretranslate (this->scenetrans_default);
+            this->sceneview_tr.translate (this->scenetrans_default);
         }
 
         //! Set the scene's x and y values at the same time.
@@ -817,10 +817,10 @@ namespace mplot {
                 this->rotation_default.z = vconf.contains("scenerotn_z") ? vconf["scenerotn_z"].get<float>() : this->rotation_default.z;
 
                 this->sceneview.setToIdentity();
-                this->sceneview.pretranslate (this->scenetrans_default);
+                this->sceneview.translate (this->scenetrans_default);
                 this->sceneview.rotate (this->rotation_default);
                 this->sceneview_tr.setToIdentity();
-                this->sceneview_tr.pretranslate (this->scenetrans_default);
+                this->sceneview_tr.translate (this->scenetrans_default);
                 this->scenetrans_delta.zero();
                 this->rotation_delta.reset();
 
@@ -1109,9 +1109,9 @@ namespace mplot {
 
                 this->sceneview.setToIdentity();
                 this->sceneview_tr.setToIdentity();
-                this->sceneview.pretranslate (this->scenetrans_default);
+                this->sceneview.translate (this->scenetrans_default);
                 this->sceneview.rotate (this->rotation_default);
-                this->sceneview_tr.pretranslate (this->scenetrans_default);
+                this->sceneview_tr.translate (this->scenetrans_default);
                 this->scenetrans_delta.zero();
                 this->rotation_delta.reset();
 
