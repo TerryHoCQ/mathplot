@@ -546,17 +546,17 @@ namespace mplot {
 
         //! Set a translation (only) into the scene view matrix
         template <std::size_t N = 3> requires (N == 3) || (N == 4)
-        void addSceneTranslation (const sm::vec<float, N>& v0) { this->scenematrix.translate (v0); }
+        void addSceneTranslation (const sm::vec<float, N>& v0) { this->scenematrix.pretranslate (v0); }
 
         //! Set a rotation (only) into the scene view matrix
         void setSceneRotation (const sm::quaternion<float>& r)
         {
             this->scenematrix.setToIdentity();
-            this->scenematrix.prerotate (r);
+            this->scenematrix.rotate (r);
         }
 
         //! Add a rotation to the scene view matrix
-        void addSceneRotation (const sm::quaternion<float>& r) { this->scenematrix.prerotate (r); }
+        void addSceneRotation (const sm::quaternion<float>& r) { this->scenematrix.rotate (r); }
 
         //! Set a translation to the model view matrix
         template <std::size_t N = 3> requires (N == 3) || (N == 4)
@@ -568,7 +568,7 @@ namespace mplot {
 
         //! Add a translation to the model view matrix
         template <std::size_t N = 3> requires (N == 3) || (N == 4)
-        void addViewTranslation (const sm::vec<float, N>& v0) { this->viewmatrix.translate (v0); }
+        void addViewTranslation (const sm::vec<float, N>& v0) { this->viewmatrix.pretranslate (v0); }
 
         //! Set a rotation (only) into the view, but keep texts fixed
         void setViewRotationFixTexts (const sm::quaternion<float>& r)
@@ -576,7 +576,7 @@ namespace mplot {
             sm::vec<> os = this->viewmatrix.translation();
             this->viewmatrix.setToIdentity();
             this->viewmatrix.translate (os);
-            this->viewmatrix.prerotate (r);
+            this->viewmatrix.rotate (r);
         }
 
         virtual void setViewRotationTexts (const sm::quaternion<float>& r) = 0;
@@ -587,7 +587,7 @@ namespace mplot {
             sm::vec<> os = this->viewmatrix.translation();
             this->viewmatrix.setToIdentity();
             this->viewmatrix.translate (os);
-            this->viewmatrix.prerotate (r);
+            this->viewmatrix.rotate (r);
             this->setViewRotationTexts (r);
         }
 
@@ -596,14 +596,14 @@ namespace mplot {
         //! Apply a further rotation to the model view matrix
         void addViewRotation (const sm::quaternion<float>& r)
         {
-            this->viewmatrix.prerotate (r);
+            this->viewmatrix.rotate (r);
             this->addViewRotationTexts (r);
         }
 
         //! Apply a further rotation to the model view matrix, but keep texts fixed
         void addViewRotationFixTexts (const sm::quaternion<float>& r)
         {
-            this->viewmatrix.prerotate (r);
+            this->viewmatrix.rotate (r);
         }
 
         // The alpha attribute accessors

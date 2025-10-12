@@ -76,7 +76,7 @@ namespace mplot {
 
         //! Set a translation (only) into the scene view matrix
         template <std::size_t N = 3> requires (N == 3) || (N == 4)
-        void addSceneTranslation (const sm::vec<float, N>& v0) { this->scenematrix.translate (v0); }
+        void addSceneTranslation (const sm::vec<float, N>& v0) { this->scenematrix.pretranslate (v0); }
 
         //! Set a rotation (only) into the scene view matrix
         void setSceneRotation (const sm::quaternion<float>& r)
@@ -84,11 +84,11 @@ namespace mplot {
             auto _offset = this->scenematrix.translation();
             this->scenematrix.setToIdentity();
             this->scenematrix.translate (_offset);
-            this->scenematrix.prerotate (r);
+            this->scenematrix.rotate (r);
         }
 
         //! Add a rotation to the scene view matrix
-        void addSceneRotation (const sm::quaternion<float>& r) { this->scenematrix.prerotate (r); }
+        void addSceneRotation (const sm::quaternion<float>& r) { this->scenematrix.rotate (r); }
 
         //! Set a translation to the model view matrix
         template <std::size_t N = 3> requires (N == 3) || (N == 4)
@@ -99,7 +99,7 @@ namespace mplot {
         }
 
         //! Add a translation to the model view matrix
-        void addViewTranslation (const sm::vec<float>& v0) { this->viewmatrix.translate (v0); }
+        void addViewTranslation (const sm::vec<float>& v0) { this->viewmatrix.pretranslate (v0); }
 
         //! Set a rotation (only) into the model view matrix
         void setViewRotation (const sm::quaternion<float>& r)
@@ -107,11 +107,11 @@ namespace mplot {
             auto tr = this->viewmatrix.translation();
             this->viewmatrix.setToIdentity();
             this->viewmatrix.translate (tr);
-            this->viewmatrix.prerotate (r);
+            this->viewmatrix.rotate (r);
         }
 
         //! Apply a further rotation to the model view matrix
-        void addViewRotation (const sm::quaternion<float>& r) { this->viewmatrix.prerotate (r); }
+        void addViewRotation (const sm::quaternion<float>& r) { this->viewmatrix.rotate (r); }
 
         //! Compute the geometry for a sample text.
         virtual mplot::TextGeometry getTextGeometry (const std::string& _txt) = 0;
