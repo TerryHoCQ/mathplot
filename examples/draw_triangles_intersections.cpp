@@ -307,7 +307,7 @@ int main()
 
     tvp->vertex_postprocess();
 
-    auto vm = tvp->get_viewmatrix();
+    auto vm = tvp->getViewMatrix();
     auto vmi = vm.inverse();
 
     auto start_wr = (vmi * start).less_one_dim(); // wr to tvp
