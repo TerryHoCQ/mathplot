@@ -71,7 +71,7 @@ namespace mplot {
         void setSceneTranslation (const sm::vec<float, N>& v0)
         {
             this->scenematrix.setToIdentity();
-            this->scenematrix.pretranslate (v0);
+            this->scenematrix.translate (v0);
         }
 
         //! Set a translation (only) into the scene view matrix
@@ -83,7 +83,7 @@ namespace mplot {
         {
             auto _offset = this->scenematrix.translation();
             this->scenematrix.setToIdentity();
-            this->scenematrix.pretranslate (_offset);
+            this->scenematrix.translate (_offset);
             this->scenematrix.rotate (r);
         }
 
@@ -95,7 +95,7 @@ namespace mplot {
         void setViewTranslation (const sm::vec<float, N>& v0)
         {
             this->viewmatrix.setToIdentity();
-            this->viewmatrix.pretranslate (v0);
+            this->viewmatrix.translate (v0);
         }
 
         //! Add a translation to the model view matrix
@@ -106,7 +106,7 @@ namespace mplot {
         {
             auto tr = this->viewmatrix.translation();
             this->viewmatrix.setToIdentity();
-            this->viewmatrix.pretranslate (tr);
+            this->viewmatrix.translate (tr);
             this->viewmatrix.rotate (r);
         }
 
