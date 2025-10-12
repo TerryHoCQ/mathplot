@@ -110,18 +110,27 @@ namespace mplot {
 
             // x
             reloffset = this->x_axis * this->lengths[0];
-            this->computeSphere (reloffset, x_axis_col, this->thickness * this->lengths[0] / 40.0f);
+            this->computeSphere (reloffset, x_axis_col, (this->thickness * this->lengths[0] / 40.0f) * endsphere_size);
             this->computeTube (zerocoord, reloffset, x_axis_col, x_axis_col, this->thickness * this->lengths[0] / 80.0f);
+            if (showneg) {
+                this->computeTube (zerocoord, -reloffset, x_axis_neg, x_axis_neg, this->thickness * this->lengths[0] / 80.0f);
+            }
 
             // y
             reloffset = this->y_axis * this->lengths[1];
-            this->computeSphere (reloffset, y_axis_col, this->thickness * this->lengths[0] / 40.0f);
+            this->computeSphere (reloffset, y_axis_col, (this->thickness * this->lengths[0] / 40.0f) * endsphere_size);
             this->computeTube (zerocoord, reloffset, y_axis_col, y_axis_col, this->thickness * this->lengths[0] / 80.0f);
+            if (showneg) {
+                this->computeTube (zerocoord, -reloffset, y_axis_neg, y_axis_neg, this->thickness * this->lengths[0] / 80.0f);
+            }
 
             // z
             reloffset = this->z_axis * this->lengths[2];
-            this->computeSphere (reloffset, z_axis_col, this->thickness * this->lengths[0] / 40.0f);
+            this->computeSphere (reloffset, z_axis_col, (this->thickness * this->lengths[0] / 40.0f) * endsphere_size);
             this->computeTube (zerocoord, reloffset, z_axis_col, z_axis_col, this->thickness * this->lengths[0] / 80.0f);
+            if (showneg) {
+                this->computeTube (zerocoord, -reloffset, z_axis_neg, z_axis_neg, this->thickness * this->lengths[0] / 80.0f);
+            }
 
             this->initAxisLabels();
         }
@@ -137,6 +146,8 @@ namespace mplot {
 
         //! A thickness scaling factor, to apply to the arrows.
         float thickness = 1.0f;
+        //! a multiplier on the end spheres
+        float endsphere_size = 1.0f;
         //! m size for text labels
         float em = 0.0f;
 
@@ -146,6 +157,11 @@ namespace mplot {
         std::array<float, 3> x_axis_col = mplot::colour::crimson;
         std::array<float, 3> y_axis_col = mplot::colour::springgreen2;
         std::array<float, 3> z_axis_col = mplot::colour::blue2;
+
+        bool showneg = false;
+        std::array<float, 3> x_axis_neg = mplot::colour::raspberry;
+        std::array<float, 3> y_axis_neg = mplot::colour::darkseagreen3;
+        std::array<float, 3> z_axis_neg = mplot::colour::steelblue3;
 
         std::string x_label = "X";
         std::string y_label = "Y";

@@ -377,6 +377,9 @@ target_link_libraries(tri OpenGL::GL glfw Freetype::Freetype)
 add_executable(draw_triangles draw_triangles.cpp)
 target_link_libraries(draw_triangles OpenGL::GL glfw Freetype::Freetype)
 
+add_executable(draw_triangles_intersections draw_triangles_intersections.cpp)
+target_link_libraries(draw_triangles_intersections OpenGL::GL glfw Freetype::Freetype)
+
 add_executable(voronoi_random voronoi_random.cpp)
 target_link_libraries(voronoi_random OpenGL::GL glfw Freetype::Freetype)
 
@@ -412,6 +415,18 @@ target_link_libraries(rhombo_scene OpenGL::GL glfw Freetype::Freetype)
 
 add_executable(rhombo_scene2 rhombo_scene2.cpp)
 target_link_libraries(rhombo_scene2 OpenGL::GL glfw Freetype::Freetype)
+
+add_executable(cube cube.cpp)
+target_link_libraries(cube OpenGL::GL glfw Freetype::Freetype)
+
+if(Eigen3_FOUND)
+  add_executable(cubetrans cubetrans.cpp)
+  target_include_directories (cubetrans BEFORE PRIVATE ${EIGEN3_INCLUDE_DIR})
+  target_link_libraries(cubetrans OpenGL::GL glfw Freetype::Freetype)
+endif(Eigen3_FOUND)
+
+add_executable(cubetrans2 cubetrans2.cpp)
+target_link_libraries(cubetrans2 OpenGL::GL glfw Freetype::Freetype)
 
 add_executable(quads quads.cpp)
 target_link_libraries(quads OpenGL::GL glfw Freetype::Freetype)
