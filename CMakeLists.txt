@@ -157,6 +157,9 @@ endif()
 # Use packaged nlohmann json
 find_package(nlohmann_json REQUIRED)
 
+# For a test program (optional)
+find_package (Eigen3 NO_MODULE)
+
 # If Qt5 is present, then some optional Qt examples will be compiled
 find_package(Qt5 QUIET COMPONENTS Gui Core Widgets)
 if(Qt5_FOUND)

@@ -29,6 +29,9 @@
 #include <cstddef>
 #include <cmath>
 #include <bitset>
+#include <map>
+#include <set>
+#include <tuple>
 
 #include <mplot/gl/version.h>
 
@@ -213,6 +216,283 @@ namespace mplot {
             this->indices.reserve (6u * n_vertices);
         }
 
+        /**
+         * Neighbour vertex mesh code
+         */
+
+        // Minimum set of vertices to generate a topological mesh
+        std::vector<sm::vec<float, 3>> vp1;
+        // Maps index in vp1 to the original this->indices index
+        sm::vvec<sm::vvec<uint32_t>> vp1_to_indices;
+        // The edges that make up the same triangles as are shown with this->indices, but in terms of vp1.
+        // Each edge must be two indices in *ascending numerical order*
+        std::set<std::array<uint32_t, 2>> edges;
+        // Triangles too. Might be more useful than edges.
+        sm::vvec<std::tuple<std::array<uint32_t, 3>, sm::vec<float, 3>>> triangles;
+
+        // Return index of vp1 that is closest to scene_coord. Can use vp1_to_indices to find the indices
+        // into vertexPositions and vertexNormals that this index in the topographic mesh relates to.
+        uint32_t find_vp1_nearest (const sm::vec<float, 3>& scene_coord) const
+        {
+            uint32_t i = std::numeric_limits<uint32_t>::max();
+            // Brute force it. (But we have a mesh; can this guarantee a faster search? I don't think so)
+            float min_d = std::numeric_limits<float>::max();
+            for (uint32_t j = 0; j < this->vp1.size(); ++j) {
+                sm::vec<> vcoord = (this->viewmatrix * vp1[j]).less_one_dim();
+                //std::cout << "vcoord: " << vcoord;
+                float d = (scene_coord - vcoord).length();
+                //std::cout << ", distance " << d << " from " << scene_coord << std::endl;
+                if (d < min_d) {
+                    min_d = d;
+                    i = j;
+                }
+            }
+            return i;
+        }
+
+        sm::vec<sm::vec<float, 3>, 3> triangle_vertices (const std::array<uint32_t, 3>& tri_indices)
+        {
+            sm::vec<sm::vec<float, 3>, 3> trivert;
+            if (tri_indices[0] < this->vp1.size()) { trivert[0] = this->vp1[tri_indices[0]]; }
+            if (tri_indices[1] < this->vp1.size()) { trivert[1] = this->vp1[tri_indices[1]]; }
+            if (tri_indices[2] < this->vp1.size()) { trivert[2] = this->vp1[tri_indices[2]]; }
+            return trivert;
+        }
+
+        sm::vvec<uint32_t> neighbours (const uint32_t idx) const
+        {
+            sm::vvec<uint32_t> rtn;
+            // Search edges to find those that include idx and then pack up the other ends in a return object
+            for (auto e : this->edges) {
+                // we have e[0] and e[1]
+                if (e[0] == idx) {
+                    // neighb is e[1]
+                    rtn.push_back (e[1]);
+                } else if (e[1] == idx) {
+                    // neighb is e[0]
+                    rtn.push_back (e[0]);
+                }
+            }
+            return rtn;
+        }
+
+        sm::vvec<std::array<uint32_t, 3>> neighbour_triangles (const uint32_t idx) const
+        {
+            sm::vvec<std::array<uint32_t, 3>> rtn;
+            for (auto t: this->triangles) {
+                auto [ti, tn] = t;
+                // If it includes idx, add it to rtn
+                if (ti[0] == idx || ti[1] == idx || ti[2] == idx) {
+                    rtn.push_back (ti);
+                }
+            }
+            return rtn;
+        }
+
+        // Get a single position from vertexPositions, using the index into the vector<vec>
+        // interpretation of vertexPositions
+        sm::vec<float, 3> get_position (const uint32_t vec_idx) const
+        {
+            auto vp = reinterpret_cast<const std::vector<sm::vec<float, 3>>*>(&this->vertexPositions);
+            return (*vp)[vec_idx];
+        }
+
+        // Get a single normal from vertexNormals, using the index into the vector<vec>
+        // interpretation of vertexNormals
+        sm::vec<float, 3> get_normal (const uint32_t vec_idx) const
+        {
+            auto vn = reinterpret_cast<const std::vector<sm::vec<float, 3>>*>(&this->vertexNormals);
+            return (*vn)[vec_idx];
+        }
+
+        // Return a tuple containing crossing location, triangle identity (three indices) and triangle normal vector
+        std::tuple<sm::vec<float, 3>, std::array<uint32_t, 3>, sm::vec<float, 3>>
+        find_triangle_crossing (const sm::vec<float, 3>& coord, const sm::vec<float, 3>& vdir) const
+        {
+            for (auto tri : triangles) {
+                auto [ti, tn] = tri;
+                auto [isect, p] = sm::algo::ray_tri_intersection<float> (this->vp1[ti[0]], this->vp1[ti[1]], this->vp1[ti[2]], coord, vdir);
+                if (isect) { return {p, ti, tn}; }
+            }
+
+            // Failed to find, return container full of maxes
+            sm::vec<float, 3> p = {};
+            p.set_from (std::numeric_limits<float>::max());
+            constexpr uint32_t umax = std::numeric_limits<uint32_t>::max();
+            return {p , std::array<uint32_t, 3>{umax, umax, umax}, p};
+
+        }
+
+        // Find a triangle containing indices a and b that isn't 'not_this' and return, along with its normal.
+        std::tuple<std::array<uint32_t, 3>, sm::vec<float>>
+        find_other_triangle_containing (const uint32_t a, const uint32_t b, const std::array<uint32_t, 3>& not_this)
+        {
+            constexpr bool debug_normals = false;
+
+            constexpr uint32_t umax = std::numeric_limits<uint32_t>::max();
+            std::array<uint32_t, 3> other = {umax, umax, umax};
+            constexpr float fmax = std::numeric_limits<float>::max();
+            sm::vec<float> other_n = {fmax, fmax, fmax};
+            sm::vec<float> my_n = {fmax, fmax, fmax}; // debug
+            for (auto tri : triangles) {
+                auto [ti, tn] = tri;
+                if (ti == not_this) {
+                    if constexpr (debug_normals) { my_n = tn; }
+                    continue;
+                }
+                if ((ti[0] == a && (ti[1] == b || ti[2] == b))
+                    || (ti[1] == a && (ti[0] == b || ti[2] == b))
+                    || (ti[2] == a && (ti[0] == b || ti[1] == b))) {
+                    other = ti;
+                    other_n = tn;
+                    if constexpr (!debug_normals) { break; }
+                }
+            }
+            if constexpr (debug_normals) {
+                std::cout << "my_n: " << my_n << " and other_n: " << other_n << std::endl;
+            }
+            return {other, other_n};
+        }
+
+        // Find the location, and the triangle indices at which a ray between coord and the model
+        // centroid cross - the 'penetration point'. This is essentially ray casting and if it gets
+        // used extensively, should go into a compute shader.
+        std::tuple<sm::vec<float, 3>, std::array<uint32_t, 3>, sm::vec<float, 3>>
+        find_triangle_crossing (const sm::vec<float, 3>& coord) const
+        {
+            return this->find_triangle_crossing (coord, (this->bb.mid() - coord));
+        }
+
+        /*!
+         * Post-process vertices to generate a neighbour relationship mesh. The usual vertices and
+         * indices may not be useful to help a ground-based agent to navigate the surface defined by
+         * the mesh. This is because vertices may be duplicated at any location, so that adjacent
+         * faces can have different normals and colours.
+         *
+         * To help guide movement across a mesh, it would be useful to have a mesh that always gives
+         * neighbour relationships.
+         */
+        void vertex_postprocess() // make_neighbour_mesh() ?
+        {
+            constexpr bool debug = true;
+
+            if constexpr (debug) { std::cout << __func__ << " called\n"; }
+            // For each vertex, search for other vertices that have the same or almost the same location
+
+            // Treat vertexPositions as a vector of vec:
+            auto vp = reinterpret_cast<const std::vector<sm::vec<float, 3>>*>(&this->vertexPositions);
+            uint32_t vps = vp->size();
+
+            constexpr float vlen_thresh = 0.0f;
+
+            // For each entry in vp1, list the entries in vertexPositions that are in the same locn
+            std::map<uint32_t, sm::vvec<uint32_t>> equiv;
+
+            // Populate equiv
+            for (uint32_t i = 0; i < vps; ++i) {
+                for (uint32_t j = 0; j < vps; ++j) {
+                    if (((*vp)[i] - (*vp)[j]).length() <= vlen_thresh) { equiv[i].push_back (j); }
+                }
+            }
+            // Prune duplicates
+            std::erase_if (equiv, [](const auto& eq) { const auto& [k, v] = eq; return v.find_first_of (k) > 0; });
+
+            // Make inverse of equiv to translate from original (indices, vertexPositions) index to new topographic mesh index
+            sm::vvec<uint32_t> equiv_top (vps, 0);
+            this->vp1_to_indices.resize (equiv.size());
+            uint32_t i = 0;
+            for (auto eq : equiv) {
+                if constexpr (debug) { std::cout << "equiv[" << eq.first << "] = " << eq.second << std::endl; }
+                this->vp1_to_indices[i] = eq.second;
+                for (auto ev : eq.second) {
+                    equiv_top[ev] = i;
+                }
+                ++i;
+            }
+            if constexpr (debug) {
+                uint32_t cntr = 0;
+                for (auto eqi : equiv_top) {
+                    std::cout << "equiv_top[" << cntr++ << "] = " << eqi << std::endl;
+                }
+            }
+            // Can now populate vp1, a vector of coordinates, if required, or simply access (*vp) as needed using equiv.first
+            vp1.resize (equiv.size(), {0});
+            i = 0;
+            for (auto eq : equiv) { vp1[i++] = (*vp)[eq.first]; }
+            if constexpr (debug) {
+                for (i = 0; i < vp1.size(); ++i) {
+                    std::cout << "vp1[" << i << "] = " << vp1[i] << std::endl;
+                }
+            }
+
+            // Lastly, generate edges. For which we require use of indices, which is expressed in
+            // terms of the old indices. That lookup is equiv_top.
+
+            for (uint32_t i = 0; i < this->indices.size(); i += 3) {
+                // Each three entries in indices is a triangle containing 3 edges. NB: Edges must be listed in ascending order!
+                std::array<uint32_t, 2> e = { equiv_top[indices[i]], equiv_top[indices[i+1]] };
+                if (e[0] > e[1]) {
+                    uint32_t t = e[0];
+                    e[0] = e[1];
+                    e[1] = t;
+                }
+                this->edges.insert (e);
+
+                e = { equiv_top[indices[i]], equiv_top[indices[i+2]] };
+                if (e[0] > e[1]) {
+                    uint32_t t = e[0];
+                    e[0] = e[1];
+                    e[1] = t;
+                }
+                this->edges.insert (e);
+
+                e = { equiv_top[indices[i+1]], equiv_top[indices[i+2]] };
+                if (e[0] > e[1]) {
+                    uint32_t t = e[0];
+                    e[0] = e[1];
+                    e[1] = t;
+                }
+                this->edges.insert (e);
+
+                // Direct population of triangles
+                std::array<uint32_t, 3> t = { equiv_top[indices[i]], equiv_top[indices[i+1]], equiv_top[indices[i+2]] };
+
+                // The normal vector for this triangle is easy to get, as we're dealing with indices already
+                sm::vec<float> trinorm = this->get_normal (indices[i]) + this->get_normal (indices[i+1]) + this->get_normal (indices[i+2]) ;
+                trinorm.renormalize();
+                if constexpr (debug) { std::cout << "Triangle normal: " << trinorm << std::endl; }
+
+                // Check rotational sense of triangles
+                sm::vec<float, 3> n = (vp1[t[1]] - vp1[t[0]]).cross (vp1[t[2]] - vp1[t[0]]);
+                if (n.dot (trinorm) < 0.0f) {
+                    // need to swap order in t:
+                    if constexpr (debug) { std::cout << "Triangle reordered (corners 1 and 2 switched)\n"; }
+                    uint32_t ti = t[2];
+                    t[2] = t[1];
+                    t[1] = ti;
+                }
+
+                this->triangles.push_back ({t, trinorm});
+                // If required, can store trinorm into a container like triangle_normals with a push_back.
+            }
+
+            if constexpr (debug) {
+                for (auto e : edges) {
+                    std::cout << "Edge: " << e[0] << "," << e[1] << std::endl;
+                }
+                for (auto t : this->triangles) {
+                    auto [ti, tn] = t;
+                    std::cout << "Tri: " << ti[0] << "," << ti[1] << "," << ti[2] << ", norm " << tn << std::endl;
+                }
+            }
+
+            std::cout << this->edges.size() << " edges and " << this->triangles.size() << " triangles in " << this->name << "\n";
+        }
+
+        /**
+         * End neighbour vertex mesh code
+         */
+
         /*!
          * A function to call initialiseVertices and postVertexInit after any necessary attributes
          * have been set (see, for example, setting the colour maps up in VisualDataModel).
@@ -234,6 +514,11 @@ namespace mplot {
 
         //! Setter for the viewmatrix
         void setViewMatrix (const sm::mat44<float>& mv) { this->viewmatrix = mv; }
+        //! And a getter
+        sm::mat44<float> getViewMatrix() const { return this->viewmatrix; }
+        //! Pre or post-multiply
+        void postmultViewMatrix (const sm::mat44<float>& m) { this->viewmatrix = this->viewmatrix * m; }
+        void premultViewMatrix (const sm::mat44<float>& m) { this->viewmatrix = m * this->viewmatrix; }
 
         virtual void setSceneMatrixTexts (const sm::mat44<float>& sv) = 0;
 
@@ -247,15 +532,21 @@ namespace mplot {
         virtual void setSceneTranslationTexts (const sm::vec<float>& v0) = 0;
 
         //! Set a translation into the scene and into any child texts
-        void setSceneTranslation (const sm::vec<float>& v0)
+        template <std::size_t N = 3> requires (N == 3) || (N == 4)
+        void setSceneTranslation (const sm::vec<float, N>& v0)
         {
             this->scenematrix.setToIdentity();
             this->scenematrix.translate (v0);
-            this->setSceneTranslationTexts (v0);
+            if constexpr (N == 4) {
+                this->setSceneTranslationTexts (v0.less_one_dim());
+            } else {
+                this->setSceneTranslationTexts (v0);
+            }
         }
 
         //! Set a translation (only) into the scene view matrix
-        void addSceneTranslation (const sm::vec<float>& v0) { this->scenematrix.pretranslate (v0); }
+        template <std::size_t N = 3> requires (N == 3) || (N == 4)
+        void addSceneTranslation (const sm::vec<float, N>& v0) { this->scenematrix.pretranslate (v0); }
 
         //! Set a rotation (only) into the scene view matrix
         void setSceneRotation (const sm::quaternion<float>& r)
@@ -268,14 +559,16 @@ namespace mplot {
         void addSceneRotation (const sm::quaternion<float>& r) { this->scenematrix.rotate (r); }
 
         //! Set a translation to the model view matrix
-        void setViewTranslation (const sm::vec<float>& v0)
+        template <std::size_t N = 3> requires (N == 3) || (N == 4)
+        void setViewTranslation (const sm::vec<float, N>& v0)
         {
             this->viewmatrix.setToIdentity();
             this->viewmatrix.translate (v0);
         }
 
         //! Add a translation to the model view matrix
-        void addViewTranslation (const sm::vec<float>& v0) { this->viewmatrix.pretranslate (v0); }
+        template <std::size_t N = 3> requires (N == 3) || (N == 4)
+        void addViewTranslation (const sm::vec<float, N>& v0) { this->viewmatrix.pretranslate (v0); }
 
         //! Set a rotation (only) into the view, but keep texts fixed
         void setViewRotationFixTexts (const sm::quaternion<float>& r)
@@ -740,7 +1033,7 @@ namespace mplot {
             // Start cap vertices (a triangle fan)
             for (int j = 0; j < segments; j++) {
                 // t is the angle of the segment
-                float t = rotation + j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = rotation + j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = _ux * std::sin(t) * r + _uy * std::cos(t) * r;
                 this->vertex_push (vstart+c, vp);
                 this->vertex_push (-v, vn);
@@ -749,7 +1042,7 @@ namespace mplot {
 
             // Intermediate, near start cap. Normals point in direction c
             for (int j = 0; j < segments; j++) {
-                float t = rotation + j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = rotation + j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = _ux * std::sin(t) * r + _uy * std::cos(t) * r;
                 this->vertex_push (vstart+c, vp);
                 c.renormalize();
@@ -759,7 +1052,7 @@ namespace mplot {
 
             // Intermediate, near end cap. Normals point in direction c
             for (int j = 0; j < segments; j++) {
-                float t = rotation + (float)j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = rotation + (float)j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = _ux * std::sin(t) * r + _uy * std::cos(t) * r;
                 this->vertex_push (vend+c, vp);
                 c.renormalize();
@@ -769,7 +1062,7 @@ namespace mplot {
 
             // Bottom cap vertices
             for (int j = 0; j < segments; j++) {
-                float t = rotation + (float)j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = rotation + (float)j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = _ux * std::sin(t) * r + _uy * std::cos(t) * r;
                 this->vertex_push (vend+c, vp);
                 this->vertex_push (v, vn);
@@ -787,7 +1080,7 @@ namespace mplot {
             // After creating vertices, push all the indices.
             GLuint capMiddle = _idx;
             GLuint capStartIdx = _idx + 1u;
-            GLuint endMiddle = _idx + (GLuint)nverts - 1u;
+            GLuint endMiddle = _idx + static_cast<GLuint>(nverts) - 1u;
             GLuint endStartIdx = capStartIdx + (3u * segments);
 
             // Start cap indices
@@ -961,7 +1254,7 @@ namespace mplot {
             // only need a single call to glDrawElements.
             for (int j = 0; j < segments; j++) {
                 // t is the angle of the segment
-                float t = j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r + v_x_inplane * std::cos(t) * r;
                 this->vertex_push (vstart+c, this->vertexPositions);
                 this->vertex_push (-v, this->vertexNormals);
@@ -970,7 +1263,7 @@ namespace mplot {
 
             // Intermediate, near start cap. Normals point in direction c
             for (int j = 0; j < segments; j++) {
-                float t = j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r + v_x_inplane * std::cos(t) * r;
                 this->vertex_push (vstart+c, this->vertexPositions);
                 c.renormalize();
@@ -980,7 +1273,7 @@ namespace mplot {
 
             // Intermediate, near end cap. Normals point in direction c
             for (int j = 0; j < segments; j++) {
-                float t = (float)j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = (float)j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r_end + v_x_inplane * std::cos(t) * r_end;
                 this->vertex_push (vend+c, this->vertexPositions);
                 c.renormalize();
@@ -990,7 +1283,7 @@ namespace mplot {
 
             // Bottom cap vertices
             for (int j = 0; j < segments; j++) {
-                float t = (float)j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = (float)j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r_end + v_x_inplane * std::cos(t) * r_end;
                 this->vertex_push (vend+c, this->vertexPositions);
                 this->vertex_push (v, this->vertexNormals);
@@ -1008,7 +1301,7 @@ namespace mplot {
             // After creating vertices, push all the indices.
             GLuint capMiddle = this->idx;
             GLuint capStartIdx = this->idx + 1u;
-            GLuint endMiddle = this->idx + (GLuint)nverts - 1u;
+            GLuint endMiddle = this->idx + static_cast<GLuint>(nverts) - 1u;
             GLuint endStartIdx = capStartIdx + (3u * segments);
 
             // Start cap
@@ -1127,7 +1420,7 @@ namespace mplot {
             // c1(t) = ( (p1-x1).normalized std::sin(t) + v.normalized cross (p1-x1).normalized * std::cos(t) )
             // c1(t) = ( inplane std::sin(t) + v * inplane * std::cos(t)
             for (int j = 0; j < segments; j++) {
-                float t = j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r + v_x_inplane * std::cos(t) * r_mod;
                 this->vertex_push (vstart+c, this->vertexPositions);
                 c.renormalize();
@@ -1141,7 +1434,7 @@ namespace mplot {
             r_mod = r_end / v_x_inplane.cross (v).length();
 
             for (int j = 0; j < segments; j++) {
-                float t = (float)j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = (float)j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r_end + v_x_inplane * std::cos(t) * r_mod;
                 this->vertex_push (vend+c, this->vertexPositions);
                 c.renormalize();
@@ -1271,7 +1564,7 @@ namespace mplot {
             // Polygon vertices (a triangle fan)
             for (int j = 0; j < segments; j++) {
                 // t is the angle of the segment
-                float t = rotation + j * sm::mathconst<float>::two_pi/(float)segments;
+                float t = rotation + j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = _ux * std::sin(t) * r + _uy * std::cos(t) * r;
                 this->vertex_push (vstart+c, this->vertexPositions);
                 this->vertex_push (-v, this->vertexNormals);
@@ -1904,7 +2197,7 @@ namespace mplot {
             // After creating vertices, push all the indices.
             GLuint capMiddle = this->idx;
             GLuint capStartIdx = this->idx + 1;
-            GLuint endMiddle = this->idx + (GLuint)nverts - 1u;
+            GLuint endMiddle = this->idx + static_cast<GLuint>(nverts) - 1u;
             GLuint endStartIdx = capStartIdx;
 
             // Base of the cone
@@ -2072,7 +2365,7 @@ namespace mplot {
             // After creating vertices, push all the indices.
             GLuint capMiddle = this->idx;
             GLuint capStartIdx = this->idx + 1u;
-            GLuint endMiddle = this->idx + (GLuint)nverts - 1u;
+            GLuint endMiddle = this->idx + static_cast<GLuint>(nverts) - 1u;
             GLuint endStartIdx = capStartIdx + (3u * segments);
 
             // Start cap indices

@@ -67,14 +67,16 @@ namespace mplot {
         void setSceneMatrix (const sm::mat44<float>& sv) { this->scenematrix = sv; }
 
         //! Set the translation specified by \a v0 into the scene translation
-        void setSceneTranslation (const sm::vec<float>& v0)
+        template <std::size_t N = 3> requires (N == 3) || (N == 4)
+        void setSceneTranslation (const sm::vec<float, N>& v0)
         {
             this->scenematrix.setToIdentity();
             this->scenematrix.pretranslate (v0);
         }
 
         //! Set a translation (only) into the scene view matrix
-        void addSceneTranslation (const sm::vec<float>& v0) { this->scenematrix.pretranslate (v0); }
+        template <std::size_t N = 3> requires (N == 3) || (N == 4)
+        void addSceneTranslation (const sm::vec<float, N>& v0) { this->scenematrix.pretranslate (v0); }
 
         //! Set a rotation (only) into the scene view matrix
         void setSceneRotation (const sm::quaternion<float>& r)
@@ -89,7 +91,8 @@ namespace mplot {
         void addSceneRotation (const sm::quaternion<float>& r) { this->scenematrix.rotate (r); }
 
         //! Set a translation to the model view matrix
-        void setViewTranslation (const sm::vec<float>& v0)
+        template <std::size_t N = 3> requires (N == 3) || (N == 4)
+        void setViewTranslation (const sm::vec<float, N>& v0)
         {
             this->viewmatrix.setToIdentity();
             this->viewmatrix.pretranslate (v0);
