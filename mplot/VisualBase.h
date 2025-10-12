@@ -764,20 +764,21 @@ namespace mplot {
         // Rotate about the point this->rotation_centre. Subroutine for computeSceneview.
         void computeSceneview_about_rotation_centre()
         {
-            sm::mat44<float> sv;
+            sm::mat44<float> sv_tr;
+            sm::mat44<float> sv_rot;
             if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
-                sv.translate (this->scenetrans_delta);
+                sv_tr.translate (this->scenetrans_delta);
                 // A rotation delta in world frame about the 'screen centre'
-                sv.translate (this->rotation_centre);
-                sv.rotate (this->rotation_delta);
-                sv.translate (-this->rotation_centre);
+                sv_rot.translate (this->rotation_centre);
+                sv_rot.rotate (this->rotation_delta);
+                sv_rot.translate (-this->rotation_centre);
             } else {
                 // Only rotate in cyl view
-                sv.rotate (this->rotation_delta);
+                sv_rot.rotate (this->rotation_delta);
             }
 
-            this->sceneview = sv * this->savedSceneview;
-            this->sceneview_tr = sv * this->savedSceneview_tr;
+            this->sceneview = sv_tr * sv_rot * this->savedSceneview;
+            this->sceneview_tr = sv_tr * this->savedSceneview_tr;
         }
 
         void computeSceneview()
