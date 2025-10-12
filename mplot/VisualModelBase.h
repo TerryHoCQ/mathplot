@@ -289,13 +289,6 @@ namespace mplot {
             return rtn;
         }
 
-        // When you are at coord and want to move in a direction move *around the surface of the model*, return the new location.
-        sm::vec<float, 3> find_vp1 (const sm::vec<float, 3>& coord, const sm::vec<float, 3>& move)
-        {
-            uint32_t vp1_idx = this->find_vp1_nearest (coord);
-            return sm::vec<float, 3>{};
-        }
-
         // Get a single position from vertexPositions, using the index into the vector<vec>
         // interpretation of vertexPositions
         sm::vec<float, 3> get_position (const uint32_t vec_idx) const
