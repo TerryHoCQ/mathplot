@@ -164,7 +164,7 @@ namespace mplot::compoundray
         // Translate camera_space by the camera position, obtained from compound-ray
         float3 campos = thescene->getCamera()->getPosition();
         sm::vec<float> campos_v = { campos.x, campos.y, campos.z };
-        camera_space.translate (campos_v);
+        camera_space.pretranslate (campos_v);
 
         return camera_space;
     }
