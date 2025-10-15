@@ -869,6 +869,12 @@ namespace mplot {
         void twodimensional (const bool val) { this->flags.set (vm_bools::twodimensional, val); }
         bool twodimensional() const { return this->flags.test (vm_bools::twodimensional); }
 
+        //! Getter for vertex positions (for mplot::NormalsVisual)
+        std::vector<float> getVertexPositions() { return this->vertexPositions; }
+        //! Getter for vertex normals (for mplot::NormalsVisual)
+        std::vector<float> getVertexNormals() { return this->vertexNormals; }
+        std::vector<float> getVertexColors() { return this->vertexColors; }
+
     protected:
 
         //! The model-specific view matrix. Used to transform the pose of the model in the scene.
