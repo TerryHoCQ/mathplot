@@ -40,17 +40,71 @@ namespace mplot {
             auto vc = reinterpret_cast<const std::vector<std::array<float, 3>>*>(&mymodelColors);
 
             for (uint32_t ii = 0; ii < vn->size(); ++ii) {
-                sm::vec<float> end = (*vp)[ii] + (*vn)[ii] * scale_factor;
-                sm::vec<float> arrow_line = (*vn)[ii] * scale_factor;
+                sm::vec<float> pos = (*vp)[ii];
+                sm::vec<float> nv = (*vn)[ii];
+
+                sm::vec<float> end = pos + nv * scale_factor;
+                sm::vec<float> arrow_line = nv * scale_factor;
                 float len = arrow_line.length();
                 sm::vec<float> cone_start = arrow_line.shorten (len * arrowhead_prop);
-                cone_start += (*vp)[ii];
+                cone_start += pos;
                 std::array<float, 3> _clr = clr;
                 if (!singlecolour) { _clr = (*vc)[ii]; }
-                this->computeTube ((*vp)[ii], cone_start, _clr, _clr, thickness * scale_factor, shapesides);
+                this->computeTube (pos, cone_start, _clr, _clr, thickness * scale_factor, shapesides);
                 float conelen = (end - cone_start).length();
                 if (arrow_line.length() > conelen) {
                     this->computeCone (cone_start, end, 0.0f, _clr, thickness * scale_factor * 2.0f, shapesides);
+                }
+            }
+
+            std::array<uint32_t, 3> ti = {};
+            // We also have vp1 (public) and triangles (also public)
+            for (auto t : mymodel->triangles) {
+                sm::vec<float, 3> nv = {};
+                sm::vec<float, 3> nvc = {};
+                sm::vec<float, 3> nvd = {};
+                std::tie(ti, nv, nvc, nvd) = t;
+                // Plot tn at mean location of ti
+                sm::vec<float, 3> pos = mymodel->vp1[ti[0]] + mymodel->vp1[ti[1]] + mymodel->vp1[ti[2]];
+                pos /= 3.0f;
+
+                // Mesh triangle normals
+                {
+                    sm::vec<float> end = pos + nv * scale_factor;
+                    sm::vec<float> arrow_line = nv * scale_factor;
+                    float len = arrow_line.length();
+                    sm::vec<float> cone_start = arrow_line.shorten (len * arrowhead_prop);
+                    cone_start += pos;
+                    this->computeTube (pos, cone_start, clr, clr, thickness * scale_factor, shapesides);
+                    float conelen = (end - cone_start).length();
+                    if (arrow_line.length() > conelen) {
+                        this->computeCone (cone_start, end, 0.0f, clr, thickness * scale_factor * 2.0f, shapesides);
+                    }
+                }
+                // Computed triangle normals
+                {
+                    sm::vec<float> end = pos + nvc * scale_factor;
+                    sm::vec<float> arrow_line = nvc * scale_factor;
+                    float len = arrow_line.length();
+                    sm::vec<float> cone_start = arrow_line.shorten (len * arrowhead_prop);
+                    cone_start += pos;
+                    this->computeTube (pos, cone_start, clrnc, clrnc, thickness * scale_factor, shapesides);
+                    float conelen = (end - cone_start).length();
+                    if (arrow_line.length() > conelen) {
+                        this->computeCone (cone_start, end, 0.0f, clrnc, thickness * scale_factor * 2.0f, shapesides);
+                    }
+                }
+                {
+                    sm::vec<float> end = pos + nvd * scale_factor;
+                    sm::vec<float> arrow_line = nvd * scale_factor;
+                    float len = arrow_line.length();
+                    sm::vec<float> cone_start = arrow_line.shorten (len * arrowhead_prop);
+                    cone_start += pos;
+                    this->computeTube (pos, cone_start, clrnd, clrnd, thickness * scale_factor, shapesides);
+                    float conelen = (end - cone_start).length();
+                    if (arrow_line.length() > conelen) {
+                        this->computeCone (cone_start, end, 0.0f, clrnd, thickness * scale_factor * 2.0f, shapesides);
+                    }
                 }
             }
         };
@@ -68,6 +122,8 @@ namespace mplot {
         // Vector single colour
         bool singlecolour = false;
         std::array<float, 3> clr = mplot::colour::grey20;
+        std::array<float, 3> clrnc = mplot::colour::grey60; // computed norm
+        std::array<float, 3> clrnd = mplot::colour::grey90; // computed norm
     };
 
 } // namespace mplot
