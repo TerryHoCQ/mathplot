@@ -1,7 +1,7 @@
 #pragma once
 
 /*!
- * \file Declares VectorVisual to visualize the normals of another VisualModel
+ * \file Declares NormalsVisual to visualize the normals of another VisualModel
  */
 
 #include <array>
