@@ -66,10 +66,13 @@ namespace mplot {
             }
         }
 
-        void update (const sm::vec<float, 3>& s, const sm::vec<float, 3>& e)
+        template <std::size_t N = 3> requires (N == 3) || (N == 4)
+        void update (const sm::vec<float, N>& s, const sm::vec<float, N>& e)
         {
-            this->start_coord = s;
-            this->end_coord = e;
+            for (std::size_t i = 0; i < 3; ++i) {
+                this->start_coord[i] = s[i];
+                this->end_coord[i] = e[i];
+            }
             this->reinit();
         }
 
