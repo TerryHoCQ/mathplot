@@ -42,7 +42,6 @@ int main()
             gv1->addLabel (lbl, {0, -1, 0}, mplot::TextFeatures(0.06f));
             gv1->cm.setType (mplot::ColourMapType::Jet);
             gv1->colour_bb = cl;
-            gv1->vertex_postprocess(); // creates the triangles and normals required for NormalsVisual
             gv1->finalize();
 
             // re-colour after construction
@@ -52,6 +51,8 @@ int main()
             size_t sz1 = gv1p->data.size();
             gv1p->data.linspace (0.0f, 1+i * imax_mult, sz1);
             gv1p->reinitColours();
+
+            gv1p->vertex_postprocess(); // creates the triangles and normals required for NormalsVisual
 
             // Create an associate normals model
             auto nrm = std::make_unique<mplot::NormalsVisual<>> (gv1p);

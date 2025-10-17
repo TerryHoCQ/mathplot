@@ -336,6 +336,9 @@ target_link_libraries(threewindows OpenGL::GL glfw Freetype::Freetype)
 add_executable(rod rod.cpp)
 target_link_libraries(rod OpenGL::GL glfw Freetype::Freetype)
 
+add_executable(rod_with_normals rod_with_normals.cpp)
+target_link_libraries(rod_with_normals OpenGL::GL glfw Freetype::Freetype)
+
 add_executable(rod_pan rod_pan.cpp)
 target_link_libraries(rod_pan OpenGL::GL glfw Freetype::Freetype)
 
