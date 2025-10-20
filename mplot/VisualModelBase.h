@@ -1014,7 +1014,7 @@ namespace mplot {
          * \param start The start of the tube
          * \param end The end of the tube
          * \param _ux a vector in the x axis direction for the end face
-         * \param _uy a vector in the y axis direction
+         * \param _uy a vector in the y axis direction. _ux ^ _uy gives the end cap normal
          * \param colStart The tube starting colour
          * \param colEnd The tube's ending colour
          * \param r Radius of the tube
@@ -1033,7 +1033,7 @@ namespace mplot {
             sm::vec<float> vend = end;
 
             // v is a face normal
-            sm::vec<float> v = _uy.cross(_ux);
+            sm::vec<float> v = _ux.cross(_uy);
             v.renormalize();
 
             // If bounding box, populate different buffers:
