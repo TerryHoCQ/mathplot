@@ -1773,7 +1773,7 @@ namespace mplot {
             for (int i = 0; i < n_faces; ++i) { // For each face in the geodesic...
                 sm::vec<F, 3> norm = { F{0}, F{0}, F{0} };
                 for (auto vtx : geo.poly.faces[i]) { // For each vertex in face...
-                    norm += vtx; // Add to the face norm
+                    norm += geo.poly.vertices[vtx]; // Add to the face norm
                     this->vertex_push (geo.poly.vertices[vtx].as_float() * r + so, this->vertexPositions);
                 }
                 sm::vec<float, 3> nf = (norm / F{3}).as_float();
