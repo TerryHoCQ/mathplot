@@ -152,8 +152,8 @@ namespace mplot {
                         const sm::quaternion<float>& _rotation, const sm::vec<float> _offset,
                         std::array<float, 3> _clr = {0,0,0})
         {
-            this->viewmatrix.rotate (_rotation);
             this->viewmatrix.translate (_offset);
+            this->viewmatrix.rotate (_rotation);
             this->clr_text = _clr;
             this->setupText (_txt);
         }
