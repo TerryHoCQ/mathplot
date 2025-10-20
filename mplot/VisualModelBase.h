@@ -375,7 +375,7 @@ namespace mplot {
         void vertex_postprocess() // make_neighbour_mesh() ?
         {
             constexpr bool debug = false;
-            constexpr bool debug_reorder = true;
+            constexpr bool debug_reorder = false;
 
             if constexpr (debug) { std::cout << __func__ << " called\n"; }
             // For each vertex, search for other vertices that have the same or almost the same location
@@ -496,9 +496,8 @@ namespace mplot {
                     auto [ti, tn, tnc, tnd] = t;
                     std::cout << "Tri: " << ti[0] << "," << ti[1] << "," << ti[2] << ", norm " << tn << std::endl;
                 }
+                std::cout << this->edges.size() << " edges and " << this->triangles.size() << " triangles in model '" << this->name << "'\n";
             }
-
-            std::cout << this->edges.size() << " edges and " << this->triangles.size() << " triangles in " << this->name << "\n";
         }
 
         /**
