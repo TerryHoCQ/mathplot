@@ -227,8 +227,8 @@ namespace mplot {
         // The edges that make up the same triangles as are shown with this->indices, but in terms of vp1.
         // Each edge must be two indices in *ascending numerical order*
         std::set<std::array<uint32_t, 2>> edges;
-        // Triangles too. Might be more useful than edges.
-        sm::vvec<std::tuple<std::array<uint32_t, 3>, sm::vec<float, 3>>> triangles;
+        // Triangles too. Might be more useful than edges. Triangle given as indices into vp1
+        sm::vvec<std::tuple<std::array<uint32_t, 3>, sm::vec<float, 3>, sm::vec<float, 3>, sm::vec<float, 3>>> triangles;
 
         // Return index of vp1 that is closest to scene_coord. Can use vp1_to_indices to find the indices
         // into vertexPositions and vertexNormals that this index in the topographic mesh relates to.
@@ -259,16 +259,16 @@ namespace mplot {
             return trivert;
         }
 
-        sm::vvec<uint32_t> neighbours (const uint32_t idx) const
+        sm::vvec<uint32_t> neighbours (const uint32_t _idx) const
         {
             sm::vvec<uint32_t> rtn;
-            // Search edges to find those that include idx and then pack up the other ends in a return object
+            // Search edges to find those that include _idx and then pack up the other ends in a return object
             for (auto e : this->edges) {
                 // we have e[0] and e[1]
-                if (e[0] == idx) {
+                if (e[0] == _idx) {
                     // neighb is e[1]
                     rtn.push_back (e[1]);
-                } else if (e[1] == idx) {
+                } else if (e[1] == _idx) {
                     // neighb is e[0]
                     rtn.push_back (e[0]);
                 }
@@ -276,13 +276,13 @@ namespace mplot {
             return rtn;
         }
 
-        sm::vvec<std::array<uint32_t, 3>> neighbour_triangles (const uint32_t idx) const
+        sm::vvec<std::array<uint32_t, 3>> neighbour_triangles (const uint32_t _idx) const
         {
             sm::vvec<std::array<uint32_t, 3>> rtn;
             for (auto t: this->triangles) {
-                auto [ti, tn] = t;
-                // If it includes idx, add it to rtn
-                if (ti[0] == idx || ti[1] == idx || ti[2] == idx) {
+                auto [ti, tn, tnc, tnd] = t;
+                // If it includes _idx, add it to rtn
+                if (ti[0] == _idx || ti[1] == _idx || ti[2] == _idx) {
                     rtn.push_back (ti);
                 }
             }
@@ -310,8 +310,8 @@ namespace mplot {
         find_triangle_crossing (const sm::vec<float, 3>& coord, const sm::vec<float, 3>& vdir) const
         {
             for (auto tri : triangles) {
-                auto [ti, tn] = tri;
-                auto [isect, p] = sm::algo::ray_tri_intersection<float> (this->vp1[ti[0]], this->vp1[ti[1]], this->vp1[ti[2]], coord, vdir);
+                auto [ti, tn, tnc, tnd] = tri;
+                auto [isect, p] = sm::algo::ray_tri_intersection<float> (this->vp1[ti[0]], this->vp1[ti[1]], this->vp1[ti[2]], coord - (vdir / 2.0f), vdir);
                 if (isect) { return {p, ti, tn}; }
             }
 
@@ -335,7 +335,7 @@ namespace mplot {
             sm::vec<float> other_n = {fmax, fmax, fmax};
             sm::vec<float> my_n = {fmax, fmax, fmax}; // debug
             for (auto tri : triangles) {
-                auto [ti, tn] = tri;
+                auto [ti, tn, tnc, tnd] = tri;
                 if (ti == not_this) {
                     if constexpr (debug_normals) { my_n = tn; }
                     continue;
@@ -360,7 +360,9 @@ namespace mplot {
         std::tuple<sm::vec<float, 3>, std::array<uint32_t, 3>, sm::vec<float, 3>>
         find_triangle_crossing (const sm::vec<float, 3>& coord) const
         {
-            return this->find_triangle_crossing (coord, (this->bb.mid() - coord));
+            sm::vec<float, 3> vdir = this->bb.mid() - coord;
+            vdir.renormalize();
+            return this->find_triangle_crossing (coord, vdir);
         }
 
         /*!
@@ -374,7 +376,8 @@ namespace mplot {
          */
         void vertex_postprocess() // make_neighbour_mesh() ?
         {
-            constexpr bool debug = true;
+            constexpr bool debug = false;
+            constexpr bool debug_reorder = false;
 
             if constexpr (debug) { std::cout << __func__ << " called\n"; }
             // For each vertex, search for other vertices that have the same or almost the same location
@@ -457,23 +460,34 @@ namespace mplot {
                 // Direct population of triangles
                 std::array<uint32_t, 3> t = { equiv_top[indices[i]], equiv_top[indices[i+1]], equiv_top[indices[i+2]] };
 
-                // The normal vector for this triangle is easy to get, as we're dealing with indices already
+                // The normal vector for this triangle could be obtained from the mesh normals, but
+                // we can't trust them (though they're easy to get, as we're dealing with indices
+                // already). However, use this to ensure that our triangle indices order is in
+                // agreement with mesh normal as far as direction goes.
                 sm::vec<float> trinorm = this->get_normal (indices[i]) + this->get_normal (indices[i+1]) + this->get_normal (indices[i+2]) ;
                 trinorm.renormalize();
-                if constexpr (debug) { std::cout << "Triangle normal: " << trinorm << std::endl; }
 
-                // Check rotational sense of triangles
-                sm::vec<float, 3> n = (vp1[t[1]] - vp1[t[0]]).cross (vp1[t[2]] - vp1[t[0]]);
+                // Compute trinorm as well and compare with the one from the mesh - perhaps it's
+                // different? We really want the right normal.
+                const sm::vec<float>& tv0 = vp1[t[0]];
+                const sm::vec<float>& tv1 = vp1[t[1]];
+                const sm::vec<float>& tv2 = vp1[t[2]];
+                sm::vec<float>  nx = (tv1 - tv0);
+                sm::vec<float>  ny = (tv2 - tv0);
+                sm::vec<float, 3> n = nx.cross (ny);
+                n.renormalize();
+
+                // Check rotational sense of triangles?
                 if (n.dot (trinorm) < 0.0f) {
                     // need to swap order in t:
-                    if constexpr (debug) { std::cout << "Triangle reordered (corners 1 and 2 switched)\n"; }
+                    if constexpr (debug_reorder) { std::cout << "Triangle reordered (corners 1 and 2 switched)\n"; }
                     uint32_t ti = t[2];
                     t[2] = t[1];
                     t[1] = ti;
+                    n = -n; // Also reverse n
                 }
 
-                this->triangles.push_back ({t, trinorm});
-                // If required, can store trinorm into a container like triangle_normals with a push_back.
+                this->triangles.push_back ({t, n, nx, ny}); // n is computed normal
             }
 
             if constexpr (debug) {
@@ -481,12 +495,11 @@ namespace mplot {
                     std::cout << "Edge: " << e[0] << "," << e[1] << std::endl;
                 }
                 for (auto t : this->triangles) {
-                    auto [ti, tn] = t;
+                    auto [ti, tn, tnc, tnd] = t;
                     std::cout << "Tri: " << ti[0] << "," << ti[1] << "," << ti[2] << ", norm " << tn << std::endl;
                 }
+                std::cout << this->edges.size() << " edges and " << this->triangles.size() << " triangles in model '" << this->name << "'\n";
             }
-
-            std::cout << this->edges.size() << " edges and " << this->triangles.size() << " triangles in " << this->name << "\n";
         }
 
         /**
@@ -869,6 +882,12 @@ namespace mplot {
         void twodimensional (const bool val) { this->flags.set (vm_bools::twodimensional, val); }
         bool twodimensional() const { return this->flags.test (vm_bools::twodimensional); }
 
+        //! Getter for vertex positions (for mplot::NormalsVisual)
+        std::vector<float> getVertexPositions() { return this->vertexPositions; }
+        //! Getter for vertex normals (for mplot::NormalsVisual)
+        std::vector<float> getVertexNormals() { return this->vertexNormals; }
+        std::vector<float> getVertexColors() { return this->vertexColors; }
+
     protected:
 
         //! The model-specific view matrix. Used to transform the pose of the model in the scene.
@@ -996,7 +1015,7 @@ namespace mplot {
          * \param start The start of the tube
          * \param end The end of the tube
          * \param _ux a vector in the x axis direction for the end face
-         * \param _uy a vector in the y axis direction
+         * \param _uy a vector in the y axis direction. _ux ^ _uy gives the end cap normal
          * \param colStart The tube starting colour
          * \param colEnd The tube's ending colour
          * \param r Radius of the tube
@@ -1015,7 +1034,7 @@ namespace mplot {
             sm::vec<float> vend = end;
 
             // v is a face normal
-            sm::vec<float> v = _uy.cross(_ux);
+            sm::vec<float> v = _ux.cross(_uy);
             v.renormalize();
 
             // If bounding box, populate different buffers:
@@ -1755,7 +1774,7 @@ namespace mplot {
             for (int i = 0; i < n_faces; ++i) { // For each face in the geodesic...
                 sm::vec<F, 3> norm = { F{0}, F{0}, F{0} };
                 for (auto vtx : geo.poly.faces[i]) { // For each vertex in face...
-                    norm += vtx; // Add to the face norm
+                    norm += geo.poly.vertices[vtx]; // Add to the face norm
                     this->vertex_push (geo.poly.vertices[vtx].as_float() * r + so, this->vertexPositions);
                 }
                 sm::vec<float, 3> nf = (norm / F{3}).as_float();

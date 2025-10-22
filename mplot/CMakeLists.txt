@@ -76,6 +76,7 @@ install(
   HSVWheelVisual.h
   IcosaVisual.h
   LengthscaleVisual.h
+  NormalsVisual.h
   PointRowsMeshVisual.h
   PointRowsVisual.h
   PolarVisual.h

@@ -66,10 +66,13 @@ namespace mplot {
             }
         }
 
-        void update (const sm::vec<float, 3>& s, const sm::vec<float, 3>& e)
+        template <std::size_t N = 3> requires (N == 3) || (N == 4)
+        void update (const sm::vec<float, N>& s, const sm::vec<float, N>& e)
         {
-            this->start_coord = s;
-            this->end_coord = e;
+            for (std::size_t i = 0; i < 3; ++i) {
+                this->start_coord[i] = s[i];
+                this->end_coord[i] = e[i];
+            }
             this->reinit();
         }
 
@@ -81,7 +84,8 @@ namespace mplot {
         float radius = 1.0f;
         //! If true, use face_uz and face_uy to draw the tube, else get a square-ended tube
         bool use_oriented_tube = true;
-        //! Face directions for the oriented tube
+        //! Face directions for the oriented tube's *end* cap. Choose carefully so that face_uy ^
+        //! face_uz gives the normal for the end cap.
         sm::vec<float, 3> face_uy = sm::vec<float, 3>::uy();
         sm::vec<float, 3> face_uz = sm::vec<float, 3>::uz();
 

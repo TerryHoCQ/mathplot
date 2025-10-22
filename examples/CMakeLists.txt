@@ -336,6 +336,9 @@ target_link_libraries(threewindows OpenGL::GL glfw Freetype::Freetype)
 add_executable(rod rod.cpp)
 target_link_libraries(rod OpenGL::GL glfw Freetype::Freetype)
 
+add_executable(rod_with_normals rod_with_normals.cpp)
+target_link_libraries(rod_with_normals OpenGL::GL glfw Freetype::Freetype)
+
 add_executable(rod_pan rod_pan.cpp)
 target_link_libraries(rod_pan OpenGL::GL glfw Freetype::Freetype)
 
@@ -366,6 +369,9 @@ if(NOT APPLE)
 
   add_executable(geodesic geodesic.cpp)
   target_link_libraries(geodesic OpenGL::GL glfw Freetype::Freetype)
+
+  add_executable(geodesic_with_normals geodesic_with_normals.cpp)
+  target_link_libraries(geodesic_with_normals OpenGL::GL glfw Freetype::Freetype)
 
   add_executable(geodesic_ce geodesic_ce.cpp)
   target_link_libraries(geodesic_ce OpenGL::GL glfw Freetype::Freetype)
