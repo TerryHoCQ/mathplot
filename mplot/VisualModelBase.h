@@ -311,7 +311,7 @@ namespace mplot {
         {
             for (auto tri : triangles) {
                 auto [ti, tn, tnc, tnd] = tri;
-                auto [isect, p] = sm::algo::ray_tri_intersection<float> (this->vp1[ti[0]], this->vp1[ti[1]], this->vp1[ti[2]], coord, vdir);
+                auto [isect, p] = sm::algo::ray_tri_intersection<float> (this->vp1[ti[0]], this->vp1[ti[1]], this->vp1[ti[2]], coord - (vdir / 2.0f), vdir);
                 if (isect) { return {p, ti, tn}; }
             }
 
@@ -360,7 +360,9 @@ namespace mplot {
         std::tuple<sm::vec<float, 3>, std::array<uint32_t, 3>, sm::vec<float, 3>>
         find_triangle_crossing (const sm::vec<float, 3>& coord) const
         {
-            return this->find_triangle_crossing (coord, (this->bb.mid() - coord));
+            sm::vec<float, 3> vdir = this->bb.mid() - coord;
+            vdir.renormalize();
+            return this->find_triangle_crossing (coord, vdir);
         }
 
         /*!
