@@ -29,6 +29,8 @@ namespace mplot {
                 return;
             }
 
+            const float cone_r = this->thickness * this->scale_factor * 2.0f;
+            const float tube_r = this->thickness * this->scale_factor;
             // Copy data out of my model...
             std::vector<float> mymodelPositions = mymodel->getVertexPositions();
             std::vector<float> mymodelNormals = mymodel->getVertexNormals();
@@ -40,32 +42,31 @@ namespace mplot {
             auto vc = reinterpret_cast<const std::vector<std::array<float, 3>>*>(&mymodelColors);
 
             for (uint32_t ii = 0; ii < vn->size(); ++ii) {
-                sm::vec<float> pos = (*vp)[ii];
-                sm::vec<float> nv = (*vn)[ii];
+                // (*vp)[ii] is position, (*vn)[ii] is normal
                 std::array<float, 3> _clr = clr;
                 if (!singlecolour) { _clr = (*vc)[ii]; }
-                this->computeArrow (pos, (pos + nv * scale_factor), _clr, thickness * scale_factor,
-                                    arrowhead_prop, thickness * scale_factor * 2.0f, shapesides);
+                this->computeArrow ((*vp)[ii], ((*vp)[ii] + (*vn)[ii] * this->scale_factor),
+                                    _clr, tube_r, this->arrowhead_prop, cone_r, this->shapesides);
             }
 
             std::array<uint32_t, 3> ti = {};
+            sm::vec<float, 3> nv = {};
+            sm::vec<float, 3> nvc = {};
+            sm::vec<float, 3> nvd = {};
+            sm::vec<float, 3> pos = {};
             // We also have vp1 (public) and triangles (also public)
             for (auto t : mymodel->triangles) {
-                sm::vec<float, 3> nv = {};
-                sm::vec<float, 3> nvc = {};
-                sm::vec<float, 3> nvd = {};
                 std::tie(ti, nv, nvc, nvd) = t;
                 // Plot tn at mean location of ti
-                sm::vec<float, 3> pos = mymodel->vp1[ti[0]] + mymodel->vp1[ti[1]] + mymodel->vp1[ti[2]];
-                pos /= 3.0f;
+                pos = (mymodel->vp1[ti[0]] + mymodel->vp1[ti[1]] + mymodel->vp1[ti[2]]) / 3.0f;
                 // Mesh triangle normals
-                this->computeArrow (pos, (pos + nv * scale_factor), clr, thickness * scale_factor,
-                                    arrowhead_prop, thickness * scale_factor * 2.0f, shapesides);
+                this->computeArrow (pos, (pos + nv * this->scale_factor),
+                                    clr, tube_r, this->arrowhead_prop, cone_r, this->shapesides);
                 // Computed triangle normals
-                this->computeArrow (pos, (pos + nvc * scale_factor), clrnc, thickness * scale_factor,
-                                    arrowhead_prop, thickness * scale_factor * 2.0f, shapesides);
-                this->computeArrow (pos, (pos + nvd * scale_factor), clrnd, thickness * scale_factor,
-                                    arrowhead_prop, thickness * scale_factor * 2.0f, shapesides);
+                this->computeArrow (pos, (pos + nvc * this->scale_factor),
+                                    clrnc, tube_r, this->arrowhead_prop, cone_r, this->shapesides);
+                this->computeArrow (pos, (pos + nvd * scale_factor),
+                                    clrnd, tube_r, this->arrowhead_prop, cone_r, this->shapesides);
             }
         };
 
