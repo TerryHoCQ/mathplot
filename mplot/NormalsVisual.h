@@ -42,19 +42,10 @@ namespace mplot {
             for (uint32_t ii = 0; ii < vn->size(); ++ii) {
                 sm::vec<float> pos = (*vp)[ii];
                 sm::vec<float> nv = (*vn)[ii];
-
-                sm::vec<float> end = pos + nv * scale_factor;
-                sm::vec<float> arrow_line = nv * scale_factor;
-                float len = arrow_line.length();
-                sm::vec<float> cone_start = arrow_line.shorten (len * arrowhead_prop);
-                cone_start += pos;
                 std::array<float, 3> _clr = clr;
                 if (!singlecolour) { _clr = (*vc)[ii]; }
-                this->computeTube (pos, cone_start, _clr, _clr, thickness * scale_factor, shapesides);
-                float conelen = (end - cone_start).length();
-                if (arrow_line.length() > conelen) {
-                    this->computeCone (cone_start, end, 0.0f, _clr, thickness * scale_factor * 2.0f, shapesides);
-                }
+                this->computeArrow (pos, (pos + nv * scale_factor), _clr, thickness * scale_factor,
+                                    arrowhead_prop, thickness * scale_factor * 2.0f, shapesides);
             }
 
             std::array<uint32_t, 3> ti = {};
