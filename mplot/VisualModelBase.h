@@ -250,7 +250,7 @@ namespace mplot {
             return i;
         }
 
-        sm::vec<sm::vec<float, 3>, 3> triangle_vertices (const std::array<uint32_t, 3>& tri_indices)
+        sm::vec<sm::vec<float, 3>, 3> triangle_vertices (const std::array<uint32_t, 3>& tri_indices) const
         {
             sm::vec<sm::vec<float, 3>, 3> trivert;
             if (tri_indices[0] < this->vp1.size()) { trivert[0] = this->vp1[tri_indices[0]]; }
@@ -325,7 +325,7 @@ namespace mplot {
 
         // Find a triangle containing indices a and b that isn't 'not_this' and return, along with its normal.
         std::tuple<std::array<uint32_t, 3>, sm::vec<float>>
-        find_other_triangle_containing (const uint32_t a, const uint32_t b, const std::array<uint32_t, 3>& not_this)
+        find_other_triangle_containing (const uint32_t a, const uint32_t b, const std::array<uint32_t, 3>& not_this) const
         {
             constexpr bool debug_normals = false;
 
