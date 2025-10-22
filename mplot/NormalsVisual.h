@@ -67,45 +67,14 @@ namespace mplot {
                 // Plot tn at mean location of ti
                 sm::vec<float, 3> pos = mymodel->vp1[ti[0]] + mymodel->vp1[ti[1]] + mymodel->vp1[ti[2]];
                 pos /= 3.0f;
-
                 // Mesh triangle normals
-                {
-                    sm::vec<float> end = pos + nv * scale_factor;
-                    sm::vec<float> arrow_line = nv * scale_factor;
-                    float len = arrow_line.length();
-                    sm::vec<float> cone_start = arrow_line.shorten (len * arrowhead_prop);
-                    cone_start += pos;
-                    this->computeTube (pos, cone_start, clr, clr, thickness * scale_factor, shapesides);
-                    float conelen = (end - cone_start).length();
-                    if (arrow_line.length() > conelen) {
-                        this->computeCone (cone_start, end, 0.0f, clr, thickness * scale_factor * 2.0f, shapesides);
-                    }
-                }
+                this->computeArrow (pos, (pos + nv * scale_factor), clr, thickness * scale_factor,
+                                    arrowhead_prop, thickness * scale_factor * 2.0f, shapesides);
                 // Computed triangle normals
-                {
-                    sm::vec<float> end = pos + nvc * scale_factor;
-                    sm::vec<float> arrow_line = nvc * scale_factor;
-                    float len = arrow_line.length();
-                    sm::vec<float> cone_start = arrow_line.shorten (len * arrowhead_prop);
-                    cone_start += pos;
-                    this->computeTube (pos, cone_start, clrnc, clrnc, thickness * scale_factor, shapesides);
-                    float conelen = (end - cone_start).length();
-                    if (arrow_line.length() > conelen) {
-                        this->computeCone (cone_start, end, 0.0f, clrnc, thickness * scale_factor * 2.0f, shapesides);
-                    }
-                }
-                {
-                    sm::vec<float> end = pos + nvd * scale_factor;
-                    sm::vec<float> arrow_line = nvd * scale_factor;
-                    float len = arrow_line.length();
-                    sm::vec<float> cone_start = arrow_line.shorten (len * arrowhead_prop);
-                    cone_start += pos;
-                    this->computeTube (pos, cone_start, clrnd, clrnd, thickness * scale_factor, shapesides);
-                    float conelen = (end - cone_start).length();
-                    if (arrow_line.length() > conelen) {
-                        this->computeCone (cone_start, end, 0.0f, clrnd, thickness * scale_factor * 2.0f, shapesides);
-                    }
-                }
+                this->computeArrow (pos, (pos + nvc * scale_factor), clrnc, thickness * scale_factor,
+                                    arrowhead_prop, thickness * scale_factor * 2.0f, shapesides);
+                this->computeArrow (pos, (pos + nvd * scale_factor), clrnd, thickness * scale_factor,
+                                    arrowhead_prop, thickness * scale_factor * 2.0f, shapesides);
             }
         };
 
