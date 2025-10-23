@@ -253,13 +253,8 @@ namespace mplot {
         {
             if (this->navmesh) { return; } // already made it
 
+            // Create a new navmesh
             this->navmesh = std::make_unique<mplot::NavMesh>();
-
-            constexpr bool debug = false;
-            constexpr bool debug_reorder = false;
-
-            if constexpr (debug) { std::cout << __func__ << " called\n"; }
-            // For each vertex, search for other vertices that have the same or almost the same location
 
             // Use the bounding box middle as the navmesh centroid.
             navmesh->centroid = this->bb.mid();
@@ -268,12 +263,11 @@ namespace mplot {
             auto vp = reinterpret_cast<const std::vector<sm::vec<float, 3>>*>(&this->vertexPositions);
             uint32_t vps = vp->size();
 
-            constexpr float vlen_thresh = 0.0f;
-
             // For each entry in vertex, list the entries in vertexPositions that are in the same locn
             std::map<uint32_t, sm::vvec<uint32_t>> equiv;
 
             // Populate equiv
+            constexpr float vlen_thresh = 0.0f;
             for (uint32_t i = 0; i < vps; ++i) {
                 for (uint32_t j = 0; j < vps; ++j) {
                     if (((*vp)[i] - (*vp)[j]).length() <= vlen_thresh) { equiv[i].push_back (j); }
@@ -287,32 +281,20 @@ namespace mplot {
             navmesh->vertexidx_to_indices.resize (equiv.size());
             uint32_t i = 0;
             for (auto eq : equiv) {
-                if constexpr (debug) { std::cout << "equiv[" << eq.first << "] = " << eq.second << std::endl; }
                 navmesh->vertexidx_to_indices[i] = eq.second;
                 for (auto ev : eq.second) {
                     navmesh_idx[ev] = i;
                 }
                 ++i;
             }
-            if constexpr (debug) {
-                uint32_t cntr = 0;
-                for (auto eqi : navmesh_idx) {
-                    std::cout << "navmesh_idx[" << cntr++ << "] = " << eqi << std::endl;
-                }
-            }
+
             // Can now populate vertex, a vector of coordinates, if required, or simply access (*vp) as needed using equiv.first
             navmesh->vertex.resize (equiv.size(), {0});
             i = 0;
             for (auto eq : equiv) { navmesh->vertex[i++] = (*vp)[eq.first]; }
-            if constexpr (debug) {
-                for (i = 0; i <  navmesh->vertex.size(); ++i) {
-                    std::cout << "vertex[" << i << "] = " <<  navmesh->vertex[i] << std::endl;
-                }
-            }
 
             // Lastly, generate edges. For which we require use of indices, which is expressed in
             // terms of the old indices. That lookup is navmesh_idx.
-
             for (uint32_t i = 0; i < this->indices.size(); i += 3) {
                 // Each three entries in indices is a triangle containing 3 edges. NB: Edges must be listed in ascending order!
                 std::array<uint32_t, 2> e = { navmesh_idx[indices[i]], navmesh_idx[indices[i+1]] };
@@ -354,15 +336,14 @@ namespace mplot {
                 const sm::vec<float>& tv0 = navmesh->vertex[t[0]];
                 const sm::vec<float>& tv1 = navmesh->vertex[t[1]];
                 const sm::vec<float>& tv2 = navmesh->vertex[t[2]];
-                sm::vec<float>  nx = (tv1 - tv0);
-                sm::vec<float>  ny = (tv2 - tv0);
-                sm::vec<float, 3> n = nx.cross (ny);
+                sm::vec<float> nx = (tv1 - tv0);
+                sm::vec<float> ny = (tv2 - tv0);
+                sm::vec<float> n = nx.cross (ny);
                 n.renormalize();
 
                 // Check rotational sense of triangles?
                 if (n.dot (trinorm) < 0.0f) {
                     // need to swap order in t:
-                    if constexpr (debug_reorder) { std::cout << "Triangle reordered (corners 1 and 2 switched)\n"; }
                     uint32_t ti = t[2];
                     t[2] = t[1];
                     t[1] = ti;
@@ -370,17 +351,6 @@ namespace mplot {
                 }
 
                 navmesh->triangles.push_back ({t, n, nx, ny}); // n is computed normal
-            }
-
-            if constexpr (debug) {
-                for (auto e : navmesh->edges) {
-                    std::cout << "Edge: " << e[0] << "," << e[1] << std::endl;
-                }
-                for (auto t : this->triangles) {
-                    auto [ti, tn, tnc, tnd] = t;
-                    std::cout << "Tri: " << ti[0] << "," << ti[1] << "," << ti[2] << ", norm " << tn << std::endl;
-                }
-                std::cout << navmesh->edges.size() << " edges and " << navmesh->triangles.size() << " triangles in model '" << this->name << "'\n";
             }
         }
 
