@@ -513,21 +513,17 @@ namespace mplot
         find_triangle_hit (const sm::mat44<float>& camspace, const sm::mat44<float>& model_to_scene)
         {
             sm::mat44<float> scene_to_model = model_to_scene.inverse();
-            std::cout << "scene_to_model: " << scene_to_model << std::endl;
             // use camera location in gltf to start from, then find model surface.
             sm::vec<float> camloc_mf = (scene_to_model * camspace * sm::vec<float>{}).less_one_dim();
-            std::cout << "Camera location in scene frame: " <<  (camspace * sm::vec<float>{}).less_one_dim() << std::endl;
-            std::cout << "Camera location in model frame: " << camloc_mf << std::endl;
             std::array<uint32_t, 3> ti0;
             sm::vec<float> tn0 = {};
             sm::vec<float> hit = {};
             sm::vec<float> vdir = this->bb.mid() - camloc_mf;
             float bb_len = this->bb.span().longest(); // lengthscale of model
-            std::cout << "BB characteristic length " << bb_len << " BB: " << this->bb << std::endl;
             // Make vdir long
-            float vdl = vdir.length() * 2.0f;
+            float vdl = vdir.length() * 2.0f; // Twice the distance from camera to BB centroid
+            vdl += bb_len * 2.0f;             // plus twice the longest axis from the BB
             vdir.renormalize();
-            vdl += bb_len;
             vdir *= vdl;
             std::tie (hit, ti0, tn0) = this->find_triangle_crossing (camloc_mf - (vdir / 2.0f), vdir);
             if (ti0[0] == std::numeric_limits<uint32_t>::max()) {
