@@ -57,8 +57,8 @@ namespace mplot
          */
         sm::vvec<sm::vvec<uint32_t>> vertexidx_to_indices;
 
-        //! Holds a copy of the centroid of the parent model (or its bounding box mid)
-        sm::vec<float> centroid = {};
+        //! Holds a copy of the bb of the parent model
+        sm::range<sm::vec<float>> bb;
 
         /*!
          * Return index of this->vertex that is closest to scene_coord. Can use vertexidx_to_indices
@@ -150,7 +150,7 @@ namespace mplot
         std::tuple<sm::vec<float>, std::array<uint32_t, 3>, sm::vec<float>>
         find_triangle_crossing (const sm::vec<float>& coord_mf) const
         {
-            sm::vec<float> vdir = this->centroid - coord_mf;
+            sm::vec<float> vdir = this->bb.mid() - coord_mf;
             vdir.renormalize();
             return this->find_triangle_crossing (coord_mf, vdir);
         }
@@ -521,8 +521,14 @@ namespace mplot
             std::array<uint32_t, 3> ti0;
             sm::vec<float> tn0 = {};
             sm::vec<float> hit = {};
-            sm::vec<float> vdir = this->centroid - camloc_mf;
+            sm::vec<float> vdir = this->bb.mid() - camloc_mf;
+            float bb_len = this->bb.span().longest(); // lengthscale of model
+            std::cout << "BB characteristic length " << bb_len << " BB: " << this->bb << std::endl;
+            // Make vdir long
+            float vdl = vdir.length() * 2.0f;
             vdir.renormalize();
+            vdl += bb_len;
+            vdir *= vdl;
             std::tie (hit, ti0, tn0) = this->find_triangle_crossing (camloc_mf - (vdir / 2.0f), vdir);
             if (ti0[0] == std::numeric_limits<uint32_t>::max()) {
                 std::cout << __func__ << ": No hit\n";

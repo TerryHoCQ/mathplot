@@ -253,11 +253,16 @@ namespace mplot {
         {
             if (this->navmesh) { return; } // already made it
 
+            if (this->flags.test (vm_bools::compute_bb) == false) {
+                throw std::runtime_error ("make_navmesh requires compute_bb flag to be true");
+            }
+            this->update_bb();
+
             // Create a new navmesh
             this->navmesh = std::make_unique<mplot::NavMesh>();
 
-            // Use the bounding box middle as the navmesh centroid.
-            navmesh->centroid = this->bb.mid();
+            // Copy the bounding box
+            navmesh->bb = this->bb;
 
             // Treat vertexPositions as a vector of vec:
             auto vp = reinterpret_cast<const std::vector<sm::vec<float, 3>>*>(&this->vertexPositions);
