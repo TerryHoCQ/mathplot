@@ -23,6 +23,7 @@ install(
   DatasetStyle.h
   graphing.h
   graphstyles.h
+  NavMesh.h
   TextFeatures.h
   TextGeometry.h
 

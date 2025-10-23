@@ -47,6 +47,7 @@
 
 #include <mplot/VisualCommon.h>
 #include <mplot/colour.h>
+#include <mplot/NavMesh.h>
 
 namespace mplot {
 
@@ -216,79 +217,6 @@ namespace mplot {
             this->indices.reserve (6u * n_vertices);
         }
 
-        /**
-         * Neighbour vertex mesh code
-         */
-
-        // Minimum set of vertices to generate a topological mesh
-        std::vector<sm::vec<float, 3>> vp1;
-        // Maps index in vp1 to the original this->indices index
-        sm::vvec<sm::vvec<uint32_t>> vp1_to_indices;
-        // The edges that make up the same triangles as are shown with this->indices, but in terms of vp1.
-        // Each edge must be two indices in *ascending numerical order*
-        std::set<std::array<uint32_t, 2>> edges;
-        // Triangles too. Might be more useful than edges. Triangle given as indices into vp1
-        sm::vvec<std::tuple<std::array<uint32_t, 3>, sm::vec<float, 3>, sm::vec<float, 3>, sm::vec<float, 3>>> triangles;
-
-        // Return index of vp1 that is closest to scene_coord. Can use vp1_to_indices to find the indices
-        // into vertexPositions and vertexNormals that this index in the topographic mesh relates to.
-        uint32_t find_vp1_nearest (const sm::vec<float, 3>& scene_coord) const
-        {
-            uint32_t i = std::numeric_limits<uint32_t>::max();
-            // Brute force it. (But we have a mesh; can this guarantee a faster search? I don't think so)
-            float min_d = std::numeric_limits<float>::max();
-            for (uint32_t j = 0; j < this->vp1.size(); ++j) {
-                sm::vec<> vcoord = (this->viewmatrix * vp1[j]).less_one_dim();
-                //std::cout << "vcoord: " << vcoord;
-                float d = (scene_coord - vcoord).length();
-                //std::cout << ", distance " << d << " from " << scene_coord << std::endl;
-                if (d < min_d) {
-                    min_d = d;
-                    i = j;
-                }
-            }
-            return i;
-        }
-
-        sm::vec<sm::vec<float, 3>, 3> triangle_vertices (const std::array<uint32_t, 3>& tri_indices) const
-        {
-            sm::vec<sm::vec<float, 3>, 3> trivert;
-            if (tri_indices[0] < this->vp1.size()) { trivert[0] = this->vp1[tri_indices[0]]; }
-            if (tri_indices[1] < this->vp1.size()) { trivert[1] = this->vp1[tri_indices[1]]; }
-            if (tri_indices[2] < this->vp1.size()) { trivert[2] = this->vp1[tri_indices[2]]; }
-            return trivert;
-        }
-
-        sm::vvec<uint32_t> neighbours (const uint32_t _idx) const
-        {
-            sm::vvec<uint32_t> rtn;
-            // Search edges to find those that include _idx and then pack up the other ends in a return object
-            for (auto e : this->edges) {
-                // we have e[0] and e[1]
-                if (e[0] == _idx) {
-                    // neighb is e[1]
-                    rtn.push_back (e[1]);
-                } else if (e[1] == _idx) {
-                    // neighb is e[0]
-                    rtn.push_back (e[0]);
-                }
-            }
-            return rtn;
-        }
-
-        sm::vvec<std::array<uint32_t, 3>> neighbour_triangles (const uint32_t _idx) const
-        {
-            sm::vvec<std::array<uint32_t, 3>> rtn;
-            for (auto t: this->triangles) {
-                auto [ti, tn, tnc, tnd] = t;
-                // If it includes _idx, add it to rtn
-                if (ti[0] == _idx || ti[1] == _idx || ti[2] == _idx) {
-                    rtn.push_back (ti);
-                }
-            }
-            return rtn;
-        }
-
         // Get a single position from vertexPositions, using the index into the vector<vec>
         // interpretation of vertexPositions
         sm::vec<float, 3> get_position (const uint32_t vec_idx) const
@@ -305,77 +233,39 @@ namespace mplot {
             return (*vn)[vec_idx];
         }
 
-        // Return a tuple containing crossing location, triangle identity (three indices) and triangle normal vector
-        std::tuple<sm::vec<float, 3>, std::array<uint32_t, 3>, sm::vec<float, 3>>
-        find_triangle_crossing (const sm::vec<float, 3>& coord, const sm::vec<float, 3>& vdir) const
-        {
-            for (auto tri : triangles) {
-                auto [ti, tn, tnc, tnd] = tri;
-                auto [isect, p] = sm::algo::ray_tri_intersection<float> (this->vp1[ti[0]], this->vp1[ti[1]], this->vp1[ti[2]], coord - (vdir / 2.0f), vdir);
-                if (isect) { return {p, ti, tn}; }
-            }
+        /**
+         * Neighbour vertex mesh code.
+         */
 
-            // Failed to find, return container full of maxes
-            sm::vec<float, 3> p = {};
-            p.set_from (std::numeric_limits<float>::max());
-            constexpr uint32_t umax = std::numeric_limits<uint32_t>::max();
-            return {p , std::array<uint32_t, 3>{umax, umax, umax}, p};
-
-        }
-
-        // Find a triangle containing indices a and b that isn't 'not_this' and return, along with its normal.
-        std::tuple<std::array<uint32_t, 3>, sm::vec<float>>
-        find_other_triangle_containing (const uint32_t a, const uint32_t b, const std::array<uint32_t, 3>& not_this) const
-        {
-            constexpr bool debug_normals = false;
-
-            constexpr uint32_t umax = std::numeric_limits<uint32_t>::max();
-            std::array<uint32_t, 3> other = {umax, umax, umax};
-            constexpr float fmax = std::numeric_limits<float>::max();
-            sm::vec<float> other_n = {fmax, fmax, fmax};
-            sm::vec<float> my_n = {fmax, fmax, fmax}; // debug
-            for (auto tri : triangles) {
-                auto [ti, tn, tnc, tnd] = tri;
-                if (ti == not_this) {
-                    if constexpr (debug_normals) { my_n = tn; }
-                    continue;
-                }
-                if ((ti[0] == a && (ti[1] == b || ti[2] == b))
-                    || (ti[1] == a && (ti[0] == b || ti[2] == b))
-                    || (ti[2] == a && (ti[0] == b || ti[1] == b))) {
-                    other = ti;
-                    other_n = tn;
-                    if constexpr (!debug_normals) { break; }
-                }
-            }
-            if constexpr (debug_normals) {
-                std::cout << "my_n: " << my_n << " and other_n: " << other_n << std::endl;
-            }
-            return {other, other_n};
-        }
+        // Our navigation mesh data struct
+        std::unique_ptr<mplot::NavMesh> navmesh;
 
         // Find the location, and the triangle indices at which a ray between coord and the model
-        // centroid cross - the 'penetration point'. This is essentially ray casting and if it gets
-        // used extensively, should go into a compute shader.
+        // centroid cross - the 'penetration point'.
         std::tuple<sm::vec<float, 3>, std::array<uint32_t, 3>, sm::vec<float, 3>>
         find_triangle_crossing (const sm::vec<float, 3>& coord) const
         {
+            if (!navmesh) { return {}; }
             sm::vec<float, 3> vdir = this->bb.mid() - coord;
             vdir.renormalize();
-            return this->find_triangle_crossing (coord, vdir);
+            return navmesh->find_triangle_crossing (coord, vdir);
         }
 
         /*!
          * Post-process vertices to generate a neighbour relationship mesh. The usual vertices and
-         * indices may not be useful to help a ground-based agent to navigate the surface defined by
-         * the mesh. This is because vertices may be duplicated at any location, so that adjacent
-         * faces can have different normals and colours.
+         * indices may not be useful to help an agent to navigate the surface defined by the
+         * mesh. This is because vertices may be duplicated at any location, so that adjacent faces
+         * can have different normals and colours.
          *
          * To help guide movement across a mesh, it would be useful to have a mesh that always gives
          * neighbour relationships.
          */
-        void vertex_postprocess() // make_neighbour_mesh() ?
+        void make_navmesh()
         {
+            if (this->navmesh) { return; } // already made it
+
+            this->navmesh = std::make_unique<mplot::NavMesh>();
+
             constexpr bool debug = false;
             constexpr bool debug_reorder = false;
 
@@ -388,7 +278,7 @@ namespace mplot {
 
             constexpr float vlen_thresh = 0.0f;
 
-            // For each entry in vp1, list the entries in vertexPositions that are in the same locn
+            // For each entry in vertex, list the entries in vertexPositions that are in the same locn
             std::map<uint32_t, sm::vvec<uint32_t>> equiv;
 
             // Populate equiv
@@ -401,64 +291,64 @@ namespace mplot {
             std::erase_if (equiv, [](const auto& eq) { const auto& [k, v] = eq; return v.find_first_of (k) > 0; });
 
             // Make inverse of equiv to translate from original (indices, vertexPositions) index to new topographic mesh index
-            sm::vvec<uint32_t> equiv_top (vps, 0);
-            this->vp1_to_indices.resize (equiv.size());
+            sm::vvec<uint32_t> navmesh_idx (vps, 0);
+            navmesh->vertexidx_to_indices.resize (equiv.size());
             uint32_t i = 0;
             for (auto eq : equiv) {
                 if constexpr (debug) { std::cout << "equiv[" << eq.first << "] = " << eq.second << std::endl; }
-                this->vp1_to_indices[i] = eq.second;
+                navmesh->vertexidx_to_indices[i] = eq.second;
                 for (auto ev : eq.second) {
-                    equiv_top[ev] = i;
+                    navmesh_idx[ev] = i;
                 }
                 ++i;
             }
             if constexpr (debug) {
                 uint32_t cntr = 0;
-                for (auto eqi : equiv_top) {
-                    std::cout << "equiv_top[" << cntr++ << "] = " << eqi << std::endl;
+                for (auto eqi : navmesh_idx) {
+                    std::cout << "navmesh_idx[" << cntr++ << "] = " << eqi << std::endl;
                 }
             }
-            // Can now populate vp1, a vector of coordinates, if required, or simply access (*vp) as needed using equiv.first
-            vp1.resize (equiv.size(), {0});
+            // Can now populate vertex, a vector of coordinates, if required, or simply access (*vp) as needed using equiv.first
+            navmesh->vertex.resize (equiv.size(), {0});
             i = 0;
-            for (auto eq : equiv) { vp1[i++] = (*vp)[eq.first]; }
+            for (auto eq : equiv) { navmesh->vertex[i++] = (*vp)[eq.first]; }
             if constexpr (debug) {
-                for (i = 0; i < vp1.size(); ++i) {
-                    std::cout << "vp1[" << i << "] = " << vp1[i] << std::endl;
+                for (i = 0; i <  navmesh->vertex.size(); ++i) {
+                    std::cout << "vertex[" << i << "] = " <<  navmesh->vertex[i] << std::endl;
                 }
             }
 
             // Lastly, generate edges. For which we require use of indices, which is expressed in
-            // terms of the old indices. That lookup is equiv_top.
+            // terms of the old indices. That lookup is navmesh_idx.
 
             for (uint32_t i = 0; i < this->indices.size(); i += 3) {
                 // Each three entries in indices is a triangle containing 3 edges. NB: Edges must be listed in ascending order!
-                std::array<uint32_t, 2> e = { equiv_top[indices[i]], equiv_top[indices[i+1]] };
+                std::array<uint32_t, 2> e = { navmesh_idx[indices[i]], navmesh_idx[indices[i+1]] };
                 if (e[0] > e[1]) {
                     uint32_t t = e[0];
                     e[0] = e[1];
                     e[1] = t;
                 }
-                this->edges.insert (e);
+                navmesh->edges.insert (e);
 
-                e = { equiv_top[indices[i]], equiv_top[indices[i+2]] };
+                e = { navmesh_idx[indices[i]], navmesh_idx[indices[i+2]] };
                 if (e[0] > e[1]) {
                     uint32_t t = e[0];
                     e[0] = e[1];
                     e[1] = t;
                 }
-                this->edges.insert (e);
+                navmesh->edges.insert (e);
 
-                e = { equiv_top[indices[i+1]], equiv_top[indices[i+2]] };
+                e = { navmesh_idx[indices[i+1]], navmesh_idx[indices[i+2]] };
                 if (e[0] > e[1]) {
                     uint32_t t = e[0];
                     e[0] = e[1];
                     e[1] = t;
                 }
-                this->edges.insert (e);
+                navmesh->edges.insert (e);
 
                 // Direct population of triangles
-                std::array<uint32_t, 3> t = { equiv_top[indices[i]], equiv_top[indices[i+1]], equiv_top[indices[i+2]] };
+                std::array<uint32_t, 3> t = { navmesh_idx[indices[i]], navmesh_idx[indices[i+1]], navmesh_idx[indices[i+2]] };
 
                 // The normal vector for this triangle could be obtained from the mesh normals, but
                 // we can't trust them (though they're easy to get, as we're dealing with indices
@@ -469,9 +359,9 @@ namespace mplot {
 
                 // Compute trinorm as well and compare with the one from the mesh - perhaps it's
                 // different? We really want the right normal.
-                const sm::vec<float>& tv0 = vp1[t[0]];
-                const sm::vec<float>& tv1 = vp1[t[1]];
-                const sm::vec<float>& tv2 = vp1[t[2]];
+                const sm::vec<float>& tv0 = navmesh->vertex[t[0]];
+                const sm::vec<float>& tv1 = navmesh->vertex[t[1]];
+                const sm::vec<float>& tv2 = navmesh->vertex[t[2]];
                 sm::vec<float>  nx = (tv1 - tv0);
                 sm::vec<float>  ny = (tv2 - tv0);
                 sm::vec<float, 3> n = nx.cross (ny);
@@ -487,18 +377,18 @@ namespace mplot {
                     n = -n; // Also reverse n
                 }
 
-                this->triangles.push_back ({t, n, nx, ny}); // n is computed normal
+                navmesh->triangles.push_back ({t, n, nx, ny}); // n is computed normal
             }
 
             if constexpr (debug) {
-                for (auto e : edges) {
+                for (auto e : navmesh->edges) {
                     std::cout << "Edge: " << e[0] << "," << e[1] << std::endl;
                 }
                 for (auto t : this->triangles) {
                     auto [ti, tn, tnc, tnd] = t;
                     std::cout << "Tri: " << ti[0] << "," << ti[1] << "," << ti[2] << ", norm " << tn << std::endl;
                 }
-                std::cout << this->edges.size() << " edges and " << this->triangles.size() << " triangles in model '" << this->name << "'\n";
+                std::cout << navmesh->edges.size() << " edges and " << navmesh->triangles.size() << " triangles in model '" << this->name << "'\n";
             }
         }
 

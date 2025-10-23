@@ -52,8 +52,6 @@ int main()
             gv1p->data.linspace (0.0f, 1+i * imax_mult, sz1);
             gv1p->reinitColours();
 
-            gv1p->vertex_postprocess(); // creates the triangles and normals required for NormalsVisual
-
             // Create an associate normals model
             auto nrm = std::make_unique<mplot::NormalsVisual<>> (gv1p);
             v.bindmodel (nrm);

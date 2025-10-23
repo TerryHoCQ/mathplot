@@ -51,7 +51,7 @@ namespace mplot::compoundray
      * This function finds the meshes in compound-ray's MulticamScene and creates corresponding
      * VisualModels in the mplot::Visual
      */
-    void scene_to_visualmodels (MulticamScene* thescene, mplot::Visual<>* thevisual)
+    void scene_to_visualmodels (MulticamScene* thescene, mplot::Visual<>* thevisual, bool make_navmeshes = false)
     {
         static constexpr bool debug_meshload = false;
         std::vector<std::shared_ptr<MulticamScene::MeshGroup>> mymeshes = thescene->getMeshes();
@@ -141,7 +141,7 @@ namespace mplot::compoundray
             auto vertvm = std::make_unique<mplot::VerticesVisual<>> (tfm, ind, posn, norm, colr);
             thevisual->bindmodel (vertvm);
             vertvm->name = mymeshes[mi]->name;
-            vertvm->vertex_postprocess();
+            if (make_navmeshes == true) { vertvm->make_navmesh(); }
             vertvm->finalize();
             thevisual->addVisualModel (vertvm);
         }

@@ -38,7 +38,6 @@ int main()
         rvm->use_oriented_tube = false;
         rvm->finalize();
         auto rvmp1 = v.addVisualModel (rvm);
-        rvmp1->vertex_postprocess();
 
         auto nrm = std::make_unique<mplot::NormalsVisual<>> (rvmp1);
         v.bindmodel (nrm);
@@ -53,7 +52,6 @@ int main()
         v.bindmodel (rvm);
         rvm->finalize();
         auto rvmp2 = v.addVisualModel (rvm);
-        rvmp2->vertex_postprocess();
 
         // Create an associate normals model
         nrm = std::make_unique<mplot::NormalsVisual<>> (rvmp2);
