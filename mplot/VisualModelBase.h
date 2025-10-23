@@ -240,17 +240,6 @@ namespace mplot {
         // Our navigation mesh data struct
         std::unique_ptr<mplot::NavMesh> navmesh;
 
-        // Find the location, and the triangle indices at which a ray between coord and the model
-        // centroid cross - the 'penetration point'.
-        std::tuple<sm::vec<float, 3>, std::array<uint32_t, 3>, sm::vec<float, 3>>
-        find_triangle_crossing (const sm::vec<float, 3>& coord) const
-        {
-            if (!navmesh) { return {}; }
-            sm::vec<float, 3> vdir = this->bb.mid() - coord;
-            vdir.renormalize();
-            return navmesh->find_triangle_crossing (coord, vdir);
-        }
-
         /*!
          * Post-process vertices to generate a neighbour relationship mesh. The usual vertices and
          * indices may not be useful to help an agent to navigate the surface defined by the
@@ -271,6 +260,9 @@ namespace mplot {
 
             if constexpr (debug) { std::cout << __func__ << " called\n"; }
             // For each vertex, search for other vertices that have the same or almost the same location
+
+            // Use the bounding box middle as the navmesh centroid.
+            navmesh->centroid = this->bb.mid();
 
             // Treat vertexPositions as a vector of vec:
             auto vp = reinterpret_cast<const std::vector<sm::vec<float, 3>>*>(&this->vertexPositions);
