@@ -590,11 +590,11 @@ namespace mplot
             _z.renormalize();
 #endif
 
-            sm::mat44<float> unsink;
-            unsink.translate (sm::vec<float>{0, hoverheight, 0});
+            sm::mat44<float> cam_mv_y;
+            cam_mv_y.translate (sm::vec<float>{0, hoverheight, 0});
 
             // The basis _x, tn0, _z, where these are vectors in the model frame that define a camera frame
-            sm::mat44<float> surface_basis = sm::mat44<float>::frombasis (_x, tn0, _z);
+            sm::mat44<float> cam_to_model_rotn = sm::mat44<float>::frombasis (_x, tn0, _z);
 
             // How to incorporate the land scaling?
             //auto _tn_scaled = model_to_scene.scaling_mat33().inverse()/* * tn0*/;
@@ -606,14 +606,8 @@ namespace mplot
             sm::mat44<float> hp_m;
             hp_m.translate (hp_scene);
 
-            // This is nearly right, but does not succeed for non-uniform 'land' models
-            sm::mat44<float> coord_rotn = hp_scene_m * m_to_sc_rotn * surface_basis * unsink;
-
-            // or if hp_scene were really hp_model something like this:? (I tried, but it
-            // incorporates the scaling of the land into the coordinate frame for the camera, which
-            // results in a very large camera with a highly scaled land model.
-            //
-            //sm::mat44<float> coord_rotn = model_to_scene * hp_m * surface_basis * unsink;
+            // This is nearly right, but does not succeed for non-uniformly scaled 'land' models
+            sm::mat44<float> coord_rotn = hp_m * m_to_sc_rotn * cam_to_model_rotn * cam_mv_y;
 
             return coord_rotn;
         }
