@@ -590,26 +590,30 @@ namespace mplot
             _z.renormalize();
 #endif
 
+            sm::mat44<float> unsink;
+            unsink.translate (sm::vec<float>{0, hoverheight, 0});
+
+            // The basis _x, tn0, _z, where these are vectors in the model frame that define a camera frame
+            sm::mat44<float> surface_basis = sm::mat44<float>::frombasis (_x, tn0, _z);
+
+            // How to incorporate the land scaling?
+            //auto _tn_scaled = model_to_scene.scaling_mat33().inverse()/* * tn0*/;
+            //std::cout << "This model's scaling: " << _tn_scaled << std::endl;
+
             // Get the rotation from scene frame to model
-            sm::mat44<float> coord_rotn = model_to_scene.rotation_mat44() * sm::mat44<float>::frombasis (_x, tn0, _z);
+            sm::mat44<float> m_to_sc_rotn = model_to_scene.rotation_mat44();
 
-            std::cout << "model_to_scene.scaling_mat33():\n" << model_to_scene.scaling_mat33() << std::endl;
-            std::cout << "model_to_scene.scaling_mat33().inverse():\n" << model_to_scene.scaling_mat33().inverse() << std::endl;
+            sm::mat44<float> hp_m;
+            hp_m.translate (hp_scene);
 
-            // Want to place camera just 'above' hp. Scaling may not be uniform. Don't want to
-            // change direction of tn0, as it is already correct, but I do want to change its length
-            // according to the scaling of the object.
-            float _tn_scale = (model_to_scene.scaling_mat33().inverse() * sm::vec<>{1}).less_one_dim().length();
-            std::cout << "Due to scaling our unit tn0 should be " << _tn_scale << " in length\n";
-            auto _tn_scaled = _tn_scale * tn0;
+            // This is nearly right, but does not succeed for non-uniform 'land' models
+            sm::mat44<float> coord_rotn = hp_scene_m * m_to_sc_rotn * surface_basis * unsink;
 
-            std::cout << "position_camera: Compare tn0 and _tn_scaled: " << tn0 << " len " << tn0.length()
-                      << " vs " << _tn_scaled << " len " << _tn_scaled.length()<< std::endl;
-
-            coord_rotn.pretranslate (hp_scene);
-
-            // Wnat to move hoverheight (scaled in length) along the camera y axis.
-            coord_rotn.pretranslate (hoverheight * _tn_scaled);
+            // or if hp_scene were really hp_model something like this:? (I tried, but it
+            // incorporates the scaling of the land into the coordinate frame for the camera, which
+            // results in a very large camera with a highly scaled land model.
+            //
+            //sm::mat44<float> coord_rotn = model_to_scene * hp_m * surface_basis * unsink;
 
             return coord_rotn;
         }
