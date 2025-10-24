@@ -386,6 +386,9 @@ target_link_libraries(draw_triangles OpenGL::GL glfw Freetype::Freetype)
 add_executable(draw_triangles_intersections draw_triangles_intersections.cpp)
 target_link_libraries(draw_triangles_intersections OpenGL::GL glfw Freetype::Freetype)
 
+add_executable(triangle_intersect triangle_intersect.cpp)
+target_link_libraries(triangle_intersect OpenGL::GL glfw Freetype::Freetype)
+
 add_executable(voronoi_random voronoi_random.cpp)
 target_link_libraries(voronoi_random OpenGL::GL glfw Freetype::Freetype)
 
