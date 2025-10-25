@@ -796,13 +796,13 @@ namespace mplot
                         reorient_model.translate (-hov_mf); // r_t_to + r_t1 = -(hov_mf + cd.pm.mv) + cd.pm.mv = -hov_mf
 
                         if (mv_rest.length() == 0) {
-                            // The first movement to edge completed the movement. We actually modeled ON the edge.
+                            // The first movement to edge completed the movement. We actually landed ON the edge.
                             cam_to_surface = reorient_model * cam_to_surface;
                             done = true;
                         } else {
                             // There's additional movement to complete.
                             // At this point, can test to see if the end point of the movement
-                            // models in the adjacent triangle. If so, we're done, if not, time
+                            // lands in the adjacent triangle. If so, we're done, if not, time
                             // for another loop.
                             sm::vec<float> endmv = (reorient_model * cam_to_surface * sm::vec<float>{}).less_one_dim();
                             // Is endmv in newtv_mf/_ti?
@@ -814,7 +814,7 @@ namespace mplot
                                 std::cout << "endmv = " << endmv << " DOES" << (isect2 ? "" : " NOT") << " model in next tri\n";
                             }
                             if (isect2) {
-                                // We DID model in the neighbouring triangle. We are done.
+                                // We DID land in the neighbouring triangle. We are done.
                                 cam_to_surface = reorient_model * cam_to_surface;
                                 done = true;
                             } else {
