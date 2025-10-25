@@ -590,23 +590,16 @@ namespace mplot
             _z.renormalize();
 #endif
 
+            // I think this positions correctly now (which is all it has to do). It ignores scaling
+            // in model_to_scene. Can be reduced to use fewer mat44s.
             sm::mat44<float> cam_mv_y;
             cam_mv_y.translate (sm::vec<float>{0, hoverheight, 0});
-
             // The basis _x, tn0, _z, where these are vectors in the model frame that define a camera frame
             sm::mat44<float> cam_to_model_rotn = sm::mat44<float>::frombasis (_x, tn0, _z);
-
-            // How to incorporate the land scaling?
-            //auto _tn_scaled = model_to_scene.scaling_mat33().inverse()/* * tn0*/;
-            //std::cout << "This model's scaling: " << _tn_scaled << std::endl;
-
             // Get the rotation from scene frame to model
             sm::mat44<float> m_to_sc_rotn = model_to_scene.rotation_mat44();
-
             sm::mat44<float> hp_m;
             hp_m.translate (hp_scene);
-
-            // This is nearly right, but does not succeed for non-uniformly scaled 'land' models
             sm::mat44<float> coord_rotn = hp_m * m_to_sc_rotn * cam_to_model_rotn * cam_mv_y;
 
             return coord_rotn;
@@ -614,6 +607,9 @@ namespace mplot
 
         /*!
          * Compute a movement over this navigation mesh.
+         *
+         * FIXME: This fails if the model has a non-uniformly scaled viewmatrix. That is, if
+         * model_to_scene has non-uniform scaling.
          *
          * \param mv_camframe A movement vector in the camera's own frame of reference (an ego-motion)
          * \param cam_to_model The transformation matrix to bring the camera coordinates to the model's frame
@@ -625,7 +621,8 @@ namespace mplot
          * \return The final camera transform matrix in the scene frame of reference.
          */
         sm::mat44<float> compute_mesh_movement (const sm::vec<float>& mv_camframe,
-                                                const sm::mat44<float>& cam_to_model,
+                                                const sm::mat44<float>& cam_to_scene,
+                                                const sm::mat44<float>& scene_to_model,
                                                 const sm::mat44<float>& model_to_scene, // required to extract scaling
                                                 std::array<uint32_t, 3>& ti0,
                                                 sm::vec<float>& tn0,
@@ -633,7 +630,27 @@ namespace mplot
         {
             constexpr bool debug_move = true;
 
-            // our return object, the final transformation matrix for the camera after the movement
+            // Camera frame to (scaled, rotated) model frame. cam_to_scene was the last viewmatrix
+            // for the camera (obtained with getCameraSpace(scene) if using CompoundRay)
+            sm::mat44<float> cam_to_model = scene_to_model * cam_to_scene;
+
+            std::cout << "compute_mesh_movement: cam unitvs in scene: "
+                      << cam_to_scene * sm::vec<>::ux() - cam_to_scene * sm::vec<>{} << ", "
+                      << cam_to_scene * sm::vec<>::uy() - cam_to_scene * sm::vec<>{}  << ", "
+                      << cam_to_scene * sm::vec<>::uz() - cam_to_scene * sm::vec<>{}  << "\n";
+
+            std::cout << "compute_mesh_movement: cam unitvs in model: "
+                      << cam_to_model * sm::vec<>::ux() - cam_to_model * sm::vec<>{}  << ", "
+                      << cam_to_model * sm::vec<>::uy() - cam_to_model * sm::vec<>{} << ", "
+                      << cam_to_model * sm::vec<>::uz() - cam_to_model * sm::vec<>{} << "\n";
+
+            //std::cout << "compute_mesh_movement: cam_to_scene:\n" << cam_to_scene << std::endl;
+            std::cout << "compute_mesh_movement: scene_to_model:\n" << scene_to_model << std::endl;
+            //std::cout << "compute_mesh_movement: cam_to_model:\n" << cam_to_model << std::endl;
+            std::cout << "compute_mesh_movement: model_to_scene:\n" << model_to_scene << std::endl;
+
+            // our return object, the final transformation matrix for the camera after the
+            // movement. Should not incorporate scaling from the model_to_scene matrix.
             sm::mat44<float> cam_final;
 
             // Camera location in the model frame
@@ -917,7 +934,7 @@ namespace mplot
             auto _tn_scaled = model_to_scene.scaling_mat33().inverse() * tn0;
             cam_final.pretranslate (_tn_scaled * hoverheight);
 
-            return model_to_scene * cam_final;
+            return model_to_scene * cam_final; // cam_to_surface was in model frame, so why doesn't this unapply scaling?
 
         } // compute_mesh_movement
 
