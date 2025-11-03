@@ -14,7 +14,11 @@
 int main (int argc, char** argv)
 {
     if (argc < 2) {
-        std::cout << "Usage: " << argv[0] << " '{ \"json\" : \"string\" }'" << std::endl;
+        std::cout << "Usage: " << argv[0] << " '{ \"json\" : \"string\" }'\n\n"
+                  << "An example:\n  " << argv[0] << " '{ \"t0\" : [-0.76,0.99,-0.87], \"t1\" : [-0.04,0.64,-1.4], \"t2\" : [-0.94,0.55,-1], \"l0\" : [-0.43,0.62,-1.24], \"l\" : [0.43,-0.43,0.8] }'\n\n"
+                  << "where t1, t2 and t3 define triangle vertices and l0, l define ray start and direction\n\n"
+                  << "This program can be used to visually debug sm::algo::ray_tri_intersection\n";
+
         return -1;
     }
 
