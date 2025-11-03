@@ -611,6 +611,9 @@ namespace mplot
          * FIXME: This fails if the model has a non-uniformly scaled viewmatrix. That is, if
          * model_to_scene has non-uniform scaling.
          *
+         * Maybe the fix is to convert the triangle vertices from the model frame to the scene frame before
+         * computing reorient?
+         *
          * \param mv_camframe A movement vector in the camera's own frame of reference (an ego-motion)
          * \param cam_to_model The transformation matrix to bring the camera coordinates to the model's frame
          * \param model_to_scene The transformation matrix to convert model coordinates to the scene frame
@@ -634,27 +637,47 @@ namespace mplot
             // for the camera (obtained with getCameraSpace(scene) if using CompoundRay)
             sm::mat44<float> cam_to_model = scene_to_model * cam_to_scene;
 
-            std::cout << "compute_mesh_movement: cam unitvs in scene: "
-                      << cam_to_scene * sm::vec<>::ux() - cam_to_scene * sm::vec<>{} << ", "
-                      << cam_to_scene * sm::vec<>::uy() - cam_to_scene * sm::vec<>{}  << ", "
-                      << cam_to_scene * sm::vec<>::uz() - cam_to_scene * sm::vec<>{}  << "\n";
+            if constexpr (debug_move) {
+                std::cout << "compute_mesh_movement: camera unit vectors in scene: "
+                          << cam_to_scene * sm::vec<>::ux() - cam_to_scene * sm::vec<>{} << ", "
+                          << cam_to_scene * sm::vec<>::uy() - cam_to_scene * sm::vec<>{}  << ", "
+                          << cam_to_scene * sm::vec<>::uz() - cam_to_scene * sm::vec<>{}  << "\n";
 
-            std::cout << "compute_mesh_movement: cam unitvs in model: "
-                      << cam_to_model * sm::vec<>::ux() - cam_to_model * sm::vec<>{}  << ", "
-                      << cam_to_model * sm::vec<>::uy() - cam_to_model * sm::vec<>{} << ", "
-                      << cam_to_model * sm::vec<>::uz() - cam_to_model * sm::vec<>{} << "\n";
+                // Make a camera frame from this with 1:1 scaling?
+                std::cout << "compute_mesh_movement: camera unit vectors in model: "
+                          << cam_to_model * sm::vec<>::ux() - cam_to_model * sm::vec<>{}  << ", "
+                          << cam_to_model * sm::vec<>::uy() - cam_to_model * sm::vec<>{} << ", "
+                          << cam_to_model * sm::vec<>::uz() - cam_to_model * sm::vec<>{} << "\n";
 
-            //std::cout << "compute_mesh_movement: cam_to_scene:\n" << cam_to_scene << std::endl;
-            std::cout << "compute_mesh_movement: scene_to_model:\n" << scene_to_model << std::endl;
-            //std::cout << "compute_mesh_movement: cam_to_model:\n" << cam_to_model << std::endl;
-            std::cout << "compute_mesh_movement: model_to_scene:\n" << model_to_scene << std::endl;
+                //std::cout << "compute_mesh_movement: cam_to_scene:\n" << cam_to_scene << std::endl;
+                std::cout << "compute_mesh_movement: scene_to_model:\n" << scene_to_model << std::endl;
+                //std::cout << "compute_mesh_movement: cam_to_model:\n" << cam_to_model << std::endl;
+                std::cout << "compute_mesh_movement: model_to_scene:\n" << model_to_scene << std::endl;
+            }
 
             // our return object, the final transformation matrix for the camera after the
             // movement. Should not incorporate scaling from the model_to_scene matrix.
             sm::mat44<float> cam_final;
 
             // Camera location in the model frame
-            sm::vec<float> camloc_mf = (cam_to_model * sm::vec<float>{}).less_one_dim();
+            sm::vec<float, 4> camloc_mf4 = cam_to_model * sm::vec<float>{};
+            sm::vec<float> camloc_mf = (camloc_mf4).less_one_dim();
+
+            // These basis vectors incorporate a scaling.
+            sm::vec<float> bvx =  (cam_to_model * sm::vec<>::ux() - camloc_mf4).less_one_dim();
+            sm::vec<float> bvy =  (cam_to_model * sm::vec<>::uy() - camloc_mf4).less_one_dim();
+            sm::vec<float> bvz =  (cam_to_model * sm::vec<>::uz() - camloc_mf4).less_one_dim();
+            bvx.renormalize();
+            bvy.renormalize();
+            bvz.renormalize();
+
+            sm::mat44<float> cam_1to1;
+            cam_1to1.frombasis_inplace (bvx, bvy, bvz);
+            cam_1to1.pretranslate (camloc_mf);
+            if constexpr (debug_move) {
+                std::cout << "cam_1to1:\n" << cam_1to1 << std::endl;
+                std::cout << "cam_to_model:\n" << cam_to_model << std::endl;
+            }
 
             // Convert indices to vertices for triangle ti0. These are in the model frame
             sm::vec<sm::vec<float>, 3> tv_mf = this->triangle_vertices (ti0);
@@ -679,7 +702,10 @@ namespace mplot
 
             // Use the detected location, hov_mf to compute the surface location of the camera - its 'hover location'
             sm::vec<float> cam_displacement  = cam_to_model.translation() - hov_mf;
+
             sm::mat44<float> cam_to_surface = cam_to_model;
+            // or perhaps: sm::mat44<float> cam_to_surface = cam_1to1;
+
             cam_to_surface.pretranslate (-cam_displacement); // This is our init pose, placed on the surface
 
             if (isect == false) {
@@ -935,6 +961,8 @@ namespace mplot
             cam_final.pretranslate (_tn_scaled * hoverheight);
 
             return model_to_scene * cam_final; // cam_to_surface was in model frame, so why doesn't this unapply scaling?
+            // or perhaps:
+            // return something * cam_final;
 
         } // compute_mesh_movement
 
