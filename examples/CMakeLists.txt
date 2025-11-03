@@ -428,11 +428,13 @@ target_link_libraries(rhombo_scene2 OpenGL::GL glfw Freetype::Freetype)
 add_executable(cube cube.cpp)
 target_link_libraries(cube OpenGL::GL glfw Freetype::Freetype)
 
-if(Eigen3_FOUND)
-  add_executable(cubetrans cubetrans.cpp)
-  target_include_directories (cubetrans BEFORE PRIVATE ${EIGEN3_INCLUDE_DIR})
-  target_link_libraries(cubetrans OpenGL::GL glfw Freetype::Freetype)
-endif(Eigen3_FOUND)
+if(NOT APPLE) # For some reason on mac os runners this fails
+  if(Eigen3_FOUND)
+    add_executable(cubetrans cubetrans.cpp)
+    target_include_directories (cubetrans BEFORE PRIVATE ${EIGEN3_INCLUDE_DIR})
+    target_link_libraries(cubetrans OpenGL::GL glfw Freetype::Freetype)
+  endif(Eigen3_FOUND)
+endif()
 
 add_executable(cubetrans2 cubetrans2.cpp)
 target_link_libraries(cubetrans2 OpenGL::GL glfw Freetype::Freetype)
