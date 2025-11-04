@@ -17,6 +17,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <stdexcept>
 
 #include <sm/vec>
 #include <sm/vvec>
@@ -25,6 +26,17 @@
 
 namespace mplot
 {
+    // test exception type
+    struct NavException : public std::runtime_error
+    {
+        NavException (const char* message) : std::runtime_error(message) {}
+        NavException (const char* message, const std::vector<std::array<uint32_t, 3>>& tris) : std::runtime_error(message)
+        {
+            this->tris = tris;
+        }
+        std::vector<std::array<uint32_t, 3>> tris;
+    };
+
     /*!
      * Navigation mesh of triangles.
      *
@@ -676,6 +688,8 @@ namespace mplot
             sm::mat44<float> cam_to_surface = cam_to_scene;
             cam_to_surface.pretranslate (hov_sf - camloc_sf); // This is now our init pose; the camera is now at the surface
 
+            std::vector<std::array<uint32_t, 3>> trisearched; // the other triangles we search. To place in exception
+            trisearched.push_back (ti0);
             if (isect == false) {
 
                 if constexpr (debug_move) {
@@ -693,6 +707,7 @@ namespace mplot
                     uint32_t i2 = (i + 1) % 3u;
                     auto [_ti, _tn] = this->find_other_triangle_containing (ti0[i1], ti0[i2], ti0);
                     if (_ti[0] != std::numeric_limits<uint32_t>::max()) {
+                        trisearched.push_back (_ti);
                         // Test to see if start location was inside a neighbour
                         sm::vec<sm::vec<float>, 3> tv_lf = this->triangle_vertices (_ti, model_to_scene);
                         // _tn was returned in model frame coordinates, so recompute in scene frame
@@ -718,7 +733,7 @@ namespace mplot
                 }
             }
 
-            if (isect == false) { throw std::runtime_error ("No intersection (at start) with triangle or neighbours"); }
+            if (isect == false) { throw NavException ("No intersection (at start) with triangle or neighbours", trisearched); }
 
             if constexpr (debug_move) {
                 std::cout << "Start of move is IN triangle "
@@ -750,7 +765,7 @@ namespace mplot
             // Now loop while our path may traverse one or more triangles
             while (!done) {
 
-                if (mv_inplane.length() == 0) { throw std::runtime_error ("Zero length mv_inplane so stop/freeze/crash"); }
+                if (mv_inplane.length() == 0) { throw NavException ("Zero length mv_inplane so stop/freeze/crash"); }
 
                 // For each edge in triangle, compute distance to edge for hov_sf and (hov_sf + mv_inplane)
                 crossing_data cd = this->compute_crossing_location (tv_sf, ti0, hov_sf, mv_inplane, tn0);
@@ -855,7 +870,7 @@ namespace mplot
                         if (cd.pm.flags.test (pm_fl::no_cross_point) == true) {
                             single_movement = true;
                         } else { // We've moved to a vertex, should have captured this case
-                            throw std::runtime_error ("We've moved to a vertex, should have captured this case");
+                            throw NavException ("We've moved to a vertex, should have captured this case");
                         }
                     } else {
                         // Test if it was movement-within; the simplest case
@@ -931,7 +946,7 @@ namespace mplot
                         } else if (detected_crossing == true) {
                             // We didn't find an alternative start triangle, but we did detect an edge crossing by intersection, so continue.
                         } else {
-                            throw std::runtime_error ("Should have detected crossing just now\n");
+                            throw NavException ("Should have detected crossing just now\n");
                         }
 
                     } // single movement if/else
