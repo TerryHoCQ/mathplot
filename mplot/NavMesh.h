@@ -232,8 +232,9 @@ namespace mplot
          * IS IS ASSUMED that mv_s is in the triangle plane and that a movement of mv_inplane would cross
          * the edge if it were long enough.
          *
-         * The triangle is part of a model, which has its own coordinate frame. All vectors and
-         * coordinates here are in the model coordinate frame.
+         * All vectors and coordinates here are in the same coordinate frame as the triangle
+         * vertices. That could be either the model frame OR the scene frame (but always one or the
+         * other).
          *
          * \param edge_s Starting coordinate of the edge
          * \param edge_e End coordinate of the edge
@@ -730,6 +731,11 @@ namespace mplot
             sm::vec<float> mv_orthog = tn0 * (mv_sf.dot (tn0) / (tn0.dot (tn0)));
             sm::vec<float> mv_inplane = mv_sf - mv_orthog; // scene frame, a relative movement
 
+            if (mv_inplane.length() == 0.0f) {
+                if constexpr (debug_move) { std::cout << "No movement, so return unchanged camera viewmatrix\n"; }
+                return cam_to_scene;
+            }
+
             // State for our loop
             bool done = false;
             // A 'detected crossing' is one where we had to use a secondary method (comparing the
@@ -787,6 +793,8 @@ namespace mplot
                         // Compute the reorientation due to the requested movement.
                         // Rotate by the angle between the normals. I think this is constrained to be <= pi
                         float rotn_angle = tn0.angle (_tn, cd.tri_edge);
+                        // If tn0 and _tn are identical, then rotn_angle will be NaN, but in that case we want no rotation
+                        if (std::isnan (rotn_angle)) { rotn_angle = 0.0f; }
                         sm::mat44<float> reorient_model; // reorientation transformation in sf
                         reorient_model.rotate (cd.tri_edge, rotn_angle);
                         sm::vec<float> mv_rest = (reorient_model * (mv_inplane - cd.pm.mv)).less_one_dim();
@@ -804,12 +812,10 @@ namespace mplot
                             // for another loop.
                             sm::vec<float> endmv = (reorient_model * cam_to_surface * sm::vec<float>{}).less_one_dim();
                             // Is endmv in newtv_sf/_ti?
-                            bool isect2 = false;
-                            sm::vec<float> isectpoint2 = {};
-                            std::tie (isect2, isectpoint2) = sm::algo::ray_tri_intersection<float> (newtv_sf[0], newtv_sf[1], newtv_sf[2],
-                                                                                                    endmv + (_tn / 2.0f), -_tn);
+                            auto [isect2, isectpoint2] = sm::algo::ray_tri_intersection<float> (newtv_sf[0], newtv_sf[1], newtv_sf[2],
+                                                                                                endmv + (_tn / 2.0f), -_tn);
                             if constexpr (debug_move) {
-                                std::cout << "endmv = " << endmv << " DOES" << (isect2 ? "" : " NOT") << " model in next tri\n";
+                                std::cout << "endmv = " << endmv << " DOES" << (isect2 ? "" : " NOT") << " land in next tri\n";
                             }
                             if (isect2) {
                                 // We DID land in the neighbouring triangle. We are done.
@@ -832,7 +838,11 @@ namespace mplot
                         ti0 = _ti;
                         tn0 = _tn;
 
-                    } else { throw std::runtime_error ("other triangle not found?!"); }
+                    } else {
+                        // other triangle not found?! We probably went off the edge of our navigation model mesh
+                        done = true;
+                        continue;
+                    }
 
                 } else { // no triangle edge crossing was detected with compute_crossing_location
 
