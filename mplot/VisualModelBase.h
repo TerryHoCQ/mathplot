@@ -326,8 +326,8 @@ namespace mplot {
                 }
                 navmesh->edges.insert (e);
 
-                // Direct population of triangles
-                std::array<uint32_t, 3> t = { navmesh_idx[indices[i]], navmesh_idx[indices[i+1]], navmesh_idx[indices[i+2]] };
+                // Direct population of triangles. Three indices and a 4th number to hold flags (with bit0 meaning edge-triangle)
+                std::array<uint32_t, 4> t = { navmesh_idx[indices[i]], navmesh_idx[indices[i+1]], navmesh_idx[indices[i+2]], 0 };
 
                 // The normal vector for this triangle could be obtained from the mesh normals, but
                 // we can't trust them (though they're easy to get, as we're dealing with indices
@@ -357,6 +357,8 @@ namespace mplot {
 
                 navmesh->triangles.push_back ({t, n, nx, ny}); // n is computed normal
             }
+
+            navmesh->mark_edge_triangles();
         }
 
         /**
