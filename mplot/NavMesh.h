@@ -18,6 +18,7 @@
 #include <set>
 #include <map>
 #include <stdexcept>
+#include <string_view>
 
 #include <sm/vec>
 #include <sm/vvec>
@@ -27,11 +28,37 @@
 namespace mplot
 {
     // Exception that returns triangles that were near the location of the error
-    struct NavException : public std::runtime_error
+    struct NavException : public std::exception
     {
-        NavException (const char* message) : std::runtime_error(message) {}
-        NavException (const char* message, const std::vector<std::array<uint32_t, 4>>& t)
-            : std::runtime_error(message) { this->tris = t; }
+        enum class type : uint32_t { generic, no_intersection, zero_mv, mv_to_vertex, undetected_crossing };
+
+        NavException (const type _type) : m_type(_type) {}
+        NavException (const type _type, const std::vector<std::array<uint32_t, 4>>& t) : m_type(_type) { this->tris = t; }
+
+        const char* what()
+        {
+            switch (m_type) {
+            case type::no_intersection:
+                return "No intersection (at start) with triangle or neighbours";
+                break;
+            case type::zero_mv:
+                return "Zero length mv_inplane so stop/freeze/crash";
+                break;
+            case type::mv_to_vertex:
+                return "We've moved to a vertex, should have captured this case";
+                break;
+            case type::undetected_crossing:
+                return "Should have detected crossing just now";
+                break;
+            case type::generic:
+            default:
+                break;
+            }
+            return "Generic";
+        }
+        // Error type determines message generated
+        type m_type = type::generic;
+        // Triangles of interest.
         std::vector<std::array<uint32_t, 4>> tris;
     };
 
@@ -726,7 +753,11 @@ namespace mplot
                                                 std::array<uint32_t, 4>& ti0,
                                                 const float hoverheight)
         {
-            constexpr bool debug_move = false;
+            constexpr bool debug_move = true;
+
+            // A data-containing exception to throw
+            mplot::NavException ne (mplot::NavException::type::generic);
+            ne.tris.push_back (ti0);
 
             // Boolean state flags used in this function
             enum class cmm_fl : uint32_t { done, detected_crossing, single_movement };
@@ -740,7 +771,7 @@ namespace mplot
             sm::vec<float> tn0 = this->triangle_normal (tv_sf);
 
             if constexpr (debug_move) {
-                std::cout << "compute_mesh_movement: ti0 " << ti0[0] << "," << ti0[1] << "," << ti0[2]
+                std::cout << "\n# compute_mesh_movement: ti0 " << ti0[0] << "," << ti0[1] << "," << ti0[2]
                           << " has vertices (sf) at " << tv_sf << " and normal " << tn0
                           << ". upcoming movement (camframe) is " << mv_camframe << std::endl;
             }
@@ -762,7 +793,6 @@ namespace mplot
             cam_to_surface.pretranslate (hov_sf - camloc_sf); // This is now our init pose; the camera is now at the surface
 
             std::vector<std::array<uint32_t, 4>> trisearched; // the other triangles we search. To place in exception
-            trisearched.push_back (ti0);
             if (isect == false) {
 
                 if constexpr (debug_move) {
@@ -804,6 +834,9 @@ namespace mplot
                         }
                     } // else missing neighbour. Could see if it would land in a neighbour that's just off the edge?
                 }
+
+                // FIXME: Another way ray_tri_intersection may have failed is if the normal goes
+                // through/very close to a vertex (of the original).
             }
 
             if (isect == false) {
@@ -815,7 +848,9 @@ namespace mplot
                 std::cout << "\nCompare current location " << cam_to_scene.translation()
                           << " with ti0: " << this->triangle_vertices (ti0, model_to_scene) << "\n\n";
 
-                throw NavException ("No intersection (at start) with triangle or neighbours", trisearched);
+                ne.m_type = NavException::type::no_intersection;
+                ne.tris.insert (ne.tris.end(), trisearched.begin(), trisearched.end());
+                throw ne;
                 // Rather than throw exception, would it be better to return an unchanged viewmatrix?
                 // Problem with this: is that we end up spinning and stuck on the edge
             }
@@ -847,8 +882,11 @@ namespace mplot
             // Now loop while our path may traverse one or more triangles
             while (!flags.test (cmm_fl::done)) {
 
+                if constexpr (debug_move) { std::cout << "\n* loopstart: Processing mv_inplane: " << mv_inplane << std::endl; }
+
                 if (mv_inplane.length() == 0) {
-                    throw NavException ("Zero length mv_inplane so stop/freeze/crash");
+                    ne.m_type = NavException::type::zero_mv;
+                    throw ne;
                 }
 
                 // For each edge in triangle, compute distance to edge for hov_sf and (hov_sf + mv_inplane)
@@ -935,6 +973,7 @@ namespace mplot
                         }
 
                         ti0 = _ti;
+                        ne.tris.push_back (ti0);
                         tn0 = _tn;
 
                     } else {
@@ -955,7 +994,8 @@ namespace mplot
                         } else { // We've moved to a vertex, should have captured this case
                             std::cout << "\nCompare current location " << cam_to_scene.translation()
                                       << " with ti0: " << this->triangle_vertices (ti0, model_to_scene) << "\n\n";
-                            throw NavException ("We've moved to a vertex, should have captured this case", {ti0});
+                            ne.m_type = NavException::type::mv_to_vertex;
+                            throw ne;
                         }
                     } else {
                         // Test if it was movement-within; the simplest case
@@ -1017,7 +1057,9 @@ namespace mplot
                                         _ti_2n = _ti;
                                         _tn_2n = _tn;
                                         break; // out of for
-                                    } // else end is not in original, and neither is start. Huh? Will get runtime error in the next stanza
+                                    } else {
+                                        // end is not in original, and neither is start. Huh? Will get runtime error in the next stanza
+                                    }
                                 }
                             }
                         }
@@ -1025,6 +1067,7 @@ namespace mplot
                         if (_ti_2n[0] != std::numeric_limits<uint32_t>::max()) {
                             // Now we know an alternative start triangle for the movement. Re-orient to this and re-loop
                             ti0 = _ti_2n;
+                            ne.tris.push_back (ti0);
                             tn0 = _tn_2n;
                             // recompute mv_inplane for this neighbour triangle
                             mv_orthog = tn0 * (mv_sf.dot (tn0) / (tn0.dot (tn0)));
@@ -1035,7 +1078,8 @@ namespace mplot
                             // Just had this, agent appears close to vertex of ti0
                             std::cout << "\nCompare current location " << cam_to_scene.translation()
                                       << " with ti0: " << this->triangle_vertices (ti0, model_to_scene) << "\n\n";
-                            throw NavException ("Should have detected crossing just now\n", {ti0});
+                            ne.m_type = NavException::type::undetected_crossing;
+                            throw ne;
                         }
 
                     } // single movement if/else
@@ -1044,7 +1088,7 @@ namespace mplot
 
             } // triangle traversing while loop
 
-            // Is ti0 an 'edge triangle'? If so, avoid the movement
+            if constexpr (debug_move) { std::cout << "looping mv_inplanes completed" << std::endl; }
 
             // Raise cam_to_surface up by hoverheight and then return
             cam_to_surface.pretranslate (hoverheight * tn0);
