@@ -931,11 +931,15 @@ namespace mplot
                         cd.tri_edge = detected_edgevec;
                         cd.pm.mv = mv_inplane;
                         cd.pm.end = hov_sf + mv_inplane;
+                    } else {
+                        if constexpr (debug_move) {
+                            std::cout << "This IS a crossing (compute_crossing_location found it) " << std::endl;
+                        }
                     }
 
-                    // Can work out new triangle here
+                    // Can work out new triangle here across the crossed edge
                     if constexpr (debug_move) {
-                        std::cout << "find_other_triangle_containing ("
+                        std::cout << "find triangle across edge: find_other_triangle_containing ("
                                   << cd.edge_idx_a << ", " <<  cd.edge_idx_b
                                   << ", [" <<  ti0[0] << "," << ti0[1] << "," << ti0[2] << "])" << std::endl;
                     }
@@ -970,6 +974,8 @@ namespace mplot
                             flags.set (cmm_fl::done, true);
                         } else {
                             // There's additional movement to complete.
+                            std::cout << "mv_rest length is " << mv_rest.length() << std::endl;
+
                             // At this point, can test to see if the end point of the movement
                             // lands in the adjacent triangle. If so, we're done, if not, time
                             // for another loop.
@@ -978,14 +984,15 @@ namespace mplot
                             auto [isect2, isectpoint2] = sm::algo::ray_tri_intersection<float> (newtv_sf[0], newtv_sf[1], newtv_sf[2],
                                                                                                 endmv + (_tn / 2.0f), -_tn);
                             if constexpr (debug_move) {
-                                std::cout << "endmv = " << endmv << " DOES" << (isect2 ? "" : " NOT") << " land in next tri\n";
+                                std::cout << "endmv = " << endmv << " DOES" << (isect2 ? "" : " NOT") << " land in new triangle\n";
                             }
                             if (isect2) {
                                 // We DID land in the neighbouring triangle. We are done.
                                 cam_to_surface = reorient_model * cam_to_surface;
                                 flags.set (cmm_fl::done, true);
                             } else {
-                                // Incomplete; We've sailed past newtv_sf.  We need to
+                                // Incomplete; We've sailed past newtv_sf. Or perhaps landed on the boundary???
+                                // We need to
                                 // set an end-point that is on newtv_sf, update hov_sf,
                                 // then recurse.  also recompute the movement encoded in
                                 // reorient_model
@@ -1088,14 +1095,6 @@ namespace mplot
                                         // is ON the boundary, but precision errors mean it isn't 'in' either
                                         // start or neighbour. Assume on edge? Push by epsilon?
                                         std::cout << "Maybe end is right on the boundary and precision errors mean it isn't 'in' either start of neighbour?\n";
-                                        auto [endisplus, endh] = sm::algo::ray_tri_intersection<float> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + (mv_inplane_nb * 1.0001f), -_tn);
-                                        if (endisplus) {
-                                            std::cout << "Just a little further IS in neighbour\n";
-                                        } else {
-                                            std::cout << "A little further ISN'T in neighbour\n";
-                                        }
-                                        ne.m_type = NavException::type::undetected_crossing;
-                                        throw ne;
                                     }
                                 }
                             }
