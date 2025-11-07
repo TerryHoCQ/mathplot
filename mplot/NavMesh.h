@@ -974,7 +974,8 @@ namespace mplot
                             flags.set (cmm_fl::done, true);
                         } else {
                             // There's additional movement to complete.
-                            std::cout << "mv_rest length is " << mv_rest.length() << std::endl;
+                            std::cout << "mv_rest length is " << mv_rest.length()
+                                      << " cf float eps: " << std::numeric_limits<float>::epsilon() << std::endl;
 
                             // At this point, can test to see if the end point of the movement
                             // lands in the adjacent triangle. If so, we're done, if not, time
@@ -991,6 +992,7 @@ namespace mplot
                                 cam_to_surface = reorient_model * cam_to_surface;
                                 flags.set (cmm_fl::done, true);
                             } else {
+                                std::cout << "did we sail past or land on the boundary?\n";
                                 // Incomplete; We've sailed past newtv_sf. Or perhaps landed on the boundary???
                                 // We need to
                                 // set an end-point that is on newtv_sf, update hov_sf,
