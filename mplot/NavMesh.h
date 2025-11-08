@@ -808,7 +808,7 @@ namespace mplot
             // boundaries and so requires that the start point is *within* the boundary.
             //
             std::cout << "First ray_tri_intersection (raystart,-tn0): " << (camloc_sf + (tn0 / 2.0f)) << "," << -tn0 << std::endl;
-            auto [isect, hov_sf] = sm::algo::ray_tri_intersection<float> (tv_sf[0], tv_sf[1], tv_sf[2], camloc_sf + (tn0 / 2.0f), -tn0);
+            auto [isect, hov_sf] = sm::algo::ray_tri_intersection<float, true, true, true> (tv_sf[0], tv_sf[1], tv_sf[2], camloc_sf + (tn0 / 2.0f), -tn0);
 
             // Use the detected location, hov_sf to compute the surface location of the camera - its 'hover location'
             sm::mat44<float> cam_to_surface = cam_to_scene;
@@ -837,7 +837,7 @@ namespace mplot
                         // _tn was returned in model frame coordinates, so recompute in scene frame
                         _tn = this->triangle_normal (tv_lf);
 
-                        auto [is, h] = sm::algo::ray_tri_intersection<float> (tv_lf[0], tv_lf[1], tv_lf[2], camloc_sf + (_tn / 2.0f), -_tn);
+                        auto [is, h] = sm::algo::ray_tri_intersection<float, true, true, true> (tv_lf[0], tv_lf[1], tv_lf[2], camloc_sf + (_tn / 2.0f), -_tn);
                         if constexpr (debug_move) {
                             std::cout << "Start of move " << (is ? "IS" : "is NOT") << " in " << _ti[0] << "," << _ti[1] << "," << _ti[2] << std::endl;
                         }
@@ -982,7 +982,7 @@ namespace mplot
                             // for another loop.
                             sm::vec<float> endmv = (reorient_model * cam_to_surface * sm::vec<float>{}).less_one_dim();
                             // Is endmv in newtv_sf/_ti?
-                            auto [isect2, isectpoint2] = sm::algo::ray_tri_intersection<float> (newtv_sf[0], newtv_sf[1], newtv_sf[2],
+                            auto [isect2, isectpoint2] = sm::algo::ray_tri_intersection<float, true, true, true> (newtv_sf[0], newtv_sf[1], newtv_sf[2],
                                                                                                 endmv + (_tn / 2.0f), -_tn);
                             if constexpr (debug_move) {
                                 std::cout << "endmv = " << endmv << " DOES" << (isect2 ? "" : " NOT") << " land in new triangle\n";
@@ -1051,7 +1051,7 @@ namespace mplot
 
                     } else {
                         if constexpr (debug_move) {
-                            std::cout << "End of movement is NOT in " << ti0[0] << "," << ti0[1] << "," << ti0[2] << ". Look for start neighbours\n";
+                            std::cout << "End of movement is NOT in ti0 " << ti0[0] << "," << ti0[1] << "," << ti0[2] << ". Look for start neighbours\n";
                         }
                         // Test 3 neighbours across the edges to find any for which the start location is also within-boundary
                         std::array<uint32_t, 4> _ti_2n = { std::numeric_limits<uint32_t>::max() };
@@ -1113,11 +1113,19 @@ namespace mplot
                         } else if (flags.test (cmm_fl::detected_crossing)) {
                             // We didn't find an alternative start triangle, but we did detect an edge crossing by intersection, so continue.
                         } else {
-                            // Just had this, agent appears close to vertex of ti0
-                            std::cout << "\nCompare current location " << cam_to_scene.translation()
-                                      << " with ti0: " << this->triangle_vertices (ti0, model_to_scene) << "\n\n";
-                            ne.m_type = NavException::type::undetected_crossing;
-                            throw ne;
+                            constexpr bool assume_complete = true;
+                            // Is that case simply 'movement complete'? Check how much movement is left?
+                            if constexpr (assume_complete) {
+                                std::cout << "Movement complete ASSUMPTION (end of move not in self or neighbours, so instead bang on the boundary\n";
+                                cam_to_surface.pretranslate (mv_inplane);
+                                flags.set (cmm_fl::done, true);
+                            } else {
+                                // Just had this, agent appears close to vertex of ti0
+                                std::cout << "\nCompare current location " << cam_to_scene.translation()
+                                          << " with ti0: " << this->triangle_vertices (ti0, model_to_scene) << "\n\n";
+                                ne.m_type = NavException::type::undetected_crossing;
+                                throw ne;
+                            }
                         }
 
                     } // single movement if/else
