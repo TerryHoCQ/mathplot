@@ -55,7 +55,7 @@ namespace mplot {
             // If we also have the navmesh, then use its triangles to show face normals
             if (mymodel->navmesh) {
 
-                std::array<uint32_t, 3> ti = {};
+                std::array<uint32_t, 4> ti = {};
                 sm::vec<float, 3> nv = {};
                 sm::vec<float, 3> nvc = {};
                 sm::vec<float, 3> nvd = {};

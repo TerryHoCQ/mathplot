@@ -24,13 +24,71 @@
 #include <sm/vvec>
 #include <sm/flags>
 #include <sm/mat44>
+#include <sm/algo>
+#include <sm/hdfdata>
 
 namespace mplot
 {
+    // The data we pass to NavMesh::compute_mesh_movement, so I can save, say the last 100 movements
+    // in a deque and then save/load and replay
+    struct NavMeshMovementData
+    {
+        sm::vec<float> mv_camframe = {};
+        sm::mat44<float> cam_to_scene = {};
+        sm::mat44<float> model_to_scene = {};
+        std::array<uint32_t, 4> ti0 = {};
+        float hoverheight = 0.0f;
+
+        bool operator== (const NavMeshMovementData& rhs) const noexcept
+        {
+            return (mv_camframe == rhs.mv_camframe
+                    && cam_to_scene == rhs.cam_to_scene
+                    && model_to_scene == rhs.model_to_scene
+                    && ti0 == rhs.ti0
+                    && hoverheight == rhs.hoverheight);
+        }
+
+        bool operator!= (const NavMeshMovementData& rhs) const noexcept { return !(*this == rhs); }
+
+        // Save data into the already-open hdfdata object
+        void save (sm::hdfdata& hd, const uint32_t data_index)
+        {
+            std::stringstream pcom;
+            pcom << "/navmeshmv_" << data_index;
+            std::string s = pcom.str() + std::string("/mv_camframe");
+            hd.add_contained_vals (s.c_str(), mv_camframe);
+            s = pcom.str() + std::string("/cam_to_scene");
+            hd.add_contained_vals (s.c_str(), cam_to_scene.mat);
+            s = pcom.str() + std::string("/model_to_scene");
+            hd.add_contained_vals (s.c_str(), model_to_scene.mat);
+            s = pcom.str() + std::string("/ti0");
+            hd.add_contained_vals (s.c_str(), ti0);
+            s = pcom.str() + std::string("/hoverheight");
+            hd.add_val (s.c_str(), hoverheight);
+        }
+
+        // Load data
+        void load (sm::hdfdata& hd, const uint32_t data_index)
+        {
+            std::stringstream pcom;
+            pcom << "/navmeshmv_" << data_index;
+            std::string s = pcom.str() + std::string("/mv_camframe");
+            hd.read_contained_vals (s.c_str(), mv_camframe);
+            s = pcom.str() + std::string("/cam_to_scene");
+            hd.read_contained_vals (s.c_str(), cam_to_scene.mat);
+            s = pcom.str() + std::string("/model_to_scene");
+            hd.read_contained_vals (s.c_str(), model_to_scene.mat);
+            s = pcom.str() + std::string("/ti0");
+            hd.read_contained_vals (s.c_str(), ti0);
+            s = pcom.str() + std::string("/hoverheight");
+            hd.read_val (s.c_str(), hoverheight);
+        }
+    };
+
     // Exception that returns triangles that were near the location of the error
     struct NavException : public std::exception
     {
-        enum class type : uint32_t { generic, no_intersection, zero_mv, mv_to_vertex, undetected_crossing };
+        enum class type : uint32_t { generic, no_intersection, zero_mv, mv_to_vertex, undetected_crossing, nan_mv };
 
         NavException (const type _type) : m_type(_type) {}
         NavException (const type _type, const std::vector<std::array<uint32_t, 4>>& t) : m_type(_type) { this->tris = t; }
@@ -49,6 +107,9 @@ namespace mplot
                 break;
             case type::undetected_crossing:
                 return "Should have detected crossing just now";
+                break;
+            case type::nan_mv:
+                return "mv_inplane contained NaN";
                 break;
             case type::generic:
             default:
@@ -773,13 +834,6 @@ namespace mplot
             sm::vec<float> _x = rand_vec.cross (tn0);
             _x.renormalize();
             sm::vec<float> _z = _x.cross (tn0);
-#if 0
-            // This was DEBUG code to get one kind of camera oriented exactly on an edge
-            sm::vec<float> _x = {0,1,-1};
-            _x.renormalize();
-            sm::vec<float> _z = {0,-1,-1};
-            _z.renormalize();
-#endif
 
             // I think this positions correctly now (which is all it has to do). It ignores scaling
             // in model_to_scene. Can be reduced to use fewer mat44s.
@@ -890,6 +944,7 @@ namespace mplot
                             if constexpr (debug_move) { std::cout << "*** Correcting!\n"; }
                             // We're in this neighbour, so update ti0/tn0 and mark isect true
                             ti0 = _ti;
+                            tv_sf = tv_lf;
                             tn0 = _tn;
                             isect = true;
                             // This requires a number of matrix recomputations:
@@ -957,16 +1012,19 @@ namespace mplot
             while (!flags.test (cmm_fl::done)) {
 
                 if constexpr (debug_move) {
-                    std::cout << "\n* loopstart: Processing mv_inplane: " << mv_inplane
-                              << " from surface start " << hov_sf << std::endl;
+                    std::cout << "\n* loopstart: Processing mv_inplane: " << hov_sf << "," << mv_inplane << std::endl;
                 }
 
                 if (mv_inplane.length() == 0) {
                     ne.m_type = NavException::type::zero_mv;
                     throw ne;
                 }
+                if (mv_inplane.has_nan()) {
+                    ne.m_type = NavException::type::nan_mv;
+                    throw ne;
+                }
 
-                // For each edge in triangle, compute distance to edge for hov_sf and (hov_sf + mv_inplane)
+                // Apply the edge crossing algorithm
                 crossing_data cd = this->compute_crossing_location (tv_sf, ti0, hov_sf, mv_inplane, tn0);
 
                 if (cd.pm.flags.test (pm_fl::no_cross_point) == false || flags.test (cmm_fl::detected_crossing) || flags.test (cmm_fl::vertex_crossing)) {
@@ -1098,8 +1156,8 @@ namespace mplot
                         // Test if it was movement-within; the simplest case
                         if constexpr (debug_move) {
                             std::cout << "No cross point and not colinear.\n  Testing if "
-                                      << (hov_sf + mv_inplane + (tn0 / 2.0f)) << " intersects tv_sf (" << tv_sf << ") dirn "
-                                      << -tn0 << "...\n";
+                                      << (hov_sf + mv_inplane + (tn0 / 2.0f)) << "," << -tn0
+                                      << " intersects tv_sf (" << tv_sf << "\n";
                         }
                         auto [single_mv, he] = sm::algo::ray_tri_intersection<float> (tv_sf[0], tv_sf[1], tv_sf[2], hov_sf + mv_inplane + (tn0 / 2.0f), -tn0);
                         flags.set (cmm_fl::single_movement, single_mv);
@@ -1116,6 +1174,8 @@ namespace mplot
                             std::cout << "End of movement is NOT in ti0 " << ti0[0] << "," << ti0[1] << "," << ti0[2] << ". Look for start neighbours\n";
                         }
                         // Test 3 neighbours across the edges to find any for which the start location is also within-boundary
+                        flags.set (cmm_fl::detected_crossing, false);
+                        flags.set (cmm_fl::vertex_crossing, false);
                         std::array<uint32_t, 4> _ti_2n = { std::numeric_limits<uint32_t>::max() };
                         sm::vec<float>_tn_2n = {};
                         for (uint32_t i = 0u; i < 3u; i++) {
@@ -1127,15 +1187,16 @@ namespace mplot
                                 sm::vec<sm::vec<float>, 3> tv_nb = this->triangle_vertices (_ti, model_to_scene);
                                 _tn = this->triangle_normal (tv_nb);
 
-                                auto [is, h] = sm::algo::ray_tri_intersection<float> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf, -_tn);
-                                sm::vec<float> mv_orthog_nb = _tn * (mv_sf.dot (_tn) / (_tn.dot(_tn)));
-                                sm::vec<float> mv_inplane_nb = mv_sf - mv_orthog_nb;
-                                auto [endis, endh] = sm::algo::ray_tri_intersection<float> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + mv_inplane_nb, -_tn);
+                                auto [is, h] = sm::algo::ray_tri_intersection<float> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + (_tn / 2.0f), -_tn);
+                                sm::vec<float> mv_orthog_nb = _tn * (mv_inplane.dot (_tn) / (_tn.dot(_tn)));
+                                sm::vec<float> mv_inplane_nb = mv_inplane - mv_orthog_nb;
+                                std::cout << "endis? ray_tri_intersection with " << (hov_sf + mv_inplane_nb + (_tn / 2.0f)) << "," << -_tn << std::endl;
+                                auto [endis, endh] = sm::algo::ray_tri_intersection<float> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + mv_inplane_nb + (_tn / 2.0f), -_tn);
                                 if constexpr (debug_move) {
                                     std::cout << "Start of move " << (is ? "IS" : "is NOT")
                                               << " in " << _ti[0] << "," << _ti[1] << "," << _ti[2] << " / " <<  tv_nb << std::endl;
                                     std::cout << "End of move " << (endis ? "IS" : "is NOT")
-                                              << " in " << _ti[0] << "," << _ti[1] << "," << _ti[2] << " / " <<  tv_nb << std::endl;
+                                              << " in that triangle" << std::endl;
                                 }
 
                                 // Here, start is in original, end may not be in original. This
@@ -1162,22 +1223,24 @@ namespace mplot
                         }
 
                         // Test one-neighbours here if necessary (that is, if the two neighbour test above failed)
-                        if (_ti_2n[0] == std::numeric_limits<uint32_t>::max()) {
+                        if (flags.test (cmm_fl::detected_crossing) == false &&
+                            _ti_2n[0] == std::numeric_limits<uint32_t>::max()) {
                             auto onens = this->find_one_neighbours (ti0);
                             for (auto onen : onens) {
                                 // Are we in this one?
                                 auto [_ti, _tn] = onen;
                                  sm::vec<sm::vec<float>, 3> tv_nb = this->triangle_vertices (_ti, model_to_scene);
                                 _tn = this->triangle_normal (tv_nb);
-                                auto [is, h] = sm::algo::ray_tri_intersection<float> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf, -_tn);
-                                sm::vec<float> mv_orthog_nb = _tn * (mv_sf.dot (_tn) / (_tn.dot(_tn)));
-                                sm::vec<float> mv_inplane_nb = mv_sf - mv_orthog_nb;
-                                auto [endis, endh] = sm::algo::ray_tri_intersection<float> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + mv_inplane_nb, -_tn);
+                                auto [is, h] = sm::algo::ray_tri_intersection<float> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + (_tn / 2.0f), -_tn);
+                                sm::vec<float> mv_orthog_nb = _tn * (mv_inplane.dot (_tn) / (_tn.dot(_tn)));
+                                sm::vec<float> mv_inplane_nb = mv_inplane - mv_orthog_nb;
+                                std::cout << "endis ONE-n? ray_tri_intersection with " << (hov_sf + mv_inplane_nb + (_tn / 2.0f)) << "," << -_tn << std::endl;
+                                auto [endis, endh] = sm::algo::ray_tri_intersection<float> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + mv_inplane_nb + (_tn / 2.0f), -_tn);
                                 if constexpr (debug_move) {
                                     std::cout << "Start of move " << (is ? "IS" : "is NOT")
                                               << " in ONE-neighbour " << _ti[0] << "," << _ti[1] << "," << _ti[2] << " / " <<  tv_nb << std::endl;
-                                    std::cout << "End of move " << (endis ? "IS" : "is NOT")
-                                              << " in ONE-neighbour " << _ti[0] << "," << _ti[1] << "," << _ti[2] << " / " <<  tv_nb << std::endl;
+                                    std::cout << "And End of move " << (endis ? "IS" : "is NOT")
+                                              << " in that ONE-neighbour " << std::endl;
                                 }
 
                                 if (endis) {
