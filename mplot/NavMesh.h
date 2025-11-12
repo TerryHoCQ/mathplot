@@ -93,6 +93,7 @@ namespace mplot
         NavException (const type _type) : m_type(_type) {}
         NavException (const type _type, const std::vector<std::array<uint32_t, 4>>& t) : m_type(_type) { this->tris = t; }
 
+        using std::exception::what;
         const char* what()
         {
             switch (m_type) {
