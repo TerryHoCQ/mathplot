@@ -251,6 +251,9 @@ namespace mplot {
          */
         void make_navmesh()
         {
+            constexpr bool debug_mn = true;
+            if constexpr (debug_mn) { std::cout << "make_navmesh: Called" << std::endl; }
+
             if (this->navmesh) { return; } // already made it
 
             if (this->flags.test (vm_bools::compute_bb) == false) {
@@ -268,30 +271,41 @@ namespace mplot {
             auto vp = reinterpret_cast<const std::vector<sm::vec<float, 3>>*>(&this->vertexPositions);
             uint32_t vps = vp->size();
 
+            if constexpr (debug_mn) { std::cout << "make_navmesh: We have " << vps << " vertices" << std::endl; }
+
             // For each entry in vertex, list the entries in vertexPositions that are in the same locn
             std::map<uint32_t, sm::vvec<uint32_t>> equiv;
 
             // Populate equiv
             constexpr float vlen_thresh = 0.0f;
             for (uint32_t i = 0; i < vps; ++i) {
+                if constexpr (debug_mn) {
+                    if (i % 1000u == 0u) {
+                        std::cout << "make_navmesh: Equivalents for i=" << i << std::endl;
+                    }
+                }
                 for (uint32_t j = 0; j < vps; ++j) {
                     if (((*vp)[i] - (*vp)[j]).length() <= vlen_thresh) { equiv[i].push_back (j); }
                 }
             }
+            if constexpr (debug_mn) { std::cout << "make_navmesh: Populated equiv" << std::endl; }
+
             // Prune duplicates
             std::erase_if (equiv, [](const auto& eq) { const auto& [k, v] = eq; return v.find_first_of (k) > 0; });
+            if constexpr (debug_mn) { std::cout << "make_navmesh: Pruned duplicates" << std::endl; }
 
             // Make inverse of equiv to translate from original (indices, vertexPositions) index to new topographic mesh index
             sm::vvec<uint32_t> navmesh_idx (vps, 0);
             navmesh->vertexidx_to_indices.resize (equiv.size());
             uint32_t i = 0;
             for (auto eq : equiv) {
-                navmesh->vertexidx_to_indices[i] = eq.second;
+                navmesh->vertexidx_to_indices[i] = eq.second; // assumes equiv is ordered
                 for (auto ev : eq.second) {
                     navmesh_idx[ev] = i;
                 }
                 ++i;
             }
+            if constexpr (debug_mn) { std::cout << "make_navmesh: Created equiv inverse" << std::endl; }
 
             // Can now populate vertex, a vector of coordinates, if required, or simply access (*vp) as needed using equiv.first
             navmesh->vertex.resize (equiv.size(), {0});
@@ -357,8 +371,10 @@ namespace mplot {
 
                 navmesh->triangles.push_back ({t, n, nx, ny}); // n is computed normal
             }
+            if constexpr (debug_mn) { std::cout << "make_navmesh: Created triangles" << std::endl; }
 
             navmesh->mark_edge_triangles();
+            if constexpr (debug_mn) { std::cout << "make_navmesh: Marked edge triangles and done." << std::endl; }
         }
 
         /**
