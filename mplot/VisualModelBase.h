@@ -277,25 +277,45 @@ namespace mplot {
 
             if constexpr (debug_mn) { std::cout << "make_navmesh: We have " << vps << " vertices" << std::endl; }
 
-            // For each entry in vertex, list the entries in vertexPositions that are in the same locn
-            std::map<uint32_t, sm::vvec<uint32_t>> equiv;
+            // For each entry in vertex, list the entries in vertexPositions that are in the same locn.
+            std::map<uint32_t, std::set<uint32_t>> equiv;
 
             // Populate equiv. Almost all the compute time is here.
-            constexpr float vlen_thresh = 0.0f;
-            for (uint32_t i = 0; i < vps; ++i) {
-                if (i % 10000 == 0) { std::cout << "make_navmesh: Processing vertex " << i << "..." << std::endl; }
-                if (vpm.count(i)) {  // else already assigned
-                    sm::vec<float, 3> me = vpm[i];
-                    for (uint32_t j = i; j < vps; ++j) { // need to go through ALL?
+            //constexpr float vlen_thresh = 0.0f;
+            //for (uint32_t i = 0; i < vps; ++i) {
+            for (auto& vmi : vpm) {
+                //if (i % 10000 == 0) { std::cout << "make_navmesh: Processing vertex " << vmi.first << "..." << std::endl; }
+                if (vpm.count(vmi.first)) {  // else already assigned
+
+                    sm::vec<float, 3> me = vpm[vmi.first];
+
+                    if (!equiv.count(vmi.first)) {
+
+                        equiv[vmi.first].insert (vmi.first);
+
+                        std::cout << "equiv["<<vmi.first<<"] is  now ";
+                        for (auto e : equiv[vmi.first]) {  std::cout << e << ","; }
+                        std::cout << std::endl;
+                    }
+
+                    for (uint32_t j = vmi.first+1; j < vmi.first+5 && j < vps; ++j) { // need to go through ALL?
                         if (vpm.count(j)) {
-                            if ((me - vpm[j]).length() <= vlen_thresh) {
-                                equiv[i].push_back (j);
+                            //if ((me - vpm[j]).length() <= vlen_thresh) {n
+                            if (me == vpm[j]) { // less proc.
+                                p
+                                equiv[vmi.first].insert (j);
+                                std::cout << "equiv["<<vmi.first<<"] is  now ";
+                                for (auto e : equiv[vmi.first]) {  std::cout << e << ","; }
+                                std::cout << std::endl;
                                 vpm.erase (j);
                             }
                         }
                     }
+
+                    //vpm.erase (i);
                 }
             }
+            std::cout << "At end, vpm size is now " << vpm.size() << std::endl;
             if constexpr (debug_mn) {
                 std::cout << "make_navmesh: Populated equiv which has "
                           << equiv.size() << " vvecs" << std::endl;
@@ -304,15 +324,17 @@ namespace mplot {
             // Make inverse of equiv to translate from original (indices, vertexPositions) index to new topographic mesh index
             sm::vvec<uint32_t> navmesh_idx (vps, 0);
             navmesh->vertexidx_to_indices.resize (equiv.size());
-            uint32_t i = 0;
+            //uint32_t i = 0;
             uint32_t vcount = 0;
             for (auto eq : equiv) {
                 vcount += eq.second.size();
-                navmesh->vertexidx_to_indices[i] = eq.second; // assumes equiv is ordered
+                // i should be the first entry in eq.second
+                std::copy (eq.second.begin(), eq.second.end(), navmesh->vertexidx_to_indices[*eq.second.begin()].begin());
+                //navmesh->vertexidx_to_indices[i] = eq.second; // assumes equiv is ordered
                 for (auto ev : eq.second) {
-                    navmesh_idx[ev] = i;
+                    navmesh_idx[ev] = *eq.second.begin();
                 }
-                ++i;
+                //++i;
             }
             if constexpr (debug_mn) {
                 std::cout << "make_navmesh: Created equiv inverse" << std::endl;
@@ -324,8 +346,8 @@ namespace mplot {
 
             // Can now populate vertex, a vector of coordinates, if required, or simply access (*vp) as needed using equiv.first
             navmesh->vertex.resize (equiv.size(), {0});
-            i = 0;
-            for (auto eq : equiv) { navmesh->vertex[i++] = (*vp)[eq.first]; }
+            uint32_t i = 0;
+            for (auto eq : equiv) { navmesh->vertex[i++] = (*vp)[eq.first]; } // FIXME
 
             // Lastly, generate edges. For which we require use of indices, which is expressed in
             // terms of the old indices. That lookup is navmesh_idx.
