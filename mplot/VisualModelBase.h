@@ -269,7 +269,11 @@ namespace mplot {
 
             // Treat vertexPositions as a vector of vec:
             auto vp = reinterpret_cast<const std::vector<sm::vec<float, 3>>*>(&this->vertexPositions);
-            uint32_t vps = vp->size();
+            // Copy it into an unordered map
+            std::unordered_map<uint32_t, sm::vec<float, 3>> vpm;
+            uint32_t ii = 0;
+            for (auto _vp : *vp) { vpm.insert ({ii++, _vp}); }
+            uint32_t vps = vpm.size();
 
             if constexpr (debug_mn) { std::cout << "make_navmesh: We have " << vps << " vertices" << std::endl; }
 
@@ -279,36 +283,44 @@ namespace mplot {
             // Populate equiv. Almost all the compute time is here.
             constexpr float vlen_thresh = 0.0f;
             for (uint32_t i = 0; i < vps; ++i) {
-                if constexpr (debug_mn) {
-                    if (i % 100000u == 0u) {
-                        std::cout << "make_navmesh: Equivalents for i=" << i << std::endl;
-                    }
-                }
-                for (uint32_t j = 0; j < vps; ++j) { // need to go through ALL? Answer? Yes
-                    if (((*vp)[i] - (*vp)[j]).length() <= vlen_thresh) {
-                        equiv[i].push_back (j);
-                        //std::cout << "equiv[i] is now " << equiv[i] << std::endl;
+                if (i % 10000 == 0) { std::cout << "make_navmesh: Processing vertex " << i << "..." << std::endl; }
+                if (vpm.count(i)) {  // else already assigned
+                    sm::vec<float, 3> me = vpm[i];
+                    for (uint32_t j = i; j < vps; ++j) { // need to go through ALL?
+                        if (vpm.count(j)) {
+                            if ((me - vpm[j]).length() <= vlen_thresh) {
+                                equiv[i].push_back (j);
+                                vpm.erase (j);
+                            }
+                        }
                     }
                 }
             }
-            if constexpr (debug_mn) { std::cout << "make_navmesh: Populated equiv." << std::endl; }
-
-            // Prune duplicates
-            std::erase_if (equiv, [](const auto& eq) { const auto& [k, v] = eq; return v.find_first_of (k) > 0; });
-            if constexpr (debug_mn) { std::cout << "make_navmesh: Pruned duplicates" << std::endl; }
+            if constexpr (debug_mn) {
+                std::cout << "make_navmesh: Populated equiv which has "
+                          << equiv.size() << " vvecs" << std::endl;
+            }
 
             // Make inverse of equiv to translate from original (indices, vertexPositions) index to new topographic mesh index
             sm::vvec<uint32_t> navmesh_idx (vps, 0);
             navmesh->vertexidx_to_indices.resize (equiv.size());
             uint32_t i = 0;
+            uint32_t vcount = 0;
             for (auto eq : equiv) {
+                vcount += eq.second.size();
                 navmesh->vertexidx_to_indices[i] = eq.second; // assumes equiv is ordered
                 for (auto ev : eq.second) {
                     navmesh_idx[ev] = i;
                 }
                 ++i;
             }
-            if constexpr (debug_mn) { std::cout << "make_navmesh: Created equiv inverse" << std::endl; }
+            if constexpr (debug_mn) {
+                std::cout << "make_navmesh: Created equiv inverse" << std::endl;
+            }
+            if (vcount != vps) {
+                std::cout << "make_navmesh: WARNING: Vertex count from equiv is " << vcount
+                          << " which should (but does not) equal " << vps  << std::endl;
+            }
 
             // Can now populate vertex, a vector of coordinates, if required, or simply access (*vp) as needed using equiv.first
             navmesh->vertex.resize (equiv.size(), {0});
