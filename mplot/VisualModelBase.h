@@ -276,19 +276,22 @@ namespace mplot {
             // For each entry in vertex, list the entries in vertexPositions that are in the same locn
             std::map<uint32_t, sm::vvec<uint32_t>> equiv;
 
-            // Populate equiv
+            // Populate equiv. Almost all the compute time is here.
             constexpr float vlen_thresh = 0.0f;
             for (uint32_t i = 0; i < vps; ++i) {
                 if constexpr (debug_mn) {
-                    if (i % 1000u == 0u) {
+                    if (i % 100000u == 0u) {
                         std::cout << "make_navmesh: Equivalents for i=" << i << std::endl;
                     }
                 }
-                for (uint32_t j = 0; j < vps; ++j) {
-                    if (((*vp)[i] - (*vp)[j]).length() <= vlen_thresh) { equiv[i].push_back (j); }
+                for (uint32_t j = 0; j < vps; ++j) { // need to go through ALL? Answer? Yes
+                    if (((*vp)[i] - (*vp)[j]).length() <= vlen_thresh) {
+                        equiv[i].push_back (j);
+                        //std::cout << "equiv[i] is now " << equiv[i] << std::endl;
+                    }
                 }
             }
-            if constexpr (debug_mn) { std::cout << "make_navmesh: Populated equiv" << std::endl; }
+            if constexpr (debug_mn) { std::cout << "make_navmesh: Populated equiv." << std::endl; }
 
             // Prune duplicates
             std::erase_if (equiv, [](const auto& eq) { const auto& [k, v] = eq; return v.find_first_of (k) > 0; });

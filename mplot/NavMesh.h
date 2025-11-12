@@ -232,6 +232,7 @@ namespace mplot
         // in its final element.
         void mark_if_on_edge (std::array<uint32_t, 4>& ti0)
         {
+            constexpr bool debug_met = false;
             uint32_t n2 = 0; // Neighbours sharing 2 vertices (up to 3)
             for (auto t: this->triangles) {
                 auto [ti, tn, tnc, tnd] = t;
@@ -255,7 +256,9 @@ namespace mplot
             }
 
             if (n2 < 3) {
-                std::cout << ti0[0] << "-" << ti0[1] << "-" << ti0[2] << " is on the edge\n";
+                if constexpr (debug_met) {
+                    std::cout << ti0[0] << "-" << ti0[1] << "-" << ti0[2] << " is on the edge\n";
+                }
                 ti0[3] = 1;
             } // Meaning that the triangle is 'on the edge' of the model
         }
@@ -264,6 +267,7 @@ namespace mplot
         // the edge if on of its neighbours has < 3 edge neighbours.
         void mark_edge_triangles()
         {
+            constexpr bool debug_met = false;
             uint32_t ec = 0;
             for (auto& t: this->triangles) {
                 auto& [ti, tn, tnc, tnd] = t;
@@ -282,15 +286,19 @@ namespace mplot
                         if ( ti2[0] == ti[1] || ti2[1] == ti[1] || ti2[2] == ti[1]) { ++ns; }
                         if ( ti2[0] == ti[2] || ti2[1] == ti[2] || ti2[2] == ti[2]) { ++ns; }
                         if (ns == 2) {
-                            std::cout << ti2[0]<<","<<ti2[1]<<","<<ti2[2] << " shares 2 vertices with "
-                                      << ti[0]<<","<<ti[1]<<","<<ti[2] << ".\n";
+                            if constexpr (debug_met) {
+                                std::cout << ti2[0]<<","<<ti2[1]<<","<<ti2[2] << " shares 2 vertices with "
+                                          << ti[0]<<","<<ti[1]<<","<<ti[2] << ".\n";
+                            }
                             ti2[3] = 1;
                             ec++;
                         }
                     }
                 }
             }
-            std::cout << ec << " / " << this->triangles.size() << " triangles are on edge\n";
+            if constexpr (debug_met) {
+                std::cout << ec << " / " << this->triangles.size() << " triangles are on edge\n";
+            }
         }
 
         // Count 2-vertex (i.e. edge) neighbours and also 1-vertex neighbours for triangle ti0
