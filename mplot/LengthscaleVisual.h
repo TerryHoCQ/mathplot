@@ -52,10 +52,10 @@ namespace mplot
 
             sm::quaternion<float> text_rotn; // no rotation by default
 
-            if (this->axis == this->ux) {
+            if (this->axis == sm::vec<float>::ux()) {
                 lblpos = bar_centre + sm::vec<float>{ -geom.half_width(), -this->width * 0.5f - 3.0f * geom.half_height(), 0.0f  };
 
-            } else if (this->axis == this->uy) {
+            } else if (this->axis == sm::vec<float>::uy()) {
                 // Rotated label
                 lblpos = bar_centre + sm::vec<float>{ this->width * 0.5f + 3.0f * geom.half_height(), -geom.half_width(), 0.0f  };
                 // Set rotation
@@ -83,9 +83,9 @@ namespace mplot
         //! Font size, etc
         mplot::TextFeatures text_features;
         // A unit vector defining the axis along which this length scale will be drawn
-        sm::vec<float> axis = this->ux;
+        sm::vec<float> axis = sm::vec<float>::ux();
         //! A unit vector defining what direction we want to look at the text from
-        sm::vec<float> upaxis = this->uz;
+        sm::vec<float> upaxis = sm::vec<float>::uz();
     };
 
 } // namespace mplot
