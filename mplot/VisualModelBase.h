@@ -251,7 +251,7 @@ namespace mplot {
          */
         void make_navmesh()
         {
-            constexpr bool debug_mn = true;
+            constexpr bool debug_mn = false;
             if constexpr (debug_mn) { std::cout << "make_navmesh: Called" << std::endl; }
 
             if (this->navmesh) { return; } // already made it

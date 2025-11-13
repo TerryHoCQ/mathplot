@@ -88,7 +88,7 @@ namespace mplot
     // Exception that returns triangles that were near the location of the error
     struct NavException : public std::exception
     {
-        enum class type : uint32_t { generic, no_intersection, zero_mv, mv_to_vertex, undetected_crossing, nan_mv };
+        enum class type : uint32_t { generic, no_intersection, zero_mv, mv_to_vertex, undetected_crossing, nan_mv, off_edge };
 
         NavException (const type _type) : m_type(_type) {}
         NavException (const type _type, const std::vector<std::array<uint32_t, 4>>& t) : m_type(_type) { this->tris = t; }
@@ -111,6 +111,9 @@ namespace mplot
                 break;
             case type::nan_mv:
                 return "mv_inplane contained NaN";
+                break;
+            case type::off_edge:
+                return "The movement went off the edge of the model";
                 break;
             case type::generic:
             default:
@@ -232,7 +235,7 @@ namespace mplot
         // in its final element. Also mark as on edge any nighbours sharing one of its vertices
         uint32_t mark_if_on_edge (std::array<uint32_t, 4>& ti0)
         {
-            constexpr bool debug_met = true;
+            constexpr bool debug_met = false;
             uint32_t n2 = 0; // Neighbours sharing 2 vertices (up to 3)
 
             std::vector<std::array<uint32_t, 4>*> neighb_edge_tris;
@@ -285,7 +288,7 @@ namespace mplot
         // the edge if on of its neighbours has < 3 edge neighbours.
         void mark_edge_triangles()
         {
-            constexpr bool debug_met = true;
+            constexpr bool debug_met = false;
             uint32_t ec = 0;
             for (auto& t: this->triangles) {
                 auto& [ti, tn, tnc, tnd] = t;
@@ -1159,7 +1162,8 @@ namespace mplot
 
                     } else {
                         // other triangle not found?! We probably went off the edge of our navigation model mesh
-                        flags.set (cmm_fl::done, true);
+                        ne.m_type = NavException::type::off_edge;
+                        throw ne;
                         continue;
                     }
 
