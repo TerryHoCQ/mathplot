@@ -35,7 +35,7 @@
 
 #include <mplot/gl/version.h>
 
-#include <sm/geometry>
+#include <sm/geometry_polyhedra>
 #include <sm/quaternion>
 #include <sm/mat44>
 #include <sm/vec>
@@ -269,85 +269,53 @@ namespace mplot {
 
             // Treat vertexPositions as a vector of vec:
             auto vp = reinterpret_cast<const std::vector<sm::vec<float, 3>>*>(&this->vertexPositions);
-            // Copy it into an unordered map
-            std::unordered_map<uint32_t, sm::vec<float, 3>> vpm;
-            uint32_t ii = 0;
-            for (auto _vp : *vp) { vpm.insert ({ii++, _vp}); }
-            uint32_t vps = vpm.size();
 
-            if constexpr (debug_mn) { std::cout << "make_navmesh: We have " << vps << " vertices" << std::endl; }
-
-            // For each entry in vertex, list the entries in vertexPositions that are in the same locn.
+            uint32_t vps = vp->size();
+            std::unordered_map<sm::vec<float, 3>, std::set<uint32_t>, sm::vec<float, 3>::hash> equiv_v;
+            uint32_t i = 0;
+            for (auto p : *vp) { equiv_v[p].insert (i++); }
             std::map<uint32_t, std::set<uint32_t>> equiv;
-
-            // Populate equiv. Almost all the compute time is here.
-            //constexpr float vlen_thresh = 0.0f;
-            //for (uint32_t i = 0; i < vps; ++i) {
-            for (auto& vmi : vpm) {
-                //if (i % 10000 == 0) { std::cout << "make_navmesh: Processing vertex " << vmi.first << "..." << std::endl; }
-                if (vpm.count(vmi.first)) {  // else already assigned
-
-                    sm::vec<float, 3> me = vpm[vmi.first];
-
-                    if (!equiv.count(vmi.first)) {
-
-                        equiv[vmi.first].insert (vmi.first);
-
-                        std::cout << "equiv["<<vmi.first<<"] is  now ";
-                        for (auto e : equiv[vmi.first]) {  std::cout << e << ","; }
-                        std::cout << std::endl;
-                    }
-
-                    for (uint32_t j = vmi.first+1; j < vmi.first+5 && j < vps; ++j) { // need to go through ALL?
-                        if (vpm.count(j)) {
-                            //if ((me - vpm[j]).length() <= vlen_thresh) {n
-                            if (me == vpm[j]) { // less proc.
-                                p
-                                equiv[vmi.first].insert (j);
-                                std::cout << "equiv["<<vmi.first<<"] is  now ";
-                                for (auto e : equiv[vmi.first]) {  std::cout << e << ","; }
-                                std::cout << std::endl;
-                                vpm.erase (j);
-                            }
-                        }
-                    }
-
-                    //vpm.erase (i);
-                }
-            }
-            std::cout << "At end, vpm size is now " << vpm.size() << std::endl;
+            for (auto e : equiv_v) { equiv[*e.second.begin()] = e.second; }
             if constexpr (debug_mn) {
+                for (auto e : equiv) {
+                    std::cout << "make_navmesh: equiv[" << e.first << "] = ";
+                    for (auto idx : e.second) {  std::cout << idx << ","; }
+                    std::cout << std::endl;
+                }
                 std::cout << "make_navmesh: Populated equiv which has "
                           << equiv.size() << " vvecs" << std::endl;
             }
 
-            // Make inverse of equiv to translate from original (indices, vertexPositions) index to new topographic mesh index
+            // Make inverse of equiv to translate from original (indices, vertexPositions) index to
+            // new topographic mesh index
             sm::vvec<uint32_t> navmesh_idx (vps, 0);
             navmesh->vertexidx_to_indices.resize (equiv.size());
-            //uint32_t i = 0;
+
             uint32_t vcount = 0;
-            for (auto eq : equiv) {
-                vcount += eq.second.size();
-                // i should be the first entry in eq.second
-                std::copy (eq.second.begin(), eq.second.end(), navmesh->vertexidx_to_indices[*eq.second.begin()].begin());
-                //navmesh->vertexidx_to_indices[i] = eq.second; // assumes equiv is ordered
-                for (auto ev : eq.second) {
-                    navmesh_idx[ev] = *eq.second.begin();
+            i = 0;
+            for (auto eqs : equiv) {
+                vcount += eqs.second.size();
+                navmesh->vertexidx_to_indices[i].resize (eqs.second.size());
+                std::copy (eqs.second.begin(), eqs.second.end(), navmesh->vertexidx_to_indices[i].begin());
+                for (auto ev : eqs.second) {
+                    if constexpr (debug_mn) { std::cout << "make_navmesh: set navmesh_idx[" << ev << "] = " << i << std::endl; }
+                    navmesh_idx[ev] = i;
                 }
-                //++i;
+                ++i;
             }
             if constexpr (debug_mn) {
                 std::cout << "make_navmesh: Created equiv inverse" << std::endl;
             }
             if (vcount != vps) {
                 std::cout << "make_navmesh: WARNING: Vertex count from equiv is " << vcount
-                          << " which should (but does not) equal " << vps  << std::endl;
+                          << " which should (but does not) equal " << vps << std::endl;
             }
 
-            // Can now populate vertex, a vector of coordinates, if required, or simply access (*vp) as needed using equiv.first
+            // Can now populate vertex, a vector of coordinates, if required, or simply access (*vp)
+            // as needed using equiv.first
             navmesh->vertex.resize (equiv.size(), {0});
-            uint32_t i = 0;
-            for (auto eq : equiv) { navmesh->vertex[i++] = (*vp)[eq.first]; } // FIXME
+            i = 0;
+            for (auto eq : equiv) { navmesh->vertex[i++] = (*vp)[eq.first]; } // FIXME?
 
             // Lastly, generate edges. For which we require use of indices, which is expressed in
             // terms of the old indices. That lookup is navmesh_idx.
@@ -410,8 +378,8 @@ namespace mplot {
             }
             if constexpr (debug_mn) { std::cout << "make_navmesh: Created triangles" << std::endl; }
 
-            navmesh->mark_edge_triangles();
-            if constexpr (debug_mn) { std::cout << "make_navmesh: Marked edge triangles and done." << std::endl; }
+            //navmesh->mark_edge_triangles();
+            //if constexpr (debug_mn) { std::cout << "make_navmesh: Marked edge triangles and done." << std::endl; }
         }
 
         /**
@@ -2638,17 +2606,17 @@ namespace mplot {
             sm::vec<float, 2> l_n_1 = e_p.less_one_dim() + (n_ortho * hw) - n_vec;
             sm::vec<float, 2> l_n_2 = n_p.less_one_dim() + (n_ortho * hw) + n_vec;
 
-            std::bitset<2> isect = sm::algo::segments_intersect<float> (l_p_1, l_p_2, l_c_1, l_c_2);
+            std::bitset<2> isect = sm::geometry::segments_intersect<float> (l_p_1, l_p_2, l_c_1, l_c_2);
             if (isect.test(0) == true && isect.test(1) == false) { // test for intersection but not colinear
-                c1_p = sm::algo::crossing_point (l_p_1, l_p_2, l_c_1, l_c_2);
+                c1_p = sm::geometry::crossing_point (l_p_1, l_p_2, l_c_1, l_c_2);
             } else if (isect.test(0) == true && isect.test(1) == true) {
                 c1_p = /*s_p.less_one_dim() +*/ (c_ortho * hw);
             } else { // no intersection. prev could have been start
                 c1_p = /*s_p.less_one_dim() +*/ (c_ortho * hw);
             }
-            isect = sm::algo::segments_intersect<float> (l_c_1, l_c_2, l_n_1, l_n_2);
+            isect = sm::geometry::segments_intersect<float> (l_c_1, l_c_2, l_n_1, l_n_2);
             if (isect.test(0) == true && isect.test(1) == false) {
-                c4_p = sm::algo::crossing_point (l_c_1, l_c_2, l_n_1, l_n_2);
+                c4_p = sm::geometry::crossing_point (l_c_1, l_c_2, l_n_1, l_n_2);
             } else if (isect.test(0) == true && isect.test(1) == true) {
                 c4_p = e_p.less_one_dim() + (c_ortho * hw);
             } else { // no intersection, prev could have been end
@@ -2663,18 +2631,18 @@ namespace mplot {
             sm::vec<float, 2> o_l_n_1 = e_p.less_one_dim() - (n_ortho * hw) - n_vec;
             sm::vec<float, 2> o_l_n_2 = n_p.less_one_dim() - (n_ortho * hw) + n_vec;
 
-            isect = sm::algo::segments_intersect<float> (o_l_p_1, o_l_p_2, o_l_c_1, o_l_c_2);
+            isect = sm::geometry::segments_intersect<float> (o_l_p_1, o_l_p_2, o_l_c_1, o_l_c_2);
             if (isect.test(0) == true && isect.test(1) == false) { // test for intersection but not colinear
-                c2_p = sm::algo::crossing_point (o_l_p_1, o_l_p_2, o_l_c_1, o_l_c_2);
+                c2_p = sm::geometry::crossing_point (o_l_p_1, o_l_p_2, o_l_c_1, o_l_c_2);
             } else if (isect.test(0) == true && isect.test(1) == true) {
                 c2_p = /*s_p.less_one_dim()*/ - (c_ortho * hw);
             } else { // no intersection. prev could have been start
                 c2_p = /*s_p.less_one_dim()*/ - (c_ortho * hw);
             }
 
-            isect = sm::algo::segments_intersect<float> (o_l_c_1, o_l_c_2, o_l_n_1, o_l_n_2);
+            isect = sm::geometry::segments_intersect<float> (o_l_c_1, o_l_c_2, o_l_n_1, o_l_n_2);
             if (isect.test(0) == true && isect.test(1) == false) {
-                c3_p = sm::algo::crossing_point (o_l_c_1, o_l_c_2, o_l_n_1, o_l_n_2);
+                c3_p = sm::geometry::crossing_point (o_l_c_1, o_l_c_2, o_l_n_1, o_l_n_2);
             } else if (isect.test(0) == true && isect.test(1) == true) {
                 c3_p = e_p.less_one_dim() - (c_ortho * hw);
             } else { // no intersection. next could have been end

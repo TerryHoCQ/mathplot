@@ -94,3 +94,6 @@ if(HDF5_FOUND)
   target_link_libraries(navmesh1 ${HDF5_C_LIBRARIES})
   add_test(navmesh1 navmesh1)
 endif()
+
+add_executable(unordered_map_vec_set unordered_map_vec_set.cpp)
+add_test(unordered_map_vec_set unordered_map_vec_set)

@@ -24,7 +24,7 @@
 #include <sm/vvec>
 #include <sm/flags>
 #include <sm/mat44>
-#include <sm/algo>
+#include <sm/geometry>
 #include <sm/hdfdata>
 
 namespace mplot
@@ -229,12 +229,15 @@ namespace mplot
         }
 
         // Determine if ti0 is on the edge of the model (with < 3 edge neighbours), If so, place 1
-        // in its final element.
-        void mark_if_on_edge (std::array<uint32_t, 4>& ti0)
+        // in its final element. Also mark as on edge any nighbours sharing one of its vertices
+        uint32_t mark_if_on_edge (std::array<uint32_t, 4>& ti0)
         {
-            constexpr bool debug_met = false;
+            constexpr bool debug_met = true;
             uint32_t n2 = 0; // Neighbours sharing 2 vertices (up to 3)
-            for (auto t: this->triangles) {
+
+            std::vector<std::array<uint32_t, 4>*> neighb_edge_tris;
+
+            for (auto& t: this->triangles) {
                 auto [ti, tn, tnc, tnd] = t;
                 auto a0 = ti0[0];
                 auto b0 = ti0[1];
@@ -244,57 +247,49 @@ namespace mplot
                 auto c = ti[2];
                 if ((   a == a0 && ((b == b0 && c != c0) || (c == b0 && b != c0)))
                     || (b == a0 && ((a == b0 && c != c0) || (c == b0 && a != c0)))
-                    || (c == a0 && ((a == b0 && b != c0) || (b == b0 && a != c0)))) { ++n2; }
-
+                    || (c == a0 && ((a == b0 && b != c0) || (b == b0 && a != c0)))) {
+                    ++n2;
+                    neighb_edge_tris.push_back (&ti);
+                }
                 else if ((   a == b0 && ((b == c0 && c != a0) || (c == c0 && b != a0)))
                          || (b == b0 && ((a == c0 && c != a0) || (c == c0 && a != a0)))
-                         || (c == b0 && ((a == c0 && b != a0) || (b == c0 && a != a0)))) { ++n2; }
-
+                         || (c == b0 && ((a == c0 && b != a0) || (b == c0 && a != a0)))) {
+                    ++n2;
+                    neighb_edge_tris.push_back (&ti);
+                }
                 else if ((   a == c0 && ((b == a0 && c != b0) || (c == a0 && b != b0)))
                          || (b == c0 && ((a == a0 && c != b0) || (c == a0 && a != b0)))
-                         || (c == c0 && ((a == a0 && b != b0) || (b == a0 && a != b0)))) { ++n2; }
+                         || (c == c0 && ((a == a0 && b != b0) || (b == a0 && a != b0)))) {
+                    ++n2;
+                    neighb_edge_tris.push_back (&ti);
+                }
             }
 
             if (n2 < 3) {
                 if constexpr (debug_met) {
-                    std::cout << ti0[0] << "-" << ti0[1] << "-" << ti0[2] << " is on the edge\n";
+                    std::cout << ti0[0] << "-" << ti0[1] << "-" << ti0[2] << " is on the edge";
                 }
                 ti0[3] = 1;
+                for (auto& net : neighb_edge_tris) {
+                    if constexpr (debug_met) { std::cout << " mark vtx neighbour "; }
+                    (*net)[3] = 1;
+                }
+                if constexpr (debug_met) { std::cout << std::endl; }
+
+                return neighb_edge_tris.size() + 1;
             } // Meaning that the triangle is 'on the edge' of the model
+            return 0;
         }
 
         // Go through all triangles, marking if they're an 'edge' triangle. A triangle is ALSO on
         // the edge if on of its neighbours has < 3 edge neighbours.
         void mark_edge_triangles()
         {
-            constexpr bool debug_met = false;
+            constexpr bool debug_met = true;
             uint32_t ec = 0;
             for (auto& t: this->triangles) {
                 auto& [ti, tn, tnc, tnd] = t;
-                mark_if_on_edge (ti);
-                if (ti[3]) {
-
-                    ec++;
-
-                    // Mark its neighbours too. This'll slow things down
-                    for (auto& t2: this->triangles) {
-                        auto& [ti2, tn2, tnc2, tnd2] = t2;
-                        if (ti2 == ti) { continue; }
-                        // If ti2 shares 2 vertices with ti, then mark ti2 as 'edge' also
-                        int ns = 0;
-                        if (ti2[0] == ti[0] || ti2[1] == ti[0] || ti2[2] == ti[0]) { ++ns; }
-                        if ( ti2[0] == ti[1] || ti2[1] == ti[1] || ti2[2] == ti[1]) { ++ns; }
-                        if ( ti2[0] == ti[2] || ti2[1] == ti[2] || ti2[2] == ti[2]) { ++ns; }
-                        if (ns == 2) {
-                            if constexpr (debug_met) {
-                                std::cout << ti2[0]<<","<<ti2[1]<<","<<ti2[2] << " shares 2 vertices with "
-                                          << ti[0]<<","<<ti[1]<<","<<ti[2] << ".\n";
-                            }
-                            ti2[3] = 1;
-                            ec++;
-                        }
-                    }
-                }
+                ec += mark_if_on_edge (ti); // ALSO loops through triangles
             }
             if constexpr (debug_met) {
                 std::cout << ec << " / " << this->triangles.size() << " triangles are on edge\n";
@@ -360,7 +355,7 @@ namespace mplot
         {
             for (auto tri : triangles) {
                 auto [ti, tn, tnc, tnd] = tri;
-                auto [isect, p] = sm::algo::ray_tri_intersection<float, float, true, false> (this->vertex[ti[0]], this->vertex[ti[1]], this->vertex[ti[2]], coord_mf - (vdir / 2.0f), vdir);
+                auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (this->vertex[ti[0]], this->vertex[ti[1]], this->vertex[ti[2]], coord_mf - (vdir / 2.0f), vdir);
                 if (isect) { return {p, ti, tn}; }
             }
 
@@ -530,7 +525,7 @@ namespace mplot
                           << " and " << h_2d << " --> " << (h_2d + mv_inplane2d) << "\n";
             }
 
-            std::bitset<2> si = sm::algo::segments_intersect<float> (edge_s_2d, edge_s_2d + edge_2d, h_2d, h_2d + mv_inplane2d);
+            std::bitset<2> si = sm::geometry::segments_intersect<float> (edge_s_2d, edge_s_2d + edge_2d, h_2d, h_2d + mv_inplane2d);
             if (si.test(1)) {
                 if constexpr (debug) { std::cout << "fec: Colinear with triangle edge!\n"; }
                 pm.flags.set (pm_fl::colinear, true);
@@ -568,7 +563,7 @@ namespace mplot
             } else {
                 if (si.test(0)) {
                     // Intersects as expected
-                    sm::vec<float, 2> cp2d = sm::algo::crossing_point<float> (edge_s_2d, edge_s_2d + edge_2d, h_2d, h_2d + mv_inplane2d);
+                    sm::vec<float, 2> cp2d = sm::geometry::crossing_point<float> (edge_s_2d, edge_s_2d + edge_2d, h_2d, h_2d + mv_inplane2d);
                     // Now go from cross point 2d to a point in model coordinates?
                     pm.end = (from_triangle_frame * cp2d.plus_one_dim(edge_s_4d[2])).less_one_dim();
                     if constexpr (debug) { std::cout << "fec: Cross point in mdl frame: " << pm.end << std::endl; }
@@ -612,7 +607,7 @@ namespace mplot
          * the edges of the triangle specified by the three vertices in t_verts/t_indices.
          *
          * IT IS ASSUMED that the triangle normal passing through mv_s WILL intersect the
-         * triangle (this may include an edge or vertex intersection). (Test beforehand with sm::algo::ray_tri_intersection)
+         * triangle (this may include an edge or vertex intersection). (Test beforehand with sm::geometry::ray_tri_intersection)
          *
          * All coordinates are in the frame of the model that contains this triangle.
          *
@@ -806,7 +801,7 @@ namespace mplot
                 sm::vec<sm::vec<float>, 3> tv_mf = this->triangle_vertices (ti0);
                 std::cout << "tn0: " << tn0 << ", length " << tn0.length() << std::endl;
                 std::cout << "TEST ray_tri_intersection (hit,-tn0): " << (hit + (tn0 / 2.0f)) << "," << -tn0 << std::endl;
-                auto [isect, hov_mf] = sm::algo::ray_tri_intersection<float> (tv_mf[0], tv_mf[1], tv_mf[2], hit + (tn0 / 2.0f), -tn0);
+                auto [isect, hov_mf] = sm::geometry::ray_tri_intersection<float> (tv_mf[0], tv_mf[1], tv_mf[2], hit + (tn0 / 2.0f), -tn0);
                 if (isect) {
                     std::cout << "ray_tri_intersection confirms we would hit at " << hov_mf << "\n";
                 } else {
@@ -918,14 +913,14 @@ namespace mplot
             }
             bool isect = false;
             sm::vec<float, 3> hov_sf = {};
-            std::tie (isect, hov_sf) = sm::algo::ray_tri_intersection<float> (tv_sf[0], tv_sf[1], tv_sf[2], camloc_sf + (tn0 / 2.0f), -tn0);
+            std::tie (isect, hov_sf) = sm::geometry::ray_tri_intersection<float> (tv_sf[0], tv_sf[1], tv_sf[2], camloc_sf + (tn0 / 2.0f), -tn0);
 
             // Use the detected location, hov_sf to compute the surface location of the camera - its 'hover location'
             sm::mat44<float> cam_to_surface = cam_to_scene;
             cam_to_surface.pretranslate (hov_sf - camloc_sf); // This is now our init pose; the camera is now at the surface
 
             if (isect == false) {
-                std::tie (isect, hov_sf) = sm::algo::ray_tri_intersection<float, double> (tv_sf[0], tv_sf[1], tv_sf[2], camloc_sf + (tn0 / 2.0f), -tn0);
+                std::tie (isect, hov_sf) = sm::geometry::ray_tri_intersection<float, double> (tv_sf[0], tv_sf[1], tv_sf[2], camloc_sf + (tn0 / 2.0f), -tn0);
                 if constexpr (debug_move2) {
                     if (isect == false) {
                         std::cout << "No isect at start with " << ti0[0] << "," << ti0[1] << "," << ti0[2]
@@ -960,7 +955,7 @@ namespace mplot
                         // _tn was returned in model frame coordinates, so recompute in scene frame
                         _tn = this->triangle_normal (tv_lf);
 
-                        auto [is, h] = sm::algo::ray_tri_intersection<float> (tv_lf[0], tv_lf[1], tv_lf[2], camloc_sf + (_tn / 2.0f), -_tn);
+                        auto [is, h] = sm::geometry::ray_tri_intersection<float> (tv_lf[0], tv_lf[1], tv_lf[2], camloc_sf + (_tn / 2.0f), -_tn);
                         if constexpr (debug_move) {
                             std::cout << "Start of move " << (is ? "IS" : "is NOT") << " in " << _ti[0] << "," << _ti[1] << "," << _ti[2] << std::endl;
                         }
@@ -987,7 +982,7 @@ namespace mplot
                     }
 
                     // Final test to see if we're on boundary?
-                    float closest_edge_d = sm::algo::dist_to_tri_edge (tv_sf[0], tv_sf[1], tv_sf[2], camloc_sf - (tn0 * hoverheight));
+                    float closest_edge_d = sm::geometry::dist_to_tri_edge (tv_sf[0], tv_sf[1], tv_sf[2], camloc_sf - (tn0 * hoverheight));
                     if constexpr (debug_move2) {
                         std::cout << "Closest distance from " << (camloc_sf - (tn0 * hoverheight))
                                   << " to ti0 edge: " << closest_edge_d << std::endl;
@@ -1133,8 +1128,8 @@ namespace mplot
                             // for another loop.
                             sm::vec<float> endmv = (reorient_model * cam_to_surface * sm::vec<float>{}).less_one_dim();
                             // Is endmv in newtv_sf/_ti?
-                            auto [isect2, isectpoint2] = sm::algo::ray_tri_intersection<float, float> (newtv_sf[0], newtv_sf[1], newtv_sf[2],
-                                                                                                       endmv + (_tn / 2.0f), -_tn);
+                            auto [isect2, isectpoint2] = sm::geometry::ray_tri_intersection<float, float> (newtv_sf[0], newtv_sf[1], newtv_sf[2],
+                                                                                                           endmv + (_tn / 2.0f), -_tn);
                             if constexpr (debug_move) {
                                 std::cout << "endmv = " << endmv << " DOES" << (isect2 ? "" : " NOT") << " land in new triangle\n";
                             }
@@ -1188,7 +1183,7 @@ namespace mplot
                                       << (hov_sf + mv_inplane + (tn0 / 2.0f)) << "," << -tn0
                                       << " intersects tv_sf (" << tv_sf << "\n";
                         }
-                        auto [single_mv, he] = sm::algo::ray_tri_intersection<float, float> (tv_sf[0], tv_sf[1], tv_sf[2], hov_sf + mv_inplane + (tn0 / 2.0f), -tn0);
+                        auto [single_mv, he] = sm::geometry::ray_tri_intersection<float, float> (tv_sf[0], tv_sf[1], tv_sf[2], hov_sf + mv_inplane + (tn0 / 2.0f), -tn0);
                         flags.set (cmm_fl::single_movement, single_mv);
                     }
 
@@ -1217,13 +1212,13 @@ namespace mplot
                                 sm::vec<sm::vec<float>, 3> tv_nb = this->triangle_vertices (_ti, model_to_scene);
                                 _tn = this->triangle_normal (tv_nb);
 
-                                auto [is, h] = sm::algo::ray_tri_intersection<float, double> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + (_tn / 2.0f), -_tn);
+                                auto [is, h] = sm::geometry::ray_tri_intersection<float, double> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + (_tn / 2.0f), -_tn);
                                 sm::vec<float> mv_orthog_nb = _tn * (mv_inplane.dot (_tn) / (_tn.dot(_tn)));
                                 sm::vec<float> mv_inplane_nb = mv_inplane - mv_orthog_nb;
                                 if constexpr (debug_move) {
                                     std::cout << "endis? ray_tri_intersection with " << (hov_sf + mv_inplane_nb + (_tn / 2.0f)) << "," << -_tn << std::endl;
                                 }
-                                auto [endis, endh] = sm::algo::ray_tri_intersection<float, double> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + mv_inplane_nb + (_tn / 2.0f), -_tn);
+                                auto [endis, endh] = sm::geometry::ray_tri_intersection<float, double> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + mv_inplane_nb + (_tn / 2.0f), -_tn);
                                 if constexpr (debug_move) {
                                     std::cout << "Start of move " << (is ? "IS" : "is NOT")
                                               << " in " << _ti[0] << "," << _ti[1] << "," << _ti[2] << " / " <<  tv_nb << std::endl;
@@ -1263,13 +1258,13 @@ namespace mplot
                                 auto [_ti, _tn] = onen;
                                  sm::vec<sm::vec<float>, 3> tv_nb = this->triangle_vertices (_ti, model_to_scene);
                                 _tn = this->triangle_normal (tv_nb);
-                                auto [is, h] = sm::algo::ray_tri_intersection<float, double> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + (_tn / 2.0f), -_tn);
+                                auto [is, h] = sm::geometry::ray_tri_intersection<float, double> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + (_tn / 2.0f), -_tn);
                                 sm::vec<float> mv_orthog_nb = _tn * (mv_inplane.dot (_tn) / (_tn.dot(_tn)));
                                 sm::vec<float> mv_inplane_nb = mv_inplane - mv_orthog_nb;
                                 if constexpr (debug_move) {
                                     std::cout << "endis ONE-n? ray_tri_intersection with " << (hov_sf + mv_inplane_nb + (_tn / 2.0f)) << "," << -_tn << std::endl;
                                 }
-                                auto [endis, endh] = sm::algo::ray_tri_intersection<float, double> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + mv_inplane_nb + (_tn / 2.0f), -_tn);
+                                auto [endis, endh] = sm::geometry::ray_tri_intersection<float, double> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + mv_inplane_nb + (_tn / 2.0f), -_tn);
                                 if constexpr (debug_move) {
                                     std::cout << "Start of move " << (is ? "IS" : "is NOT")
                                               << " in ONE-neighbour " << _ti[0] << "," << _ti[1] << "," << _ti[2] << " / " <<  tv_nb << std::endl;
