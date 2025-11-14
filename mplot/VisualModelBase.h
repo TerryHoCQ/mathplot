@@ -413,6 +413,8 @@ namespace mplot {
         void postmultViewMatrix (const sm::mat44<float>& m) { this->viewmatrix = this->viewmatrix * m; }
         void premultViewMatrix (const sm::mat44<float>& m) { this->viewmatrix = m * this->viewmatrix; }
 
+        void scaleViewMatrix (const float by) { this->viewmatrix.scale (by); }
+
         virtual void setSceneMatrixTexts (const sm::mat44<float>& sv) = 0;
 
         //! When setting the scene matrix, also have to set the text's scene matrices.
