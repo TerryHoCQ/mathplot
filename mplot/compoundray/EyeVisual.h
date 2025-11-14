@@ -176,7 +176,14 @@ namespace mplot::compoundray
         static constexpr int cone_vertices = tube_faces * 3 + 2;
         static constexpr int disc_vertices = tube_faces * 4 + 2;
         // Setter for cone_length must reinit vertices
-        void set_cone_length (float _cone_length) { this->cone_length = _cone_length; this->reinit(); }
+        void set_cone_length (float _cone_length)
+        {
+            if (this->focal_point_sum > 0.0f) {
+                std::cout << "WARNING: manual cone length will be ignored because "
+                          << "compound-ray eye file specifies focal offsets\n";
+            }
+            this->cone_length = _cone_length; this->reinit();
+        }
         float get_cone_length() { return this->cone_length; }
         // Setter for the disc width. To replace cone length? Or operate as alternative?
         void set_disc_width (float _disc_width) { this->disc_width = _disc_width; this->reinit(); }
