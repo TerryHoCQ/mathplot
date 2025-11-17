@@ -2022,8 +2022,10 @@ namespace mplot {
             sm::vec<float> n = {};
 
             // sm::vec versions of the colours
-            sm::vec<float> _sc (sc);
-            sm::vec<float> _sc2 (sc2);
+            sm::vec<float> _sc = {};
+            _sc.set_from (sc);
+            sm::vec<float> _sc2 = {};
+            _sc2.set_from (sc2);
 
             // Push the central point
             p = { 0, 0, abc[2] };
