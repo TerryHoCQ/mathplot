@@ -1985,6 +1985,163 @@ namespace mplot {
         }
 
         /*!
+         * Compute an ellipsoid surface of the form x*x/a*a + y*y/b*b + z*z/c*c = 1
+         *
+         * so is the offset position for the ellipsoid
+         *
+         * sc is the colour at one end of the z axis
+         *
+         * sc2 is the colour at the other end
+         *
+         * abc are the three ellipsoid parameters
+         *
+         * rings is the number of rings along the z axis
+         *
+         * segments is the number of segments in each ring along the z axis
+         *
+         * tr transform matrix to apply to each point in the ellipse (applied before so is applied
+         * as a transform)
+         */
+        void computeEllipsoid (sm::vec<float> so,
+                               std::array<float, 3> sc,
+                               std::array<float, 3> sc2,
+                               sm::vec<float> abc,
+                               int rings = 10, int segments = 12,
+                               sm::mat44<float> tr = sm::mat44<float>{})
+        {
+            // We have two angular parameters t and t2. t in range 0-2pi and t2 in range 0-pi. t
+            // gives the 'xy' ellipse; t2 gives the change in size of the xy ellipse as the z axis
+            // is traversed.
+            float t = 0.0f;
+            float t2 = 0.0f;
+            // used computing normals
+            sm::vec<float> two_over_abcsq = 2.0f / abc.sq();
+            // Holding the coordinates of each point on the ellipsoid as we compute it
+            sm::vec<float> p = {};
+            // The normal vector
+            sm::vec<float> n = {};
+
+            // sm::vec versions of the colours
+            sm::vec<float> _sc (sc);
+            sm::vec<float> _sc2 (sc2);
+
+            // Push the central point
+            p = { 0, 0, abc[2] };
+            this->vertex_push (so + (tr * p).less_one_dim(), this->vertexPositions);
+            n = { 0, 0, 1 };
+            this->vertex_push (n, this->vertexNormals);
+            this->vertex_push (_sc, this->vertexColors);
+
+            GLuint capMiddle = this->idx++;
+            GLuint ringStartIdx = this->idx;
+            GLuint lastRingStartIdx = this->idx;
+
+            t2 = sm::mathconst<float>::pi / rings;
+            p[2] = abc[2] * std::cos(t2);
+
+            bool firstseg = true;
+            for (int j = 0; j < segments; j++) {
+
+                t = sm::mathconst<float>::two_pi * static_cast<float>(j) / segments;
+                p[0] = abc[0] * std::cos(t) * std::sin(t2);
+                p[1] = abc[1] * std::sin(t) * std::sin(t2);
+
+                sm::vec<> pp = (tr * p).less_one_dim();
+                this->vertex_push (so + pp, this->vertexPositions);
+
+                n = (tr * (p * two_over_abcsq)).less_one_dim();
+                n.renormalize();
+                this->vertex_push (n, this->vertexNormals);
+
+                sm::vec<float> sc_ring = _sc * (1.0f - 1.0f / rings)  + _sc2 * 1.0f / rings;
+                this->vertex_push (sc_ring, this->vertexColors);
+
+                if (!firstseg) {
+                    this->indices.push_back (capMiddle);
+                    this->indices.push_back (this->idx-1);
+                    this->indices.push_back (this->idx++);
+                } else {
+                    this->idx++;
+                    firstseg = false;
+                }
+            }
+            this->indices.push_back (capMiddle);
+            this->indices.push_back (this->idx-1);
+            this->indices.push_back (capMiddle+1);
+
+            // Now add the triangles around the rings
+            for (int i = 2; i < rings; i++) {
+
+                t2 = sm::mathconst<float>::pi * (static_cast<float>(i) / rings);
+                p[2] = abc[2] * std::cos(t2);
+
+                sm::vec<float> sc_ring = _sc * (1.0f - static_cast<float>(i) / rings)  + _sc2 * static_cast<float>(i) / rings;
+
+                for (int j = 0; j < segments; j++) {
+
+                    // "current" segment
+                    t = sm::mathconst<float>::two_pi * static_cast<float>(j) / segments;
+                    p[0] = abc[0] * std::cos(t) * std::sin(t2);
+                    p[1] = abc[1] * std::sin(t) * std::sin(t2);
+
+                    // NB: Only add ONE vertex per segment. ALREADY have the first ring!
+                    sm::vec<> pp = (tr * p).less_one_dim();
+                    this->vertex_push (so + pp, this->vertexPositions);
+                    // The vertex normal of a vertex that makes up a sphere is
+                    // just a normal vector in the direction of the vertex.
+                    n = (tr * (p * two_over_abcsq)).less_one_dim();
+                    n.renormalize();
+                    this->vertex_push (n, this->vertexNormals);
+
+                    this->vertex_push (sc_ring, this->vertexColors);
+
+                    if (j == segments - 1) {
+                        // Last vertex is back to the start
+                        this->indices.push_back (ringStartIdx++);
+                        this->indices.push_back (this->idx);
+                        this->indices.push_back (lastRingStartIdx);
+                        this->indices.push_back (lastRingStartIdx);
+                        this->indices.push_back (this->idx++);
+                        this->indices.push_back (lastRingStartIdx+segments);
+                    } else {
+                        this->indices.push_back (ringStartIdx++);
+                        this->indices.push_back (this->idx);
+                        this->indices.push_back (ringStartIdx);
+                        this->indices.push_back (ringStartIdx);
+                        this->indices.push_back (this->idx++);
+                        this->indices.push_back (this->idx);
+                    }
+                }
+                lastRingStartIdx += segments;
+            }
+
+            // bottom cap
+
+            // Push the central point of the bottom cap
+            p = { 0, 0, -abc[2] };
+            this->vertex_push (so + (tr * p).less_one_dim(), this->vertexPositions);
+            n = { 0, 0, -1 };
+            this->vertex_push (n, this->vertexNormals);
+            this->vertex_push (_sc2, this->vertexColors);
+            capMiddle = this->idx++;
+            firstseg = true;
+            // No more vertices to push, just do the indices for the bottom cap
+            ringStartIdx = lastRingStartIdx;
+            for (int j = 0; j < segments; j++) {
+                if (j != segments - 1) {
+                    this->indices.push_back (capMiddle);
+                    this->indices.push_back (ringStartIdx++);
+                    this->indices.push_back (ringStartIdx);
+                } else {
+                    // Last segment
+                    this->indices.push_back (capMiddle);
+                    this->indices.push_back (ringStartIdx);
+                    this->indices.push_back (lastRingStartIdx);
+                }
+            }
+        }
+
+        /*!
          * Compute vertices for an icosahedron.
          */
         void computeIcosahedron (sm::vec<float> centre,

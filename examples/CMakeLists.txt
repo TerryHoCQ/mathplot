@@ -360,6 +360,9 @@ if(NOT APPLE)
   target_link_libraries(sphere OpenGL::GL glfw Freetype::Freetype)
 endif()
 
+add_executable(ellipsoid ellipsoid.cpp)
+target_link_libraries(ellipsoid OpenGL::GL glfw Freetype::Freetype)
+
 # constexpr code won't work on Apple Clang
 if(NOT APPLE)
   add_executable(icosahedron icosahedron.cpp)
