@@ -296,6 +296,8 @@ namespace mplot {
             if (found_model == true) { this->vm.erase (this->vm.begin() + modelId); }
         }
 
+        void clear () { this->vm.clear(); }
+
         void set_cursorpos (double _x, double _y) { this->cursorpos = {static_cast<float>(_x), static_cast<float>(_y)}; }
 
         //! A callback function
