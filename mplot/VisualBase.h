@@ -893,7 +893,7 @@ namespace mplot {
         sm::vec<float, 3> rotation_centre = {};
 
         // Distance to the 'rotation centre'. Used to scale the effect of the scroll wheel
-        float d_to_rotation_centre = 5.0f;
+        float d_to_rotation_centre = -1.2f * zDefault;
 
         //! The projection matrix is a member of this class. Value is set during setPerspective() or setOrthographic()
         sm::mat44<float> projection;
@@ -1121,6 +1121,7 @@ namespace mplot {
                 this->sceneview_tr.translate (this->scenetrans_default);
                 this->scenetrans_delta.zero();
                 this->rotation_delta.reset();
+                this->d_to_rotation_centre = -1.2f * this->scenetrans_default[2];
 
                 needs_render = true;
             }
