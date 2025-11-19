@@ -1391,12 +1391,7 @@ namespace mplot {
 
                 // Add the depth at which the object lies.  Use forward projection to determine the
                 // correct z coordinate for the inverse projection. This assumes only one object.
-#if 0
-                sm::vec<float> st = this->savedSceneview.translation();
-                sm::vec<float, 4> point =  { 0.0f, 0.0f, st.z(), 1.0f };
-#else
                 sm::vec<float, 4> point =  { 0.0f, 0.0f, -this->d_to_rotation_centre, 1.0f };
-#endif
                 sm::vec<float, 4> pp = this->projection * point;
                 float coord_z = pp[2] / pp[3]; // divide by pp[3] is divide by/normalise by 'w'.
 
