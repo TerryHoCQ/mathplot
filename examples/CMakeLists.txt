@@ -537,3 +537,7 @@ endif()
 
 add_executable(show_boundingboxes show_boundingboxes.cpp)
 target_link_libraries(show_boundingboxes OpenGL::GL glfw Freetype::Freetype)
+
+# if have compound-ray header
+add_executable(cray_eye cray_eye.cpp)
+target_link_libraries(cray_eye OpenGL::GL glfw Freetype::Freetype)

@@ -11,10 +11,56 @@
 #include <mplot/VisualModel.h>
 #include <mplot/gl/version.h>
 
-#include "cameras/CompoundEyeDataTypes.h"
-
 namespace mplot::compoundray
 {
+    // This is a binary-compatible equivalent to Ommatidium from cameras/CompoundEyeDataTypes.h in compound-ray.
+    // Use reinterpret_cast<std::vector<mplot::compoundray::Ommatidium>*>(ommatidia) if using compound ray.
+    struct Ommatidium
+    {
+        sm::vec<float, 3> relativePosition = {};
+        sm::vec<float, 3> relativeDirection = {};
+        float acceptanceAngleRadians = 0.0f;
+        float focalPointOffset = 0.0f;
+    };
+
+    // Helper function. Read the compound-ray csv eye file into ommatidia. ommatidia should be a pointer to an allocate vector.
+    [[maybe_unused]] static std::vector<mplot::compoundray::Ommatidium>* readEye (std::vector<mplot::compoundray::Ommatidium>* ommatidia,
+                                                                                  const std::string& path)
+    {
+        if (ommatidia == nullptr) { return ommatidia; }
+
+        std::cout << "Path: " << path << std::endl;
+
+        ommatidia->clear();
+
+        std::ifstream eyeDataFile (path, std::ifstream::in);
+        if(!eyeDataFile.is_open()) {
+            std::cout << "Failed to open eye data file " << path << "\n";
+            return ommatidia;
+        }
+
+        std::string line;
+        size_t ommCount = 0;
+        while (std::getline (eyeDataFile, line)) {
+            std::vector<std::string> splitData = mplot::tools::stringToVector (line, " ");
+            if (splitData.size() < 8) {
+                std::cout << "Malformed line, continue...\n";
+                continue;
+            }
+            mplot::compoundray::Ommatidium o = {
+                sm::vec<float, 3>{ std::stof(splitData[0]), std::stof(splitData[1]), std::stof(splitData[2]) },
+                sm::vec<float, 3>{ std::stof(splitData[3]), std::stof(splitData[4]), std::stof(splitData[5]) },
+                std::stof(splitData[6]),
+                std::stof(splitData[7])
+            };
+            ommatidia->push_back (o);
+            ommCount++;
+        }
+        std::cout <<  "  Loaded " << ommCount << " ommatidia." << std::endl;
+
+        return ommatidia;
+    }
+
     //! This class creates a visualization of a compound-ray format compound eye model
     template<int glver = mplot::gl::version_4_1>
     class EyeVisual : public mplot::VisualModel<glver>
@@ -25,7 +71,7 @@ namespace mplot::compoundray
         //! Initialise with offset, start and end coordinates, radius and a single colour.
         EyeVisual (const sm::vec<float, 3> _offset,
                    std::vector<std::array<float, 3>>* _ommData,
-                   std::vector<Ommatidium>* _ommatidia)
+                   std::vector<mplot::compoundray::Ommatidium>* _ommatidia)
         {
             this->init (_offset, _ommData, _ommatidia);
         }
@@ -34,7 +80,7 @@ namespace mplot::compoundray
 
         void init (const sm::vec<float, 3> _offset,
                    std::vector<std::array<float, 3>>* _ommData,
-                   std::vector<Ommatidium>* _ommatidia)
+                   std::vector<mplot::compoundray::Ommatidium>* _ommatidia)
         {
             this->viewmatrix.translate (_offset);
             this->ommData = _ommData;
@@ -109,12 +155,10 @@ namespace mplot::compoundray
                 for (size_t i = 0u; i < n_omm; ++i) {
                     // Ommatidia colour, position/shape
                     std::array<float, 3> colour = (*ommData)[i];
-                    float3 rpos = (*ommatidia)[i].relativePosition;
-                    float3 rdir = (*ommatidia)[i].relativeDirection;
                     float angle = (*ommatidia)[i].acceptanceAngleRadians;
                     float focal_point = (*ommatidia)[i].focalPointOffset;
-                    sm::vec<float, 3> pos = { rpos.x, rpos.y, rpos.z };
-                    sm::vec<float, 3> dir = { rdir.x, rdir.y, rdir.z };
+                    sm::vec<float, 3> pos = (*ommatidia)[i].relativePosition;
+                    sm::vec<float, 3> dir = (*ommatidia)[i].relativeDirection;
                     dir.renormalize();
                     // Tip of cone is 'behind' the position of the ommatidial face/lens
                     sm::vec<float, 3> ommatidial_detector_point = pos - dir * focal_point;
@@ -134,12 +178,10 @@ namespace mplot::compoundray
                 // ommatidial sensor AND the centre of the ommatidial lens
                 for (size_t i = 0u; i < n_omm; ++i) {
                     std::array<float, 3> colour = (*ommData)[i];
-                    float3 rpos = (*ommatidia)[i].relativePosition;
-                    float3 rdir = (*ommatidia)[i].relativeDirection;
                     float angle = (*ommatidia)[i].acceptanceAngleRadians;
                     // pos will be the tip of the cone in this case, and the centre of the disc
-                    sm::vec<float, 3> pos = { rpos.x, rpos.y, rpos.z };
-                    sm::vec<float, 3> dir = { rdir.x, rdir.y, rdir.z };
+                    sm::vec<float, 3> pos = (*ommatidia)[i].relativePosition;
+                    sm::vec<float, 3> dir = (*ommatidia)[i].relativeDirection;
                     dir.renormalize();
                     // do a cone
                     sm::vec<float, 3> ommatidial_cone_pos = pos + dir * this->cone_length;
@@ -158,6 +200,9 @@ namespace mplot::compoundray
                 }
             }
 
+            if (this->show_2d) {
+                // Compute intersections between ommatidia direction vectors and our projection sphere.
+            }
         }
 
         // Visualize in two modes "disc" mode, showing just a 2D disc for each ommatidium and
@@ -165,8 +210,8 @@ namespace mplot::compoundray
         bool show_cones = false;
         // The colours detected by each ommatidium
         std::vector<std::array<float, 3>>* ommData = nullptr;
-        // The position and orientation of each oimmatidium
-        std::vector<Ommatidium>* ommatidia = nullptr;
+        // The position and orientation of each ommatidium
+        std::vector<mplot::compoundray::Ommatidium>* ommatidia = nullptr;
         // If sum is 0, then we have a special case for rendering the eye as we have no focal point
         // offsets specified for this eye (and hence the radius of the ommatidium is not known)
         float focal_point_sum = 0.0f;
@@ -188,6 +233,15 @@ namespace mplot::compoundray
         // Setter for the disc width. To replace cone length? Or operate as alternative?
         void set_disc_width (float _disc_width) { this->disc_width = _disc_width; this->reinit(); }
         float get_disc_width() { return this->disc_width; }
+
+        // Parameters to reduce the visual to 2D. Use these to draw a sphere externally with a
+        // SphereVisual for your debugging.
+        bool show_2d = true;
+        float proj_sphere_radius = 0.0f;
+        sm::vec<float> proj_sphere_centre = {};
+        bool show_sphere = true;
+        sm::vvec<sm::vec<float>> proj_sphere_intersections;
+
     private:
         // User-modifiable ommatidial cone length which is used if there's no focal point offset
         float cone_length = 0.1f;
