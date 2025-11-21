@@ -54,19 +54,22 @@ int main (int argc, char** argv)
     }
 
     // A second eye goes in the 'eye only' window
-    mplot::compoundray::EyeVisual<>* ep = nullptr;
+    //mplot::compoundray::EyeVisual<>* ep = nullptr;
     auto eyevm = std::make_unique<mplot::compoundray::EyeVisual<>> (sm::vec<>{}, &ommatidiaColours, ommatidia.get());
     v.bindmodel (eyevm);
     eyevm->name = "Big Eye";
     eyevm->show_cones = false;
     eyevm->proj_sphere_centre = { 0, 0, 0 };
     eyevm->proj_sphere_radius = psrad;
-    eyevm->show_sphere = false;
-    eyevm->setAlpha (0.1f);
+    eyevm->twod_offset = { 0, 2, 0 };
+    eyevm->show_sphere = true;
+    eyevm->show_rays = true;
     eyevm->finalize();
 
-    ep = v.addVisualModel (eyevm);
+    v.addVisualModel (eyevm);
 
+#if 0
+    ep = v.addVisualModel (eyevm);
     if (ep->show_sphere) {
         auto svm = std::make_unique<mplot::SphereVisual<>> (ep->proj_sphere_centre, ep->proj_sphere_radius, mplot::colour::slategray1);
         v.bindmodel (svm);
@@ -108,6 +111,6 @@ int main (int argc, char** argv)
 #endif
         }
     }
-
+#endif
     v.keepOpen();
 }
