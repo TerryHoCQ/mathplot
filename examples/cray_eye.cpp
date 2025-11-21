@@ -63,8 +63,6 @@ int main (int argc, char** argv)
     eyevm->finalize();
 
     ep = v.addVisualModel (eyevm);
-    // Scale this model up, so it's not tiny like the one in the scene
-    ep->scaleViewMatrix (1000);
 
     if (ep->show_sphere) {
         auto svm = std::make_unique<mplot::SphereVisual<>> (ep->proj_sphere_centre, ep->proj_sphere_radius, mplot::colour::slategray1);
@@ -74,34 +72,36 @@ int main (int argc, char** argv)
         v.addVisualModel (svm);
 
 
-        // Can now find intersections on our sphere
-        sm::vec<> l0 = (*ommatidia)[0].relativePosition;
-        sm::vec<> l = -(*ommatidia)[0].relativeDirection;
+        for (size_t i = 0; i < ommatidia->size(); ++i) {
+            // Can now find intersections on our sphere
+            sm::vec<> l0 = (*ommatidia)[i].relativePosition;
+            sm::vec<> l = -(*ommatidia)[i].relativeDirection;
 
-#if 1
-        auto vvm = std::make_unique<mplot::VectorVisual<float, 3>> (l0);
-        v.bindmodel (vvm);
-        vvm->vgoes = mplot::VectorGoes::FromOrigin;
-        vvm->thickness = 0.001f;
-        vvm->thevec = l;
-        vvm->finalize();
-        v.addVisualModel (vvm);
+            // Show direction vector from ommatidium position
+            auto vvm = std::make_unique<mplot::VectorVisual<float, 3>> (l0);
+            v.bindmodel (vvm);
+            vvm->vgoes = mplot::VectorGoes::FromOrigin;
+            vvm->thickness = 0.001f;
+            vvm->thevec = l;
+            vvm->finalize();
+            v.addVisualModel (vvm);
+
+            sm::vec<sm::vec<>, 2> intersections = sm::geometry::ray_sphere_intersection (sm::vec<>{}, ep->proj_sphere_radius, l0, l);
+
+            if (intersections[0][0] != std::numeric_limits<float>::max()) {
+                auto ivm1 = std::make_unique<mplot::SphereVisual<>> (intersections[0], 0.01f, mplot::colour::crimson);
+                v.bindmodel (ivm1);
+                ivm1->finalize();
+                v.addVisualModel (ivm1);
+            }
+#if 0
+            if (intersections[1][0] != std::numeric_limits<float>::max()) {
+                auto ivm2 = std::make_unique<mplot::SphereVisual<>> (intersections[1], 0.01f, mplot::colour::blue);
+                v.bindmodel (ivm2);
+                ivm2->finalize();
+                v.addVisualModel (ivm2);
+            }
 #endif
-
-        sm::vec<sm::vec<>, 2> intersections = sm::geometry::ray_sphere_intersection (sm::vec<>{}, ep->proj_sphere_radius, l0, l);
-
-        if (intersections[0][0] != std::numeric_limits<float>::max()) {
-            auto ivm1 = std::make_unique<mplot::SphereVisual<>> (intersections[0], 0.01f, mplot::colour::crimson);
-            v.bindmodel (ivm1);
-            ivm1->finalize();
-            v.addVisualModel (ivm1);
-        }
-
-        if (intersections[1][0] != std::numeric_limits<float>::max()) {
-            auto ivm2 = std::make_unique<mplot::SphereVisual<>> (intersections[1], 0.01f, mplot::colour::blue);
-            v.bindmodel (ivm2);
-            ivm2->finalize();
-            v.addVisualModel (ivm2);
         }
     }
 
