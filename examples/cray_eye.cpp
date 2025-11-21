@@ -61,7 +61,7 @@ int main (int argc, char** argv)
     eyevm->show_cones = false;
     eyevm->proj_sphere_centre = { 0, 0, 0 };
     eyevm->proj_sphere_radius = psrad;
-    eyevm->show_sphere = true;
+    eyevm->show_sphere = false;
     eyevm->setAlpha (0.1f);
     eyevm->finalize();
 

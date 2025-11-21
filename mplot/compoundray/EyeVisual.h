@@ -8,8 +8,13 @@
 #include <vector>
 #include <sm/mathconst>
 #include <sm/vec>
+#include <sm/range>
+#include <sm/geometry>
 #include <mplot/VisualModel.h>
 #include <mplot/gl/version.h>
+
+#define JC_VORONOI_IMPLEMENTATION
+#include <mplot/jcvoronoi/jc_voronoi.h>
 
 namespace mplot::compoundray
 {
@@ -103,9 +108,9 @@ namespace mplot::compoundray
             } // else num_vertices = disc_vertices;
 
             // 3 colours, n_omm tubes, cone_vertices vertices per cone.
-            if (n_verts != 3u * n_omm * static_cast<unsigned int>(num_vertices)) {
-                throw std::runtime_error ("EyeVisual: n_verts/n_omm sizes mismatch!");
-            }
+            //if (n_verts != 3u * n_omm * static_cast<unsigned int>(num_vertices)) {
+            //    throw std::runtime_error ("EyeVisual: n_verts/n_omm sizes mismatch!");
+            //}
 
             // Could test on: if (this->focal_point_sum > 0.0f) { // if the number of vertices were
             // different, but I chose cones in both cases
@@ -118,6 +123,26 @@ namespace mplot::compoundray
                     this->vertex_push ((*ommData)[i], this->vertexColors);
                 }
             }
+
+            //////////////// 2D map
+            if (!this->omm2d.empty()) {
+                // Replace elements of vertexColors
+                //unsigned int tcounts = 0;
+                sm::vec<> cv = {};
+                for (std::size_t i = 0u; i < this->triangle_counts.size(); ++i) {
+                    auto c = (*ommData)[this->site_indices[i]];
+                    //std::size_t d_idx = tcounts * 9; // 3 floats per vtx, 3 vtxs per tri
+                    for (std::size_t j = 0; j < 3 * this->triangle_counts[i]; ++j) {
+                        // This is ONE colour vertex. Need 3 per triangle.
+                        this->vertex_push (c, this->vertexColors);
+                        //this->vertexColors[d_idx + 3 * j]     = c[0];
+                        //this->vertexColors[d_idx + 3 * j + 1] = c[1];
+                        //this->vertexColors[d_idx + 3 * j + 2] = c[2];
+                    }
+                    //tcounts += this->triangle_counts[i];
+                }
+            }
+            ///////////////////
 
             // Lastly, this call copies vertexColors (etc) into the OpenGL memory space
             this->reinit_colour_buffer();
@@ -202,7 +227,87 @@ namespace mplot::compoundray
 
             if (this->show_2d) {
                 // Compute intersections between ommatidia direction vectors and our projection sphere.
+                for (size_t i = 0; i < this->ommatidia->size(); ++i) {
+                    sm::vec<sm::vec<>, 2> sph_coord = sm::geometry::ray_sphere_intersection (sm::vec<>{}, this->proj_sphere_radius,
+                                                                                             (*ommatidia)[i].relativePosition,
+                                                                                             -(*ommatidia)[i].relativeDirection);
+                    if (sph_coord[0][0] != std::numeric_limits<float>::max()) {
+                        // sph_coord[0] is the coordinate for the ommatidia pixel on the sphere
+                        sm::vec<float, 2> ll = sm::geometry::spherical_projection::xyz_to_latlong (sph_coord[0], this->proj_sphere_radius);
+                        sm::vec<float, 2> xy = sm::geometry::spherical_projection::mercator (ll, this->proj_sphere_radius);
+                        // Add xy as one of the points that we'll make a Voronoi diagram from.
+                        this->omm2d.push_back (xy.plus_one_dim());
+                    }
+                }
+                // Make 2D Voronoi of omm2d.
+                this->voronoi2d();
             }
+        }
+
+        void voronoi2d()
+        {
+            // Use mplot::range to find the extents of dataCoords. From these create a
+            // rectangle to pass to jcv_diagram_generate.
+            uint32_t ncoords = this->omm2d.size();
+            const sm::vvec<sm::vec<float, 3>>* d_ptr = &this->omm2d; // may not need
+            sm::range<float> rx, ry;
+            rx.search_init();
+            ry.search_init();
+            for (unsigned int i = 0; i < ncoords; ++i) {
+                rx.update (this->omm2d[i][0]);
+                ry.update (this->omm2d[i][1]);
+            }
+            // Generate the 2D Voronoi diagram
+            jcv_diagram diagram;
+            std::memset (&diagram, 0, sizeof(jcv_diagram));
+            jcv_rect domain = {
+                jcv_point{rx.min - this->border_width, ry.min - this->border_width, 0.0f},
+                jcv_point{rx.max + this->border_width, ry.max + this->border_width, 0.0f}
+            };
+            jcv_diagram_generate (ncoords, d_ptr->data(), &domain, 0, &diagram);
+            // We obtain access the the Voronoi cell sites:
+            const jcv_site* sites = jcv_diagram_get_sites (&diagram);
+
+            if (static_cast<uint32_t>(diagram.numsites) != ncoords) {
+                std::cout << "WARNING: numsites != ncoords ?!?!\n";
+            }
+
+            for (int i = 0; i < diagram.numsites; ++i) {
+                const jcv_site* site = &sites[i];
+                jcv_graphedge* e = site->edges; // The very first edge
+                while (e) {
+                    // Set z. Should be done in jcvoronoi, but haven't found out how
+                    e->pos[0][2] = this->omm2d[i][2];
+                    e->pos[1][2] = e->pos[0][2];
+                    e = e->next;
+                }
+            }
+
+            // To draw triangles iterate over the 'sites' and get the edges
+            this->triangle_counts.resize (ncoords, 0);
+            this->site_indices.resize (ncoords, 0);
+            this->triangle_count_sum = 0;
+
+            // To draw triangles iterate over the 'sites' and draw triangles
+            for (int i = 0; i < diagram.numsites; ++i) {
+                const jcv_site* site = &sites[i];
+                const jcv_graphedge* e = site->edges;
+                std::array<float, 3> colour = (*ommData)[i];
+                unsigned int site_triangles = 0;
+                while (e) {
+                    this->computeTriangle (site->p + this->twod_offset,
+                                           e->pos[0] + this->twod_offset,
+                                           e->pos[1] + this->twod_offset, colour);
+                    ++site_triangles;
+                    e = e->next;
+                }
+                this->triangle_counts[i] = site_triangles;
+                this->site_indices[i] = site->index;
+                this->triangle_count_sum += site_triangles;
+            }
+
+            // At end free the Voronoi diagram memory
+            jcv_diagram_free (&diagram);
         }
 
         // Visualize in two modes "disc" mode, showing just a 2D disc for each ommatidium and
@@ -234,19 +339,54 @@ namespace mplot::compoundray
         void set_disc_width (float _disc_width) { this->disc_width = _disc_width; this->reinit(); }
         float get_disc_width() { return this->disc_width; }
 
-        // Parameters to reduce the visual to 2D. Use these to draw a sphere externally with a
-        // SphereVisual for your debugging.
+        // Parameters for a 2D representation
         bool show_2d = true;
+        // 2D positions for the ommatidia centres encoded in 3D vecs
+        sm::vvec<sm::vec<float, 3>> omm2d;
+        // Use this to position the 2D map wrt the three D model
+        sm::vec<float, 3> twod_offset = {0, 0, 0};
+        // The user-provided radius of the projection sphere. Will need to match the size of the compound ray eye
         float proj_sphere_radius = 0.0f;
+        // The centre of the user-provided projection sphere
         sm::vec<float> proj_sphere_centre = {};
+        // Should the sphere be shown visually (maybe by external code?
         bool show_sphere = true;
-        sm::vvec<sm::vec<float>> proj_sphere_intersections;
+        // Width of border around 2D map
+        float border_width = std::numeric_limits<float>::epsilon();
+        // Have to record the number of triangles in each cell in the 2D map in order to update the colours
+        sm::vvec<unsigned int> triangle_counts;
+        // Record the data index for each Voronoi cell index. For reinitColours
+        sm::vvec<unsigned int> site_indices;
+        // Sum of triangles used for reinitColours
+        unsigned int triangle_count_sum = 0;
 
     private:
         // User-modifiable ommatidial cone length which is used if there's no focal point offset
         float cone_length = 0.1f;
         // User-modifiable ommatidial disc width. If negative ignored?
         float disc_width = -1.0f;
+
+        //! Compute a triangle from 3 arbitrary corners
+        void computeTriangle (sm::vec<float> c1, sm::vec<float> c2, sm::vec<float> c3, const std::array<float, 3>& colr)
+        {
+            // v is the face normal
+            sm::vec<float> u1 = c1-c2;
+            sm::vec<float> u2 = c2-c3;
+            sm::vec<float> v = u1.cross(u2);
+            v.renormalize();
+            // Push corner vertices
+            this->vertex_push (c1, this->vertexPositions);
+            this->vertex_push (c2, this->vertexPositions);
+            this->vertex_push (c3, this->vertexPositions);
+            // Colours/normals
+            for (unsigned int i = 0; i < 3U; ++i) {
+                this->vertex_push (colr, this->vertexColors);
+                this->vertex_push (v, this->vertexNormals);
+            }
+            this->indices.push_back (this->idx++);
+            this->indices.push_back (this->idx++);
+            this->indices.push_back (this->idx++);
+        }
     };
 
 } // namespace comray
