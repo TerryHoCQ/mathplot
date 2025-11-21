@@ -21,11 +21,14 @@ int main (int argc, char** argv)
 {
     std::string eyefile = "";
     if (argc < 2) {
-        std::cout << "Usage: " << argv[0] << " path/to/eyefile.eye\n";
+        std::cout << "Usage: " << argv[0] << " path/to/eyefile.eye [projection sphere radius]\n";
         return -1;
     } else {
         eyefile = std::string (argv[1]);
     }
+
+    float psrad = 0.6f;
+    if (argc > 2) { psrad = std::atof (argv[2]); }
 
     auto v = mplot::Visual<>(1024, 768, "mplot::compoundray::EyeVisual");
 
@@ -57,7 +60,7 @@ int main (int argc, char** argv)
     eyevm->name = "Big Eye";
     eyevm->show_cones = false;
     eyevm->proj_sphere_centre = { 0, 0, 0 };
-    eyevm->proj_sphere_radius = 0.6f;
+    eyevm->proj_sphere_radius = psrad;
     eyevm->show_sphere = true;
     eyevm->setAlpha (0.1f);
     eyevm->finalize();
@@ -89,14 +92,15 @@ int main (int argc, char** argv)
             sm::vec<sm::vec<>, 2> intersections = sm::geometry::ray_sphere_intersection (sm::vec<>{}, ep->proj_sphere_radius, l0, l);
 
             if (intersections[0][0] != std::numeric_limits<float>::max()) {
-                auto ivm1 = std::make_unique<mplot::SphereVisual<>> (intersections[0], 0.01f, mplot::colour::crimson);
+                // intersections[0] is the coordinate for the ommatidia pixel on the sphere
+                auto ivm1 = std::make_unique<mplot::SphereVisual<>> (intersections[0], 0.01f * psrad, mplot::colour::crimson);
                 v.bindmodel (ivm1);
                 ivm1->finalize();
                 v.addVisualModel (ivm1);
             }
 #if 0
             if (intersections[1][0] != std::numeric_limits<float>::max()) {
-                auto ivm2 = std::make_unique<mplot::SphereVisual<>> (intersections[1], 0.01f, mplot::colour::blue);
+                auto ivm2 = std::make_unique<mplot::SphereVisual<>> (intersections[1], 0.01f * psrad, mplot::colour::blue);
                 v.bindmodel (ivm2);
                 ivm2->finalize();
                 v.addVisualModel (ivm2);
