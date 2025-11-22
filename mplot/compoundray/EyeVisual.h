@@ -99,7 +99,7 @@ namespace mplot::compoundray
             size_t n_verts = this->vertexColors.size(); // should be tube_vertices * n_omm
             if (n_verts == 0u) { return; } // model doesn't exist yet
 
-            this->vertexColors.clear(); // Could re-write not clear/push
+            // this->vertexColors.clear(); // Could re-write not clear/push
             size_t n_omm = ommData->size();
 
             int num_vertices = disc_vertices;
@@ -120,27 +120,34 @@ namespace mplot::compoundray
                 // Update the 3 RGB values in vertexColors tube_vertices times
                 int j = 0;
                 for (; j < num_vertices; ++j) {
-                    this->vertex_push ((*ommData)[i], this->vertexColors);
+                    this->vertexColors[i * num_vertices * 3 + j * 3] = (*ommData)[i][0];
+                    this->vertexColors[i * num_vertices * 3 + j * 3 + 1] = (*ommData)[i][1];
+                    this->vertexColors[i * num_vertices * 3 + j * 3 + 2] = (*ommData)[i][2];
+                    //this->vertex_push ((*ommData)[i], this->vertexColors);
                 }
             }
 
+            std::size_t i_3d = n_omm * num_vertices * 3;
+
             //////////////// 2D map
-            if (!this->omm2d.empty()) {
+            for (uint32_t pri = 0; pri < this->projections.size(); ++pri) {
                 // Replace elements of vertexColors
-                //unsigned int tcounts = 0;
-                sm::vec<> cv = {};
-                for (std::size_t i = 0u; i < this->triangle_counts.size(); ++i) {
-                    auto c = (*ommData)[this->site_indices[i]];
-                    //std::size_t d_idx = tcounts * 9; // 3 floats per vtx, 3 vtxs per tri
-                    for (std::size_t j = 0; j < 3 * this->triangle_counts[i]; ++j) {
+                std::size_t tcounts = 0;
+                std::size_t d_2d = 0;
+                for (std::size_t i = 0u; i < this->projections[pri].triangle_counts.size(); ++i) {
+                    auto c = (*ommData)[this->projections[pri].site_indices[i]];
+                    std::size_t d_idx = i_3d + tcounts * 9; // 3 floats per vtx, 3 vtxs per tri
+                    for (std::size_t j = 0; j < 3 * this->projections[pri].triangle_counts[i]; ++j) {
                         // This is ONE colour vertex. Need 3 per triangle.
-                        this->vertex_push (c, this->vertexColors);
-                        //this->vertexColors[d_idx + 3 * j]     = c[0];
-                        //this->vertexColors[d_idx + 3 * j + 1] = c[1];
-                        //this->vertexColors[d_idx + 3 * j + 2] = c[2];
+                        //this->vertex_push (c, this->vertexColors);
+                        this->vertexColors[d_idx + 3 * j]     = c[0];
+                        this->vertexColors[d_idx + 3 * j + 1] = c[1];
+                        this->vertexColors[d_idx + 3 * j + 2] = c[2];
+                        d_2d++;
                     }
-                    //tcounts += this->triangle_counts[i];
+                    tcounts += this->projections[pri].triangle_counts[i];
                 }
+                i_3d += d_2d;
             }
             ///////////////////
 
@@ -316,8 +323,8 @@ namespace mplot::compoundray
 
                 if (this->show_sphere) {
                     this->computeSphere (this->projections[pri].proj_sphere_centre,
-                                         mplot::colour::grey50, mplot::colour::grey50,
-                                         this->projections[pri].proj_sphere_radius);
+                                         mplot::colour::grey50,
+                                         this->projections[pri].proj_sphere_radius, 18, 18);
                 }
 
                 if (this->show_rays) {
@@ -333,7 +340,7 @@ namespace mplot::compoundray
                         if (intersections[0][0] != std::numeric_limits<float>::max()) {
                             // intersections[0] is the coordinate for the ommatidia pixel on the sphere
                             this->computeSphere (intersections[0],
-                                                 mplot::colour::crimson, mplot::colour::crimson, 0.006f * this->projections[pri].proj_sphere_radius);
+                                                 mplot::colour::crimson, 0.006f * this->projections[pri].proj_sphere_radius);
                         }
                     }
                 }
@@ -388,7 +395,8 @@ namespace mplot::compoundray
             for (int i = 0; i < diagram.numsites; ++i) {
                 const jcv_site* site = &sites[i];
                 const jcv_graphedge* e = site->edges;
-                std::array<float, 3> colour = (*ommData)[i];
+                std::array<float, 3> colour = (*ommData)[this->projections[pri].site_indices[i]];
+
                 unsigned int site_triangles = 0;
                 while (e) {
                     this->computeTriangle (site->p + this->projections[pri].twod_offset,

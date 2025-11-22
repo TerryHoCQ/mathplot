@@ -60,16 +60,20 @@ int main (int argc, char** argv)
     eyevm->name = "Big Eye";
     eyevm->show_cones = false;
 
-    sm::vec<> centre = { 0, 0, 0 };
-    sm::vec<> twod_offset = { 0, 2, 0 };
-
+    sm::vec<> centre = { -0.5, 0, 0 };
+    sm::vec<> twod_offset = { 3, 2, 0 };
     eyevm->add_spherical_projection (twod_offset, mplot::compoundray::EyeVisual<>::projection_type::mercator, centre, psrad);
+/*
+    twod_offset = { -3, 2, 0 };
+    centre = { 0.5, 0, 0 };
+    eyevm->add_spherical_projection (twod_offset, mplot::compoundray::EyeVisual<>::projection_type::mercator, centre, psrad);
+*/
     eyevm->show_sphere = true;
     eyevm->show_rays = true;
     eyevm->finalize();
 
-    v.addVisualModel (eyevm);
-
+    [[maybe_unused]] auto ep = v.addVisualModel (eyevm);
+    ep->reinitColours();
 #if 0
     ep = v.addVisualModel (eyevm);
     if (ep->show_sphere) {
