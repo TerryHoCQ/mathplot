@@ -59,9 +59,11 @@ int main (int argc, char** argv)
     v.bindmodel (eyevm);
     eyevm->name = "Big Eye";
     eyevm->show_cones = false;
-    eyevm->proj_sphere_centre = { 0, 0, 0 };
-    eyevm->proj_sphere_radius = psrad;
-    eyevm->twod_offset = { 0, 2, 0 };
+
+    sm::vec<> centre = { 0, 0, 0 };
+    sm::vec<> twod_offset = { 0, 2, 0 };
+
+    eyevm->add_spherical_projection (twod_offset, mplot::compoundray::EyeVisual<>::projection_type::mercator, centre, psrad);
     eyevm->show_sphere = true;
     eyevm->show_rays = true;
     eyevm->finalize();
