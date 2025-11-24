@@ -297,6 +297,7 @@ namespace mplot::compoundray
 
             for (uint32_t pri = 0; pri < this->projections.size(); ++pri) {
                 this->omm2d.clear();
+                std::cout << "omm2d cleared; size is " << omm2d.size() << std::endl;
                 // Compute intersections between ommatidia direction vectoras and our projection sphere.
                 sm::mat44<float> coord_rotn;
                 coord_rotn.rotate (sm::vec<>::ux(), sm::mathconst<float>::pi_over_2);
@@ -315,6 +316,7 @@ namespace mplot::compoundray
                         this->omm2d.push_back (xy.plus_one_dim());
                     }
                 }
+                std::cout << "omm2d re-built; size is " << omm2d.size() << std::endl;
                 // Make 2D Voronoi of omm2d.
                 this->voronoi2d (pri);
             }
@@ -349,14 +351,15 @@ namespace mplot::compoundray
 
         void voronoi2d (uint32_t pri)
         {
+            std::cout << "voronoi2d (" << pri << ")\n";
             // Use mplot::range to find the extents of dataCoords. From these create a
             // rectangle to pass to jcv_diagram_generate.
-            uint32_t ncoords = this->omm2d.size();
+            int ncoords = static_cast<int>(this->omm2d.size());
             const sm::vvec<sm::vec<float, 3>>* d_ptr = &this->omm2d; // may not need
             sm::range<float> rx, ry;
             rx.search_init();
             ry.search_init();
-            for (unsigned int i = 0; i < ncoords; ++i) {
+            for (int i = 0; i < ncoords; ++i) {
                 rx.update (this->omm2d[i][0]);
                 ry.update (this->omm2d[i][1]);
             }
@@ -370,12 +373,11 @@ namespace mplot::compoundray
             jcv_diagram_generate (ncoords, d_ptr->data(), &domain, 0, &diagram);
             // We obtain access the the Voronoi cell sites:
             const jcv_site* sites = jcv_diagram_get_sites (&diagram);
-
-            if (static_cast<uint32_t>(diagram.numsites) != ncoords) {
-                std::cout << "WARNING: numsites != ncoords ?!?!\n";
+            if (diagram.numsites != ncoords) {
+                std::cout << "WARNING: diagram's ncoords (" << diagram.numsites << ") != ncoords (" << ncoords << ")?!?!\n";
             }
 
-            for (int i = 0; i < diagram.numsites; ++i) {
+            for (int i = 0; i < diagram.numsites && i < ncoords; ++i) {
                 const jcv_site* site = &sites[i];
                 jcv_graphedge* e = site->edges; // The very first edge
                 while (e) {
@@ -392,13 +394,14 @@ namespace mplot::compoundray
             this->projections[pri].triangle_count_sum = 0;
 
             // To draw triangles iterate over the 'sites' and draw triangles
-            for (int i = 0; i < diagram.numsites; ++i) {
+            for (int i = 0; i < diagram.numsites && i < ncoords; ++i) {
                 const jcv_site* site = &sites[i];
                 const jcv_graphedge* e = site->edges;
                 std::array<float, 3> colour = (*ommData)[this->projections[pri].site_indices[i]];
 
                 unsigned int site_triangles = 0;
                 while (e) {
+                    //std::cout << "Triangle colour " << i << " = " << colour[0] << "...GB\n";
                     this->computeTriangle (site->p + this->projections[pri].twod_offset,
                                            e->pos[0] + this->projections[pri].twod_offset,
                                            e->pos[1] + this->projections[pri].twod_offset, colour);
