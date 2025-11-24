@@ -28,7 +28,9 @@ int main (int argc, char** argv)
     }
 
     float psrad = 0.6f;
-    if (argc > 2) { psrad = std::atof (argv[2]); }
+
+    float cx = 0.0f;
+    if (argc > 2) { cx = std::atof (argv[2]); }
 
     auto v = mplot::Visual<>(1024, 768, "mplot::compoundray::EyeVisual");
 
@@ -65,15 +67,15 @@ int main (int argc, char** argv)
     eyevm->add_spherical_projection (twod_offset, mplot::compoundray::EyeVisual<>::projection_type::mercator, centre, psrad);
 
     twod_offset = { 3, 2, 0 };
-    centre = { 0, 0, 0 };
-    eyevm->add_spherical_projection (twod_offset, mplot::compoundray::EyeVisual<>::projection_type::mercator, centre, psrad * 0.9);
+    centre = { cx, 0, 0 };
+    eyevm->add_spherical_projection (twod_offset, mplot::compoundray::EyeVisual<>::projection_type::mercator, centre, psrad);
 
     eyevm->show_sphere = true;
     eyevm->show_rays = true;
     eyevm->finalize();
 
     [[maybe_unused]] auto ep = v.addVisualModel (eyevm);
-    // ep->reinitColours();
+    ep->reinitColours();
 #if 0
     ep = v.addVisualModel (eyevm);
     if (ep->show_sphere) {

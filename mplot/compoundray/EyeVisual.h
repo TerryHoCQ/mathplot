@@ -102,6 +102,7 @@ namespace mplot::compoundray
             // this->vertexColors.clear(); // Could re-write not clear/push
             size_t n_omm = ommData->size();
 
+            // How many vertices in the 3D part of the model?
             int num_vertices = disc_vertices;
             if (this->show_cones == true) {
                 num_vertices = cone_vertices + disc_vertices;
@@ -143,7 +144,7 @@ namespace mplot::compoundray
                         this->vertexColors[d_idx + 3 * j]     = c[0];
                         this->vertexColors[d_idx + 3 * j + 1] = c[1];
                         this->vertexColors[d_idx + 3 * j + 2] = c[2];
-                        d_2d++;
+                        d_2d += 9;
                     }
                     tcounts += this->projections[pri].triangle_counts[i];
                 }
@@ -349,7 +350,6 @@ namespace mplot::compoundray
 
         void voronoi2d (uint32_t pri)
         {
-            std::cout << "voronoi2d (" << pri << ")\n";
             // Use mplot::range to find the extents of dataCoords. From these create a
             // rectangle to pass to jcv_diagram_generate.
             int ncoords = static_cast<int>(this->omm2d.size());
@@ -388,15 +388,14 @@ namespace mplot::compoundray
 
             // To draw triangles iterate over the 'sites' and get the edges
             this->projections[pri].triangle_counts.resize (ncoords, 0);
-            this->projections[pri].site_indices.resize (ncoords, 0); // << !!!
+            this->projections[pri].site_indices.resize (ncoords, 0);
             this->projections[pri].triangle_count_sum = 0;
 
             // To draw triangles iterate over the 'sites' and draw triangles
             for (int i = 0; i < diagram.numsites && i < ncoords; ++i) {
                 const jcv_site* site = &sites[i];
                 const jcv_graphedge* e = site->edges;
-                std::array<float, 3> colour = (*ommData)[site->index];
-
+                const std::array<float, 3>& colour = (*ommData)[site->index];
                 unsigned int site_triangles = 0;
                 while (e) {
                     this->computeTriangle (site->p + this->projections[pri].twod_offset,
