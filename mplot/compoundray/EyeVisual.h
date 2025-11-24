@@ -125,11 +125,10 @@ namespace mplot::compoundray
                 std::size_t tcounts = 0;
                 std::size_t d_2d = 0;
                 for (std::size_t i = 0u; i < this->projections[pri].triangle_counts.size(); ++i) {
-                    auto c = (*ommData)[this->projections[pri].site_indices[i]];
+                    auto c = (*ommData)[this->projections[pri].site_indices[i] + this->projections[pri].start_i];
                     std::size_t d_idx = i_3d + tcounts * 9; // 3 floats per vtx, 3 vtxs per tri
                     for (std::size_t j = 0; j < 3 * this->projections[pri].triangle_counts[i]; ++j) {
                         // This is ONE colour vertex. Need 3 per triangle.
-                        //this->vertex_push (c, this->vertexColors);
                         this->vertexColors[d_idx + 3 * j]     = c[0];
                         this->vertexColors[d_idx + 3 * j + 1] = c[1];
                         this->vertexColors[d_idx + 3 * j + 2] = c[2];
@@ -154,13 +153,16 @@ namespace mplot::compoundray
         };
 
         // Project latitude/longitude ll with projection type t and given radius
-        sm::vec<float, 2> spherical_projection (const sm::vec<float, 2>& ll, projection_type t, const float radius)
+        sm::vec<float, 2> spherical_projection (const sm::vec<float, 2>& ll, projection_type t,
+                                                const float radius)
         {
             sm::vec<float, 2> xy = {};
             if (t == projection_type::equirectangular) {
                 xy = sm::geometry::spherical_projection::equirectangular (ll, radius);
             } else if (t == projection_type::cassini) {
                 xy = sm::geometry::spherical_projection::cassini (ll, radius);
+            } else if (t == projection_type::cylindrical) {
+                throw std::runtime_error ("Not a spherical projection");
             } else {
                 xy = sm::geometry::spherical_projection::mercator (ll, radius);
             }
@@ -184,24 +186,32 @@ namespace mplot::compoundray
             // Which spherical to 2D projection to use?
             projection_type proj_type = projection_type::mercator;
             // Have to record the number of triangles in each cell in the 2D map in order to update the colours
-            sm::vvec<unsigned int> triangle_counts;
+            sm::vvec<uint32_t> triangle_counts;
             // Record the data index for each Voronoi cell index. For reinitColours
-            sm::vvec<unsigned int> site_indices;
+            sm::vvec<uint32_t> site_indices;
             // Sum of triangles used for reinitColours
-            unsigned int triangle_count_sum = 0;
+            uint32_t triangle_count_sum = 0;
+            // Starting ommatidium index for projection
+            uint32_t start_i = 0;
+            // End index
+            uint32_t end_i = std::numeric_limits<uint32_t>::max();
         };
 
         // A compound eye visualization may require several projections to 2D
         std::vector<projection_data> projections;
 
         void add_spherical_projection (const sm::vec<float, 3>& _twod_offset, projection_type t,
-                                       const sm::vec<float>& centre, const float radius)
+                                       const sm::vec<float>& centre, const float radius,
+                                       const uint32_t _start_i = 0,
+                                       const uint32_t _end_i = std::numeric_limits<uint32_t>::max())
         {
             projection_data d;
             d.proj_type = t;
             d.twod_offset = _twod_offset;
             d.proj_sphere_centre = centre;
             d.proj_sphere_radius = radius;
+            d.start_i = _start_i;
+            d.end_i = _end_i;
             this->projections.push_back (d);
         }
 
@@ -290,7 +300,7 @@ namespace mplot::compoundray
                 sm::mat44<float> coord_rotn;
                 coord_rotn.rotate (sm::vec<>::ux(), sm::mathconst<float>::pi_over_2);
                 //coord_rotn.rotate (sm::vec<>::uz(), sm::mathconst<float>::pi_over_2);
-                for (size_t i = 0; i < this->ommatidia->size(); ++i) {
+                for (size_t i = this->projections[pri].start_i; i < this->ommatidia->size() && i < this->projections[pri].end_i; ++i) {
                     sm::vec<sm::vec<>, 2> sph_coord = sm::geometry::ray_sphere_intersection (this->projections[pri].proj_sphere_centre,
                                                                                              this->projections[pri].proj_sphere_radius,
                                                                                              (*ommatidia)[i].relativePosition,
@@ -341,14 +351,14 @@ namespace mplot::compoundray
             // Use mplot::range to find the extents of dataCoords. From these create a
             // rectangle to pass to jcv_diagram_generate.
             int ncoords = static_cast<int>(this->omm2d.size());
-            const sm::vvec<sm::vec<float, 3>>* d_ptr = &this->omm2d; // may not need
             sm::range<float> rx, ry;
             rx.search_init();
             ry.search_init();
-            for (int i = 0; i < ncoords; ++i) {
+            for (int i = 0; i < ncoords ; ++i) {
                 rx.update (this->omm2d[i][0]);
                 ry.update (this->omm2d[i][1]);
             }
+            std::cout << "rx: "<< rx << ", ry " << ry << std::endl;
             // Generate the 2D Voronoi diagram
             jcv_diagram diagram;
             std::memset (&diagram, 0, sizeof(jcv_diagram));
@@ -356,8 +366,8 @@ namespace mplot::compoundray
                 jcv_point{rx.min - this->border_width, ry.min - this->border_width, 0.0f},
                 jcv_point{rx.max + this->border_width, ry.max + this->border_width, 0.0f}
             };
-            jcv_diagram_generate (ncoords, d_ptr->data(), &domain, 0, &diagram);
-            // We obtain access the the Voronoi cell sites:
+            jcv_diagram_generate (ncoords, this->omm2d.data(), &domain, 0, &diagram);
+            // We obtain access to the Voronoi cell sites:
             const jcv_site* sites = jcv_diagram_get_sites (&diagram);
             if (diagram.numsites != ncoords) {
                 std::cout << "WARNING: diagram's ncoords (" << diagram.numsites << ") != ncoords (" << ncoords << ")?!?!\n";
@@ -383,8 +393,14 @@ namespace mplot::compoundray
             for (int i = 0; i < diagram.numsites && i < ncoords; ++i) {
                 const jcv_site* site = &sites[i];
                 const jcv_graphedge* e = site->edges;
-                const std::array<float, 3>& colour = (*ommData)[site->index];
-                unsigned int site_triangles = 0;
+                this->projections[pri].site_indices[i] = site->index;
+                std::array<float, 3> colour = mplot::colour::black;
+                if (site->index + this->projections[pri].start_i < ommData->size()) {
+                    colour = (*ommData)[site->index + this->projections[pri].start_i];
+                } else {
+                    std::cout << "Uh oh, can't access colour [" << site->index << " + " << this->projections[pri].start_i << "]\n";
+                }
+                uint32_t site_triangles = 0;
                 while (e) {
                     this->computeTriangle (site->p + this->projections[pri].twod_offset,
                                            e->pos[0] + this->projections[pri].twod_offset,
@@ -393,7 +409,6 @@ namespace mplot::compoundray
                     e = e->next;
                 }
                 this->projections[pri].triangle_counts[i] = site_triangles;
-                this->projections[pri].site_indices[i] = site->index;
                 this->projections[pri].triangle_count_sum += site_triangles;
             }
 
@@ -456,7 +471,7 @@ namespace mplot::compoundray
             this->vertex_push (c2, this->vertexPositions);
             this->vertex_push (c3, this->vertexPositions);
             // Colours/normals
-            for (unsigned int i = 0; i < 3U; ++i) {
+            for (uint32_t i = 0; i < 3U; ++i) {
                 this->vertex_push (colr, this->vertexColors);
                 this->vertex_push (v, this->vertexNormals);
             }

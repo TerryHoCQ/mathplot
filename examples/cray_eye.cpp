@@ -29,7 +29,7 @@ int main (int argc, char** argv)
 
     float psrad = 0.6f;
 
-    float cx = 0.0f;
+    float cx = 0.5f;
     if (argc > 2) { cx = std::atof (argv[2]); }
 
     auto v = mplot::Visual<>(1024, 768, "mplot::compoundray::EyeVisual");
@@ -55,20 +55,18 @@ int main (int argc, char** argv)
         ommatidiaColours[i] = cm.convert (ommatidiaData[i]);
     }
 
-    // A second eye goes in the 'eye only' window
-    //mplot::compoundray::EyeVisual<>* ep = nullptr;
     auto eyevm = std::make_unique<mplot::compoundray::EyeVisual<>> (sm::vec<>{}, &ommatidiaColours, ommatidia.get());
     v.bindmodel (eyevm);
     eyevm->name = "Big Eye";
     eyevm->show_cones = false;
 
     sm::vec<> centre = { -0.5, 0, 0 };
-    sm::vec<> twod_offset = { -3, 2, 0 };
-    eyevm->add_spherical_projection (twod_offset, mplot::compoundray::EyeVisual<>::projection_type::mercator, centre, psrad);
+    sm::vec<> twod_offset = { -.5, 2, 0 };
+    eyevm->add_spherical_projection (twod_offset, mplot::compoundray::EyeVisual<>::projection_type::mercator, centre, psrad, 780, 1560);
 
-    twod_offset = { 3, 2, 0 };
+    twod_offset = { .5, 2, 0 };
     centre = { cx, 0, 0 };
-    eyevm->add_spherical_projection (twod_offset, mplot::compoundray::EyeVisual<>::projection_type::mercator, centre, psrad);
+    eyevm->add_spherical_projection (twod_offset, mplot::compoundray::EyeVisual<>::projection_type::mercator, centre, psrad, 0, 780);
 
     eyevm->show_sphere = true;
     eyevm->show_rays = true;
@@ -76,49 +74,6 @@ int main (int argc, char** argv)
 
     [[maybe_unused]] auto ep = v.addVisualModel (eyevm);
     ep->reinitColours();
-#if 0
-    ep = v.addVisualModel (eyevm);
-    if (ep->show_sphere) {
-        auto svm = std::make_unique<mplot::SphereVisual<>> (ep->proj_sphere_centre, ep->proj_sphere_radius, mplot::colour::slategray1);
-        v.bindmodel (svm);
-        svm->setAlpha (0.5);
-        svm->finalize();
-        v.addVisualModel (svm);
 
-
-        for (size_t i = 0; i < ommatidia->size(); ++i) {
-            // Can now find intersections on our sphere
-            sm::vec<> l0 = (*ommatidia)[i].relativePosition;
-            sm::vec<> l = -(*ommatidia)[i].relativeDirection;
-
-            // Show direction vector from ommatidium position
-            auto vvm = std::make_unique<mplot::VectorVisual<float, 3>> (l0);
-            v.bindmodel (vvm);
-            vvm->vgoes = mplot::VectorGoes::FromOrigin;
-            vvm->thickness = 0.001f;
-            vvm->thevec = l;
-            vvm->finalize();
-            v.addVisualModel (vvm);
-
-            sm::vec<sm::vec<>, 2> intersections = sm::geometry::ray_sphere_intersection (sm::vec<>{}, ep->proj_sphere_radius, l0, l);
-
-            if (intersections[0][0] != std::numeric_limits<float>::max()) {
-                // intersections[0] is the coordinate for the ommatidia pixel on the sphere
-                auto ivm1 = std::make_unique<mplot::SphereVisual<>> (intersections[0], 0.01f * psrad, mplot::colour::crimson);
-                v.bindmodel (ivm1);
-                ivm1->finalize();
-                v.addVisualModel (ivm1);
-            }
-#if 0
-            if (intersections[1][0] != std::numeric_limits<float>::max()) {
-                auto ivm2 = std::make_unique<mplot::SphereVisual<>> (intersections[1], 0.01f * psrad, mplot::colour::blue);
-                v.bindmodel (ivm2);
-                ivm2->finalize();
-                v.addVisualModel (ivm2);
-            }
-#endif
-        }
-    }
-#endif
     v.keepOpen();
 }
