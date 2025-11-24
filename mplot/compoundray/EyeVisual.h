@@ -98,23 +98,13 @@ namespace mplot::compoundray
             if (ommData->empty()) { return; }
             size_t n_verts = this->vertexColors.size(); // should be tube_vertices * n_omm
             if (n_verts == 0u) { return; } // model doesn't exist yet
-
-            // this->vertexColors.clear(); // Could re-write not clear/push
             size_t n_omm = ommData->size();
 
-            // How many vertices in the 3D part of the model?
+            // Replace colours for the 3D part of the model
             int num_vertices = disc_vertices;
             if (this->show_cones == true) {
                 num_vertices = cone_vertices + disc_vertices;
             } // else num_vertices = disc_vertices;
-
-            // 3 colours, n_omm tubes, cone_vertices vertices per cone.
-            //if (n_verts != 3u * n_omm * static_cast<unsigned int>(num_vertices)) {
-            //    throw std::runtime_error ("EyeVisual: n_verts/n_omm sizes mismatch!");
-            //}
-
-            // Could test on: if (this->focal_point_sum > 0.0f) { // if the number of vertices were
-            // different, but I chose cones in both cases
 
             // Re-colour cones built from a focal point offset and acceptance angle
             for (size_t i = 0u; i < n_omm; ++i) {
@@ -124,13 +114,12 @@ namespace mplot::compoundray
                     this->vertexColors[i * num_vertices * 3 + j * 3] =     (*ommData)[i][0];
                     this->vertexColors[i * num_vertices * 3 + j * 3 + 1] = (*ommData)[i][1];
                     this->vertexColors[i * num_vertices * 3 + j * 3 + 2] = (*ommData)[i][2];
-                    //this->vertex_push ((*ommData)[i], this->vertexColors);
                 }
             }
-
+            // i_3d is the index offset for the 3D part
             std::size_t i_3d = n_omm * num_vertices * 3;
 
-            //////////////// 2D map
+            // Replace colours in the 2D part of the model
             for (uint32_t pri = 0; pri < this->projections.size(); ++pri) {
                 // Replace elements of vertexColors
                 std::size_t tcounts = 0;
@@ -150,7 +139,6 @@ namespace mplot::compoundray
                 }
                 i_3d += d_2d;
             }
-            ///////////////////
 
             // Lastly, this call copies vertexColors (etc) into the OpenGL memory space
             this->reinit_colour_buffer();
