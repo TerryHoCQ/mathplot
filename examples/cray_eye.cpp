@@ -51,7 +51,6 @@ int main (int argc, char** argv)
     ommatidiaColours.resize (ommatidia->size());
     for (size_t i = 0; i < ommatidia->size(); ++i) {
         ommatidiaColours[i] = cm.convert (ommatidiaData[i]);
-        std::cout << "ommatidiaColours[" << i << "] = " << ommatidiaColours[i][0] << "...GB\n";
     }
 
     // A second eye goes in the 'eye only' window
@@ -66,15 +65,15 @@ int main (int argc, char** argv)
     eyevm->add_spherical_projection (twod_offset, mplot::compoundray::EyeVisual<>::projection_type::mercator, centre, psrad);
 
     twod_offset = { 3, 2, 0 };
-    centre = { 1, 0, 0 };
-    eyevm->add_spherical_projection (twod_offset, mplot::compoundray::EyeVisual<>::projection_type::mercator, centre, psrad);
+    centre = { 0, 0, 0 };
+    eyevm->add_spherical_projection (twod_offset, mplot::compoundray::EyeVisual<>::projection_type::mercator, centre, psrad * 0.9);
 
     eyevm->show_sphere = true;
     eyevm->show_rays = true;
     eyevm->finalize();
 
     [[maybe_unused]] auto ep = v.addVisualModel (eyevm);
-    //ep->reinitColours();
+    // ep->reinitColours();
 #if 0
     ep = v.addVisualModel (eyevm);
     if (ep->show_sphere) {

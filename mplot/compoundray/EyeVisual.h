@@ -29,8 +29,8 @@ namespace mplot::compoundray
     };
 
     // Helper function. Read the compound-ray csv eye file into ommatidia. ommatidia should be a pointer to an allocate vector.
-    [[maybe_unused]] static std::vector<mplot::compoundray::Ommatidium>* readEye (std::vector<mplot::compoundray::Ommatidium>* ommatidia,
-                                                                                  const std::string& path)
+    [[maybe_unused]] static std::vector<mplot::compoundray::Ommatidium>*
+    readEye (std::vector<mplot::compoundray::Ommatidium>* ommatidia, const std::string& path)
     {
         if (ommatidia == nullptr) { return ommatidia; }
 
@@ -120,7 +120,7 @@ namespace mplot::compoundray
                 // Update the 3 RGB values in vertexColors tube_vertices times
                 int j = 0;
                 for (; j < num_vertices; ++j) {
-                    this->vertexColors[i * num_vertices * 3 + j * 3] = (*ommData)[i][0];
+                    this->vertexColors[i * num_vertices * 3 + j * 3] =     (*ommData)[i][0];
                     this->vertexColors[i * num_vertices * 3 + j * 3 + 1] = (*ommData)[i][1];
                     this->vertexColors[i * num_vertices * 3 + j * 3 + 2] = (*ommData)[i][2];
                     //this->vertex_push ((*ommData)[i], this->vertexColors);
@@ -297,7 +297,6 @@ namespace mplot::compoundray
 
             for (uint32_t pri = 0; pri < this->projections.size(); ++pri) {
                 this->omm2d.clear();
-                std::cout << "omm2d cleared; size is " << omm2d.size() << std::endl;
                 // Compute intersections between ommatidia direction vectoras and our projection sphere.
                 sm::mat44<float> coord_rotn;
                 coord_rotn.rotate (sm::vec<>::ux(), sm::mathconst<float>::pi_over_2);
@@ -316,7 +315,6 @@ namespace mplot::compoundray
                         this->omm2d.push_back (xy.plus_one_dim());
                     }
                 }
-                std::cout << "omm2d re-built; size is " << omm2d.size() << std::endl;
                 // Make 2D Voronoi of omm2d.
                 this->voronoi2d (pri);
             }
@@ -390,18 +388,17 @@ namespace mplot::compoundray
 
             // To draw triangles iterate over the 'sites' and get the edges
             this->projections[pri].triangle_counts.resize (ncoords, 0);
-            this->projections[pri].site_indices.resize (ncoords, 0);
+            this->projections[pri].site_indices.resize (ncoords, 0); // << !!!
             this->projections[pri].triangle_count_sum = 0;
 
             // To draw triangles iterate over the 'sites' and draw triangles
             for (int i = 0; i < diagram.numsites && i < ncoords; ++i) {
                 const jcv_site* site = &sites[i];
                 const jcv_graphedge* e = site->edges;
-                std::array<float, 3> colour = (*ommData)[this->projections[pri].site_indices[i]];
+                std::array<float, 3> colour = (*ommData)[site->index];
 
                 unsigned int site_triangles = 0;
                 while (e) {
-                    //std::cout << "Triangle colour " << i << " = " << colour[0] << "...GB\n";
                     this->computeTriangle (site->p + this->projections[pri].twod_offset,
                                            e->pos[0] + this->projections[pri].twod_offset,
                                            e->pos[1] + this->projections[pri].twod_offset, colour);
