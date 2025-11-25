@@ -180,9 +180,11 @@ namespace mplot::compoundray
             // Use this to position the 2D map wrt the three D model
             sm::vec<float, 3> twod_offset = {0, 0, 0};
             // The user-provided radius of the projection sphere. Will need to match the size of the compound ray eye
-            float proj_sphere_radius = 0.0f;
-            // The centre of the user-provided projection sphere
-            sm::vec<float> proj_sphere_centre = {};
+            float proj_radius = 0.0f;
+            // The centre of the user-provided projection sphere or cylinder
+            sm::vec<float> proj_centre = {};
+            // The height of a projection cylinder
+            sm::vec<float> proj_height = {};
             // Which spherical to 2D projection to use?
             projection_type proj_type = projection_type::mercator;
             // Have to record the number of triangles in each cell in the 2D map in order to update the colours
@@ -200,7 +202,7 @@ namespace mplot::compoundray
         // A compound eye visualization may require several projections to 2D
         std::vector<projection_data> projections;
 
-        void add_spherical_projection (const sm::vec<float, 3>& _twod_offset, projection_type t,
+        void add_spherical_projection (projection_type t, const sm::vec<float, 3>& _twod_offset,
                                        const sm::vec<float>& centre, const float radius,
                                        const uint32_t _start_i = 0,
                                        const uint32_t _end_i = std::numeric_limits<uint32_t>::max())
@@ -208,14 +210,28 @@ namespace mplot::compoundray
             projection_data d;
             d.proj_type = t;
             d.twod_offset = _twod_offset;
-            d.proj_sphere_centre = centre;
-            d.proj_sphere_radius = radius;
+            d.proj_centre = centre;
+            d.proj_radius = radius;
             d.start_i = _start_i;
             d.end_i = _end_i;
             this->projections.push_back (d);
         }
 
-        // void add_cylindrical_projection (_twod_offset, centre, radius, height);
+        void add_cylindrical_projection (const sm::vec<float, 3>& _twod_offset, const sm::vec<float>& centre,
+                                         const float radius, const float height,
+                                         const uint32_t _start_i = 0,
+                                         const uint32_t _end_i = std::numeric_limits<uint32_t>::max())
+        {
+            projection_data d;
+            d.proj_type = projection_data::cylindrical;
+            d.twod_offset = _twod_offset;
+            d.proj_centre = centre;
+            d.proj_radius = radius;
+            d.proj_height = height;
+            d.start_i = _start_i;
+            d.end_i = _end_i;
+            this->projections.push_back (d);
+        }
 
         //! Initialize vertex buffer objects and vertex array object.
         void initializeVertices()
@@ -296,35 +312,37 @@ namespace mplot::compoundray
 
             for (uint32_t pri = 0; pri < this->projections.size(); ++pri) {
                 this->omm2d.clear();
-                // Compute intersections between ommatidia direction vectors and our projection sphere.
-                sm::mat44<float> coord_rotn;
-                coord_rotn.rotate (sm::vec<>::ux(), sm::mathconst<float>::pi_over_2);
-                //coord_rotn.rotate (sm::vec<>::uz(), sm::mathconst<float>::pi_over_2);
-                for (size_t i = this->projections[pri].start_i; i < this->ommatidia->size() && i < this->projections[pri].end_i; ++i) {
-                    sm::vec<sm::vec<>, 2> sph_coord = sm::geometry::ray_sphere_intersection (this->projections[pri].proj_sphere_centre,
-                                                                                             this->projections[pri].proj_sphere_radius,
-                                                                                             (*ommatidia)[i].relativePosition,
-                                                                                             -(*ommatidia)[i].relativeDirection);
-                    if (sph_coord[0][0] != std::numeric_limits<float>::max()) {
-                        // sph_coord[0] is the coordinate for the ommatidia pixel on the sphere
-                        sm::vec<float, 3> rot_coord = (coord_rotn * sph_coord[0]).less_one_dim();
-                        sm::vec<float, 2> ll = sm::geometry::spherical_projection::xyz_to_latlong (rot_coord, this->projections[pri].proj_sphere_radius);
-                        sm::vec<float, 2> xy = this->spherical_projection (ll, this->projections[pri].proj_type, this->projections[pri].proj_sphere_radius);
-                        // Add xy as one of the points that we'll make a Voronoi diagram from.
-                        this->omm2d.push_back (xy.plus_one_dim());
+                if (this->projections[pri].proj_type == projection_type::cylindrical) {
+                    std::cout << "NOTE: Cylindrical projections are currently unimplemented\n";
+                } else {
+                    // Compute intersections between ommatidia direction vectors and our projection sphere.
+                    sm::mat44<float> coord_rotn;
+                    coord_rotn.rotate (sm::vec<>::ux(), sm::mathconst<float>::pi_over_2);
+                    for (size_t i = this->projections[pri].start_i; i < this->ommatidia->size() && i < this->projections[pri].end_i; ++i) {
+                        sm::vec<sm::vec<>, 2> sph_coord = sm::geometry::ray_sphere_intersection (this->projections[pri].proj_centre,
+                                                                                                 this->projections[pri].proj_radius,
+                                                                                                 (*ommatidia)[i].relativePosition,
+                                                                                                 -(*ommatidia)[i].relativeDirection);
+                        if (sph_coord[0][0] != std::numeric_limits<float>::max()) {
+                            // sph_coord[0] is the coordinate for the ommatidia pixel on the sphere
+                            sm::vec<float, 3> rot_coord = (coord_rotn * sph_coord[0]).less_one_dim();
+                            sm::vec<float, 2> ll = sm::geometry::spherical_projection::xyz_to_latlong (rot_coord, this->projections[pri].proj_radius);
+                            sm::vec<float, 2> xy = this->spherical_projection (ll, this->projections[pri].proj_type, this->projections[pri].proj_radius);
+                            // Add xy as one of the points that we'll make a Voronoi diagram from.
+                            this->omm2d.push_back (xy.plus_one_dim());
+                        }
                     }
+                    // Make 2D Voronoi of omm2d.
+                    this->voronoi2d (pri);
                 }
-                // Make 2D Voronoi of omm2d.
-                this->voronoi2d (pri);
             }
-            std::cout << "After 2D stuff, idx = " << this->idx << " for " << this->name << std::endl;
 
             for (uint32_t pri = 0; pri < this->projections.size(); ++pri) {
 
                 if (this->show_sphere) {
-                    this->computeSphere (this->projections[pri].proj_sphere_centre,
+                    this->computeSphere (this->projections[pri].proj_centre,
                                          mplot::colour::grey50,
-                                         this->projections[pri].proj_sphere_radius, 18, 18);
+                                         this->projections[pri].proj_radius, 18, 18);
                 }
 
                 if (this->show_rays) {
@@ -333,14 +351,14 @@ namespace mplot::compoundray
                         sm::vec<> l0 = (*ommatidia)[i].relativePosition;
                         sm::vec<> l = -(*ommatidia)[i].relativeDirection;
                         // Show direction vector from ommatidium position
-                        this->computeArrow (l0, l0 + l, mplot::colour::grey80, 0.002f * this->projections[pri].proj_sphere_radius);
+                        this->computeArrow (l0, l0 + l, mplot::colour::grey80, 0.002f * this->projections[pri].proj_radius);
                         // Recompute intersections
-                        sm::vec<sm::vec<>, 2> intersections = sm::geometry::ray_sphere_intersection (this->projections[pri].proj_sphere_centre,
-                                                                                                     this->projections[pri].proj_sphere_radius, l0, l);
+                        sm::vec<sm::vec<>, 2> intersections = sm::geometry::ray_sphere_intersection (this->projections[pri].proj_centre,
+                                                                                                     this->projections[pri].proj_radius, l0, l);
                         if (intersections[0][0] != std::numeric_limits<float>::max()) {
                             // intersections[0] is the coordinate for the ommatidia pixel on the sphere
                             this->computeSphere (intersections[0],
-                                                 mplot::colour::crimson, 0.006f * this->projections[pri].proj_sphere_radius);
+                                                 mplot::colour::crimson, 0.006f * this->projections[pri].proj_radius);
                         }
                     }
                 }

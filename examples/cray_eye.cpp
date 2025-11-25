@@ -62,11 +62,11 @@ int main (int argc, char** argv)
 
     sm::vec<> centre = { -0.5, 0, 0 };
     sm::vec<> twod_offset = { -.5, 2, 0 };
-    eyevm->add_spherical_projection (twod_offset, mplot::compoundray::EyeVisual<>::projection_type::mercator, centre, psrad, 780, 1560);
+    eyevm->add_spherical_projection (mplot::compoundray::EyeVisual<>::projection_type::mercator, twod_offset, centre, psrad, 780, 1560);
 
     twod_offset = { .5, 2, 0 };
     centre = { cx, 0, 0 };
-    eyevm->add_spherical_projection (twod_offset, mplot::compoundray::EyeVisual<>::projection_type::mercator, centre, psrad, 0, 780);
+    eyevm->add_spherical_projection (mplot::compoundray::EyeVisual<>::projection_type::mercator, twod_offset, centre, psrad, 0, 780);
 
     eyevm->show_sphere = true;
     eyevm->show_rays = true;
