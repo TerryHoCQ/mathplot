@@ -132,7 +132,7 @@ namespace mplot::compoundray
                         this->vertexColors[d_idx + 3 * j]     = c[0];
                         this->vertexColors[d_idx + 3 * j + 1] = c[1];
                         this->vertexColors[d_idx + 3 * j + 2] = c[2];
-                        d_2d += 9;
+                        d_2d += 3;
                     }
                     tcounts += this->projections[pri].triangle_counts[i];
                 }
@@ -296,7 +296,7 @@ namespace mplot::compoundray
 
             for (uint32_t pri = 0; pri < this->projections.size(); ++pri) {
                 this->omm2d.clear();
-                // Compute intersections between ommatidia direction vectoras and our projection sphere.
+                // Compute intersections between ommatidia direction vectors and our projection sphere.
                 sm::mat44<float> coord_rotn;
                 coord_rotn.rotate (sm::vec<>::ux(), sm::mathconst<float>::pi_over_2);
                 //coord_rotn.rotate (sm::vec<>::uz(), sm::mathconst<float>::pi_over_2);
@@ -317,6 +317,7 @@ namespace mplot::compoundray
                 // Make 2D Voronoi of omm2d.
                 this->voronoi2d (pri);
             }
+            std::cout << "After 2D stuff, idx = " << this->idx << " for " << this->name << std::endl;
 
             for (uint32_t pri = 0; pri < this->projections.size(); ++pri) {
 
@@ -358,7 +359,6 @@ namespace mplot::compoundray
                 rx.update (this->omm2d[i][0]);
                 ry.update (this->omm2d[i][1]);
             }
-            std::cout << "rx: "<< rx << ", ry " << ry << std::endl;
             // Generate the 2D Voronoi diagram
             jcv_diagram diagram;
             std::memset (&diagram, 0, sizeof(jcv_diagram));
