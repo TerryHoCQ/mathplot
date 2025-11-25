@@ -100,24 +100,27 @@ namespace mplot::compoundray
             if (n_verts == 0u) { return; } // model doesn't exist yet
             size_t n_omm = ommData->size();
 
-            // Replace colours for the 3D part of the model
-            int num_vertices = disc_vertices;
-            if (this->show_cones == true) {
-                num_vertices = cone_vertices + disc_vertices;
-            } // else num_vertices = disc_vertices;
+            std::size_t i_3d = 0;
+            if (show_3d) {
+                // Replace colours for the 3D part of the model
+                int num_vertices = disc_vertices;
+                if (this->show_cones == true) {
+                    num_vertices = cone_vertices + disc_vertices;
+                } // else num_vertices = disc_vertices;
 
-            // Re-colour cones built from a focal point offset and acceptance angle
-            for (size_t i = 0u; i < n_omm; ++i) {
-                // Update the 3 RGB values in vertexColors tube_vertices times
-                int j = 0;
-                for (; j < num_vertices; ++j) {
-                    this->vertexColors[i * num_vertices * 3 + j * 3] =     (*ommData)[i][0];
-                    this->vertexColors[i * num_vertices * 3 + j * 3 + 1] = (*ommData)[i][1];
-                    this->vertexColors[i * num_vertices * 3 + j * 3 + 2] = (*ommData)[i][2];
+                // Re-colour cones built from a focal point offset and acceptance angle
+                for (size_t i = 0u; i < n_omm; ++i) {
+                    // Update the 3 RGB values in vertexColors tube_vertices times
+                    int j = 0;
+                    for (; j < num_vertices; ++j) {
+                        this->vertexColors[i * num_vertices * 3 + j * 3] =     (*ommData)[i][0];
+                        this->vertexColors[i * num_vertices * 3 + j * 3 + 1] = (*ommData)[i][1];
+                        this->vertexColors[i * num_vertices * 3 + j * 3 + 2] = (*ommData)[i][2];
+                    }
                 }
+                // i_3d is the index offset for the 3D part
+                i_3d = n_omm * num_vertices * 3;
             }
-            // i_3d is the index offset for the 3D part
-            std::size_t i_3d = n_omm * num_vertices * 3;
 
             // Replace colours in the 2D part of the model
             for (uint32_t pri = 0; pri < this->projections.size(); ++pri) {
@@ -153,12 +156,12 @@ namespace mplot::compoundray
         };
 
         // Project latitude/longitude ll with projection type t and given radius
-        sm::vec<float, 2> spherical_projection (const sm::vec<float, 2>& ll, projection_type t,
-                                                const float radius)
+        sm::vec<float, 2> spherical_projection (const sm::vec<float, 2>& ll, projection_type t, const float radius)
         {
             sm::vec<float, 2> xy = {};
             if (t == projection_type::equirectangular) {
-                xy = sm::geometry::spherical_projection::equirectangular (ll, radius);
+                //sm::mathconst<float>::pi_over_2
+                xy = sm::geometry::spherical_projection::equirectangular<float, 0.0f, 0.0f, 0.0f> (ll, radius);
             } else if (t == projection_type::cassini) {
                 xy = sm::geometry::spherical_projection::cassini (ll, radius);
             } else if (t == projection_type::cylindrical) {
@@ -177,8 +180,8 @@ namespace mplot::compoundray
          */
         struct projection_data
         {
-            // Use this to position the 2D map wrt the three D model
-            sm::vec<float, 3> twod_offset = {0, 0, 0};
+            // Use this to position the 2D map wrt the three D model. You can translate, scale and rotate
+            sm::mat44<float> twod_transform;
             // The user-provided radius of the projection sphere. Will need to match the size of the compound ray eye
             float proj_radius = 0.0f;
             // The centre of the user-provided projection sphere or cylinder
@@ -202,14 +205,14 @@ namespace mplot::compoundray
         // A compound eye visualization may require several projections to 2D
         std::vector<projection_data> projections;
 
-        void add_spherical_projection (projection_type t, const sm::vec<float, 3>& _twod_offset,
+        void add_spherical_projection (projection_type t, const sm::mat44<float>& _twod_transform,
                                        const sm::vec<float>& centre, const float radius,
                                        const uint32_t _start_i = 0,
                                        const uint32_t _end_i = std::numeric_limits<uint32_t>::max())
         {
             projection_data d;
             d.proj_type = t;
-            d.twod_offset = _twod_offset;
+            d.twod_transform = _twod_transform;
             d.proj_centre = centre;
             d.proj_radius = radius;
             d.start_i = _start_i;
@@ -217,14 +220,24 @@ namespace mplot::compoundray
             this->projections.push_back (d);
         }
 
-        void add_cylindrical_projection (const sm::vec<float, 3>& _twod_offset, const sm::vec<float>& centre,
+        void add_spherical_projection (projection_type t, const sm::vec<float, 3>& _twod_offset,
+                                       const sm::vec<float>& centre, const float radius,
+                                       const uint32_t _start_i = 0,
+                                       const uint32_t _end_i = std::numeric_limits<uint32_t>::max())
+        {
+            sm::mat44<float> tr;
+            tr.translate (_twod_offset);
+            this->add_spherical_projection (t, tr, centre, radius, _start_i, _end_i);
+        }
+
+        void add_cylindrical_projection (const sm::mat44<float>& _twod_transform, const sm::vec<float>& centre,
                                          const float radius, const float height,
                                          const uint32_t _start_i = 0,
                                          const uint32_t _end_i = std::numeric_limits<uint32_t>::max())
         {
             projection_data d;
             d.proj_type = projection_data::cylindrical;
-            d.twod_offset = _twod_offset;
+            d.twod_transform = _twod_transform;
             d.proj_centre = centre;
             d.proj_radius = radius;
             d.proj_height = height;
@@ -258,54 +271,56 @@ namespace mplot::compoundray
                 this->focal_point_sum += (*ommatidia)[i].focalPointOffset;
             }
 
-            if (this->focal_point_sum > 0.0f) {
-                // We have focal points, so draw with the relativePosition representing the centre
-                // of the ommatidial lens - the base of a cone - which then extends back to the cone
-                // tip, which can be thought of as the location of the ommatidial 'sensor'
-                for (size_t i = 0u; i < n_omm; ++i) {
-                    // Ommatidia colour, position/shape
-                    std::array<float, 3> colour = (*ommData)[i];
-                    float angle = (*ommatidia)[i].acceptanceAngleRadians;
-                    float focal_point = (*ommatidia)[i].focalPointOffset;
-                    sm::vec<float, 3> pos = (*ommatidia)[i].relativePosition;
-                    sm::vec<float, 3> dir = (*ommatidia)[i].relativeDirection;
-                    dir.renormalize();
-                    // Tip of cone is 'behind' the position of the ommatidial face/lens
-                    sm::vec<float, 3> ommatidial_detector_point = pos - dir * focal_point;
-                    // work out radius from acceptance angle and focal_point
-                    float radius = focal_point * std::tan (angle / 2.0f);
-                    // The disc
-                    this->computeTube (pos, pos + (0.1f * radius * dir), colour, colour, radius, tube_faces);
-                    if (this->show_cones == true) {
-                        // Colour comes from ommData. ringoffset is 1.0f
-                        this->computeCone (pos, ommatidial_detector_point, 0.0f, colour, radius, tube_faces);
+            if (show_3d) {
+                if (this->focal_point_sum > 0.0f) {
+                    // We have focal points, so draw with the relativePosition representing the centre
+                    // of the ommatidial lens - the base of a cone - which then extends back to the cone
+                    // tip, which can be thought of as the location of the ommatidial 'sensor'
+                    for (size_t i = 0u; i < n_omm; ++i) {
+                        // Ommatidia colour, position/shape
+                        std::array<float, 3> colour = (*ommData)[i];
+                        float angle = (*ommatidia)[i].acceptanceAngleRadians;
+                        float focal_point = (*ommatidia)[i].focalPointOffset;
+                        sm::vec<float, 3> pos = (*ommatidia)[i].relativePosition;
+                        sm::vec<float, 3> dir = (*ommatidia)[i].relativeDirection;
+                        dir.renormalize();
+                        // Tip of cone is 'behind' the position of the ommatidial face/lens
+                        sm::vec<float, 3> ommatidial_detector_point = pos - dir * focal_point;
+                        // work out radius from acceptance angle and focal_point
+                        float radius = focal_point * std::tan (angle / 2.0f);
+                        // The disc
+                        this->computeTube (pos, pos + (0.1f * radius * dir), colour, colour, radius, tube_faces);
+                        if (this->show_cones == true) {
+                            // Colour comes from ommData. ringoffset is 1.0f
+                            this->computeCone (pos, ommatidial_detector_point, 0.0f, colour, radius, tube_faces);
+                        }
                     }
-                }
-            } else {
-                // All our focal_points are 0. Don't have focal point offset to help define our
-                // cones, only acceptance angle. Use manually specified tube_length (or computed
-                // radius) to figure out the size of a cone, whose tip is the location of the
-                // ommatidial sensor AND the centre of the ommatidial lens
-                for (size_t i = 0u; i < n_omm; ++i) {
-                    std::array<float, 3> colour = (*ommData)[i];
-                    float angle = (*ommatidia)[i].acceptanceAngleRadians;
-                    // pos will be the tip of the cone in this case, and the centre of the disc
-                    sm::vec<float, 3> pos = (*ommatidia)[i].relativePosition;
-                    sm::vec<float, 3> dir = (*ommatidia)[i].relativeDirection;
-                    dir.renormalize();
-                    // do a cone
-                    sm::vec<float, 3> ommatidial_cone_pos = pos + dir * this->cone_length;
-                    float ringoffset = 0.0f;
-                    // work out radius from acceptance angle and focal_point
-                    float radius = this->disc_width / 2.0f; // will be negative if not set
-                    if (radius < 0.0f) { // fall back to using cone_length
-                        radius = this->cone_length * std::tan (angle / 2.0f);
-                    }
-                    // Show a disc. Use disc_width, or if it is -ve, cone_length and computed radius
-                    this->computeTube (pos, pos - (0.1f * radius * dir), colour, colour, radius, tube_faces);
-                    // And optionally a cone
-                    if (this->show_cones == true) {
-                        this->computeCone (ommatidial_cone_pos, pos, ringoffset, colour, radius, tube_faces);
+                } else {
+                    // All our focal_points are 0. Don't have focal point offset to help define our
+                    // cones, only acceptance angle. Use manually specified tube_length (or computed
+                    // radius) to figure out the size of a cone, whose tip is the location of the
+                    // ommatidial sensor AND the centre of the ommatidial lens
+                    for (size_t i = 0u; i < n_omm; ++i) {
+                        std::array<float, 3> colour = (*ommData)[i];
+                        float angle = (*ommatidia)[i].acceptanceAngleRadians;
+                        // pos will be the tip of the cone in this case, and the centre of the disc
+                        sm::vec<float, 3> pos = (*ommatidia)[i].relativePosition;
+                        sm::vec<float, 3> dir = (*ommatidia)[i].relativeDirection;
+                        dir.renormalize();
+                        // do a cone
+                        sm::vec<float, 3> ommatidial_cone_pos = pos + dir * this->cone_length;
+                        float ringoffset = 0.0f;
+                        // work out radius from acceptance angle and focal_point
+                        float radius = this->disc_width / 2.0f; // will be negative if not set
+                        if (radius < 0.0f) { // fall back to using cone_length
+                            radius = this->cone_length * std::tan (angle / 2.0f);
+                        }
+                        // Show a disc. Use disc_width, or if it is -ve, cone_length and computed radius
+                        this->computeTube (pos, pos - (0.1f * radius * dir), colour, colour, radius, tube_faces);
+                        // And optionally a cone
+                        if (this->show_cones == true) {
+                            this->computeCone (ommatidial_cone_pos, pos, ringoffset, colour, radius, tube_faces);
+                        }
                     }
                 }
             }
@@ -328,6 +343,7 @@ namespace mplot::compoundray
                             sm::vec<float, 3> rot_coord = (coord_rotn * sph_coord[0]).less_one_dim();
                             sm::vec<float, 2> ll = sm::geometry::spherical_projection::xyz_to_latlong (rot_coord, this->projections[pri].proj_radius);
                             sm::vec<float, 2> xy = this->spherical_projection (ll, this->projections[pri].proj_type, this->projections[pri].proj_radius);
+                            //xy[0] = -xy[0]; // invert x
                             // Add xy as one of the points that we'll make a Voronoi diagram from.
                             this->omm2d.push_back (xy.plus_one_dim());
                         }
@@ -340,8 +356,7 @@ namespace mplot::compoundray
             for (uint32_t pri = 0; pri < this->projections.size(); ++pri) {
 
                 if (this->show_sphere) {
-                    this->computeSphere (this->projections[pri].proj_centre,
-                                         mplot::colour::grey50,
+                    this->computeSphere (this->projections[pri].proj_centre, mplot::colour::grey50,
                                          this->projections[pri].proj_radius, 18, 18);
                 }
 
@@ -407,6 +422,8 @@ namespace mplot::compoundray
             this->projections[pri].site_indices.resize (ncoords, 0);
             this->projections[pri].triangle_count_sum = 0;
 
+            sm::vvec<sm::vec<>> flat_triangles; // contains a sequence of triplets of vecs
+            sm::vvec<std::array<float, 3>> flat_colours;
             // To draw triangles iterate over the 'sites' and draw triangles
             for (int i = 0; i < diagram.numsites && i < ncoords; ++i) {
                 const jcv_site* site = &sites[i];
@@ -420,20 +437,43 @@ namespace mplot::compoundray
                 }
                 uint32_t site_triangles = 0;
                 while (e) {
-                    this->computeTriangle (site->p + this->projections[pri].twod_offset,
-                                           e->pos[0] + this->projections[pri].twod_offset,
-                                           e->pos[1] + this->projections[pri].twod_offset, colour);
+#if 0
+                    sm::vec<float> t1 = {};
+                    sm::vec<float> t2 = {};
+                    sm::vec<float> t3 = {};
+                    t1 = (this->projections[pri].twod_transform * site->p).less_one_dim();
+                    t2 = (this->projections[pri].twod_transform * e->pos[0]).less_one_dim();
+                    t3 = (this->projections[pri].twod_transform * e->pos[1]).less_one_dim();
+                    this->computeTriangle (t1, t2, t3, colour);
+#else
+                    flat_triangles.push_back (site->p);
+                    flat_triangles.push_back (e->pos[0]);
+                    flat_triangles.push_back (e->pos[1]);
+                    flat_colours.push_back (colour);
+#endif
                     ++site_triangles;
                     e = e->next;
                 }
                 this->projections[pri].triangle_counts[i] = site_triangles;
                 this->projections[pri].triangle_count_sum += site_triangles;
             }
-
+#if 1
+            // Can now computeTriangles
+            //sm::vec<float> flat_mean = flat_triangles.mean();
+            //flat_triangles -= flat_mean;
+            for (uint32_t i = 0; i < flat_triangles.size(); i += 3) {
+                sm::vec<float> t1 = (this->projections[pri].twod_transform * flat_triangles[i]).less_one_dim();
+                sm::vec<float> t2 = (this->projections[pri].twod_transform * flat_triangles[i + 1]).less_one_dim();
+                sm::vec<float> t3 = (this->projections[pri].twod_transform * flat_triangles[i + 2]).less_one_dim();
+                this->computeTriangle (t1, t2, t3, flat_colours[i/3]);
+            }
+#endif
             // At end free the Voronoi diagram memory
             jcv_diagram_free (&diagram);
         }
 
+        // If false, hide 3D representation (the ommatidial cones and discs)
+        bool show_3d = true;
         // Visualize in two modes "disc" mode, showing just a 2D disc for each ommatidium and
         // disc+cone mode, where the acceptance angle is displayed too. Runtime switchable.
         bool show_cones = false;

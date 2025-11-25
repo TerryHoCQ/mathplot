@@ -29,7 +29,7 @@ int main (int argc, char** argv)
 
     float psrad = 0.6f;
 
-    float cx = 0.5f;
+    [[maybe_unused]] float cx = 0.5f;
     if (argc > 2) { cx = std::atof (argv[2]); }
 
     auto v = mplot::Visual<>(1024, 768, "mplot::compoundray::EyeVisual");
@@ -60,13 +60,14 @@ int main (int argc, char** argv)
     eyevm->name = "Big Eye";
     eyevm->show_cones = false;
 
-    sm::vec<> centre = { -0.5, 0, 0 };
-    sm::vec<> twod_offset = { -.5, 2, 0 };
-    eyevm->add_spherical_projection (mplot::compoundray::EyeVisual<>::projection_type::mercator, twod_offset, centre, psrad, 780, 1560);
+    auto ptype = mplot::compoundray::EyeVisual<>::projection_type::equirectangular; // mercator, equirectangular or cassini
+    sm::vec<> centre = { 0, 0, 0 };
+    sm::mat44<float> twod_tr;
+    twod_tr.translate (sm::vec<>{0,0,-2});
+    eyevm->add_spherical_projection (ptype, twod_tr, centre, psrad);
 
-    twod_offset = { .5, 2, 0 };
-    centre = { cx, 0, 0 };
-    eyevm->add_spherical_projection (mplot::compoundray::EyeVisual<>::projection_type::mercator, twod_offset, centre, psrad, 0, 780);
+    //centre = { cx, 0, 0 };
+    //eyevm->add_spherical_projection (ptype, twod_offset, centre, psrad, 780, 1560);
 
     eyevm->show_sphere = true;
     eyevm->show_rays = true;
