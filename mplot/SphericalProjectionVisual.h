@@ -28,11 +28,11 @@ namespace mplot
         sm::vec<T, 2> project (const sm::vec<T, 2>& ll, const T radius)
         {
             if (this->proj_type == sm::geometry::spherical_projection::type::equirectangular) {
-                return sm::geometry::spherical_projection::equirectangular (ll, radius);
+                return sm::geometry::spherical_projection::equirectangular (ll, radius, this->lambda0, this->phi0, this->phi1);
             } else if (this->proj_type == sm::geometry::spherical_projection::type::cassini) {
-                return sm::geometry::spherical_projection::cassini (ll, radius);
+                return sm::geometry::spherical_projection::cassini (ll, radius, this->lambda0);
             } else {
-                return sm::geometry::spherical_projection::mercator (ll, radius);
+                return sm::geometry::spherical_projection::mercator (ll, radius, this->lambda0);
             }
         }
 
@@ -80,16 +80,10 @@ namespace mplot
             rx.search_init();
             ry.search_init();
             for (int i = 0; i < ncoords ; ++i) {
-                if (std::isinf(this->xy[i][0])) {
-                    std::cout << "xy["<<i<<"][0] is inf" << std::endl;
-                }
-                if (std::isinf(this->xy[i][1])) {
-                    std::cout << "xy["<<i<<"][1] is inf" << std::endl;
-                }
                 rx.update (this->xy[i][0]);
                 ry.update (this->xy[i][1]);
             }
-            std::cout << "rx: " << rx << " ry: " << ry << std::endl;
+
             // Generate the 2D Voronoi diagram
             jcv_diagram diagram;
             std::memset (&diagram, 0, sizeof(jcv_diagram));
@@ -126,6 +120,10 @@ namespace mplot
                 uint32_t site_triangles = 0;
                 while (e) {
                     this->computeTriangle (site->p, e->pos[0], e->pos[1], c);
+                    if constexpr (show_centres) {
+                        auto sphc = (site->p +  e->pos[0] + e->pos[1]) / T{3};
+                        this->computeSphere (sphc, this->centre_col, this->centre_rad, 4, 4);
+                    }
                     ++site_triangles;
                     e = e->next;
                 }
@@ -142,6 +140,17 @@ namespace mplot
         sm::vvec<sm::vec<T, 3>> xy;
         // The radius of our sphere
         T radius = T{1};
-        T border_width = std::numeric_limits<T>::epsilon();
+        // The longitudinal offset
+        T lambda0 = T{0};
+        // Params for equirectangular projection
+        T phi0 = T{0};
+        T phi1 = T{0};
+        // A border width for the Voronoi cells
+        T border_width = T{0.001};
+
+        // To debug the centres of the Voronoi cells, set show_centres true
+        static constexpr bool show_centres = false;
+        static constexpr std::array<float, 3> centre_col = mplot::colour::black;
+        static constexpr T centre_rad = T{0.005};
     };
 }

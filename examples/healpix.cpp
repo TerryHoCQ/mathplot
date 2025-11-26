@@ -45,17 +45,14 @@ int main (int argc, char** argv)
     sm::vvec<sm::vec<float, 2>> latlong (hpvp->pixeldata.size());
     for (uint32_t i = 0; i < hpvp->pixeldata.size(); ++i) {
 
+        // ang.theta is co-latitude (and needs re-casting to be longitude), ang.phi is a longitude
         hp::t_ang ang = hp::nest2ang (hpvp->get_nside(), i);
 
-        // ang.theta is co-latitude (and needs re-casting to be longitude), ang.phi is a longitude
-        float lat = ang.theta - sm::mathconst<float>::pi_over_2;
-        // constrain to range -pi/2 < lat <= pi/2
-        lat *= 2.0f;
-        sm::algo::minus_pi_to_pi (lat);
-        lat /= 2.0f;
+        // ang.theta is pi for the South pole and 0 for the North pole
+        // latitude should be in range -pi/2 (S) < lat <= pi/2 (N)
+        float _lat = (sm::mathconst<float>::pi - ang.theta) - sm::mathconst<float>::pi_over_2;
 
-        latlong[i] = { lat, static_cast<float>(ang.phi) };
-
+        latlong[i] = { _lat, static_cast<float>(ang.phi) };
         hpvcolours[i] = hpvp->cm.convert (hpvp->pixeldata[i]);
     }
 
@@ -65,11 +62,24 @@ int main (int argc, char** argv)
     spv->twodimensional (true);
     spv->proj_type = sm::geometry::spherical_projection::type::mercator;
     spv->latlong = latlong;
+    spv->lambda0 = 0.0f;
     spv->colour = hpvcolours;
     spv->finalize();
     auto spvp = v.addVisualModel (spv);
     auto ext = spvp->extents(); // Use VisualModel::extents() to help place the label
     spvp->addLabel ("Mercator projection", sm::vec<>{ ext[0].min, ext[1].min - 0.16f, 0.0f }, mplot::TextFeatures(0.08f));
+
+    spv = std::make_unique<mplot::SphericalProjectionVisual<float>> (sm::vec<float>{12,0,0});
+    v.bindmodel (spv);
+    spv->twodimensional (true);
+    spv->proj_type = sm::geometry::spherical_projection::type::mercator;
+    spv->latlong = latlong;
+    spv->lambda0 = sm::mathconst<float>::pi_over_4;
+    spv->colour = hpvcolours;
+    spv->finalize();
+    spvp = v.addVisualModel (spv);
+    ext = spvp->extents(); // Use VisualModel::extents() to help place the label
+    spvp->addLabel ("Mercator projection 2", sm::vec<>{ ext[0].min, ext[1].min - 0.16f, 0.0f }, mplot::TextFeatures(0.08f));
 
     spv = std::make_unique<mplot::SphericalProjectionVisual<float>> (sm::vec<float>{-5,-4,0});
     v.bindmodel (spv);
@@ -82,6 +92,20 @@ int main (int argc, char** argv)
     ext = spvp->extents();
     spvp->addLabel ("Equirectangular projection", sm::vec<>{ ext[0].min, ext[1].min - 0.16f, 0.0f }, mplot::TextFeatures(0.08f));
 
+    spv = std::make_unique<mplot::SphericalProjectionVisual<float>> (sm::vec<float>{-5,-8,0});
+    v.bindmodel (spv);
+    spv->twodimensional (true);
+    spv->lambda0 = sm::mathconst<float>::pi_over_4;
+    //spv->phi0 = sm::mathconst<float>::pi_over_4; // Latitude offset
+    //spv->phi1 = sm::mathconst<float>::pi_over_4; // Longitude scaling
+    spv->proj_type = sm::geometry::spherical_projection::type::equirectangular;
+    spv->latlong = latlong;
+    spv->colour = hpvcolours;
+    spv->finalize();
+    spvp = v.addVisualModel (spv);
+    ext = spvp->extents();
+    spvp->addLabel ("Equirectangular projection2", sm::vec<>{ ext[0].min, ext[1].min - 0.16f, 0.0f }, mplot::TextFeatures(0.08f));
+
     spv = std::make_unique<mplot::SphericalProjectionVisual<float>> (sm::vec<float>{-4,3,0});
     v.bindmodel (spv);
     spv->twodimensional (true);
@@ -92,6 +116,18 @@ int main (int argc, char** argv)
     spvp = v.addVisualModel (spv);
     ext = spvp->extents();
     spvp->addLabel ("Cassini projection", sm::vec<>{ ext[0].min, ext[1].min - 0.16f, 0.0f }, mplot::TextFeatures(0.08f));
+
+    spv = std::make_unique<mplot::SphericalProjectionVisual<float>> (sm::vec<float>{-7,3,0});
+    v.bindmodel (spv);
+    spv->twodimensional (true);
+    spv->lambda0 = sm::mathconst<float>::pi_over_4;
+    spv->proj_type = sm::geometry::spherical_projection::type::cassini;
+    spv->latlong = latlong;
+    spv->colour = hpvcolours;
+    spv->finalize();
+    spvp = v.addVisualModel (spv);
+    ext = spvp->extents();
+    spvp->addLabel ("Cassini projection2", sm::vec<>{ ext[0].min, ext[1].min - 0.16f, 0.0f }, mplot::TextFeatures(0.08f));
 
     v.keepOpen();
     return 0;
