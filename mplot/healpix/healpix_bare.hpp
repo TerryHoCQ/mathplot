@@ -48,7 +48,7 @@ namespace hp {
     /*!
      * A structure describing a location on the sphere. \a Theta is the co-latitude
      * in radians (0 at the North Pole, increasing to pi at the South Pole.
-     * \a Phi is the azimuth in radians.
+     * \a Phi is the azimuth in radians. Starting where? And rotating which way?
      */
     typedef struct { double theta, phi; } t_ang;
     /*!

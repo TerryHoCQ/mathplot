@@ -40,6 +40,19 @@ int main (int argc, char** argv)
     hpv->finalize();
     auto hpvp = v.addVisualModel (hpv);
 
+#if 1 // Testing healpix angle to xyz
+    hp::t_ang ang_tst;
+    ang_tst.phi = 0;
+    ang_tst.theta = 0;
+    hp::t_vec pv = hp::loc2vec (hp::ang2loc (ang_tst));
+    std::cout << "Test angle theta = " << ang_tst.theta << ", phi = " << ang_tst.phi << " gives xyz " << sm::vec<double>({pv.x, pv.y, pv.z}) << std::endl;
+
+    ang_tst.phi = 0;
+    ang_tst.theta = sm::mathconst<double>::pi_over_2;
+    pv = hp::loc2vec (hp::ang2loc (ang_tst));
+    std::cout << "Test angle theta = " << ang_tst.theta << ", phi = " << ang_tst.phi << " gives xyz " << sm::vec<double>({pv.x, pv.y, pv.z}) << std::endl;
+#endif
+
     // Show some 2D projections, as well
     sm::vvec<std::array<float, 3>> hpvcolours (hpvp->pixeldata.size(), mplot::colour::crimson);
     sm::vvec<sm::vec<float, 2>> latlong (hpvp->pixeldata.size());
