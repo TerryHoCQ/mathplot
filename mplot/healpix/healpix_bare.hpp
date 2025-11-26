@@ -46,9 +46,14 @@ namespace hp {
      */
 
     /*!
-     * A structure describing a location on the sphere. \a Theta is the co-latitude
-     * in radians (0 at the North Pole, increasing to pi at the South Pole.
-     * \a Phi is the azimuth in radians. Starting where? And rotating which way?
+     * A structure describing a location on the sphere. \a theta is the co-latitude in radians (0 at
+     * the North Pole, increasing to pi at the South Pole.  \a phi is the azimuth in radians. It's
+     * also correct to describe it as the longitude. With theta on the equator (theta = pi/2), phi =
+     * 0 gives the x unit vector (1,0,0) and phi = pi/2 gives the y unit vector (0,1,0). This
+     * matches longitude in the Earth-centered Earth-fixed (ECEF) scheme. Test by passing these
+     * values to
+     *
+     * hp::loc2vec (hp::ang2loc (_t_ang))
      */
     typedef struct { double theta, phi; } t_ang;
     /*!

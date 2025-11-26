@@ -26,7 +26,17 @@ int main (int argc, char** argv)
     // scheme. If we fill it with sequential values, then the colour map will show the
     // hierarchical nature of the HEALPix.
     for (int64_t p = 0; p < hpv->n_pixels(); ++p) {
-        hpv->pixeldata[p] = static_cast<float>(p) / hpv->n_pixels();
+        hpv->pixeldata[p] = 0.5f * static_cast<float>(p) / hpv->n_pixels();
+        // Mark circles for the x, y and z axes to check they line up
+        hp::t_vec pv = hp::nest2vec (hpv->get_nside(), p);
+        auto v = sm::vec<double>({pv.x, pv.y, pv.z});
+        if (v.angle (sm::vec<double>::ux()) < 0.05) {
+            hpv->pixeldata[p] = 0.6;
+        } else if (v.angle (sm::vec<double>::uy()) < 0.05) {
+            hpv->pixeldata[p] = 0.8;
+        } else if (v.angle (sm::vec<double>::uz()) < 0.05) {
+            hpv->pixeldata[p] = 1.0;
+        }
     }
 
     std::stringstream ss;
@@ -39,19 +49,6 @@ int main (int argc, char** argv)
     // Finalize and add
     hpv->finalize();
     auto hpvp = v.addVisualModel (hpv);
-
-#if 1 // Testing healpix angle to xyz
-    hp::t_ang ang_tst;
-    ang_tst.phi = 0;
-    ang_tst.theta = 0;
-    hp::t_vec pv = hp::loc2vec (hp::ang2loc (ang_tst));
-    std::cout << "Test angle theta = " << ang_tst.theta << ", phi = " << ang_tst.phi << " gives xyz " << sm::vec<double>({pv.x, pv.y, pv.z}) << std::endl;
-
-    ang_tst.phi = 0;
-    ang_tst.theta = sm::mathconst<double>::pi_over_2;
-    pv = hp::loc2vec (hp::ang2loc (ang_tst));
-    std::cout << "Test angle theta = " << ang_tst.theta << ", phi = " << ang_tst.phi << " gives xyz " << sm::vec<double>({pv.x, pv.y, pv.z}) << std::endl;
-#endif
 
     // Show some 2D projections, as well
     sm::vvec<std::array<float, 3>> hpvcolours (hpvp->pixeldata.size(), mplot::colour::crimson);
