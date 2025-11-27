@@ -39,6 +39,7 @@
 #include <sm/quaternion>
 #include <sm/mat44>
 #include <sm/vec>
+#include <sm/vvec>
 #include <sm/range>
 #include <sm/mathconst>
 #include <sm/base64>
