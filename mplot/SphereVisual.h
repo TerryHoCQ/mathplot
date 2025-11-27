@@ -41,7 +41,6 @@ namespace mplot
         float radius = 1.0f;
         //! The colour of the sphere
         std::array<float, 3> sphere_colour = {1.0f, 0.0f, 0.0f};
-
     };
 
 } // namespace mplot
