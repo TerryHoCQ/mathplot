@@ -1,5 +1,8 @@
 /*
  * Make a healpix visual, showing the NEST index in a colour map
+ *
+ * This program also demonstrates 2D spherical projections that are available in sm::geometry and
+ * the Visual class mplot::SphereProjectionVisual
  */
 #include <cstdint>
 #include <cstdlib>
@@ -67,7 +70,7 @@ int main (int argc, char** argv)
     }
 
     // Add two-dimensional projections
-    auto spv = std::make_unique<mplot::SphericalProjectionVisual<float>> (sm::vec<float>{4,0,0});
+    auto spv = std::make_unique<mplot::SphericalProjectionVisual<float>> (sm::vec<float>{5,0,0});
     v.bindmodel (spv);
     spv->twodimensional (true);
     spv->proj_type = sm::geometry::spherical_projection::type::mercator;
@@ -79,7 +82,7 @@ int main (int argc, char** argv)
     auto ext = spvp->extents(); // Use VisualModel::extents() to help place the label
     spvp->addLabel ("Mercator projection", sm::vec<>{ ext[0].min, ext[1].min - 0.16f, 0.0f }, mplot::TextFeatures(0.08f));
 
-    spv = std::make_unique<mplot::SphericalProjectionVisual<float>> (sm::vec<float>{12,0,0});
+    spv = std::make_unique<mplot::SphericalProjectionVisual<float>> (sm::vec<float>{13,0,0});
     v.bindmodel (spv);
     spv->twodimensional (true);
     spv->proj_type = sm::geometry::spherical_projection::type::mercator;
@@ -89,7 +92,13 @@ int main (int argc, char** argv)
     spv->finalize();
     spvp = v.addVisualModel (spv);
     ext = spvp->extents(); // Use VisualModel::extents() to help place the label
-    spvp->addLabel ("Mercator projection 2", sm::vec<>{ ext[0].min, ext[1].min - 0.16f, 0.0f }, mplot::TextFeatures(0.08f));
+    std::stringstream ss1;
+    ss1 << "Mercator projection with "
+        << mplot::unicode::toUtf8(mplot::unicode::lambda)
+        << mplot::unicode::toUtf8(mplot::unicode::subs0)
+        << " = " << mplot::unicode::toUtf8(mplot::unicode::pi) << "/4";
+    spvp->addLabel (ss1.str(),
+                    sm::vec<>{ ext[0].min, ext[1].min - 0.16f, 0.0f }, mplot::TextFeatures(0.08f));
 
     spv = std::make_unique<mplot::SphericalProjectionVisual<float>> (sm::vec<float>{-5,-4,0});
     v.bindmodel (spv);
@@ -114,9 +123,14 @@ int main (int argc, char** argv)
     spv->finalize();
     spvp = v.addVisualModel (spv);
     ext = spvp->extents();
-    spvp->addLabel ("Equirectangular projection2", sm::vec<>{ ext[0].min, ext[1].min - 0.16f, 0.0f }, mplot::TextFeatures(0.08f));
+    std::stringstream ss2;
+    ss2 << "Equirectangular projection with "
+        << mplot::unicode::toUtf8(mplot::unicode::lambda)
+        << mplot::unicode::toUtf8(mplot::unicode::subs0)
+        << " = " << mplot::unicode::toUtf8(mplot::unicode::pi) << "/4";
+    spvp->addLabel (ss2.str(), sm::vec<>{ ext[0].min, ext[1].min - 0.16f, 0.0f }, mplot::TextFeatures(0.08f));
 
-    spv = std::make_unique<mplot::SphericalProjectionVisual<float>> (sm::vec<float>{-4,3,0});
+    spv = std::make_unique<mplot::SphericalProjectionVisual<float>> (sm::vec<float>{-9,3,0});
     v.bindmodel (spv);
     spv->twodimensional (true);
     spv->proj_type = sm::geometry::spherical_projection::type::cassini;
@@ -127,7 +141,7 @@ int main (int argc, char** argv)
     ext = spvp->extents();
     spvp->addLabel ("Cassini projection", sm::vec<>{ ext[0].min, ext[1].min - 0.16f, 0.0f }, mplot::TextFeatures(0.08f));
 
-    spv = std::make_unique<mplot::SphericalProjectionVisual<float>> (sm::vec<float>{-7,3,0});
+    spv = std::make_unique<mplot::SphericalProjectionVisual<float>> (sm::vec<float>{-4,3,0});
     v.bindmodel (spv);
     spv->twodimensional (true);
     spv->lambda0 = sm::mathconst<float>::pi_over_4;
@@ -137,7 +151,12 @@ int main (int argc, char** argv)
     spv->finalize();
     spvp = v.addVisualModel (spv);
     ext = spvp->extents();
-    spvp->addLabel ("Cassini projection2", sm::vec<>{ ext[0].min, ext[1].min - 0.16f, 0.0f }, mplot::TextFeatures(0.08f));
+    std::stringstream ss3;
+    ss3 << "Cassini projection with "
+        << mplot::unicode::toUtf8(mplot::unicode::lambda)
+        << mplot::unicode::toUtf8(mplot::unicode::subs0)
+        << " = " << mplot::unicode::toUtf8(mplot::unicode::pi) << "/4";
+    spvp->addLabel (ss3.str(), sm::vec<>{ ext[0].min, ext[1].min - 0.16f, 0.0f }, mplot::TextFeatures(0.08f));
 
     v.keepOpen();
     return 0;
