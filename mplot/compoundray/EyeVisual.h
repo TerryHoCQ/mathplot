@@ -161,7 +161,7 @@ namespace mplot::compoundray
             sm::vec<float, 2> xy = {};
             if (t == projection_type::equirectangular) {
                 //sm::mathconst<float>::pi_over_2
-                xy = sm::geometry::spherical_projection::equirectangular<float, 0.0f, 0.0f, 0.0f> (ll, radius);
+                xy = sm::geometry::spherical_projection::equirectangular (ll, radius);
             } else if (t == projection_type::cassini) {
                 xy = sm::geometry::spherical_projection::cassini (ll, radius);
             } else if (t == projection_type::cylindrical) {
