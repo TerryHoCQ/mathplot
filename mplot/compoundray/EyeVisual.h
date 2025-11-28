@@ -14,10 +14,13 @@
 #include <mplot/gl/version.h>
 
 #define JC_VORONOI_IMPLEMENTATION
+#define JCV_REAL_TYPE double // double precision in jcvoronoi necessary
 #include <mplot/jcvoronoi/jc_voronoi.h>
 
 namespace mplot::compoundray
 {
+    using jcv_real = JCV_REAL_TYPE;
+
     // This is a binary-compatible equivalent to Ommatidium from cameras/CompoundEyeDataTypes.h in compound-ray.
     // Use reinterpret_cast<std::vector<mplot::compoundray::Ommatidium>*>(ommatidia) if using compound ray.
     struct Ommatidium
@@ -173,7 +176,7 @@ namespace mplot::compoundray
         }
 
         // 2D positions for the ommatidia centres encoded in 3D vecs. Gets re-used for each projection
-        sm::vvec<sm::vec<float, 3>> omm2d;
+        sm::vvec<sm::vec<jcv_real, 3>> omm2d;
 
         /*
          * Possibly each of these need replication for each of multiple 2d projections
@@ -343,9 +346,8 @@ namespace mplot::compoundray
                             sm::vec<float, 3> rot_coord = (coord_rotn * sph_coord[0]).less_one_dim();
                             sm::vec<float, 2> ll = sm::geometry::spherical_projection::xyz_to_latlong (rot_coord, this->projections[pri].proj_radius);
                             sm::vec<float, 2> xy = this->spherical_projection (ll, this->projections[pri].proj_type, this->projections[pri].proj_radius);
-                            //xy[0] = -xy[0]; // invert x
                             // Add xy as one of the points that we'll make a Voronoi diagram from.
-                            this->omm2d.push_back (xy.plus_one_dim());
+                            this->omm2d.push_back (xy.plus_one_dim().as<jcv_real>());
                         }
                     }
                     // Make 2D Voronoi of omm2d.
@@ -385,7 +387,7 @@ namespace mplot::compoundray
             // Use mplot::range to find the extents of dataCoords. From these create a
             // rectangle to pass to jcv_diagram_generate.
             int ncoords = static_cast<int>(this->omm2d.size());
-            sm::range<float> rx, ry;
+            sm::range<jcv_real> rx, ry;
             rx.search_init();
             ry.search_init();
             for (int i = 0; i < ncoords ; ++i) {
@@ -446,9 +448,9 @@ namespace mplot::compoundray
                     t3 = (this->projections[pri].twod_transform * e->pos[1]).less_one_dim();
                     this->computeTriangle (t1, t2, t3, colour);
 #else
-                    flat_triangles.push_back (site->p);
-                    flat_triangles.push_back (e->pos[0]);
-                    flat_triangles.push_back (e->pos[1]);
+                    flat_triangles.push_back (site->p.as<float>());
+                    flat_triangles.push_back (e->pos[0].as<float>());
+                    flat_triangles.push_back (e->pos[1].as<float>());
                     flat_colours.push_back (colour);
 #endif
                     ++site_triangles;
