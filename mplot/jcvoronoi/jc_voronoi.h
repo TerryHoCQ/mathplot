@@ -179,13 +179,7 @@ namespace jcv
     struct manager
     {
         manager(){}
-        ~manager()
-        {
-            if (this->diagram) {
-                jcv::manager<T>::diagram_free (this->diagram);
-                delete this->diagram;
-            }
-        }
+        ~manager() { jcv::manager<T>::diagram_free (&this->diagram); }
 
         static constexpr T edge_intersect_threshold = T{JCV_EDGE_INTERSECT_THRESHOLD};
 
@@ -312,14 +306,7 @@ namespace jcv
         }
 
         // User API
-        const site<T>* diagram_get_sites()
-        {
-            const site<T>* sites = nullptr;
-            if (this->diagram) {
-                sites = diagram_get_sites (this->diagram);
-            }
-            return sites;
-        }
+        const site<T>* diagram_get_sites() { return diagram_get_sites (&this->diagram); }
 
         // Iterates over a list of edges, skipping invalid edges (where p0==p1)
         const edge<T>* diagram_get_next_edge( const edge<T>* _edge )
@@ -1550,29 +1537,22 @@ namespace jcv
                 rx.update (centres[i][0]);
                 ry.update (centres[i][1]);
             }
-            // Have to actually new the diagram!
-            this->diagram = new jcv::diagram<T>;
-            std::memset (this->diagram, 0, sizeof(jcv::diagram<T>));
+            std::memset (&this->diagram, 0, sizeof(jcv::diagram<T>));
             this->domain = {
                 jcv::point<T>{rx.min - this->border_width, ry.min - this->border_width, 0.0f},
                 jcv::point<T>{rx.max + this->border_width, ry.max + this->border_width, 0.0f}
             };
-            jcv::manager<T>::diagram_generate (ncoords, centres.data(), &this->domain, 0, this->diagram);
+            jcv::manager<T>::diagram_generate (ncoords, centres.data(), &this->domain, 0, &this->diagram);
         }
 
-        int diagram_numsites() const
-        {
-            int n = 0;
-            if (this->diagram) { n = this->diagram->numsites; }
-            return n;
-        }
+        int diagram_numsites() const { return this->diagram.numsites; }
 
         // User-configurable border width
         T border_width = std::numeric_limits<T>::epsilon();
 
     private:
         // Our diagram
-        jcv::diagram<T>* diagram = nullptr;
+        jcv::diagram<T> diagram;
         // A domain for the diagram.
         jcv::rect<T> domain = {};
     }; // end struct jcv
