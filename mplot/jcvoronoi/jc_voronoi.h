@@ -119,20 +119,6 @@ namespace jc
         void*                   ctx;        // User defined context
     };
 
-#if 0 // shift to after context_internal
-    template<typename jcv_real>
-    struct jcv_diagram
-    {
-        jcv_context_internal*   internal;
-        int                     numsites;
-        jcv_point               min;
-        jcv_point               max;
-    };
-#endif
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-
     // Second batch of structs
     template<typename jcv_real>
     struct jcv_halfedge
@@ -210,7 +196,13 @@ namespace jc
     struct voronoi
     {
         voronoi(){}
-        ~voronoi(){}
+        ~voronoi()
+        {
+            if (this->diagram) {
+                jc::voronoi<double>::jcv_diagram_free (this->diagram);
+                delete this->diagram;
+            }
+        }
 
         static constexpr jcv_real jcv_edge_intersect_threshold = jcv_real{JCV_EDGE_INTERSECT_THRESHOLD};
 
@@ -339,7 +331,6 @@ namespace jc
         {
             jcv_context_internal<jcv_real>* internal = d->internal;
             void* memctx = internal->memctx;
-            //FJCVFreeFn& freefn = internal->free;
             while(internal->memblocks)
             {
                 jcv_memoryblock* p = internal->memblocks;
@@ -354,6 +345,15 @@ namespace jc
         static const jcv_site<jcv_real>* jcv_diagram_get_sites( const jcv_diagram<jcv_real>* diagram )
         {
             return diagram->internal->sites;
+        }
+
+        const jcv_site<jcv_real>* jcv_diagram_get_sites()
+        {
+            const jcv_site<jcv_real>* sites = nullptr;
+            if (this->diagram) {
+                sites = jcv_diagram_get_sites (this->diagram);
+            }
+            return sites;
         }
 
         // Iterates over a list of edges, skipping invalid edges (where p0==p1)
@@ -1576,6 +1576,41 @@ namespace jc
             jcv_diagram_generate_useralloc(num_points, points, rect, clipper, 0, jcv_alloc_fn, jcv_free_fn, d);
         }
 
+        void jcv_diagram_generate (const std::vector<jcv_point<jcv_real>>& centres)
+        {
+            int ncoords = static_cast<int>(centres.size());
+            sm::range<jcv_real> rx, ry;
+            rx.search_init();
+            ry.search_init();
+            for (int i = 0; i < ncoords ; ++i) {
+                rx.update (centres[i][0]);
+                ry.update (centres[i][1]);
+            }
+            // Have to actually new the diagram!
+            this->diagram = new jc::jcv_diagram<jcv_real>;
+            std::memset (this->diagram, 0, sizeof(jc::jcv_diagram<jcv_real>));
+            this->domain = {
+                jc::jcv_point<jcv_real>{rx.min - this->border_width, ry.min - this->border_width, 0.0f},
+                jc::jcv_point<jcv_real>{rx.max + this->border_width, ry.max + this->border_width, 0.0f}
+            };
+            jc::voronoi<jcv_real>::jcv_diagram_generate (ncoords, centres.data(), &this->domain, 0, this->diagram);
+        }
+
+        int diagram_numsites() const
+        {
+            int n = 0;
+            if (this->diagram) { n = this->diagram->numsites; }
+            return n;
+        }
+
+        // User-configurable border width
+        jcv_real border_width = std::numeric_limits<jcv_real>::epsilon();
+
+    private:
+        // Our diagram
+        jc::jcv_diagram<jcv_real>* diagram = nullptr;
+        // A domain for the diagram.
+        jc::jcv_rect<jcv_real> domain = {};
     }; // end struct jcv
 
 } // namespace
