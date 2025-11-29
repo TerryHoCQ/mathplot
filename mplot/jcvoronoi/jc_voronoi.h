@@ -8,6 +8,7 @@
 #pragma once
 
 #include <stdlib.h> // malloc() & free()
+#include <iostream> // one sanity message
 #include <limits>
 #include <cmath>
 #include <cassert>  // assert()
@@ -1131,7 +1132,13 @@ namespace jcv
                 next = site->edges;
             }
 
-            while( current && next )
+            // Need a sanity check, as this while loop can go infinite if earlier code fails to
+            // generate the Voronoi diagram correctly. We usually go 5 or 6 times around the while,
+            // so if we get to 1024 we're probably in an interminable loop.
+            constexpr int loopcount_thresh = 1024;
+            int loopcount = 0;
+
+            while (current && next && loopcount < loopcount_thresh)
             {
                 int current_edge_flags = get_edge_flags(&current->pos[1], &clipper->min, &clipper->max);
                 if( current_edge_flags && !point_eq(&current->pos[1], &next->pos[0]))
@@ -1194,6 +1201,10 @@ namespace jcv
                     next = current->next;
                     if( !next )
                         next = site->edges;
+                }
+                ++loopcount;
+                if (loopcount > 1000) {
+                    std::cout << "Too many loops. Thi can be caused by numerical precision errors when using T==float on some sets of points\n";
                 }
             }
         }
