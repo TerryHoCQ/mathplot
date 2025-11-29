@@ -90,7 +90,7 @@ namespace mplot {
             }
 
             // Use mplot::range to find the extents of dataCoords. From these create a
-            // rectangle to pass to jcv_diagram_generate.
+            // rectangle to pass to diagram_generate.
             sm::range<float> rx, ry;
             rx.search_init();
             ry.search_init();
@@ -100,12 +100,12 @@ namespace mplot {
             }
 
             // Generate the 2D Voronoi diagram
-            jc::voronoi<float> vd;
+            jc::manager<float> vd;
             vd.border_width = this->border_width;
-            vd.jcv_diagram_generate (*(dcoords_ptr));
+            vd.diagram_generate (*(dcoords_ptr));
 
             // We obtain access to the Voronoi cell sites:
-            const jc::jcv_site<float>* sites = vd.jcv_diagram_get_sites();
+            const jc::jcv_site<float>* sites = vd.diagram_get_sites();
 
             // Now scan through the Voronoi cell 'sites' and 'edges' to re-assign z
             // values in the edges. This is not going to be particularly efficient, but
@@ -149,21 +149,21 @@ namespace mplot {
                     // solution would be to modify the jcvoronoi algorithm to populate
                     // both ends of all edges with additional logic.
                     for (unsigned int j = 0; j < 2; ++j) {
-                        if (edge_1->edge->sites[j]) {
+                        if (edge_1->edge_->sites[j]) {
                             //std::cout << "insert edge_1 " << edge_1->edge->sites[j]->p << " into edge_pos_centres[" << edge_1->pos[1] << "]\n";
-                            edge_pos_centres[edge_1->pos[1]].insert (edge_1->edge->sites[j]->p);
+                            edge_pos_centres[edge_1->pos[1]].insert (edge_1->edge_->sites[j]->p);
                             //std::cout << "insert edge_1 " << edge_1->edge->sites[j]->p << " into edge_pos_centres[" << edge_1->pos[0] << "]\n";
-                            edge_pos_centres[edge_1->pos[0]].insert (edge_1->edge->sites[j]->p);
+                            edge_pos_centres[edge_1->pos[0]].insert (edge_1->edge_->sites[j]->p);
                         }
                         // By definition, cellcentres_1 also gets edge_2 sites...
-                        if (edge_2->edge->sites[j]) {
+                        if (edge_2->edge_->sites[j]) {
                             //std::cout << "insert edge_2 " << edge_2->edge->sites[j]->p << " into edge_pos_centres[" << edge_1->pos[1] << "]\n";
-                            edge_pos_centres[edge_1->pos[1]].insert (edge_2->edge->sites[j]->p);
+                            edge_pos_centres[edge_1->pos[1]].insert (edge_2->edge_->sites[j]->p);
                         }
                         // and cellcentres_0 gets edge_0 sites
-                        if (edge_0->edge->sites[j]) {
+                        if (edge_0->edge_->sites[j]) {
                             //std::cout << "insert edge_0 " << edge_0->edge->sites[j]->p << " into edge_pos_centres[" << edge_1->pos[0] << "]\n";
-                            edge_pos_centres[edge_1->pos[0]].insert (edge_0->edge->sites[j]->p);
+                            edge_pos_centres[edge_1->pos[0]].insert (edge_0->edge_->sites[j]->p);
                         }
                     }
 
