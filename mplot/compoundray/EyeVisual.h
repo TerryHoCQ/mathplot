@@ -386,24 +386,24 @@ namespace mplot::compoundray
         void voronoi2d (uint32_t pri)
         {
             // Use mplot::range to find the extents of dataCoords. From these create a
-            // rectangle to pass to jcv_diagram_generate.
+            // rectangle to pass to diagram_generate.
             int ncoords = static_cast<int>(this->omm2d.size());
 
-            jc::voronoi<double> vd; // we need double precision for projections, float may run into trouble
-            vd.border_width = this->border_width;
-            vd.jcv_diagram_generate (this->omm2d);
+            jcv::manager<double> vorman; // we need double precision for projections, float may run into trouble
+            vorman.border_width = this->border_width;
+            vorman.diagram_generate (this->omm2d);
 
-            int diag_nsites = vd.diagram_numsites();
+            int diag_nsites = vorman.diagram_numsites();
             if (diag_nsites != ncoords) {
                 std::cout << "WARNING: diagram's ncoords (" << diag_nsites << ") != ncoords (" << ncoords << ")?!?!\n";
             }
 
             // We obtain access to the Voronoi cell sites:
-            const jc::jcv_site<double>* sites = vd.jcv_diagram_get_sites();
+            const jcv::site<double>* sites = vorman.diagram_get_sites();
 
             for (int i = 0; i < diag_nsites && i < ncoords; ++i) {
-                const jc::jcv_site<double>* site = &sites[i];
-                jc::jcv_graphedge<double>* e = site->edges; // The very first edge
+                const jcv::site<double>* site = &sites[i];
+                jcv::graphedge<double>* e = site->edges; // The very first edge
                 while (e) {
                     // Set z. Should be done in jcvoronoi, but haven't found out how
                     e->pos[0][2] = this->omm2d[i][2];
@@ -421,8 +421,8 @@ namespace mplot::compoundray
             sm::vvec<std::array<float, 3>> flat_colours;
             // To draw triangles iterate over the 'sites' and draw triangles
             for (int i = 0; i < diag_nsites && i < ncoords; ++i) {
-                const jc::jcv_site<double>* site = &sites[i];
-                const jc::jcv_graphedge<double>* e = site->edges;
+                const jcv::site<double>* site = &sites[i];
+                const jcv::graphedge<double>* e = site->edges;
                 this->projections[pri].site_indices[i] = site->index;
                 std::array<float, 3> colour = mplot::colour::black;
                 if (site->index + this->projections[pri].start_i < ommData->size()) {

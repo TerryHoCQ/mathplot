@@ -118,12 +118,10 @@ namespace jcv
 
     struct memoryblock
     {
-        size_t sizefree;
+        size_t              sizefree;
         struct memoryblock* next;
-        char*  memory;
+        char*               memory;
     };
-
-    typedef int  (*FJCVPriorityQueuePrint)(const void* node, int pos);
 
     struct priorityqueue
     {

@@ -8,7 +8,6 @@
 #include <sm/geometry>
 #include <mplot/VisualModel.h>
 #include <mplot/gl/version.h>
-
 #include <mplot/jcvoronoi/jc_voronoi.h>
 
 namespace mplot
@@ -73,24 +72,24 @@ namespace mplot
         void voronoi2d()
         {
             // Use mplot::range to find the extents of dataCoords. From these create a
-            // rectangle to pass to jcv_diagram_generate.
+            // rectangle to pass to diagram_generate.
             int ncoords = static_cast<int>(this->xy.size());
 
-            jc::voronoi<double> vd; // we need double precision for projections, float may run into trouble
-            vd.border_width = this->border_width;
-            vd.jcv_diagram_generate (this->xy);
+            jcv::manager<double> vorman; // we need double precision for projections, float may run into trouble
+            vorman.border_width = this->border_width;
+            vorman.diagram_generate (this->xy);
 
-            int diag_nsites = vd.diagram_numsites();
+            int diag_nsites = vorman.diagram_numsites();
             if (diag_nsites != ncoords) {
                 std::cout << "WARNING: diagram's ncoords (" << diag_nsites << ") != ncoords (" << ncoords << ")?!?!\n";
             }
 
             // We obtain access to the Voronoi cell sites:
-            const jc::jcv_site<double>* sites = vd.jcv_diagram_get_sites();
+            const jcv::site<double>* sites = vorman.diagram_get_sites();
 
-            for (int i = 0; i < vd.diagram_numsites() && i < ncoords; ++i) {
-                const jc::jcv_site<double>* site = &sites[i];
-                jc::jcv_graphedge<double>* e = site->edges; // The very first edge
+            for (int i = 0; i < vorman.diagram_numsites() && i < ncoords; ++i) {
+                const jcv::site<double>* site = &sites[i];
+                jcv::graphedge<double>* e = site->edges; // The very first edge
                 while (e) {
                     // Set z. Should be done in jcvoronoi, but haven't found out how
                     e->pos[0][2] = this->xy[i][2];
@@ -100,9 +99,9 @@ namespace mplot
             }
 
             // To draw triangles iterate over the 'sites' and draw triangles
-            for (int i = 0; i < vd.diagram_numsites() && i < ncoords; ++i) {
-                const jc::jcv_site<double>* site = &sites[i];
-                const jc::jcv_graphedge<double>* e = site->edges;
+            for (int i = 0; i < vorman.diagram_numsites() && i < ncoords; ++i) {
+                const jcv::site<double>* site = &sites[i];
+                const jcv::graphedge<double>* e = site->edges;
                 std::array<float, 3> c = mplot::colour::black;
                 if (static_cast<std::size_t>(site->index) < this->colour.size()) { c = this->colour[site->index]; }
                 uint32_t site_triangles = 0;
