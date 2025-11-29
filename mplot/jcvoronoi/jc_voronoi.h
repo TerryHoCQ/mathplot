@@ -5,1559 +5,1580 @@
 // Copyright (c) 2015-2023 Mathias Westerdahl
 // For LICENSE (MIT), USAGE or HISTORY, see bottom of file
 
-#ifndef JC_VORONOI_H
-#define JC_VORONOI_H
+#pragma once
 
+#include <stdlib.h> // malloc() & free()
 #include <limits>
 #include <cmath>
 #include <cassert>  // assert()
 #include <cstdint>  // uintptr_t etc
+#include <functional>
 #include <sm/mathconst>
 #include <sm/vec>
-#include <stdlib.h> // malloc() & free()
-
-#ifndef JCV_REAL_TYPE
-    #define JCV_REAL_TYPE float
-#endif
-typedef JCV_REAL_TYPE jcv_real;
 
 #ifndef JCV_EDGE_INTERSECT_THRESHOLD
     // Fix for Issue #40
     #define JCV_EDGE_INTERSECT_THRESHOLD 1.0e-10F
 #endif
-static constexpr jcv_real jcv_edge_intersect_threshold = jcv_real{JCV_EDGE_INTERSECT_THRESHOLD};
 
-typedef sm::vec<jcv_real, 3>        jcv_point;
-typedef struct jcv_rect_            jcv_rect;
-typedef struct jcv_site_            jcv_site;
-typedef struct jcv_edge_            jcv_edge;
-typedef struct jcv_graphedge_       jcv_graphedge;
-typedef struct jcv_delauney_edge_   jcv_delauney_edge;
-typedef struct jcv_delauney_iter_   jcv_delauney_iter;
-typedef struct jcv_diagram_         jcv_diagram;
-typedef struct jcv_clipper_         jcv_clipper;
-typedef struct jcv_context_internal_ jcv_context_internal;
+namespace jc
+{
+#pragma pack(push, 1)
 
-/// Tests if a point is inside the final shape
-typedef int (*jcv_clip_test_point_fn)(const jcv_clipper* clipper, const jcv_point p);
-/** Given an edge, and the clipper, calculates the e->pos[0] and e->pos[1]
- * Returns 0 if not successful
- */
-typedef int (*jcv_clip_edge_fn)(const jcv_clipper* clipper, jcv_edge* e);
-/** Given the clipper, the site and the last edge,
- * closes any gaps in the polygon by adding new edges that follow the bounding shape
- * The internal context is use when allocating new edges.
- */
-typedef void (*jcv_clip_fillgap_fn)(const jcv_clipper* clipper, jcv_context_internal* allocator, jcv_site* s);
+    template<typename jcv_real>
+    using jcv_point = sm::vec<jcv_real, 3>;
 
-/**
- * Uses malloc
- * If a clipper is not supplied, a default box clipper will be used
- * If rect is null, an automatic bounding box is calculated, with an extra padding of 10 units
- * All points will be culled against the bounding rect, and all edges will be clipped against it.
- */
-extern void jcv_diagram_generate( int num_points, const jcv_point* points, const jcv_rect* rect, const jcv_clipper* clipper, jcv_diagram* diagram );
+    // fwd declar graphpedge
+    template <typename jcv_real> struct jcv_graphedge;
 
-typedef void* (*FJCVAllocFn)(void* userctx, size_t size);
-typedef void (*FJCVFreeFn)(void* userctx, void* p);
+    template<typename jcv_real>
+    struct jcv_site
+    {
+        jcv_point<jcv_real>       p;
+        int                       index;  // Index into the original list of points
+        jcv_graphedge<jcv_real>*  edges;  // The half edges owned by the cell
+    };
 
-// Same as above, but allows the client to use a custom allocator
-extern void jcv_diagram_generate_useralloc( int num_points, const jcv_point* points, const jcv_rect* rect, const jcv_clipper* clipper, void* userallocctx, FJCVAllocFn allocfn, FJCVFreeFn freefn, jcv_diagram* diagram );
+    // The coefficients a, b and c are from the general line equation: ax * by + c = 0
+    template<typename jcv_real>
+    struct jcv_edge
+    {
+        struct jcv_edge<jcv_real>*   next;
+        jcv_site<jcv_real>*          sites[2];
+        jcv_point<jcv_real>          pos[2];
+        jcv_real            a;
+        jcv_real            b;
+        jcv_real            c;
+    };
 
-// Uses free (or the registered custom free function)
-extern void jcv_diagram_free( jcv_diagram* diagram );
+    template<typename jcv_real>
+    struct jcv_graphedge
+    {
+        struct jcv_graphedge<jcv_real>*  next;
+        struct jcv_edge<jcv_real>*       edge;
+        struct jcv_site<jcv_real>*       neighbor;
+        jcv_point<jcv_real>              pos[2];
+        jcv_real                         angle;
+    };
 
-// Returns an array of sites, where each index is the same as the original input point array.
-extern const jcv_site* jcv_diagram_get_sites( const jcv_diagram* diagram );
+    template<typename jcv_real>
+    struct jcv_delauney_iter
+    {
+        const jcv_edge<jcv_real>*   sentinel;
+        const jcv_edge<jcv_real>*   current;
+    };
 
-// Returns a linked list of all the voronoi edges
-// excluding the ones that lie on the borders of the bounding box.
-// For a full list of edges, you need to iterate over the sites, and their graph edges.
-extern const jcv_edge* jcv_diagram_get_edges( const jcv_diagram* diagram );
+    template<typename jcv_real>
+    struct jcv_delauney_edge
+    {
+        const jcv_edge<jcv_real>* edge;       // The voronoi edge separating the two sites
+        const jcv_site<jcv_real>* sites[2];
+        jcv_point<jcv_real>       pos[2];     // the positions of the two sites
+    };
 
-// Iterates over a list of edges, skipping invalid edges (where p0==p1)
-extern const jcv_edge* jcv_diagram_get_next_edge( const jcv_edge* edge );
+    template<typename jcv_real>
+    struct jcv_rect
+    {
+        jcv_point<jcv_real>   min;
+        jcv_point<jcv_real>   max;
+    };
 
-// Creates an iterator over the delauney edges of a voronoi diagram
-void jcv_delauney_begin( const jcv_diagram* diagram, jcv_delauney_iter* iter );
+    // Convert these to templated usings? or use std::function?
+    /// Tests if a point is inside the final shape
+    //typedef int (*jcv_clip_test_point_fn)(const jcv_clipper<jcv_real>* clipper, const jcv_point p);
+    //template<typename jcv_real>
 
-// Steps the iterator and returns the next edge
-// Returns 0 when there are no more edges
-int jcv_delauney_next( jcv_delauney_iter* iter, jcv_delauney_edge* next );
+    /** Given an edge, and the clipper, calculates the e->pos[0] and e->pos[1]
+     * Returns 0 if not successful
+     */
+    //typedef int (*jcv_clip_edge_fn)(const jcv_clipper* clipper, jcv_edge* e);
 
-// For the default clipper
-extern int jcv_boxshape_test(const jcv_clipper* clipper, const jcv_point p);
-extern int jcv_boxshape_clip(const jcv_clipper* clipper, jcv_edge* e);
-extern void jcv_boxshape_fillgaps(const jcv_clipper* clipper, jcv_context_internal* allocator, jcv_site* s);
+    /** Given the clipper, the site and the last edge,
+     * closes any gaps in the polygon by adding new edges that follow the bounding shape
+     * The internal context is use when allocating new edges.
+     */
+    //typedef void (*jcv_clip_fillgap_fn)(const jcv_clipper* clipper, jcv_context_internal* allocator, jcv_site* s);
 
+    // Forward declare jcv_context_internal for the std::function
+    template<typename jcv_real> struct jcv_context_internal;
+
+    template<typename jcv_real>
+    struct jcv_clipper
+    {
+        // Tests if a point is inside the final shape
+        std::function<int(const jcv_clipper<jcv_real>* clipper, const jcv_point<jcv_real> p)> test_fn;
+        // Given an edge, and the clipper, calculates the e->pos[0] and e->pos[1]
+        // Returns 0 if not successful
+        std::function<int(const jcv_clipper<jcv_real>* clipper, jcv_edge<jcv_real>* e)> clip_fn;
+        // Given the clipper, the site and the last edge,
+        // closes any gaps in the polygon by adding new edges that follow the bounding shape
+        // The internal context is use when allocating new edges.
+        std::function<void(const jcv_clipper<jcv_real>* clipper, jcv_context_internal<jcv_real>* allocator, jcv_site<jcv_real>* s)> fill_fn;
+        jcv_point<jcv_real>     min;        // The bounding rect min
+        jcv_point<jcv_real>     max;        // The bounding rect max
+        void*                   ctx;        // User defined context
+    };
+
+#if 0 // shift to after context_internal
+    template<typename jcv_real>
+    struct jcv_diagram
+    {
+        jcv_context_internal*   internal;
+        int                     numsites;
+        jcv_point               min;
+        jcv_point               max;
+    };
+#endif
+#pragma pack(pop)
 
 #pragma pack(push, 1)
 
-struct jcv_graphedge_
-{
-    struct jcv_graphedge_*  next;
-    struct jcv_edge_*       edge;
-    struct jcv_site_*       neighbor;
-    jcv_point               pos[2];
-    jcv_real                angle;
-};
+    // Second batch of structs
+    template<typename jcv_real>
+    struct jcv_halfedge
+    {
+        jcv_edge<jcv_real>*               edge;
+        struct jcv_halfedge<jcv_real>*    left;
+        struct jcv_halfedge<jcv_real>*    right;
+        jcv_point<jcv_real>               vertex;
+        jcv_real                y;
+        int                     direction; // 0=left, 1=right
+        int                     pqpos;
+    };
 
-struct jcv_site_
-{
-    jcv_point       p;
-    int             index;  // Index into the original list of points
-    jcv_graphedge*  edges;  // The half edges owned by the cell
-};
+    struct jcv_memoryblock
+    {
+        size_t sizefree;
+        struct jcv_memoryblock* next;
+        char*  memory;
+    };
 
-// The coefficients a, b and c are from the general line equation: ax * by + c = 0
-struct jcv_edge_
-{
-    struct jcv_edge_*   next;
-    jcv_site*           sites[2];
-    jcv_point           pos[2];
-    jcv_real            a;
-    jcv_real            b;
-    jcv_real            c;
-};
+    typedef int  (*FJCVPriorityQueuePrint)(const void* node, int pos);
 
-struct jcv_delauney_iter_
-{
-    const jcv_edge*   sentinel;
-    const jcv_edge*   current;
-};
+    struct jcv_priorityqueue
+    {
+        // Implements a binary heap
+        int                         maxnumitems;
+        int                         numitems;
+        void**                      items;
+    };
 
-struct jcv_delauney_edge_
-{
-    const jcv_edge* edge;       // The voronoi edge separating the two sites
-    const jcv_site* sites[2];
-    jcv_point       pos[2];     // the positions of the two sites
-};
+    using FJCVAllocFn = void*(void* userctx, size_t size);
+    using FJCVFreeFn = void(void* userctx, void* p);
 
-struct jcv_rect_
-{
-    jcv_point   min;
-    jcv_point   max;
-};
+    template<typename jcv_real>
+    struct jcv_context_internal
+    {
+        void*                         mem;
+        jcv_edge<jcv_real>*           edges;
+        jcv_halfedge<jcv_real>*       beachline_start;
+        jcv_halfedge<jcv_real>*       beachline_end;
+        jcv_halfedge<jcv_real>*       last_inserted;
+        jcv_priorityqueue*            eventqueue;
 
-struct jcv_clipper_
-{
-    jcv_clip_test_point_fn  test_fn;
-    jcv_clip_edge_fn        clip_fn;
-    jcv_clip_fillgap_fn     fill_fn;
-    jcv_point               min;        // The bounding rect min
-    jcv_point               max;        // The bounding rect max
-    void*                   ctx;        // User defined context
-};
+        jcv_site<jcv_real>*           sites;
+        jcv_site<jcv_real>*           bottomsite;
+        int                           numsites;
+        int                           currentsite;
+        int                           _padding;
 
-struct jcv_diagram_
-{
-    jcv_context_internal*   internal;
-    int                     numsites;
-    jcv_point               min;
-    jcv_point               max;
-};
+        jcv_memoryblock*              memblocks;
+        jcv_edge<jcv_real>*           edgepool;
+        jcv_halfedge<jcv_real>*       halfedgepool;
+        void**                        eventmem;
+        jcv_clipper<jcv_real>         clipper;
+
+        void*                         memctx; // Given by the user
+        std::function<FJCVAllocFn>    alloc;
+        std::function<FJCVFreeFn>     free;
+
+        jcv_rect<jcv_real>            rect;
+    };
+
+    template<typename jcv_real>
+    struct jcv_diagram
+    {
+        jcv_context_internal<jcv_real>*   internal;
+        int                               numsites;
+        jcv_point<jcv_real>               min;
+        jcv_point<jcv_real>               max;
+    };
 
 #pragma pack(pop)
 
-#endif // JC_VORONOI_H
-
-#ifdef JC_VORONOI_IMPLEMENTATION
-#undef JC_VORONOI_IMPLEMENTATION
-
-// INTERNAL FUNCTIONS
-
-static const int JCV_DIRECTION_LEFT  = 0;
-static const int JCV_DIRECTION_RIGHT = 1;
-
-static constexpr jcv_real jcv_invalid_value = std::numeric_limits<jcv_real>::lowest();
-
-// jcv_real
-static int jcv_real_eq(jcv_real a, jcv_real b)
-{
-    return std::abs(a - b) < std::numeric_limits<jcv_real>::epsilon();
-}
-
-// jcv_point
-static int jcv_point_cmp(const void* p1, const void* p2)
-{
-    const jcv_point* s1 = static_cast<const jcv_point*>(p1);
-    const jcv_point* s2 = static_cast<const jcv_point*>(p2);
-    return (s1->y() != s2->y()) ? (s1->y() < s2->y() ? -1 : 1) : (s1->x() < s2->x() ? -1 : 1);
-}
-
-static int jcv_point_less( const jcv_point* pt1, const jcv_point* pt2 )
-{
-    return (pt1->y() == pt2->y()) ? (pt1->x() < pt2->x()) : pt1->y() < pt2->y();
-}
-
-static int jcv_point_eq( const jcv_point* pt1, const jcv_point* pt2 )
-{
-    return jcv_real_eq(pt1->y(), pt2->y()) && jcv_real_eq(pt1->x(), pt2->x());
-}
-
-[[maybe_unused]]
-static int jcv_point_on_box_edge( const jcv_point* pt, const jcv_point* min, const jcv_point* max )
-{
-    return pt->x() == min->x() || pt->y() == min->y() || pt->x() == max->x() || pt->y() == max->y();
-}
-
-// corners
-
-static const int JCV_EDGE_LEFT    = 1;
-static const int JCV_EDGE_RIGHT   = 2;
-static const int JCV_EDGE_BOTTOM  = 4;
-static const int JCV_EDGE_TOP     = 8;
-
-static const int JCV_CORNER_NONE          = 0;
-static const int JCV_CORNER_TOP_LEFT      = 1;
-static const int JCV_CORNER_BOTTOM_LEFT   = 2;
-static const int JCV_CORNER_BOTTOM_RIGHT  = 3;
-static const int JCV_CORNER_TOP_RIGHT     = 4;
-
-static int jcv_get_edge_flags( const jcv_point* pt, const jcv_point* min, const jcv_point* max )
-{
-    int flags = 0;
-    if      (pt->x() == min->x())   flags |= JCV_EDGE_LEFT;
-    else if (pt->x() == max->x())   flags |= JCV_EDGE_RIGHT;
-    if      (pt->y() == min->y())   flags |= JCV_EDGE_BOTTOM;
-    else if (pt->y() == max->y())   flags |= JCV_EDGE_TOP;
-    return flags;
-}
-
-static int jcv_edge_flags_to_corner(int edge_flags)
-{
-    #define TEST_FLAGS(_FLAGS, _RETVAL) if ( (_FLAGS) == edge_flags ) return _RETVAL
-    TEST_FLAGS(JCV_EDGE_TOP|JCV_EDGE_LEFT, JCV_CORNER_TOP_LEFT);
-    TEST_FLAGS(JCV_EDGE_TOP|JCV_EDGE_RIGHT, JCV_CORNER_TOP_RIGHT);
-    TEST_FLAGS(JCV_EDGE_BOTTOM|JCV_EDGE_LEFT, JCV_CORNER_BOTTOM_LEFT);
-    TEST_FLAGS(JCV_EDGE_BOTTOM|JCV_EDGE_RIGHT, JCV_CORNER_BOTTOM_RIGHT);
-    #undef TEST_FLAGS
-    return 0;
-}
-
-[[maybe_unused]] static int jcv_is_corner(int corner) { return corner != 0; }
-
-static int jcv_corner_rotate_90(int corner)
-{
-    corner--;
-    corner = (corner+1)%4;
-    return corner + 1;
-}
-static jcv_point jcv_corner_to_point(int corner, const jcv_point* min, const jcv_point* max )
-{
-    jcv_point p;
-    if      (corner == JCV_CORNER_TOP_LEFT)     { p[0] = min->x(); p[1] = max->y(); }
-    else if (corner == JCV_CORNER_TOP_RIGHT)    { p[0] = max->x(); p[1] = max->y(); }
-    else if (corner == JCV_CORNER_BOTTOM_LEFT)  { p[0] = min->x(); p[1] = min->y(); }
-    else if (corner == JCV_CORNER_BOTTOM_RIGHT) { p[0] = max->x(); p[1] = min->y(); }
-    else                                        { p[0] = jcv_invalid_value; p[1] = jcv_invalid_value; }
-    return p;
-}
-
-static jcv_real jcv_point_dist_sq( const jcv_point* pt1, const jcv_point* pt2)
-{
-    jcv_real diffx = pt1->x() - pt2->x();
-    jcv_real diffy = pt1->y() - pt2->y();
-    return diffx * diffx + diffy * diffy;
-}
-
-static jcv_real jcv_point_dist( const jcv_point* pt1, const jcv_point* pt2 )
-{
-    return std::sqrt (jcv_point_dist_sq (pt1, pt2));
-}
-
-// Structs
-
-#pragma pack(push, 1)
-
-typedef struct jcv_halfedge_
-{
-    jcv_edge*               edge;
-    struct jcv_halfedge_*   left;
-    struct jcv_halfedge_*   right;
-    jcv_point               vertex;
-    jcv_real                y;
-    int                     direction; // 0=left, 1=right
-    int                     pqpos;
-} jcv_halfedge;
-
-typedef struct jcv_memoryblock_
-{
-    size_t sizefree;
-    struct jcv_memoryblock_* next;
-    char*  memory;
-} jcv_memoryblock;
-
-
-typedef int  (*FJCVPriorityQueuePrint)(const void* node, int pos);
-
-typedef struct jcv_priorityqueue_
-{
-    // Implements a binary heap
-    int                         maxnumitems;
-    int                         numitems;
-    void**                      items;
-} jcv_priorityqueue;
-
-
-struct jcv_context_internal_
-{
-    void*               mem;
-    jcv_edge*           edges;
-    jcv_halfedge*       beachline_start;
-    jcv_halfedge*       beachline_end;
-    jcv_halfedge*       last_inserted;
-    jcv_priorityqueue*  eventqueue;
-
-    jcv_site*           sites;
-    jcv_site*           bottomsite;
-    int                 numsites;
-    int                 currentsite;
-    int                 _padding;
-
-    jcv_memoryblock*    memblocks;
-    jcv_edge*           edgepool;
-    jcv_halfedge*       halfedgepool;
-    void**              eventmem;
-    jcv_clipper         clipper;
-
-    void*               memctx; // Given by the user
-    FJCVAllocFn         alloc;
-    FJCVFreeFn          free;
-
-    jcv_rect            rect;
-};
-
-#pragma pack(pop)
-
-void jcv_diagram_free( jcv_diagram* d )
-{
-    jcv_context_internal* internal = d->internal;
-    void* memctx = internal->memctx;
-    FJCVFreeFn freefn = internal->free;
-    while(internal->memblocks)
+    template<typename jcv_real> requires std::is_floating_point_v<jcv_real>
+    struct voronoi
     {
-        jcv_memoryblock* p = internal->memblocks;
-        internal->memblocks = internal->memblocks->next;
-        freefn( memctx, p );
-    }
+        voronoi(){}
+        ~voronoi(){}
 
-    freefn( memctx, internal->mem );
-}
+        static constexpr jcv_real jcv_edge_intersect_threshold = jcv_real{JCV_EDGE_INTERSECT_THRESHOLD};
 
-const jcv_site* jcv_diagram_get_sites( const jcv_diagram* diagram )
-{
-    return diagram->internal->sites;
-}
+/*
+        typedef sm::vec<jcv_real, 3>        jcv_point;
+        typedef struct jcv_rect_            jcv_rect;
+        typedef struct jcv_site_            jcv_site;
+        typedef struct jcv_edge_            jcv_edge;
+        typedef struct jcv_graphedge_       jcv_graphedge;
+        typedef struct jcv_delauney_edge_   jcv_delauney_edge;
+        typedef struct jcv_delauney_iter_   jcv_delauney_iter;
+        typedef struct jcv_diagram_         jcv_diagram;
+        typedef struct jcv_clipper_         jcv_clipper;
+        typedef struct jcv_context_internal_ jcv_context_internal;
 
-const jcv_edge* jcv_diagram_get_edges( const jcv_diagram* diagram )
-{
-    jcv_edge e;
-    e.next = diagram->internal->edges;
-    return jcv_diagram_get_next_edge(&e);
-}
+        typedef void* (*FJCVAllocFn)(void* userctx, size_t size);
+        typedef void (*FJCVFreeFn)(void* userctx, void* p);
+*/
+        // FIRST batch of structs were here
 
-const jcv_edge* jcv_diagram_get_next_edge( const jcv_edge* edge )
-{
-    const jcv_edge* e = edge->next;
-    while (e != 0 && jcv_point_eq(&e->pos[0], &e->pos[1])) {
-        e = e->next;
-    }
-    return e;
-}
+        // INTERNAL FUNCTIONS
 
-void jcv_delauney_begin( const jcv_diagram* diagram, jcv_delauney_iter* iter )
-{
-    iter->current = 0;
-    iter->sentinel = jcv_diagram_get_edges(diagram);
-}
+        static const int JCV_DIRECTION_LEFT  = 0;
+        static const int JCV_DIRECTION_RIGHT = 1;
 
-int jcv_delauney_next( jcv_delauney_iter* iter, jcv_delauney_edge* next )
-{
-    if (iter->sentinel)
-    {
-        iter->current = iter->sentinel;
-        iter->sentinel = 0;
-    }
-    else {
-        // Note: If we use the raw edges, we still get a proper delauney triangulation
-        // However, the result looks less relevant to the cells contained within the bounding box
-        // E.g. some cells that look isolated from each other, suddenly still are connected,
-        // because they share an edge outside of the bounding box
-        iter->current = jcv_diagram_get_next_edge(iter->current);
-    }
+        static constexpr jcv_real jcv_invalid_value = std::numeric_limits<jcv_real>::lowest();
 
-    while (iter->current && (iter->current->sites[0] == 0 || iter->current->sites[1] == 0))
-    {
-        iter->current = jcv_diagram_get_next_edge(iter->current);
-    }
-
-    if (!iter->current)
-        return 0;
-
-    next->edge = iter->current;
-    next->sites[0] = next->edge->sites[0];
-    next->sites[1] = next->edge->sites[1];
-    next->pos[0] = next->sites[0]->p;
-    next->pos[1] = next->sites[1]->p;
-    return 1;
-}
-
-static void* jcv_align(void* value, size_t alignment)
-{
-    return (void*) (((uintptr_t) value + (alignment-1)) & ~(alignment-1));
-}
-
-static void* jcv_alloc(jcv_context_internal* internal, size_t size)
-{
-    if( !internal->memblocks || internal->memblocks->sizefree < (size+sizeof(void*)) )
-    {
-        size_t blocksize = 16 * 1024;
-        jcv_memoryblock* block = (jcv_memoryblock*)internal->alloc( internal->memctx, blocksize );
-        size_t offset = sizeof(jcv_memoryblock);
-        block->sizefree = blocksize - offset;
-        block->next = internal->memblocks;
-        block->memory = ((char*)block) + offset;
-        internal->memblocks = block;
-    }
-    void* p_raw = internal->memblocks->memory;
-    void* p_aligned = jcv_align(p_raw, sizeof(void*));
-    size += (uintptr_t)p_aligned - (uintptr_t)p_raw;
-    internal->memblocks->memory += size;
-    internal->memblocks->sizefree -= size;
-    return p_aligned;
-}
-
-static jcv_edge* jcv_alloc_edge(jcv_context_internal* internal)
-{
-    return (jcv_edge*)jcv_alloc(internal, sizeof(jcv_edge));
-}
-
-static jcv_halfedge* jcv_alloc_halfedge(jcv_context_internal* internal)
-{
-    if( internal->halfedgepool )
-    {
-        jcv_halfedge* edge = internal->halfedgepool;
-        internal->halfedgepool = internal->halfedgepool->right;
-        return edge;
-    }
-
-    return (jcv_halfedge*)jcv_alloc(internal, sizeof(jcv_halfedge));
-}
-
-static jcv_graphedge* jcv_alloc_graphedge(jcv_context_internal* internal)
-{
-    return (jcv_graphedge*)jcv_alloc(internal, sizeof(jcv_graphedge));
-}
-
-static void* jcv_alloc_fn(void* memctx, size_t size)
-{
-    (void)memctx;
-    return malloc(size);
-}
-
-static void jcv_free_fn(void* memctx, void* p)
-{
-    (void)memctx;
-    free(p);
-}
-
-// jcv_edge
-
-static int jcv_is_valid(const jcv_point* p)
-{
-    return (p->x() != jcv_invalid_value || p->y() != jcv_invalid_value) ? 1 : 0;
-}
-
-static void jcv_edge_create(jcv_edge* e, jcv_site* s1, jcv_site* s2)
-{
-    e->next = 0;
-    e->sites[0] = s1;
-    e->sites[1] = s2;
-    e->pos[0][0] = jcv_invalid_value;
-    e->pos[0][1] = jcv_invalid_value;
-    e->pos[1][0] = jcv_invalid_value;
-    e->pos[1][1] = jcv_invalid_value;
-
-    // Create line equation between S1 and S2:
-    // jcv_real a = -1 * (s2->p[1] - s1->p[1]);
-    // jcv_real b = s2->p[0] - s1->p[0];
-    // //jcv_real c = -1 * (s2->p[0] - s1->p[0]) * s1->p[1] + (s2->p[1] - s1->p[1]) * s1->p[0];
-    //
-    // // create perpendicular line
-    // jcv_real pa = b;
-    // jcv_real pb = -a;
-    // //jcv_real pc = pa * s1->p[0] + pb * s1->p[1];
-    //
-    // // Move to the mid point
-    // jcv_real mx = s1->p[0] + dx * jcv_real(0.5);
-    // jcv_real my = s1->p[1] + dy * jcv_real(0.5);
-    // jcv_real pc = ( pa * mx + pb * my );
-
-    jcv_real dx = s2->p[0] - s1->p[0];
-    jcv_real dy = s2->p[1] - s1->p[1];
-    int dx_is_larger = (dx*dx) > (dy*dy); // instead of fabs
-
-    // Simplify it, using dx and dy
-    e->c = dx * (s1->p[0] + dx * (jcv_real)0.5) + dy * (s1->p[1] + dy * (jcv_real)0.5);
-
-    if( dx_is_larger )
-    {
-        e->a = (jcv_real)1;
-        e->b = dy / dx;
-        e->c /= dx;
-    }
-    else
-    {
-        e->a = dx / dy;
-        e->b = (jcv_real)1;
-        e->c /= dy;
-    }
-}
-
-// CLIPPING
-int jcv_boxshape_test(const jcv_clipper* clipper, const jcv_point p)
-{
-    return p[0] >= clipper->min[0] && p[0] <= clipper->max[0] &&
-           p[1] >= clipper->min[1] && p[1] <= clipper->max[1];
-}
-
-// The line equation: ax + by + c = 0
-// see jcv_edge_create
-int jcv_boxshape_clip(const jcv_clipper* clipper, jcv_edge* e)
-{
-    jcv_real pxmin = clipper->min[0];
-    jcv_real pxmax = clipper->max[0];
-    jcv_real pymin = clipper->min[1];
-    jcv_real pymax = clipper->max[1];
-
-    jcv_real x1, y1, x2, y2;
-    jcv_point* s1;
-    jcv_point* s2;
-    if (e->a == (jcv_real)1 && e->b >= (jcv_real)0)
-    {
-        s1 = jcv_is_valid(&e->pos[1]) ? &e->pos[1] : 0;
-        s2 = jcv_is_valid(&e->pos[0]) ? &e->pos[0] : 0;
-    }
-    else
-    {
-        s1 = jcv_is_valid(&e->pos[0]) ? &e->pos[0] : 0;
-        s2 = jcv_is_valid(&e->pos[1]) ? &e->pos[1] : 0;
-    }
-
-    if (e->a == (jcv_real)1) // delta x is larger
-    {
-        y1 = pymin;
-        if (s1 != 0 && s1->y() > pymin)
+        // App specific equality
+        static int jcv_real_eq(jcv_real a, jcv_real b)
         {
-            y1 = s1->y();
+            return std::abs(a - b) < std::numeric_limits<jcv_real>::epsilon();
         }
-        if( y1 > pymax )
+
+        // jcv_point
+        static int jcv_point_cmp(const void* p1, const void* p2)
         {
-            y1 = pymax;
+            const jcv_point<jcv_real>* s1 = static_cast<const jcv_point<jcv_real>*>(p1);
+            const jcv_point<jcv_real>* s2 = static_cast<const jcv_point<jcv_real>*>(p2);
+            return (s1->y() != s2->y()) ? (s1->y() < s2->y() ? -1 : 1) : (s1->x() < s2->x() ? -1 : 1);
         }
-        x1 = e->c - e->b * y1;
-        y2 = pymax;
-        if (s2 != 0 && s2->y() < pymax)
-            y2 = s2->y();
 
-        if( y2 < pymin )
+        static int jcv_point_less (const jcv_point<jcv_real>* pt1, const jcv_point<jcv_real>* pt2 )
         {
-            y2 = pymin;
+            return (pt1->y() == pt2->y()) ? (pt1->x() < pt2->x()) : pt1->y() < pt2->y();
         }
-        x2 = (e->c) - (e->b) * y2;
-        // Never occurs according to lcov
-        // if( ((x1 > pxmax) & (x2 > pxmax)) | ((x1 < pxmin) & (x2 < pxmin)) )
-        // {
-        //     return 0;
-        // }
-        if (x1 > pxmax)
+
+        static int jcv_point_eq( const jcv_point<jcv_real>* pt1, const jcv_point<jcv_real>* pt2 )
         {
-            x1 = pxmax;
-            y1 = (e->c - x1) / e->b;
+            return jcv_real_eq(pt1->y(), pt2->y()) && jcv_real_eq(pt1->x(), pt2->x());
         }
-        else if (x1 < pxmin)
+
+        [[maybe_unused]]
+        static int jcv_point_on_box_edge( const jcv_point<jcv_real>* pt, const jcv_point<jcv_real>* min, const jcv_point<jcv_real>* max )
         {
-            x1 = pxmin;
-            y1 = (e->c - x1) / e->b;
+            return pt->x() == min->x() || pt->y() == min->y() || pt->x() == max->x() || pt->y() == max->y();
         }
-        if (x2 > pxmax)
+
+        // edges and corners
+        static const int JCV_EDGE_LEFT    = 1;
+        static const int JCV_EDGE_RIGHT   = 2;
+        static const int JCV_EDGE_BOTTOM  = 4;
+        static const int JCV_EDGE_TOP     = 8;
+
+        static const int JCV_CORNER_NONE          = 0;
+        static const int JCV_CORNER_TOP_LEFT      = 1;
+        static const int JCV_CORNER_BOTTOM_LEFT   = 2;
+        static const int JCV_CORNER_BOTTOM_RIGHT  = 3;
+        static const int JCV_CORNER_TOP_RIGHT     = 4;
+
+        static int jcv_get_edge_flags( const jcv_point<jcv_real>* pt, const jcv_point<jcv_real>* min, const jcv_point<jcv_real>* max )
         {
-            x2 = pxmax;
-            y2 = (e->c - x2) / e->b;
+            int flags = 0;
+            if      (pt->x() == min->x())   flags |= JCV_EDGE_LEFT;
+            else if (pt->x() == max->x())   flags |= JCV_EDGE_RIGHT;
+            if      (pt->y() == min->y())   flags |= JCV_EDGE_BOTTOM;
+            else if (pt->y() == max->y())   flags |= JCV_EDGE_TOP;
+            return flags;
         }
-        else if (x2 < pxmin)
+
+        static int jcv_edge_flags_to_corner(int edge_flags)
         {
-            x2 = pxmin;
-            y2 = (e->c - x2) / e->b;
+#define TEST_FLAGS(_FLAGS, _RETVAL) if ( (_FLAGS) == edge_flags ) return _RETVAL
+            TEST_FLAGS(JCV_EDGE_TOP|JCV_EDGE_LEFT, JCV_CORNER_TOP_LEFT);
+            TEST_FLAGS(JCV_EDGE_TOP|JCV_EDGE_RIGHT, JCV_CORNER_TOP_RIGHT);
+            TEST_FLAGS(JCV_EDGE_BOTTOM|JCV_EDGE_LEFT, JCV_CORNER_BOTTOM_LEFT);
+            TEST_FLAGS(JCV_EDGE_BOTTOM|JCV_EDGE_RIGHT, JCV_CORNER_BOTTOM_RIGHT);
+#undef TEST_FLAGS
+            return 0;
         }
-    }
-    else // delta y is larger
-    {
-        x1 = pxmin;
-        if( s1 != 0 && s1->x() > pxmin )
-            x1 = s1->x();
-        if( x1 > pxmax )
+
+        [[maybe_unused]] static int jcv_is_corner(int corner) { return corner != 0; }
+
+        static int jcv_corner_rotate_90(int corner)
         {
-            x1 = pxmax;
+            corner--;
+            corner = (corner+1)%4;
+            return corner + 1;
         }
-        y1 = e->c - e->a * x1;
-        x2 = pxmax;
-        if( s2 != 0 && s2->x() < pxmax )
-            x2 = s2->x();
-        if( x2 < pxmin )
+        static jcv_point<jcv_real> jcv_corner_to_point(int corner, const jcv_point<jcv_real>* min, const jcv_point<jcv_real>* max )
         {
-            x2 = pxmin;
+            jcv_point<jcv_real> p;
+            if      (corner == JCV_CORNER_TOP_LEFT)     { p[0] = min->x(); p[1] = max->y(); }
+            else if (corner == JCV_CORNER_TOP_RIGHT)    { p[0] = max->x(); p[1] = max->y(); }
+            else if (corner == JCV_CORNER_BOTTOM_LEFT)  { p[0] = min->x(); p[1] = min->y(); }
+            else if (corner == JCV_CORNER_BOTTOM_RIGHT) { p[0] = max->x(); p[1] = min->y(); }
+            else                                        { p[0] = jcv_invalid_value; p[1] = jcv_invalid_value; }
+            return p;
         }
-        y2 = e->c - e->a * x2;
-        // Never occurs according to lcov
-        // if( ((y1 > pymax) & (y2 > pymax)) | ((y1 < pymin) & (y2 < pymin)) )
-        // {
-        //     return 0;
-        // }
-        if( y1 > pymax )
+
+        static jcv_real jcv_point_dist_sq( const jcv_point<jcv_real>* pt1, const jcv_point<jcv_real>* pt2)
         {
-            y1 = pymax;
-            x1 = (e->c - y1) / e->a;
+            jcv_real diffx = pt1->x() - pt2->x();
+            jcv_real diffy = pt1->y() - pt2->y();
+            return diffx * diffx + diffy * diffy;
         }
-        else if( y1 < pymin )
+
+        static jcv_real jcv_point_dist( const jcv_point<jcv_real>* pt1, const jcv_point<jcv_real>* pt2 )
         {
-            y1 = pymin;
-            x1 = (e->c - y1) / e->a;
+            return std::sqrt (jcv_point_dist_sq (pt1, pt2));
         }
-        if( y2 > pymax )
+
+        // SECOND batch of Structs were here
+
+        // Uses free (or the registered custom free function)
+        static void jcv_diagram_free( jcv_diagram<jcv_real>* d )
         {
-            y2 = pymax;
-            x2 = (e->c - y2) / e->a;
-        }
-        else if( y2 < pymin )
-        {
-            y2 = pymin;
-            x2 = (e->c - y2) / e->a;
-        }
-    }
-
-    e->pos[0][0] = x1;
-    e->pos[0][1] = y1;
-    e->pos[1][0] = x2;
-    e->pos[1][1] = y2;
-
-    // If the two points are equal, the result is invalid
-    return (x1 == x2 && y1 == y2) ? 0 : 1;
-}
-
-// The line equation: ax + by + c = 0
-// see jcv_edge_create
-static int jcv_edge_clipline(jcv_context_internal* internal, jcv_edge* e)
-{
-    return internal->clipper.clip_fn(&internal->clipper, e);
-}
-
-static jcv_edge* jcv_edge_new(jcv_context_internal* internal, jcv_site* s1, jcv_site* s2)
-{
-    jcv_edge* e = jcv_alloc_edge(internal);
-    jcv_edge_create(e, s1, s2);
-    return e;
-}
-
-
-// jcv_halfedge
-
-static void jcv_halfedge_link(jcv_halfedge* edge, jcv_halfedge* newedge)
-{
-    newedge->left = edge;
-    newedge->right = edge->right;
-    edge->right->left = newedge;
-    edge->right = newedge;
-}
-
-static void jcv_halfedge_unlink(jcv_halfedge* he)
-{
-    he->left->right = he->right;
-    he->right->left = he->left;
-    he->left  = 0;
-    he->right = 0;
-}
-
-static jcv_halfedge* jcv_halfedge_new(jcv_context_internal* internal, jcv_edge* e, int direction)
-{
-    jcv_halfedge* he = jcv_alloc_halfedge(internal);
-    he->edge        = e;
-    he->left        = 0;
-    he->right       = 0;
-    he->direction   = direction;
-    he->pqpos       = 0;
-    // These are set outside
-    //he->y()
-    //he->vertex
-    return he;
-}
-
-static void jcv_halfedge_delete(jcv_context_internal* internal, jcv_halfedge* he)
-{
-    he->right = internal->halfedgepool;
-    internal->halfedgepool = he;
-}
-
-static jcv_site* jcv_halfedge_leftsite(const jcv_halfedge* he)
-{
-    return he->edge->sites[he->direction];
-}
-
-static jcv_site* jcv_halfedge_rightsite(const jcv_halfedge* he)
-{
-    return he->edge ? he->edge->sites[1 - he->direction] : 0;
-}
-
-static int jcv_halfedge_rightof(const jcv_halfedge* he, const jcv_point* p)
-{
-    const jcv_edge* e = he->edge;
-    const jcv_site* topsite = e->sites[1];
-
-    int right_of_site = (p->x() > topsite->p[0]) ? 1 : 0;
-    if (right_of_site && he->direction == JCV_DIRECTION_LEFT)
-        return 1;
-    if (!right_of_site && he->direction == JCV_DIRECTION_RIGHT)
-        return 0;
-
-    jcv_real dxp, dyp, dxs, t1, t2, t3, yl;
-
-    int above;
-    if (e->a == (jcv_real)1)
-    {
-        dyp = p->y() - topsite->p[1];
-        dxp = p->x() - topsite->p[0];
-        int fast = 0;
-        if( (!right_of_site & (e->b < (jcv_real)0)) | (right_of_site & (e->b >= (jcv_real)0)) )
-        {
-            above = dyp >= e->b * dxp;
-            fast = above;
-        }
-        else
-        {
-            above = (p->x() + p->y() * e->b) > e->c;
-            if (e->b < (jcv_real)0)
-                above = !above;
-            if (!above)
-                fast = 1;
-        }
-        if (!fast)
-        {
-            dxs = topsite->p[0] - e->sites[0]->p[0];
-            above = e->b * (dxp * dxp - dyp * dyp)
-                    < dxs * dyp * ((jcv_real)1 + (jcv_real)2 * dxp / dxs + e->b * e->b);
-            if (e->b < (jcv_real)0)
-                above = !above;
-        }
-    }
-    else // e->b == 1
-    {
-        yl = e->c - e->a * p->x();
-        t1 = p->y() - yl;
-        t2 = p->x() - topsite->p[0];
-        t3 = yl - topsite->p[1];
-        above = t1 * t1 > (t2 * t2 + t3 * t3);
-    }
-    return (he->direction == JCV_DIRECTION_LEFT ? above : !above);
-}
-
-// Keeps the priority queue sorted with events sorted in ascending order
-// Return 1 if the edges needs to be swapped
-static int jcv_halfedge_compare( const jcv_halfedge* he1, const jcv_halfedge* he2 )
-{
-    return  (he1->y == he2->y) ? he1->vertex[0] > he2->vertex[0] : he1->y > he2->y;
-}
-
-static int jcv_halfedge_intersect(const jcv_halfedge* he1, const jcv_halfedge* he2, jcv_point* out)
-{
-    const jcv_edge* e1 = he1->edge;
-    const jcv_edge* e2 = he2->edge;
-
-    jcv_real d = e1->a * e2->b - e1->b * e2->a;
-    if(-jcv_edge_intersect_threshold < d && d < jcv_edge_intersect_threshold)
-    {
-        return 0;
-    }
-    (*out)[0] = (e1->c * e2->b - e1->b * e2->c) / d;
-    (*out)[1] = (e1->a * e2->c - e1->c * e2->a) / d;
-    // I considered trying to determine the correct z here, but we don't have all the
-    // information required. So just set out->z to a default value meaning 'unset' (Seb)
-    (*out)[2] = 0.0f; // NB: this does not set z for all edges
-
-    const jcv_edge* e;
-    const jcv_halfedge* he;
-    if( jcv_point_less( &e1->sites[1]->p, &e2->sites[1]->p) )
-    {
-        he = he1;
-        e = e1;
-    }
-    else
-    {
-        he = he2;
-        e = e2;
-    }
-
-    int right_of_site = out->x() >= e->sites[1]->p[0];
-    if ((right_of_site && he->direction == JCV_DIRECTION_LEFT) || (!right_of_site && he->direction == JCV_DIRECTION_RIGHT))
-    {
-        return 0;
-    }
-
-    return 1;
-}
-
-
-// Priority queue
-
-static int jcv_pq_moveup(jcv_priorityqueue* pq, int pos)
-{
-    jcv_halfedge** items = (jcv_halfedge**)pq->items;
-    jcv_halfedge* node = items[pos];
-
-    for( int parent = (pos >> 1);
-         pos > 1 && jcv_halfedge_compare(items[parent], node);
-         pos = parent, parent = parent >> 1)
-    {
-        items[pos] = items[parent];
-        items[pos]->pqpos = pos;
-    }
-
-    node->pqpos = pos;
-    items[pos] = node;
-    return pos;
-}
-
-static int jcv_pq_maxchild(jcv_priorityqueue* pq, int pos)
-{
-    int child = pos << 1;
-    if( child >= pq->numitems )
-        return 0;
-    jcv_halfedge** items = (jcv_halfedge**)pq->items;
-    if( (child + 1) < pq->numitems && jcv_halfedge_compare(items[child], items[child+1]) )
-        return child+1;
-    return child;
-}
-
-static int jcv_pq_movedown(jcv_priorityqueue* pq, int pos)
-{
-    jcv_halfedge** items = (jcv_halfedge**)pq->items;
-    jcv_halfedge* node = items[pos];
-
-    int child = jcv_pq_maxchild(pq, pos);
-    while( child && jcv_halfedge_compare(node, items[child]) )
-    {
-        items[pos] = items[child];
-        items[pos]->pqpos = pos;
-        pos = child;
-        child = jcv_pq_maxchild(pq, pos);
-    }
-
-    items[pos] = node;
-    items[pos]->pqpos = pos;
-    return pos;
-}
-
-static void jcv_pq_create(jcv_priorityqueue* pq, int capacity, void** buffer)
-{
-    pq->maxnumitems = capacity;
-    pq->numitems    = 1;
-    pq->items       = buffer;
-}
-
-static int jcv_pq_empty(jcv_priorityqueue* pq)
-{
-    return pq->numitems == 1 ? 1 : 0;
-}
-
-static int jcv_pq_push(jcv_priorityqueue* pq, void* node)
-{
-    assert(pq->numitems < pq->maxnumitems);
-    int n = pq->numitems++;
-    pq->items[n] = node;
-    return jcv_pq_moveup(pq, n);
-}
-
-static void* jcv_pq_pop(jcv_priorityqueue* pq)
-{
-    void* node = pq->items[1];
-    pq->items[1] = pq->items[--pq->numitems];
-    jcv_pq_movedown(pq, 1);
-    return node;
-}
-
-static void* jcv_pq_top(jcv_priorityqueue* pq)
-{
-    return pq->items[1];
-}
-
-static void jcv_pq_remove(jcv_priorityqueue* pq, jcv_halfedge* node)
-{
-    if( pq->numitems == 1 )
-        return;
-    int pos = node->pqpos;
-    if( pos == 0 )
-        return;
-
-    jcv_halfedge** items = (jcv_halfedge**)pq->items;
-
-    items[pos] = items[--pq->numitems];
-    if( jcv_halfedge_compare( node, items[pos] ) )
-        jcv_pq_moveup( pq, pos );
-    else
-        jcv_pq_movedown( pq, pos );
-    node->pqpos = pos;
-}
-
-// internal functions
-
-static jcv_site* jcv_nextsite(jcv_context_internal* internal)
-{
-    return (internal->currentsite < internal->numsites) ? &internal->sites[internal->currentsite++] : 0;
-}
-
-static jcv_halfedge* jcv_get_edge_above_x(jcv_context_internal* internal, const jcv_point* p)
-{
-    // Gets the arc on the beach line at the x coordinate (i.e. right above the new site event)
-
-    // A good guess it's close by (Can be optimized)
-    jcv_halfedge* he = internal->last_inserted;
-    if( !he )
-    {
-        if( p->x() < (internal->rect.max[0] - internal->rect.min[0]) / 2 )
-            he = internal->beachline_start;
-        else
-            he = internal->beachline_end;
-    }
-
-    //
-    if( he == internal->beachline_start || (he != internal->beachline_end && jcv_halfedge_rightof(he, p)) )
-    {
-        do {
-            he = he->right;
-        }
-        while( he != internal->beachline_end && jcv_halfedge_rightof(he, p) );
-
-        he = he->left;
-    }
-    else
-    {
-        do {
-            he = he->left;
-        }
-        while( he != internal->beachline_start && !jcv_halfedge_rightof(he, p) );
-    }
-
-    return he;
-}
-
-static int jcv_check_circle_event(const jcv_halfedge* he1, const jcv_halfedge* he2, jcv_point* vertex)
-{
-    jcv_edge* e1 = he1->edge;
-    jcv_edge* e2 = he2->edge;
-    if( e1 == 0 || e2 == 0 || e1->sites[1] == e2->sites[1] )
-    {
-        return 0;
-    }
-
-    return jcv_halfedge_intersect(he1, he2, vertex);
-}
-
-static void jcv_site_event(jcv_context_internal* internal, jcv_site* site)
-{
-    jcv_halfedge* left   = jcv_get_edge_above_x(internal, &site->p);
-    jcv_halfedge* right  = left->right;
-    jcv_site*     bottom = jcv_halfedge_rightsite(left);
-    if( !bottom )
-        bottom = internal->bottomsite;
-
-    jcv_edge* edge = jcv_edge_new(internal, bottom, site);
-    edge->next = internal->edges;
-    internal->edges = edge;
-
-    jcv_halfedge* edge1 = jcv_halfedge_new(internal, edge, JCV_DIRECTION_LEFT);
-    jcv_halfedge* edge2 = jcv_halfedge_new(internal, edge, JCV_DIRECTION_RIGHT);
-
-    jcv_halfedge_link(left, edge1);
-    jcv_halfedge_link(edge1, edge2);
-
-    internal->last_inserted = right;
-
-    jcv_point p;
-    if( jcv_check_circle_event( left, edge1, &p ) )
-    {
-        jcv_pq_remove(internal->eventqueue, left);
-        left->vertex    = p;
-        left->y         = p[1] + jcv_point_dist(&site->p, &p);
-        jcv_pq_push(internal->eventqueue, left);
-    }
-    if( jcv_check_circle_event( edge2, right, &p ) )
-    {
-        edge2->vertex   = p;
-        edge2->y        = p[1] + jcv_point_dist(&site->p, &p);
-        jcv_pq_push(internal->eventqueue, edge2);
-    }
-}
-
-// https://cp-algorithms.com/geometry/oriented-triangle-area.html
-static jcv_real jcv_determinant(const jcv_point* a, const jcv_point* b, const jcv_point* c)
-{
-    return (b->x() - a->x())*(c->y() - a->y()) - (b->y() - a->y())*(c->x() - a->x());
-}
-
-static jcv_real jcv_calc_sort_metric(const jcv_site* site, const jcv_graphedge* edge)
-{
-    // We take the average of the two points, since we can better distinguish between very small edges
-    constexpr jcv_real half = jcv_real{0.5};
-    jcv_real x = (edge->pos[0][0] + edge->pos[1][0]) * half;
-    jcv_real y = (edge->pos[0][1] + edge->pos[1][1]) * half;
-    jcv_real diffy = y - site->p[1];
-    jcv_real angle = std::atan2( diffy, x - site->p[0] );
-    if( diffy < 0 ) {
-        angle = angle + sm::mathconst<jcv_real>::two_pi;
-    }
-    return angle;
-}
-
-static int jcv_graphedge_eq(jcv_graphedge* a, jcv_graphedge* b)
-{
-    return jcv_real_eq(a->angle, b->angle) && jcv_point_eq( &a->pos[0], &b->pos[0] ) && jcv_point_eq( &a->pos[1], &b->pos[1] );
-}
-
-static void jcv_sortedges_insert(jcv_site* site, jcv_graphedge* edge)
-{
-    // Special case for the head end
-    jcv_graphedge* prev = 0;
-    if (site->edges == 0 || site->edges->angle >= edge->angle)
-    {
-        edge->next = site->edges;
-        site->edges = edge;
-    }
-    else
-    {
-        // Locate the node before the point of insertion
-        jcv_graphedge* current = site->edges;
-        while(current->next != 0 && current->next->angle < edge->angle)
-        {
-            current = current->next;
-        }
-        prev = current;
-        edge->next = current->next;
-        current->next = edge;
-    }
-
-    // check to avoid duplicates
-    if (prev && jcv_graphedge_eq(prev, edge))
-    {
-        prev->next = edge->next;
-    }
-    else if (edge->next && jcv_graphedge_eq(edge, edge->next))
-    {
-        edge->next = edge->next->next;
-    }
-}
-
-static void jcv_finishline(jcv_context_internal* internal, jcv_edge* e)
-{
-    if( !jcv_edge_clipline(internal, e) ) {
-        return;
-    }
-
-    // Make sure the graph edges are CCW
-    int flip = jcv_determinant(&e->sites[0]->p, &e->pos[0], &e->pos[1]) > (jcv_real)0 ? 0 : 1;
-
-    for( int i = 0; i < 2; ++i )
-    {
-        jcv_graphedge* ge = jcv_alloc_graphedge(internal);
-
-        ge->edge = e;
-        ge->next = 0;
-        ge->neighbor = e->sites[1-i];
-        ge->pos[flip] = e->pos[i];
-        ge->pos[1-flip] = e->pos[1-i];
-        ge->angle = jcv_calc_sort_metric(e->sites[i], ge);
-
-        jcv_sortedges_insert( e->sites[i], ge );
-    }
-}
-
-
-static void jcv_endpos(jcv_context_internal* internal, jcv_edge* e, const jcv_point* p, int direction)
-{
-    e->pos[direction] = *p;
-
-    if( !jcv_is_valid(&e->pos[1 - direction]) )
-        return;
-
-    jcv_finishline(internal, e);
-}
-
-static void jcv_create_corner_edge(jcv_context_internal* internal, const jcv_site* site, jcv_graphedge* current, jcv_graphedge* gap)
-{
-    gap->neighbor   = 0;
-    gap->pos[0]     = current->pos[1];
-
-    if( current->pos[1][0] < internal->rect.max[0] && current->pos[1][1] == internal->rect.min[1] )
-    {
-        gap->pos[1][0] = internal->rect.max[0];
-        gap->pos[1][1] = internal->rect.min[1];
-    }
-    else if( current->pos[1][0] > internal->rect.min[0] && current->pos[1][1] == internal->rect.max[1] )
-    {
-        gap->pos[1][0] = internal->rect.min[0];
-        gap->pos[1][1] = internal->rect.max[1];
-    }
-    else if( current->pos[1][1] > internal->rect.min[1] && current->pos[1][0] == internal->rect.min[0] )
-    {
-        gap->pos[1][0] = internal->rect.min[0];
-        gap->pos[1][1] = internal->rect.min[1];
-    }
-    else if( current->pos[1][1] < internal->rect.max[1] && current->pos[1][0] == internal->rect.max[0] )
-    {
-        gap->pos[1][0] = internal->rect.max[0];
-        gap->pos[1][1] = internal->rect.max[1];
-    }
-
-    gap->angle = jcv_calc_sort_metric(site, gap);
-}
-
-static jcv_edge* jcv_create_gap_edge(jcv_context_internal* internal, jcv_site* site, jcv_graphedge* ge)
-{
-    jcv_edge* edge  = jcv_alloc_edge(internal);
-    edge->pos[0]    = ge->pos[0];
-    edge->pos[1]    = ge->pos[1];
-    edge->sites[0]  = site;
-    edge->sites[1]  = 0;
-    edge->a = edge->b = edge->c = 0;
-    edge->next      = internal->edges;
-    internal->edges = edge;
-    return edge;
-}
-
-void jcv_boxshape_fillgaps(const jcv_clipper* clipper, jcv_context_internal* allocator, jcv_site* site)
-{
-    // They're sorted CCW, so if the current->pos[1] != next->pos[0], then we have a gap
-    jcv_graphedge* current = site->edges;
-    if( !current )
-    {
-        // No edges, then it should be a single cell
-        assert( allocator->numsites == 1 );
-
-        jcv_graphedge* gap = jcv_alloc_graphedge(allocator);
-        gap->neighbor   = 0;
-        gap->pos[0]     = clipper->min;
-        gap->pos[1][0]   = clipper->max[0];
-        gap->pos[1][1]   = clipper->min[1];
-        gap->angle      = jcv_calc_sort_metric(site, gap);
-        gap->next       = 0;
-        gap->edge       = jcv_create_gap_edge(allocator, site, gap);
-
-        current = gap;
-        site->edges = gap;
-    }
-
-    jcv_graphedge* next = current->next;
-    if( !next )
-    {
-        jcv_graphedge* gap = jcv_alloc_graphedge(allocator);
-        jcv_create_corner_edge(allocator, site, current, gap);
-        gap->edge = jcv_create_gap_edge(allocator, site, gap);
-
-        gap->next = current->next;
-        current->next = gap;
-        current = gap;
-        next = site->edges;
-    }
-
-    while( current && next )
-    {
-        int current_edge_flags = jcv_get_edge_flags(&current->pos[1], &clipper->min, &clipper->max);
-        if( current_edge_flags && !jcv_point_eq(&current->pos[1], &next->pos[0]))
-        {
-            // Cases:
-            //  Current and Next on the same border
-            //  Current on one border, and Next on another border
-            //  Current on the corner, Next on the border
-            //  Current on the corner, Next on another border (another corner in between)
-
-            int next_edge_flags = jcv_get_edge_flags(&next->pos[0], &clipper->min, &clipper->max);
-            if (current_edge_flags & next_edge_flags)
+            jcv_context_internal<jcv_real>* internal = d->internal;
+            void* memctx = internal->memctx;
+            //FJCVFreeFn& freefn = internal->free;
+            while(internal->memblocks)
             {
-                // Current and Next on the same border
-                jcv_graphedge* gap = jcv_alloc_graphedge(allocator);
-                gap->neighbor   = 0;
-                gap->pos[0]     = current->pos[1];
-                gap->pos[1]     = next->pos[0];
-                gap->angle      = jcv_calc_sort_metric(site, gap);
-                gap->edge       = jcv_create_gap_edge(allocator, site, gap);
+                jcv_memoryblock* p = internal->memblocks;
+                internal->memblocks = internal->memblocks->next;
+                internal->free( memctx, p );
+            }
 
-                gap->next = current->next;
-                current->next = gap;
+            internal->free( memctx, internal->mem );
+        }
+
+        // Returns an array of sites, where each index is the same as the original input point array.
+        static const jcv_site<jcv_real>* jcv_diagram_get_sites( const jcv_diagram<jcv_real>* diagram )
+        {
+            return diagram->internal->sites;
+        }
+
+        // Iterates over a list of edges, skipping invalid edges (where p0==p1)
+        const jcv_edge<jcv_real>* jcv_diagram_get_next_edge( const jcv_edge<jcv_real>* edge )
+        {
+            const jcv_edge<jcv_real>* e = edge->next;
+            while (e != 0 && jcv_point_eq(&e->pos[0], &e->pos[1])) {
+                e = e->next;
+            }
+            return e;
+        }
+
+        // Returns a linked list of all the voronoi edges excluding the ones that lie on the borders of
+        // the bounding box.  For a full list of edges, you need to iterate over the sites, and their
+        // graph edges.
+        const jcv_edge<jcv_real>* jcv_diagram_get_edges( const jcv_diagram<jcv_real>* diagram )
+        {
+            jcv_edge<jcv_real> e;
+            e.next = diagram->internal->edges;
+            return jcv_diagram_get_next_edge(&e);
+        }
+
+        // Creates an iterator over the delauney edges of a voronoi diagram
+        void jcv_delauney_begin( const jcv_diagram<jcv_real>* diagram, jcv_delauney_iter<jcv_real>* iter )
+        {
+            iter->current = 0;
+            iter->sentinel = jcv_diagram_get_edges(diagram);
+        }
+
+        // Steps the iterator and returns the next edge Returns 0 when there are no more edges
+        int jcv_delauney_next( jcv_delauney_iter<jcv_real>* iter, jcv_delauney_edge<jcv_real>* next )
+        {
+            if (iter->sentinel)
+            {
+                iter->current = iter->sentinel;
+                iter->sentinel = 0;
             }
             else {
-                // Current and Next on different borders
-                int corner_flag = jcv_edge_flags_to_corner(current_edge_flags);
-                if (corner_flag)
+                // Note: If we use the raw edges, we still get a proper delauney triangulation
+                // However, the result looks less relevant to the cells contained within the bounding box
+                // E.g. some cells that look isolated from each other, suddenly still are connected,
+                // because they share an edge outside of the bounding box
+                iter->current = jcv_diagram_get_next_edge(iter->current);
+            }
+
+            while (iter->current && (iter->current->sites[0] == 0 || iter->current->sites[1] == 0))
+            {
+                iter->current = jcv_diagram_get_next_edge(iter->current);
+            }
+
+            if (!iter->current)
+                return 0;
+
+            next->edge = iter->current;
+            next->sites[0] = next->edge->sites[0];
+            next->sites[1] = next->edge->sites[1];
+            next->pos[0] = next->sites[0]->p;
+            next->pos[1] = next->sites[1]->p;
+            return 1;
+        }
+
+        static void* jcv_align(void* value, size_t alignment)
+        {
+            return (void*) (((uintptr_t) value + (alignment-1)) & ~(alignment-1));
+        }
+
+        static void* jcv_alloc(jcv_context_internal<jcv_real>* internal, size_t size)
+        {
+            if( !internal->memblocks || internal->memblocks->sizefree < (size+sizeof(void*)) )
+            {
+                size_t blocksize = 16 * 1024;
+                jcv_memoryblock* block = (jcv_memoryblock*)internal->alloc( internal->memctx, blocksize );
+                size_t offset = sizeof(jcv_memoryblock);
+                block->sizefree = blocksize - offset;
+                block->next = internal->memblocks;
+                block->memory = ((char*)block) + offset;
+                internal->memblocks = block;
+            }
+            void* p_raw = internal->memblocks->memory;
+            void* p_aligned = jcv_align(p_raw, sizeof(void*));
+            size += (uintptr_t)p_aligned - (uintptr_t)p_raw;
+            internal->memblocks->memory += size;
+            internal->memblocks->sizefree -= size;
+            return p_aligned;
+        }
+
+        static jcv_edge<jcv_real>* jcv_alloc_edge(jcv_context_internal<jcv_real>* internal)
+        {
+            return (jcv_edge<jcv_real>*)jcv_alloc(internal, sizeof(jcv_edge<jcv_real>));
+        }
+
+        static jcv_halfedge<jcv_real>* jcv_alloc_halfedge(jcv_context_internal<jcv_real>* internal)
+        {
+            if( internal->halfedgepool )
+            {
+                jcv_halfedge<jcv_real>* edge = internal->halfedgepool;
+                internal->halfedgepool = internal->halfedgepool->right;
+                return edge;
+            }
+
+            return (jcv_halfedge<jcv_real>*)jcv_alloc(internal, sizeof(jcv_halfedge<jcv_real>));
+        }
+
+        static jcv_graphedge<jcv_real>* jcv_alloc_graphedge(jcv_context_internal<jcv_real>* internal)
+        {
+            return (jcv_graphedge<jcv_real>*)jcv_alloc(internal, sizeof(jcv_graphedge<jcv_real>));
+        }
+
+        static void* jcv_alloc_fn(void* memctx, size_t size)
+        {
+            (void)memctx;
+            return malloc(size);
+        }
+
+        static void jcv_free_fn(void* memctx, void* p)
+        {
+            (void)memctx;
+            free(p);
+        }
+
+        // jcv_edge methods
+        static int jcv_is_valid(const jcv_point<jcv_real>* p)
+        {
+            return (p->x() != jcv_invalid_value || p->y() != jcv_invalid_value) ? 1 : 0;
+        }
+
+        static void jcv_edge_create(jcv_edge<jcv_real>* e, jcv_site<jcv_real>* s1, jcv_site<jcv_real>* s2)
+        {
+            e->next = 0;
+            e->sites[0] = s1;
+            e->sites[1] = s2;
+            e->pos[0][0] = jcv_invalid_value;
+            e->pos[0][1] = jcv_invalid_value;
+            e->pos[1][0] = jcv_invalid_value;
+            e->pos[1][1] = jcv_invalid_value;
+
+            // Create line equation between S1 and S2:
+            // jcv_real a = -1 * (s2->p[1] - s1->p[1]);
+            // jcv_real b = s2->p[0] - s1->p[0];
+            // //jcv_real c = -1 * (s2->p[0] - s1->p[0]) * s1->p[1] + (s2->p[1] - s1->p[1]) * s1->p[0];
+            //
+            // // create perpendicular line
+            // jcv_real pa = b;
+            // jcv_real pb = -a;
+            // //jcv_real pc = pa * s1->p[0] + pb * s1->p[1];
+            //
+            // // Move to the mid point
+            // jcv_real mx = s1->p[0] + dx * jcv_real(0.5);
+            // jcv_real my = s1->p[1] + dy * jcv_real(0.5);
+            // jcv_real pc = ( pa * mx + pb * my );
+
+            jcv_real dx = s2->p[0] - s1->p[0];
+            jcv_real dy = s2->p[1] - s1->p[1];
+            int dx_is_larger = (dx*dx) > (dy*dy); // instead of fabs
+
+            // Simplify it, using dx and dy
+            e->c = dx * (s1->p[0] + dx * (jcv_real)0.5) + dy * (s1->p[1] + dy * (jcv_real)0.5);
+
+            if( dx_is_larger )
+            {
+                e->a = (jcv_real)1;
+                e->b = dy / dx;
+                e->c /= dx;
+            }
+            else
+            {
+                e->a = dx / dy;
+                e->b = (jcv_real)1;
+                e->c /= dy;
+            }
+        }
+
+        // CLIPPING
+        static int jcv_boxshape_test(const jcv_clipper<jcv_real>* clipper, const jcv_point<jcv_real> p)
+        {
+            return p[0] >= clipper->min[0] && p[0] <= clipper->max[0] &&
+            p[1] >= clipper->min[1] && p[1] <= clipper->max[1];
+        }
+
+        // The line equation: ax + by + c = 0
+        // see jcv_edge_create
+        static int jcv_boxshape_clip(const jcv_clipper<jcv_real>* clipper, jcv_edge<jcv_real>* e)
+        {
+            jcv_real pxmin = clipper->min[0];
+            jcv_real pxmax = clipper->max[0];
+            jcv_real pymin = clipper->min[1];
+            jcv_real pymax = clipper->max[1];
+
+            jcv_real x1, y1, x2, y2;
+            jcv_point<jcv_real>* s1;
+            jcv_point<jcv_real>* s2;
+            if (e->a == (jcv_real)1 && e->b >= (jcv_real)0)
+            {
+                s1 = jcv_is_valid(&e->pos[1]) ? &e->pos[1] : 0;
+                s2 = jcv_is_valid(&e->pos[0]) ? &e->pos[0] : 0;
+            }
+            else
+            {
+                s1 = jcv_is_valid(&e->pos[0]) ? &e->pos[0] : 0;
+                s2 = jcv_is_valid(&e->pos[1]) ? &e->pos[1] : 0;
+            }
+
+            if (e->a == (jcv_real)1) // delta x is larger
+            {
+                y1 = pymin;
+                if (s1 != 0 && s1->y() > pymin)
                 {
-                    // we are already at one corner, so we need to find the next one
-                    corner_flag = jcv_corner_rotate_90(corner_flag);
+                    y1 = s1->y();
+                }
+                if( y1 > pymax )
+                {
+                    y1 = pymax;
+                }
+                x1 = e->c - e->b * y1;
+                y2 = pymax;
+                if (s2 != 0 && s2->y() < pymax)
+                    y2 = s2->y();
+
+                if( y2 < pymin )
+                {
+                    y2 = pymin;
+                }
+                x2 = (e->c) - (e->b) * y2;
+                // Never occurs according to lcov
+                // if( ((x1 > pxmax) & (x2 > pxmax)) | ((x1 < pxmin) & (x2 < pxmin)) )
+                // {
+                //     return 0;
+                // }
+                if (x1 > pxmax)
+                {
+                    x1 = pxmax;
+                    y1 = (e->c - x1) / e->b;
+                }
+                else if (x1 < pxmin)
+                {
+                    x1 = pxmin;
+                    y1 = (e->c - x1) / e->b;
+                }
+                if (x2 > pxmax)
+                {
+                    x2 = pxmax;
+                    y2 = (e->c - x2) / e->b;
+                }
+                else if (x2 < pxmin)
+                {
+                    x2 = pxmin;
+                    y2 = (e->c - x2) / e->b;
+                }
+            }
+            else // delta y is larger
+            {
+                x1 = pxmin;
+                if( s1 != 0 && s1->x() > pxmin )
+                    x1 = s1->x();
+                if( x1 > pxmax )
+                {
+                    x1 = pxmax;
+                }
+                y1 = e->c - e->a * x1;
+                x2 = pxmax;
+                if( s2 != 0 && s2->x() < pxmax )
+                    x2 = s2->x();
+                if( x2 < pxmin )
+                {
+                    x2 = pxmin;
+                }
+                y2 = e->c - e->a * x2;
+                // Never occurs according to lcov
+                // if( ((y1 > pymax) & (y2 > pymax)) | ((y1 < pymin) & (y2 < pymin)) )
+                // {
+                //     return 0;
+                // }
+                if( y1 > pymax )
+                {
+                    y1 = pymax;
+                    x1 = (e->c - y1) / e->a;
+                }
+                else if( y1 < pymin )
+                {
+                    y1 = pymin;
+                    x1 = (e->c - y1) / e->a;
+                }
+                if( y2 > pymax )
+                {
+                    y2 = pymax;
+                    x2 = (e->c - y2) / e->a;
+                }
+                else if( y2 < pymin )
+                {
+                    y2 = pymin;
+                    x2 = (e->c - y2) / e->a;
+                }
+            }
+
+            e->pos[0][0] = x1;
+            e->pos[0][1] = y1;
+            e->pos[1][0] = x2;
+            e->pos[1][1] = y2;
+
+            // If the two points are equal, the result is invalid
+            return (x1 == x2 && y1 == y2) ? 0 : 1;
+        }
+
+        // The line equation: ax + by + c = 0
+        // see jcv_edge_create
+        static int jcv_edge_clipline(jcv_context_internal<jcv_real>* internal, jcv_edge<jcv_real>* e)
+        {
+            return internal->clipper.clip_fn(&internal->clipper, e);
+        }
+
+        static jcv_edge<jcv_real>* jcv_edge_new(jcv_context_internal<jcv_real>* internal, jcv_site<jcv_real>* s1, jcv_site<jcv_real>* s2)
+        {
+            jcv_edge<jcv_real>* e = jcv_alloc_edge(internal);
+            jcv_edge_create(e, s1, s2);
+            return e;
+        }
+
+
+        // jcv_halfedge
+
+        static void jcv_halfedge_link(jcv_halfedge<jcv_real>* edge, jcv_halfedge<jcv_real>* newedge)
+        {
+            newedge->left = edge;
+            newedge->right = edge->right;
+            edge->right->left = newedge;
+            edge->right = newedge;
+        }
+
+        static void jcv_halfedge_unlink(jcv_halfedge<jcv_real>* he)
+        {
+            he->left->right = he->right;
+            he->right->left = he->left;
+            he->left  = 0;
+            he->right = 0;
+        }
+
+        static jcv_halfedge<jcv_real>* jcv_halfedge_new(jcv_context_internal<jcv_real>* internal, jcv_edge<jcv_real>* e, int direction)
+        {
+            jcv_halfedge<jcv_real>* he = jcv_alloc_halfedge(internal);
+            he->edge        = e;
+            he->left        = 0;
+            he->right       = 0;
+            he->direction   = direction;
+            he->pqpos       = 0;
+            // These are set outside
+            //he->y()
+            //he->vertex
+            return he;
+        }
+
+        static void jcv_halfedge_delete(jcv_context_internal<jcv_real>* internal, jcv_halfedge<jcv_real>* he)
+        {
+            he->right = internal->halfedgepool;
+            internal->halfedgepool = he;
+        }
+
+        static jcv_site<jcv_real>* jcv_halfedge_leftsite(const jcv_halfedge<jcv_real>* he)
+        {
+            return he->edge->sites[he->direction];
+        }
+
+        static jcv_site<jcv_real>* jcv_halfedge_rightsite(const jcv_halfedge<jcv_real>* he)
+        {
+            return he->edge ? he->edge->sites[1 - he->direction] : 0;
+        }
+
+        static int jcv_halfedge_rightof(const jcv_halfedge<jcv_real>* he, const jcv_point<jcv_real>* p)
+        {
+            const jcv_edge<jcv_real>* e = he->edge;
+            const jcv_site<jcv_real>* topsite = e->sites[1];
+
+            int right_of_site = (p->x() > topsite->p[0]) ? 1 : 0;
+            if (right_of_site && he->direction == JCV_DIRECTION_LEFT)
+                return 1;
+            if (!right_of_site && he->direction == JCV_DIRECTION_RIGHT)
+                return 0;
+
+            jcv_real dxp, dyp, dxs, t1, t2, t3, yl;
+
+            int above;
+            if (e->a == (jcv_real)1)
+            {
+                dyp = p->y() - topsite->p[1];
+                dxp = p->x() - topsite->p[0];
+                int fast = 0;
+                if( (!right_of_site & (e->b < (jcv_real)0)) | (right_of_site & (e->b >= (jcv_real)0)) )
+                {
+                    above = dyp >= e->b * dxp;
+                    fast = above;
                 }
                 else
                 {
-                    // we are on the middle of a border
-                    // we need to find the adjacent corner, following the borders CCW
-                    if      (current_edge_flags == JCV_EDGE_TOP)    { corner_flag = JCV_CORNER_TOP_LEFT; }
-                    else if (current_edge_flags == JCV_EDGE_LEFT)   { corner_flag = JCV_CORNER_BOTTOM_LEFT; }
-                    else if (current_edge_flags == JCV_EDGE_BOTTOM) { corner_flag = JCV_CORNER_BOTTOM_RIGHT; }
-                    else if (current_edge_flags == JCV_EDGE_RIGHT)  { corner_flag = JCV_CORNER_TOP_RIGHT; }
-
+                    above = (p->x() + p->y() * e->b) > e->c;
+                    if (e->b < (jcv_real)0)
+                        above = !above;
+                    if (!above)
+                        fast = 1;
                 }
-                jcv_point corner = jcv_corner_to_point(corner_flag, &clipper->min, &clipper->max);
+                if (!fast)
+                {
+                    dxs = topsite->p[0] - e->sites[0]->p[0];
+                    above = e->b * (dxp * dxp - dyp * dyp)
+                    < dxs * dyp * ((jcv_real)1 + (jcv_real)2 * dxp / dxs + e->b * e->b);
+                    if (e->b < (jcv_real)0)
+                        above = !above;
+                }
+            }
+            else // e->b == 1
+            {
+                yl = e->c - e->a * p->x();
+                t1 = p->y() - yl;
+                t2 = p->x() - topsite->p[0];
+                t3 = yl - topsite->p[1];
+                above = t1 * t1 > (t2 * t2 + t3 * t3);
+            }
+            return (he->direction == JCV_DIRECTION_LEFT ? above : !above);
+        }
 
-                jcv_graphedge* gap = jcv_alloc_graphedge(allocator);
-                gap->neighbor   = 0;
-                gap->pos[0]     = current->pos[1];
-                gap->pos[1]     = corner;
-                gap->angle      = jcv_calc_sort_metric(site, gap);
-                gap->edge       = jcv_create_gap_edge(allocator, site, gap);
+        // Keeps the priority queue sorted with events sorted in ascending order
+        // Return 1 if the edges needs to be swapped
+        static int jcv_halfedge_compare( const jcv_halfedge<jcv_real>* he1, const jcv_halfedge<jcv_real>* he2 )
+        {
+            return  (he1->y == he2->y) ? he1->vertex[0] > he2->vertex[0] : he1->y > he2->y;
+        }
 
-                gap->next = current->next;
-                current->next = gap;
+        static int jcv_halfedge_intersect(const jcv_halfedge<jcv_real>* he1, const jcv_halfedge<jcv_real>* he2, jcv_point<jcv_real>* out)
+        {
+            const jcv_edge<jcv_real>* e1 = he1->edge;
+            const jcv_edge<jcv_real>* e2 = he2->edge;
+
+            jcv_real d = e1->a * e2->b - e1->b * e2->a;
+            if(-jcv_edge_intersect_threshold < d && d < jcv_edge_intersect_threshold)
+            {
+                return 0;
+            }
+            (*out)[0] = (e1->c * e2->b - e1->b * e2->c) / d;
+            (*out)[1] = (e1->a * e2->c - e1->c * e2->a) / d;
+            // I considered trying to determine the correct z here, but we don't have all the
+            // information required. So just set out->z to a default value meaning 'unset' (Seb)
+            (*out)[2] = 0.0f; // NB: this does not set z for all edges
+
+            const jcv_edge<jcv_real>* e;
+            const jcv_halfedge<jcv_real>* he;
+            if( jcv_point_less( &e1->sites[1]->p, &e2->sites[1]->p) )
+            {
+                he = he1;
+                e = e1;
+            }
+            else
+            {
+                he = he2;
+                e = e2;
+            }
+
+            int right_of_site = out->x() >= e->sites[1]->p[0];
+            if ((right_of_site && he->direction == JCV_DIRECTION_LEFT) || (!right_of_site && he->direction == JCV_DIRECTION_RIGHT))
+            {
+                return 0;
+            }
+
+            return 1;
+        }
+
+
+        // Priority queue
+
+        static int jcv_pq_moveup(jcv_priorityqueue* pq, int pos)
+        {
+            jcv_halfedge<jcv_real>** items = (jcv_halfedge<jcv_real>**)pq->items;
+            jcv_halfedge<jcv_real>* node = items[pos];
+
+            for( int parent = (pos >> 1);
+                 pos > 1 && jcv_halfedge_compare(items[parent], node);
+                 pos = parent, parent = parent >> 1)
+            {
+                items[pos] = items[parent];
+                items[pos]->pqpos = pos;
+            }
+
+            node->pqpos = pos;
+            items[pos] = node;
+            return pos;
+        }
+
+        static int jcv_pq_maxchild(jcv_priorityqueue* pq, int pos)
+        {
+            int child = pos << 1;
+            if( child >= pq->numitems )
+                return 0;
+            jcv_halfedge<jcv_real>** items = (jcv_halfedge<jcv_real>**)pq->items;
+            if( (child + 1) < pq->numitems && jcv_halfedge_compare(items[child], items[child+1]) )
+                return child+1;
+            return child;
+        }
+
+        static int jcv_pq_movedown(jcv_priorityqueue* pq, int pos)
+        {
+            jcv_halfedge<jcv_real>** items = (jcv_halfedge<jcv_real>**)pq->items;
+            jcv_halfedge<jcv_real>* node = items[pos];
+
+            int child = jcv_pq_maxchild(pq, pos);
+            while( child && jcv_halfedge_compare(node, items[child]) )
+            {
+                items[pos] = items[child];
+                items[pos]->pqpos = pos;
+                pos = child;
+                child = jcv_pq_maxchild(pq, pos);
+            }
+
+            items[pos] = node;
+            items[pos]->pqpos = pos;
+            return pos;
+        }
+
+        static void jcv_pq_create(jcv_priorityqueue* pq, int capacity, void** buffer)
+        {
+            pq->maxnumitems = capacity;
+            pq->numitems    = 1;
+            pq->items       = buffer;
+        }
+
+        static int jcv_pq_empty(jcv_priorityqueue* pq)
+        {
+            return pq->numitems == 1 ? 1 : 0;
+        }
+
+        static int jcv_pq_push(jcv_priorityqueue* pq, void* node)
+        {
+            assert(pq->numitems < pq->maxnumitems);
+            int n = pq->numitems++;
+            pq->items[n] = node;
+            return jcv_pq_moveup(pq, n);
+        }
+
+        static void* jcv_pq_pop(jcv_priorityqueue* pq)
+        {
+            void* node = pq->items[1];
+            pq->items[1] = pq->items[--pq->numitems];
+            jcv_pq_movedown(pq, 1);
+            return node;
+        }
+
+        static void* jcv_pq_top(jcv_priorityqueue* pq)
+        {
+            return pq->items[1];
+        }
+
+        static void jcv_pq_remove(jcv_priorityqueue* pq, jcv_halfedge<jcv_real>* node)
+        {
+            if( pq->numitems == 1 )
+                return;
+            int pos = node->pqpos;
+            if( pos == 0 )
+                return;
+
+            jcv_halfedge<jcv_real>** items = (jcv_halfedge<jcv_real>**)pq->items;
+
+            items[pos] = items[--pq->numitems];
+            if( jcv_halfedge_compare( node, items[pos] ) )
+                jcv_pq_moveup( pq, pos );
+            else
+                jcv_pq_movedown( pq, pos );
+            node->pqpos = pos;
+        }
+
+        // internal functions
+
+        static jcv_site<jcv_real>* jcv_nextsite(jcv_context_internal<jcv_real>* internal)
+        {
+            return (internal->currentsite < internal->numsites) ? &internal->sites[internal->currentsite++] : 0;
+        }
+
+        static jcv_halfedge<jcv_real>* jcv_get_edge_above_x(jcv_context_internal<jcv_real>* internal, const jcv_point<jcv_real>* p)
+        {
+            // Gets the arc on the beach line at the x coordinate (i.e. right above the new site event)
+
+            // A good guess it's close by (Can be optimized)
+            jcv_halfedge<jcv_real>* he = internal->last_inserted;
+            if( !he )
+            {
+                if( p->x() < (internal->rect.max[0] - internal->rect.min[0]) / 2 )
+                    he = internal->beachline_start;
+                else
+                    he = internal->beachline_end;
+            }
+
+            //
+            if( he == internal->beachline_start || (he != internal->beachline_end && jcv_halfedge_rightof(he, p)) )
+            {
+                do {
+                    he = he->right;
+                }
+                while( he != internal->beachline_end && jcv_halfedge_rightof(he, p) );
+
+                he = he->left;
+            }
+            else
+            {
+                do {
+                    he = he->left;
+                }
+                while( he != internal->beachline_start && !jcv_halfedge_rightof(he, p) );
+            }
+
+            return he;
+        }
+
+        static int jcv_check_circle_event(const jcv_halfedge<jcv_real>* he1, const jcv_halfedge<jcv_real>* he2, jcv_point<jcv_real>* vertex)
+        {
+            jcv_edge<jcv_real>* e1 = he1->edge;
+            jcv_edge<jcv_real>* e2 = he2->edge;
+            if( e1 == 0 || e2 == 0 || e1->sites[1] == e2->sites[1] )
+            {
+                return 0;
+            }
+
+            return jcv_halfedge_intersect(he1, he2, vertex);
+        }
+
+        static void jcv_site_event(jcv_context_internal<jcv_real>* internal, jcv_site<jcv_real>* site)
+        {
+            jcv_halfedge<jcv_real>* left   = jcv_get_edge_above_x(internal, &site->p);
+            jcv_halfedge<jcv_real>* right  = left->right;
+            jcv_site<jcv_real>*     bottom = jcv_halfedge_rightsite(left);
+            if( !bottom )
+                bottom = internal->bottomsite;
+
+            jcv_edge<jcv_real>* edge = jcv_edge_new(internal, bottom, site);
+            edge->next = internal->edges;
+            internal->edges = edge;
+
+            jcv_halfedge<jcv_real>* edge1 = jcv_halfedge_new(internal, edge, JCV_DIRECTION_LEFT);
+            jcv_halfedge<jcv_real>* edge2 = jcv_halfedge_new(internal, edge, JCV_DIRECTION_RIGHT);
+
+            jcv_halfedge_link(left, edge1);
+            jcv_halfedge_link(edge1, edge2);
+
+            internal->last_inserted = right;
+
+            jcv_point<jcv_real> p;
+            if( jcv_check_circle_event( left, edge1, &p ) )
+            {
+                jcv_pq_remove(internal->eventqueue, left);
+                left->vertex    = p;
+                left->y         = p[1] + jcv_point_dist(&site->p, &p);
+                jcv_pq_push(internal->eventqueue, left);
+            }
+            if( jcv_check_circle_event( edge2, right, &p ) )
+            {
+                edge2->vertex   = p;
+                edge2->y        = p[1] + jcv_point_dist(&site->p, &p);
+                jcv_pq_push(internal->eventqueue, edge2);
             }
         }
 
-        current = current->next;
-        if( current )
+        // https://cp-algorithms.com/geometry/oriented-triangle-area.html
+        static jcv_real jcv_determinant(const jcv_point<jcv_real>* a, const jcv_point<jcv_real>* b, const jcv_point<jcv_real>* c)
         {
-            next = current->next;
+            return (b->x() - a->x())*(c->y() - a->y()) - (b->y() - a->y())*(c->x() - a->x());
+        }
+
+        static jcv_real jcv_calc_sort_metric(const jcv_site<jcv_real>* site, const jcv_graphedge<jcv_real>* edge)
+        {
+            // We take the average of the two points, since we can better distinguish between very small edges
+            constexpr jcv_real half = jcv_real{0.5};
+            jcv_real x = (edge->pos[0][0] + edge->pos[1][0]) * half;
+            jcv_real y = (edge->pos[0][1] + edge->pos[1][1]) * half;
+            jcv_real diffy = y - site->p[1];
+            jcv_real angle = std::atan2( diffy, x - site->p[0] );
+            if( diffy < 0 ) {
+                angle = angle + sm::mathconst<jcv_real>::two_pi;
+            }
+            return angle;
+        }
+
+        static int jcv_graphedge_eq(jcv_graphedge<jcv_real>* a, jcv_graphedge<jcv_real>* b)
+        {
+            return jcv_real_eq(a->angle, b->angle) && jcv_point_eq( &a->pos[0], &b->pos[0] ) && jcv_point_eq( &a->pos[1], &b->pos[1] );
+        }
+
+        static void jcv_sortedges_insert(jcv_site<jcv_real>* site, jcv_graphedge<jcv_real>* edge)
+        {
+            // Special case for the head end
+            jcv_graphedge<jcv_real>* prev = 0;
+            if (site->edges == 0 || site->edges->angle >= edge->angle)
+            {
+                edge->next = site->edges;
+                site->edges = edge;
+            }
+            else
+            {
+                // Locate the node before the point of insertion
+                jcv_graphedge<jcv_real>* current = site->edges;
+                while(current->next != 0 && current->next->angle < edge->angle)
+                {
+                    current = current->next;
+                }
+                prev = current;
+                edge->next = current->next;
+                current->next = edge;
+            }
+
+            // check to avoid duplicates
+            if (prev && jcv_graphedge_eq(prev, edge))
+            {
+                prev->next = edge->next;
+            }
+            else if (edge->next && jcv_graphedge_eq(edge, edge->next))
+            {
+                edge->next = edge->next->next;
+            }
+        }
+
+        static void jcv_finishline(jcv_context_internal<jcv_real>* internal, jcv_edge<jcv_real>* e)
+        {
+            if( !jcv_edge_clipline(internal, e) ) {
+                return;
+            }
+
+            // Make sure the graph edges are CCW
+            int flip = jcv_determinant(&e->sites[0]->p, &e->pos[0], &e->pos[1]) > (jcv_real)0 ? 0 : 1;
+
+            for( int i = 0; i < 2; ++i )
+            {
+                jcv_graphedge<jcv_real>* ge = jcv_alloc_graphedge(internal);
+
+                ge->edge = e;
+                ge->next = 0;
+                ge->neighbor = e->sites[1-i];
+                ge->pos[flip] = e->pos[i];
+                ge->pos[1-flip] = e->pos[1-i];
+                ge->angle = jcv_calc_sort_metric(e->sites[i], ge);
+
+                jcv_sortedges_insert( e->sites[i], ge );
+            }
+        }
+
+
+        static void jcv_endpos(jcv_context_internal<jcv_real>* internal, jcv_edge<jcv_real>* e, const jcv_point<jcv_real>* p, int direction)
+        {
+            e->pos[direction] = *p;
+
+            if( !jcv_is_valid(&e->pos[1 - direction]) )
+                return;
+
+            jcv_finishline(internal, e);
+        }
+
+        static void jcv_create_corner_edge(jcv_context_internal<jcv_real>* internal, const jcv_site<jcv_real>* site, jcv_graphedge<jcv_real>* current, jcv_graphedge<jcv_real>* gap)
+        {
+            gap->neighbor   = 0;
+            gap->pos[0]     = current->pos[1];
+
+            if( current->pos[1][0] < internal->rect.max[0] && current->pos[1][1] == internal->rect.min[1] )
+            {
+                gap->pos[1][0] = internal->rect.max[0];
+                gap->pos[1][1] = internal->rect.min[1];
+            }
+            else if( current->pos[1][0] > internal->rect.min[0] && current->pos[1][1] == internal->rect.max[1] )
+            {
+                gap->pos[1][0] = internal->rect.min[0];
+                gap->pos[1][1] = internal->rect.max[1];
+            }
+            else if( current->pos[1][1] > internal->rect.min[1] && current->pos[1][0] == internal->rect.min[0] )
+            {
+                gap->pos[1][0] = internal->rect.min[0];
+                gap->pos[1][1] = internal->rect.min[1];
+            }
+            else if( current->pos[1][1] < internal->rect.max[1] && current->pos[1][0] == internal->rect.max[0] )
+            {
+                gap->pos[1][0] = internal->rect.max[0];
+                gap->pos[1][1] = internal->rect.max[1];
+            }
+
+            gap->angle = jcv_calc_sort_metric(site, gap);
+        }
+
+        static jcv_edge<jcv_real>* jcv_create_gap_edge(jcv_context_internal<jcv_real>* internal, jcv_site<jcv_real>* site, jcv_graphedge<jcv_real>* ge)
+        {
+            jcv_edge<jcv_real>* edge  = jcv_alloc_edge(internal);
+            edge->pos[0]    = ge->pos[0];
+            edge->pos[1]    = ge->pos[1];
+            edge->sites[0]  = site;
+            edge->sites[1]  = 0;
+            edge->a = edge->b = edge->c = 0;
+            edge->next      = internal->edges;
+            internal->edges = edge;
+            return edge;
+        }
+
+        static void jcv_boxshape_fillgaps(const jcv_clipper<jcv_real>* clipper, jcv_context_internal<jcv_real>* allocator, jcv_site<jcv_real>* site)
+        {
+            // They're sorted CCW, so if the current->pos[1] != next->pos[0], then we have a gap
+            jcv_graphedge<jcv_real>* current = site->edges;
+            if( !current )
+            {
+                // No edges, then it should be a single cell
+                assert( allocator->numsites == 1 );
+
+                jcv_graphedge<jcv_real>* gap = jcv_alloc_graphedge(allocator);
+                gap->neighbor   = 0;
+                gap->pos[0]     = clipper->min;
+                gap->pos[1][0]   = clipper->max[0];
+                gap->pos[1][1]   = clipper->min[1];
+                gap->angle      = jcv_calc_sort_metric(site, gap);
+                gap->next       = 0;
+                gap->edge       = jcv_create_gap_edge(allocator, site, gap);
+
+                current = gap;
+                site->edges = gap;
+            }
+
+            jcv_graphedge<jcv_real>* next = current->next;
             if( !next )
+            {
+                jcv_graphedge<jcv_real>* gap = jcv_alloc_graphedge(allocator);
+                jcv_create_corner_edge(allocator, site, current, gap);
+                gap->edge = jcv_create_gap_edge(allocator, site, gap);
+
+                gap->next = current->next;
+                current->next = gap;
+                current = gap;
                 next = site->edges;
+            }
+
+            while( current && next )
+            {
+                int current_edge_flags = jcv_get_edge_flags(&current->pos[1], &clipper->min, &clipper->max);
+                if( current_edge_flags && !jcv_point_eq(&current->pos[1], &next->pos[0]))
+                {
+                    // Cases:
+                    //  Current and Next on the same border
+                    //  Current on one border, and Next on another border
+                    //  Current on the corner, Next on the border
+                    //  Current on the corner, Next on another border (another corner in between)
+
+                    int next_edge_flags = jcv_get_edge_flags(&next->pos[0], &clipper->min, &clipper->max);
+                    if (current_edge_flags & next_edge_flags)
+                    {
+                        // Current and Next on the same border
+                        jcv_graphedge<jcv_real>* gap = jcv_alloc_graphedge(allocator);
+                        gap->neighbor   = 0;
+                        gap->pos[0]     = current->pos[1];
+                        gap->pos[1]     = next->pos[0];
+                        gap->angle      = jcv_calc_sort_metric(site, gap);
+                        gap->edge       = jcv_create_gap_edge(allocator, site, gap);
+
+                        gap->next = current->next;
+                        current->next = gap;
+                    }
+                    else {
+                        // Current and Next on different borders
+                        int corner_flag = jcv_edge_flags_to_corner(current_edge_flags);
+                        if (corner_flag)
+                        {
+                            // we are already at one corner, so we need to find the next one
+                            corner_flag = jcv_corner_rotate_90(corner_flag);
+                        }
+                        else
+                        {
+                            // we are on the middle of a border
+                            // we need to find the adjacent corner, following the borders CCW
+                            if      (current_edge_flags == JCV_EDGE_TOP)    { corner_flag = JCV_CORNER_TOP_LEFT; }
+                            else if (current_edge_flags == JCV_EDGE_LEFT)   { corner_flag = JCV_CORNER_BOTTOM_LEFT; }
+                            else if (current_edge_flags == JCV_EDGE_BOTTOM) { corner_flag = JCV_CORNER_BOTTOM_RIGHT; }
+                            else if (current_edge_flags == JCV_EDGE_RIGHT)  { corner_flag = JCV_CORNER_TOP_RIGHT; }
+
+                        }
+                        jcv_point<jcv_real> corner = jcv_corner_to_point(corner_flag, &clipper->min, &clipper->max);
+
+                        jcv_graphedge<jcv_real>* gap = jcv_alloc_graphedge(allocator);
+                        gap->neighbor   = 0;
+                        gap->pos[0]     = current->pos[1];
+                        gap->pos[1]     = corner;
+                        gap->angle      = jcv_calc_sort_metric(site, gap);
+                        gap->edge       = jcv_create_gap_edge(allocator, site, gap);
+
+                        gap->next = current->next;
+                        current->next = gap;
+                    }
+                }
+
+                current = current->next;
+                if( current )
+                {
+                    next = current->next;
+                    if( !next )
+                        next = site->edges;
+                }
+            }
         }
-    }
-}
 
 
-// Since the algorithm leaves gaps at the borders/corner, we want to fill them
-static void jcv_fillgaps(jcv_diagram* diagram)
-{
-    jcv_context_internal* internal = diagram->internal;
-    if (!internal->clipper.fill_fn)
-        return;
-
-    for( int i = 0; i < internal->numsites; ++i )
-    {
-        jcv_site* site = &internal->sites[i];
-        internal->clipper.fill_fn(&internal->clipper, internal, site);
-    }
-}
-
-
-static void jcv_circle_event(jcv_context_internal* internal)
-{
-    jcv_halfedge* left      = (jcv_halfedge*)jcv_pq_pop(internal->eventqueue);
-
-    jcv_halfedge* leftleft  = left->left;
-    jcv_halfedge* right     = left->right;
-    jcv_halfedge* rightright= right->right;
-    jcv_site* bottom = jcv_halfedge_leftsite(left);
-    jcv_site* top    = jcv_halfedge_rightsite(right);
-
-    jcv_point vertex = left->vertex;
-    jcv_endpos(internal, left->edge, &vertex, left->direction);
-    jcv_endpos(internal, right->edge, &vertex, right->direction);
-
-    internal->last_inserted = rightright;
-
-    jcv_pq_remove(internal->eventqueue, right);
-    jcv_halfedge_unlink(left);
-    jcv_halfedge_unlink(right);
-    jcv_halfedge_delete(internal, left);
-    jcv_halfedge_delete(internal, right);
-
-    int direction = JCV_DIRECTION_LEFT;
-    if( bottom->p[1] > top->p[1] )
-    {
-        jcv_site* temp = bottom;
-        bottom = top;
-        top = temp;
-        direction = JCV_DIRECTION_RIGHT;
-    }
-
-    jcv_edge* edge = jcv_edge_new(internal, bottom, top);
-    edge->next = internal->edges;
-    internal->edges = edge;
-
-    jcv_halfedge* he = jcv_halfedge_new(internal, edge, direction);
-    jcv_halfedge_link(leftleft, he);
-    jcv_endpos(internal, edge, &vertex, JCV_DIRECTION_RIGHT - direction);
-
-    jcv_point p;
-    if( jcv_check_circle_event( leftleft, he, &p ) )
-    {
-        jcv_pq_remove(internal->eventqueue, leftleft);
-        leftleft->vertex    = p;
-        leftleft->y         = p[1] + jcv_point_dist(&bottom->p, &p);
-        jcv_pq_push(internal->eventqueue, leftleft);
-    }
-    if( jcv_check_circle_event( he, rightright, &p ) )
-    {
-        he->vertex      = p;
-        he->y           = p[1] + jcv_point_dist(&bottom->p, &p);
-        jcv_pq_push(internal->eventqueue, he);
-    }
-}
-
-void jcv_diagram_generate( int num_points, const jcv_point* points, const jcv_rect* rect, const jcv_clipper* clipper, jcv_diagram* d )
-{
-    jcv_diagram_generate_useralloc(num_points, points, rect, clipper, 0, jcv_alloc_fn, jcv_free_fn, d);
-}
-
-typedef union jcv_cast_align_struct_
-{
-    char*   charp;
-    void**  voidpp;
-} jcv_cast_align_struct;
-
-static void jcv_rect_union(jcv_rect* rect, const jcv_point* p)
-{
-    rect->min[0] = std::min(rect->min[0], p->x());
-    rect->min[1] = std::min(rect->min[1], p->y());
-    rect->max[0] = std::max(rect->max[0], p->x());
-    rect->max[1] = std::max(rect->max[1], p->y());
-}
-
-static void jcv_rect_round(jcv_rect* rect)
-{
-    rect->min[0] = std::floor(rect->min[0]);
-    rect->min[1] = std::floor(rect->min[1]);
-    rect->max[0] = std::ceil(rect->max[0]);
-    rect->max[1] = std::ceil(rect->max[1]);
-}
-
-static void jcv_rect_inflate(jcv_rect* rect, jcv_real amount)
-{
-    rect->min[0] -= amount;
-    rect->min[1] -= amount;
-    rect->max[0] += amount;
-    rect->max[1] += amount;
-}
-
-static int jcv_prune_duplicates(jcv_context_internal* internal, jcv_rect* rect)
-{
-    int num_sites = internal->numsites;
-    jcv_site* sites = internal->sites;
-
-    jcv_rect r;
-    r.min[0] = r.min[1] = std::numeric_limits<jcv_real>::max();
-    r.max[0] = r.max[1] = std::numeric_limits<jcv_real>::lowest();
-
-    int offset = 0;
-    // Prune duplicates first
-    for (int i = 0; i < num_sites; i++)
-    {
-        const jcv_site* s = &sites[i];
-        // Remove duplicates, to avoid anomalies
-        if( i > 0 && jcv_point_eq(&s->p, &sites[i - 1].p) )
+        // Since the algorithm leaves gaps at the borders/corner, we want to fill them
+        static void jcv_fillgaps(jcv_diagram<jcv_real>* diagram)
         {
-            offset++;
-            continue;
+            jcv_context_internal<jcv_real>* internal = diagram->internal;
+            if (!internal->clipper.fill_fn)
+                return;
+
+            for( int i = 0; i < internal->numsites; ++i )
+            {
+                jcv_site<jcv_real>* site = &internal->sites[i];
+                internal->clipper.fill_fn(&internal->clipper, internal, site);
+            }
         }
 
-        sites[i - offset] = sites[i];
 
-        jcv_rect_union(&r, &s->p);
-    }
-    internal->numsites -= offset;
-    if (rect) {
-        *rect = r;
-    }
-    return offset;
-}
-
-static int jcv_prune_not_in_shape(jcv_context_internal* internal, jcv_rect* rect)
-{
-    int num_sites = internal->numsites;
-    jcv_site* sites = internal->sites;
-
-    jcv_rect r;
-    r.min[0] = r.min[1] = std::numeric_limits<jcv_real>::max();
-    r.max[0] = r.max[1] = std::numeric_limits<jcv_real>::lowest();
-
-    int offset = 0;
-    for (int i = 0; i < num_sites; i++)
-    {
-        const jcv_site* s = &sites[i];
-
-        if (!internal->clipper.test_fn(&internal->clipper, s->p))
+        static void jcv_circle_event(jcv_context_internal<jcv_real>* internal)
         {
-            offset++;
-            continue;
+            jcv_halfedge<jcv_real>* left      = (jcv_halfedge<jcv_real>*)jcv_pq_pop(internal->eventqueue);
+
+            jcv_halfedge<jcv_real>* leftleft  = left->left;
+            jcv_halfedge<jcv_real>* right     = left->right;
+            jcv_halfedge<jcv_real>* rightright= right->right;
+            jcv_site<jcv_real>* bottom = jcv_halfedge_leftsite(left);
+            jcv_site<jcv_real>* top    = jcv_halfedge_rightsite(right);
+
+            jcv_point<jcv_real> vertex = left->vertex;
+            jcv_endpos(internal, left->edge, &vertex, left->direction);
+            jcv_endpos(internal, right->edge, &vertex, right->direction);
+
+            internal->last_inserted = rightright;
+
+            jcv_pq_remove(internal->eventqueue, right);
+            jcv_halfedge_unlink(left);
+            jcv_halfedge_unlink(right);
+            jcv_halfedge_delete(internal, left);
+            jcv_halfedge_delete(internal, right);
+
+            int direction = JCV_DIRECTION_LEFT;
+            if( bottom->p[1] > top->p[1] )
+            {
+                jcv_site<jcv_real>* temp = bottom;
+                bottom = top;
+                top = temp;
+                direction = JCV_DIRECTION_RIGHT;
+            }
+
+            jcv_edge<jcv_real>* edge = jcv_edge_new(internal, bottom, top);
+            edge->next = internal->edges;
+            internal->edges = edge;
+
+            jcv_halfedge<jcv_real>* he = jcv_halfedge_new(internal, edge, direction);
+            jcv_halfedge_link(leftleft, he);
+            jcv_endpos(internal, edge, &vertex, JCV_DIRECTION_RIGHT - direction);
+
+            jcv_point<jcv_real> p;
+            if( jcv_check_circle_event( leftleft, he, &p ) )
+            {
+                jcv_pq_remove(internal->eventqueue, leftleft);
+                leftleft->vertex    = p;
+                leftleft->y         = p[1] + jcv_point_dist(&bottom->p, &p);
+                jcv_pq_push(internal->eventqueue, leftleft);
+            }
+            if( jcv_check_circle_event( he, rightright, &p ) )
+            {
+                he->vertex      = p;
+                he->y           = p[1] + jcv_point_dist(&bottom->p, &p);
+                jcv_pq_push(internal->eventqueue, he);
+            }
         }
 
-        sites[i - offset] = sites[i];
-
-        jcv_rect_union(&r, &s->p);
-    }
-    internal->numsites -= offset;
-    if (rect) {
-        *rect = r;
-    }
-    return offset;
-}
-
-static jcv_context_internal* jcv_alloc_internal(int num_points, void* userallocctx, FJCVAllocFn allocfn, FJCVFreeFn freefn)
-{
-    // Interesting limits from Euler's equation
-    // Slide 81: https://courses.cs.washington.edu/courses/csep521/01au/lectures/lecture10slides.pdf
-    // Page 3: https://sites.cs.ucsb.edu/~suri/cs235/Voronoi.pdf
-    size_t eventssize = (size_t)(num_points*2) * sizeof(void*); // beachline can have max 2*n-5 parabolas
-    size_t sitessize = (size_t)num_points * sizeof(jcv_site);
-    size_t memsize = sizeof(jcv_priorityqueue) + eventssize + sitessize + sizeof(jcv_context_internal) + 16u; // 16 bytes padding for alignment
-
-    char* originalmem = (char*)allocfn(userallocctx, memsize);
-    memset(originalmem, 0, memsize);
-
-    // align memory
-    char* mem = (char*)jcv_align(originalmem, sizeof(void*));
-
-    jcv_context_internal* internal = (jcv_context_internal*)mem;
-    mem += sizeof(jcv_context_internal);
-    internal->mem    = originalmem;
-    internal->memctx = userallocctx;
-    internal->alloc  = allocfn;
-    internal->free   = freefn;
-
-    mem = (char*)jcv_align(mem, sizeof(void*));
-    internal->sites = (jcv_site*) mem;
-    mem += sitessize;
-
-    mem = (char*)jcv_align(mem, sizeof(void*));
-    internal->eventqueue = (jcv_priorityqueue*)mem;
-    mem += sizeof(jcv_priorityqueue);
-    assert( ((uintptr_t)mem & (sizeof(void*)-1)) == 0 );
-
-    jcv_cast_align_struct tmp;
-    tmp.charp = mem;
-    internal->eventmem = tmp.voidpp;
-
-    assert((mem+eventssize) <= (originalmem+memsize));
-
-    return internal;
-}
-
-void jcv_diagram_generate_useralloc(int num_points, const jcv_point* points, const jcv_rect* rect, const jcv_clipper* clipper, void* userallocctx, FJCVAllocFn allocfn, FJCVFreeFn freefn, jcv_diagram* d)
-{
-    if( d->internal )
-        jcv_diagram_free( d );
-
-    jcv_context_internal* internal = jcv_alloc_internal(num_points, userallocctx, allocfn, freefn);
-
-    internal->beachline_start = jcv_halfedge_new(internal, 0, 0);
-    internal->beachline_end = jcv_halfedge_new(internal, 0, 0);
-
-    internal->beachline_start->left     = 0;
-    internal->beachline_start->right    = internal->beachline_end;
-    internal->beachline_end->left       = internal->beachline_start;
-    internal->beachline_end->right      = 0;
-
-    internal->last_inserted = 0;
-
-    int max_num_events = num_points*2; // beachline can have max 2*n-5 parabolas
-    jcv_pq_create(internal->eventqueue, max_num_events, (void**)internal->eventmem);
-
-    internal->numsites = num_points;
-    jcv_site* sites = internal->sites;
-
-    for( int i = 0; i < num_points; ++i )
-    {
-        sites[i].p        = points[i];
-        sites[i].edges    = 0;
-        sites[i].index    = i;
-    }
-
-    qsort(sites, (size_t)num_points, sizeof(jcv_site), jcv_point_cmp);
-
-    jcv_clipper box_clipper;
-    if (clipper == 0) {
-        box_clipper.test_fn = jcv_boxshape_test;
-        box_clipper.clip_fn = jcv_boxshape_clip;
-        box_clipper.fill_fn = jcv_boxshape_fillgaps;
-        clipper = &box_clipper;
-    }
-    internal->clipper = *clipper;
-
-    jcv_rect tmp_rect;
-    tmp_rect.min[0] = tmp_rect.min[1] = std::numeric_limits<jcv_real>::max();
-    tmp_rect.max[0] = tmp_rect.max[1] = std::numeric_limits<jcv_real>::lowest();
-    jcv_prune_duplicates(internal, &tmp_rect);
-
-    // Prune using the test second
-    if (internal->clipper.test_fn)
-    {
-        // e.g. used by the box clipper in the test_fn
-        internal->clipper.min = rect ? rect->min : tmp_rect.min;
-        internal->clipper.max = rect ? rect->max : tmp_rect.max;
-
-        jcv_prune_not_in_shape(internal, &tmp_rect);
-
-        // The pruning might have made the bounding box smaller
-        if (!rect) {
-            // In the case of all sites being all on a horizontal or vertical line, the
-            // rect area will be zero, and the diagram generation will most likely fail
-            jcv_rect_round(&tmp_rect);
-            jcv_rect_inflate(&tmp_rect, 10);
-
-            internal->clipper.min = tmp_rect.min;
-            internal->clipper.max = tmp_rect.max;
-        }
-    }
-
-    internal->rect = rect ? *rect : tmp_rect;
-
-    d->min      = internal->rect.min;
-    d->max      = internal->rect.max;
-    d->numsites = internal->numsites;
-    d->internal = internal;
-
-    internal->bottomsite = jcv_nextsite(internal);
-
-    jcv_priorityqueue* pq = internal->eventqueue;
-    jcv_site* site = jcv_nextsite(internal);
-
-    int finished = 0;
-    while( !finished )
-    {
-        jcv_point lowest_pq_point;
-        if( !jcv_pq_empty(pq) )
+        typedef union jcv_cast_align_struct_
         {
-            jcv_halfedge* he = (jcv_halfedge*)jcv_pq_top(pq);
-            lowest_pq_point[0] = he->vertex[0];
-            lowest_pq_point[1] = he->y;
-        }
+            char*   charp;
+            void**  voidpp;
+        } jcv_cast_align_struct;
 
-        if( site != 0 && (jcv_pq_empty(pq) || jcv_point_less(&site->p, &lowest_pq_point) ) )
+        static void jcv_rect_union(jcv_rect<jcv_real>* rect, const jcv_point<jcv_real>* p)
         {
-            jcv_site_event(internal, site);
-            site = jcv_nextsite(internal);
+            rect->min[0] = std::min(rect->min[0], p->x());
+            rect->min[1] = std::min(rect->min[1], p->y());
+            rect->max[0] = std::max(rect->max[0], p->x());
+            rect->max[1] = std::max(rect->max[1], p->y());
         }
-        else if( !jcv_pq_empty(pq) )
+
+        static void jcv_rect_round(jcv_rect<jcv_real>* rect)
         {
-            jcv_circle_event(internal);
+            rect->min[0] = std::floor(rect->min[0]);
+            rect->min[1] = std::floor(rect->min[1]);
+            rect->max[0] = std::ceil(rect->max[0]);
+            rect->max[1] = std::ceil(rect->max[1]);
         }
-        else
+
+        static void jcv_rect_inflate(jcv_rect<jcv_real>* rect, jcv_real amount)
         {
-            finished = 1;
+            rect->min[0] -= amount;
+            rect->min[1] -= amount;
+            rect->max[0] += amount;
+            rect->max[1] += amount;
         }
-    }
 
-    for( jcv_halfedge* he = internal->beachline_start->right; he != internal->beachline_end; he = he->right )
-    {
-        jcv_finishline(internal, he->edge);
-    }
+        static int jcv_prune_duplicates(jcv_context_internal<jcv_real>* internal, jcv_rect<jcv_real>* rect)
+        {
+            int num_sites = internal->numsites;
+            jcv_site<jcv_real>* sites = internal->sites;
 
-    jcv_fillgaps(d);
-}
+            jcv_rect<jcv_real> r;
+            r.min[0] = r.min[1] = std::numeric_limits<jcv_real>::max();
+            r.max[0] = r.max[1] = std::numeric_limits<jcv_real>::lowest();
 
-#endif // JC_VORONOI_IMPLEMENTATION
+            int offset = 0;
+            // Prune duplicates first
+            for (int i = 0; i < num_sites; i++)
+            {
+                const jcv_site<jcv_real>* s = &sites[i];
+                // Remove duplicates, to avoid anomalies
+                if( i > 0 && jcv_point_eq(&s->p, &sites[i - 1].p) )
+                {
+                    offset++;
+                    continue;
+                }
+
+                sites[i - offset] = sites[i];
+
+                jcv_rect_union(&r, &s->p);
+            }
+            internal->numsites -= offset;
+            if (rect) {
+                *rect = r;
+            }
+            return offset;
+        }
+
+        static int jcv_prune_not_in_shape(jcv_context_internal<jcv_real>* internal, jcv_rect<jcv_real>* rect)
+        {
+            int num_sites = internal->numsites;
+            jcv_site<jcv_real>* sites = internal->sites;
+
+            jcv_rect<jcv_real> r;
+            r.min[0] = r.min[1] = std::numeric_limits<jcv_real>::max();
+            r.max[0] = r.max[1] = std::numeric_limits<jcv_real>::lowest();
+
+            int offset = 0;
+            for (int i = 0; i < num_sites; i++)
+            {
+                const jcv_site<jcv_real>* s = &sites[i];
+
+                if (!internal->clipper.test_fn(&internal->clipper, s->p))
+                {
+                    offset++;
+                    continue;
+                }
+
+                sites[i - offset] = sites[i];
+
+                jcv_rect_union(&r, &s->p);
+            }
+            internal->numsites -= offset;
+            if (rect) {
+                *rect = r;
+            }
+            return offset;
+        }
+
+        static jcv_context_internal<jcv_real>* jcv_alloc_internal(int num_points, void* userallocctx, FJCVAllocFn allocfn, FJCVFreeFn freefn)
+        {
+            // Interesting limits from Euler's equation
+            // Slide 81: https://courses.cs.washington.edu/courses/csep521/01au/lectures/lecture10slides.pdf
+            // Page 3: https://sites.cs.ucsb.edu/~suri/cs235/Voronoi.pdf
+            size_t eventssize = (size_t)(num_points*2) * sizeof(void*); // beachline can have max 2*n-5 parabolas
+            size_t sitessize = (size_t)num_points * sizeof(jcv_site<jcv_real>);
+            size_t memsize = sizeof(jcv_priorityqueue) + eventssize + sitessize + sizeof(jcv_context_internal<jcv_real>) + 16u; // 16 bytes padding for alignment
+
+            char* originalmem = (char*)allocfn(userallocctx, memsize);
+            memset(originalmem, 0, memsize);
+
+            // align memory
+            char* mem = (char*)jcv_align(originalmem, sizeof(void*));
+
+            jcv_context_internal<jcv_real>* internal = (jcv_context_internal<jcv_real>*)mem;
+            mem += sizeof(jcv_context_internal<jcv_real>);
+            internal->mem    = originalmem;
+            internal->memctx = userallocctx;
+            internal->alloc  = allocfn;
+            internal->free   = freefn;
+
+            mem = (char*)jcv_align(mem, sizeof(void*));
+            internal->sites = (jcv_site<jcv_real>*) mem;
+            mem += sitessize;
+
+            mem = (char*)jcv_align(mem, sizeof(void*));
+            internal->eventqueue = (jcv_priorityqueue*)mem;
+            mem += sizeof(jcv_priorityqueue);
+            assert( ((uintptr_t)mem & (sizeof(void*)-1)) == 0 );
+
+            jcv_cast_align_struct tmp;
+            tmp.charp = mem;
+            internal->eventmem = tmp.voidpp;
+
+            assert((mem+eventssize) <= (originalmem+memsize));
+
+            return internal;
+        }
+
+        // This version of jcv_diagram_generate allows the client to use a custom allocator
+        static void jcv_diagram_generate_useralloc(int num_points, const jcv_point<jcv_real>* points, const jcv_rect<jcv_real>* rect, const jcv_clipper<jcv_real>* clipper, void* userallocctx, FJCVAllocFn allocfn, FJCVFreeFn freefn, jcv_diagram<jcv_real>* d)
+        {
+            if( d->internal )
+                jcv_diagram_free( d );
+
+            jcv_context_internal<jcv_real>* internal = jcv_alloc_internal(num_points, userallocctx, allocfn, freefn);
+
+            internal->beachline_start = jcv_halfedge_new(internal, 0, 0);
+            internal->beachline_end = jcv_halfedge_new(internal, 0, 0);
+
+            internal->beachline_start->left     = 0;
+            internal->beachline_start->right    = internal->beachline_end;
+            internal->beachline_end->left       = internal->beachline_start;
+            internal->beachline_end->right      = 0;
+
+            internal->last_inserted = 0;
+
+            int max_num_events = num_points*2; // beachline can have max 2*n-5 parabolas
+            jcv_pq_create(internal->eventqueue, max_num_events, (void**)internal->eventmem);
+
+            internal->numsites = num_points;
+            jcv_site<jcv_real>* sites = internal->sites;
+
+            for( int i = 0; i < num_points; ++i )
+            {
+                sites[i].p        = points[i];
+                sites[i].edges    = 0;
+                sites[i].index    = i;
+            }
+
+            qsort(sites, (size_t)num_points, sizeof(jcv_site<jcv_real>), jcv_point_cmp);
+
+            jcv_clipper<jcv_real> box_clipper;
+            if (clipper == 0) {
+                // model->get_shaderprogs = &mplot::VisualBase<glver>::get_shaderprogs;
+                box_clipper.test_fn = &jc::voronoi<jcv_real>::jcv_boxshape_test;
+                box_clipper.clip_fn = &jc::voronoi<jcv_real>::jcv_boxshape_clip;
+                box_clipper.fill_fn = &jc::voronoi<jcv_real>::jcv_boxshape_fillgaps;
+                clipper = &box_clipper;
+            }
+            internal->clipper = *clipper;
+
+            jcv_rect<jcv_real> tmp_rect;
+            tmp_rect.min[0] = tmp_rect.min[1] = std::numeric_limits<jcv_real>::max();
+            tmp_rect.max[0] = tmp_rect.max[1] = std::numeric_limits<jcv_real>::lowest();
+            jcv_prune_duplicates(internal, &tmp_rect);
+
+            // Prune using the test second
+            if (internal->clipper.test_fn)
+            {
+                // e.g. used by the box clipper in the test_fn
+                internal->clipper.min = rect ? rect->min : tmp_rect.min;
+                internal->clipper.max = rect ? rect->max : tmp_rect.max;
+
+                jcv_prune_not_in_shape(internal, &tmp_rect);
+
+                // The pruning might have made the bounding box smaller
+                if (!rect) {
+                    // In the case of all sites being all on a horizontal or vertical line, the
+                    // rect area will be zero, and the diagram generation will most likely fail
+                    jcv_rect_round(&tmp_rect);
+                    jcv_rect_inflate(&tmp_rect, 10);
+
+                    internal->clipper.min = tmp_rect.min;
+                    internal->clipper.max = tmp_rect.max;
+                }
+            }
+
+            internal->rect = rect ? *rect : tmp_rect;
+
+            d->min      = internal->rect.min;
+            d->max      = internal->rect.max;
+            d->numsites = internal->numsites;
+            d->internal = internal;
+
+            internal->bottomsite = jcv_nextsite(internal);
+
+            jcv_priorityqueue* pq = internal->eventqueue;
+            jcv_site<jcv_real>* site = jcv_nextsite(internal);
+
+            int finished = 0;
+            while( !finished )
+            {
+                jcv_point<jcv_real> lowest_pq_point;
+                if( !jcv_pq_empty(pq) )
+                {
+                    jcv_halfedge<jcv_real>* he = (jcv_halfedge<jcv_real>*)jcv_pq_top(pq);
+                    lowest_pq_point[0] = he->vertex[0];
+                    lowest_pq_point[1] = he->y;
+                }
+
+                if( site != 0 && (jcv_pq_empty(pq) || jcv_point_less(&site->p, &lowest_pq_point) ) )
+                {
+                    jcv_site_event(internal, site);
+                    site = jcv_nextsite(internal);
+                }
+                else if( !jcv_pq_empty(pq) )
+                {
+                    jcv_circle_event(internal);
+                }
+                else
+                {
+                    finished = 1;
+                }
+            }
+
+            for( jcv_halfedge<jcv_real>* he = internal->beachline_start->right; he != internal->beachline_end; he = he->right )
+            {
+                jcv_finishline(internal, he->edge);
+            }
+
+            jcv_fillgaps(d);
+        }
+
+        /**
+         * Uses malloc
+         * If a clipper is not supplied, a default box clipper will be used
+         * If rect is null, an automatic bounding box is calculated, with an extra padding of 10 units
+         * All points will be culled against the bounding rect, and all edges will be clipped against it.
+         */
+        static void jcv_diagram_generate( int num_points, const jcv_point<jcv_real>* points, const jcv_rect<jcv_real>* rect, const jcv_clipper<jcv_real>* clipper, jcv_diagram<jcv_real>* d )
+        {
+            jcv_diagram_generate_useralloc(num_points, points, rect, clipper, 0, jcv_alloc_fn, jcv_free_fn, d);
+        }
+
+    }; // end struct jcv
+
+} // namespace
 
 /*
 
@@ -1565,7 +1586,7 @@ ABOUT:
 
     A fast single file 2D voronoi diagram generator
 
-HISTORY:
+(Pre mathplot) HISTORY:
     0.9     2023-01-22  - Modified the Delauney iterator creation api
     0.8     2022-12-20  - Added fix for missing border edges
                           More robust removal of duplicate graph edges

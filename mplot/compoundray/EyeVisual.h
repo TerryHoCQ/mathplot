@@ -13,13 +13,12 @@
 #include <mplot/VisualModel.h>
 #include <mplot/gl/version.h>
 
-#define JC_VORONOI_IMPLEMENTATION
-#define JCV_REAL_TYPE double // double precision in jcvoronoi necessary
+//#define JCV_REAL_TYPE double // double precision in jcvoronoi necessary
 #include <mplot/jcvoronoi/jc_voronoi.h>
 
 namespace mplot::compoundray
 {
-    using jcv_real = JCV_REAL_TYPE;
+    //using jcv_real = JCV_REAL_TYPE;
 
     // This is a binary-compatible equivalent to Ommatidium from cameras/CompoundEyeDataTypes.h in compound-ray.
     // Use reinterpret_cast<std::vector<mplot::compoundray::Ommatidium>*>(ommatidia) if using compound ray.
@@ -176,7 +175,7 @@ namespace mplot::compoundray
         }
 
         // 2D positions for the ommatidia centres encoded in 3D vecs. Gets re-used for each projection
-        sm::vvec<sm::vec<jcv_real, 3>> omm2d;
+        sm::vvec<sm::vec<double, 3>> omm2d;
 
         /*
          * Possibly each of these need replication for each of multiple 2d projections
@@ -352,7 +351,7 @@ namespace mplot::compoundray
                             sm::vec<float, 2> ll = sm::geometry::spherical_projection::xyz_to_latlong (rot_coord, this->projections[pri].proj_radius);
                             sm::vec<float, 2> xy = this->spherical_projection (ll, this->projections[pri].proj_type, this->projections[pri].proj_radius);
                             // Add xy as one of the points that we'll make a Voronoi diagram from.
-                            this->omm2d.push_back (xy.plus_one_dim().as<jcv_real>());
+                            this->omm2d.push_back (xy.plus_one_dim().as<double>());
                         }
                     }
                     // Make 2D Voronoi of omm2d.
@@ -392,7 +391,7 @@ namespace mplot::compoundray
             // Use mplot::range to find the extents of dataCoords. From these create a
             // rectangle to pass to jcv_diagram_generate.
             int ncoords = static_cast<int>(this->omm2d.size());
-            sm::range<jcv_real> rx, ry;
+            sm::range<double> rx, ry;
             rx.search_init();
             ry.search_init();
             for (int i = 0; i < ncoords ; ++i) {
@@ -400,22 +399,24 @@ namespace mplot::compoundray
                 ry.update (this->omm2d[i][1]);
             }
             // Generate the 2D Voronoi diagram
-            jcv_diagram diagram;
-            std::memset (&diagram, 0, sizeof(jcv_diagram));
-            jcv_rect domain = {
-                jcv_point{rx.min - this->border_width, ry.min - this->border_width, 0.0f},
-                jcv_point{rx.max + this->border_width, ry.max + this->border_width, 0.0f}
+            // jc::voronoi<double> vd; // will then do some of the following in constructor:
+
+            jc::jcv_diagram<double> diagram;
+            std::memset (&diagram, 0, sizeof(jc::jcv_diagram<double>));
+            jc::jcv_rect<double> domain = {
+                jc::jcv_point<double>{rx.min - this->border_width, ry.min - this->border_width, 0.0f},
+                jc::jcv_point<double>{rx.max + this->border_width, ry.max + this->border_width, 0.0f}
             };
-            jcv_diagram_generate (ncoords, this->omm2d.data(), &domain, 0, &diagram);
+            jc::voronoi<double>::jcv_diagram_generate (ncoords, this->omm2d.data(), &domain, 0, &diagram);
             // We obtain access to the Voronoi cell sites:
-            const jcv_site* sites = jcv_diagram_get_sites (&diagram);
+            const jc::jcv_site<double>* sites = jc::voronoi<double>::jcv_diagram_get_sites (&diagram);
             if (diagram.numsites != ncoords) {
                 std::cout << "WARNING: diagram's ncoords (" << diagram.numsites << ") != ncoords (" << ncoords << ")?!?!\n";
             }
 
             for (int i = 0; i < diagram.numsites && i < ncoords; ++i) {
-                const jcv_site* site = &sites[i];
-                jcv_graphedge* e = site->edges; // The very first edge
+                const jc::jcv_site<double>* site = &sites[i];
+                jc::jcv_graphedge<double>* e = site->edges; // The very first edge
                 while (e) {
                     // Set z. Should be done in jcvoronoi, but haven't found out how
                     e->pos[0][2] = this->omm2d[i][2];
@@ -433,8 +434,8 @@ namespace mplot::compoundray
             sm::vvec<std::array<float, 3>> flat_colours;
             // To draw triangles iterate over the 'sites' and draw triangles
             for (int i = 0; i < diagram.numsites && i < ncoords; ++i) {
-                const jcv_site* site = &sites[i];
-                const jcv_graphedge* e = site->edges;
+                const jc::jcv_site<double>* site = &sites[i];
+                const jc::jcv_graphedge<double>* e = site->edges;
                 this->projections[pri].site_indices[i] = site->index;
                 std::array<float, 3> colour = mplot::colour::black;
                 if (site->index + this->projections[pri].start_i < ommData->size()) {
@@ -476,7 +477,7 @@ namespace mplot::compoundray
             }
 #endif
             // At end free the Voronoi diagram memory
-            jcv_diagram_free (&diagram);
+            jc::voronoi<double>::jcv_diagram_free (&diagram);
         }
 
         // If false, hide 3D representation (the ommatidial cones and discs)
