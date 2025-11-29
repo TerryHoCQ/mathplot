@@ -334,8 +334,13 @@ namespace mplot::compoundray
                     std::cout << "NOTE: Cylindrical projections are currently unimplemented\n";
                 } else {
                     // Compute intersections between ommatidia direction vectors and our projection sphere.
+
+                    // Rotate coordinates as the compound eye looks forwards along z, whereas 2D
+                    // projections look forwards along x by convention.
                     sm::mat44<float> coord_rotn;
+                    coord_rotn.rotate (sm::vec<>::uz(), sm::mathconst<float>::pi_over_2);
                     coord_rotn.rotate (sm::vec<>::ux(), sm::mathconst<float>::pi_over_2);
+
                     for (size_t i = this->projections[pri].start_i; i < this->ommatidia->size() && i < this->projections[pri].end_i; ++i) {
                         sm::vec<sm::vec<>, 2> sph_coord = sm::geometry::ray_sphere_intersection (this->projections[pri].proj_centre,
                                                                                                  this->projections[pri].proj_radius,
