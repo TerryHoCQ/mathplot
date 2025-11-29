@@ -199,29 +199,12 @@ namespace jc
         ~voronoi()
         {
             if (this->diagram) {
-                jc::voronoi<double>::jcv_diagram_free (this->diagram);
+                jc::voronoi<jcv_real>::jcv_diagram_free (this->diagram);
                 delete this->diagram;
             }
         }
 
         static constexpr jcv_real jcv_edge_intersect_threshold = jcv_real{JCV_EDGE_INTERSECT_THRESHOLD};
-
-/*
-        typedef sm::vec<jcv_real, 3>        jcv_point;
-        typedef struct jcv_rect_            jcv_rect;
-        typedef struct jcv_site_            jcv_site;
-        typedef struct jcv_edge_            jcv_edge;
-        typedef struct jcv_graphedge_       jcv_graphedge;
-        typedef struct jcv_delauney_edge_   jcv_delauney_edge;
-        typedef struct jcv_delauney_iter_   jcv_delauney_iter;
-        typedef struct jcv_diagram_         jcv_diagram;
-        typedef struct jcv_clipper_         jcv_clipper;
-        typedef struct jcv_context_internal_ jcv_context_internal;
-
-        typedef void* (*FJCVAllocFn)(void* userctx, size_t size);
-        typedef void (*FJCVFreeFn)(void* userctx, void* p);
-*/
-        // FIRST batch of structs were here
 
         // INTERNAL FUNCTIONS
 
@@ -324,8 +307,6 @@ namespace jc
             return std::sqrt (jcv_point_dist_sq (pt1, pt2));
         }
 
-        // SECOND batch of Structs were here
-
         // Uses free (or the registered custom free function)
         static void jcv_diagram_free( jcv_diagram<jcv_real>* d )
         {
@@ -347,6 +328,7 @@ namespace jc
             return diagram->internal->sites;
         }
 
+        // User API
         const jcv_site<jcv_real>* jcv_diagram_get_sites()
         {
             const jcv_site<jcv_real>* sites = nullptr;
@@ -1576,6 +1558,7 @@ namespace jc
             jcv_diagram_generate_useralloc(num_points, points, rect, clipper, 0, jcv_alloc_fn, jcv_free_fn, d);
         }
 
+        // User API
         void jcv_diagram_generate (const std::vector<jcv_point<jcv_real>>& centres)
         {
             int ncoords = static_cast<int>(centres.size());
