@@ -104,14 +104,12 @@ namespace mplot
                 const jcv::graphedge<double>* e = site->edges;
                 std::array<float, 3> c = mplot::colour::black;
                 if (static_cast<std::size_t>(site->index) < this->colour.size()) { c = this->colour[site->index]; }
-                uint32_t site_triangles = 0;
                 while (e) {
                     this->computeTriangle (site->p, e->pos[0], e->pos[1], c);
                     if constexpr (show_centres) {
                         auto sphc = (site->p +  e->pos[0] + e->pos[1]) / T{3};
                         this->computeSphere (sphc, this->centre_col, this->centre_rad, 4, 4);
                     }
-                    ++site_triangles;
                     e = e->next;
                 }
             }
