@@ -8,8 +8,6 @@
 #include <sm/geometry>
 #include <mplot/VisualModel.h>
 #include <mplot/gl/version.h>
-
-#define JC_VORONOI_IMPLEMENTATION
 #include <mplot/jcvoronoi/jc_voronoi.h>
 
 namespace mplot
@@ -44,18 +42,18 @@ namespace mplot
             this->indices.clear();
             this->xy.resize (this->latlong.size());
             for (uint32_t i = 0; i < this->latlong.size(); ++i) {
-                this->xy[i] = this->project (this->latlong[i], this->radius).plus_one_dim();
+                this->xy[i] = this->project (this->latlong[i], this->radius).plus_one_dim().template as<double>();
             }
             this->voronoi2d();
         }
 
         //! Compute a triangle from 3 arbitrary corners
-        void computeTriangle (sm::vec<T> c1, sm::vec<T> c2, sm::vec<T> c3, const std::array<float, 3>& colr)
+        void computeTriangle (sm::vec<double> c1, sm::vec<double> c2, sm::vec<double> c3, const std::array<float, 3>& colr)
         {
             // v is the face normal
-            sm::vec<T> u1 = c1-c2;
-            sm::vec<T> u2 = c2-c3;
-            sm::vec<T> v = u1.cross(u2);
+            sm::vec<double> u1 = c1-c2;
+            sm::vec<double> u2 = c2-c3;
+            sm::vec<double> v = u1.cross(u2);
             v.renormalize();
             // Push corner vertices
             this->vertex_push (c1.as_float(), this->vertexPositions);
@@ -74,35 +72,24 @@ namespace mplot
         void voronoi2d()
         {
             // Use mplot::range to find the extents of dataCoords. From these create a
-            // rectangle to pass to jcv_diagram_generate.
+            // rectangle to pass to diagram_generate.
             int ncoords = static_cast<int>(this->xy.size());
-            sm::range<T> rx, ry;
-            rx.search_init();
-            ry.search_init();
-            for (int i = 0; i < ncoords ; ++i) {
-                rx.update (this->xy[i][0]);
-                ry.update (this->xy[i][1]);
+
+            jcv::manager<double> vorman; // we need double precision for projections, float may run into trouble
+            vorman.border_width = this->border_width;
+            vorman.diagram_generate (this->xy);
+
+            int diag_nsites = vorman.diagram_numsites();
+            if (diag_nsites != ncoords) {
+                std::cout << "WARNING: diagram's ncoords (" << diag_nsites << ") != ncoords (" << ncoords << ")?!?!\n";
             }
-
-            // Generate the 2D Voronoi diagram
-            jcv_diagram diagram;
-            std::memset (&diagram, 0, sizeof(jcv_diagram));
-            jcv_rect domain = {
-                jcv_point{rx.min - this->border_width, ry.min - this->border_width, 0.0f},
-                jcv_point{rx.max + this->border_width, ry.max + this->border_width, 0.0f}
-            };
-
-            jcv_diagram_generate (ncoords, this->xy.data(), &domain, 0, &diagram);
 
             // We obtain access to the Voronoi cell sites:
-            const jcv_site* sites = jcv_diagram_get_sites (&diagram);
-            if (diagram.numsites != ncoords) {
-                std::cout << "WARNING: diagram's ncoords (" << diagram.numsites << ") != ncoords (" << ncoords << ")?!?!\n";
-            }
+            const jcv::site<double>* sites = vorman.diagram_get_sites();
 
-            for (int i = 0; i < diagram.numsites && i < ncoords; ++i) {
-                const jcv_site* site = &sites[i];
-                jcv_graphedge* e = site->edges; // The very first edge
+            for (int i = 0; i < vorman.diagram_numsites() && i < ncoords; ++i) {
+                const jcv::site<double>* site = &sites[i];
+                jcv::graphedge<double>* e = site->edges; // The very first edge
                 while (e) {
                     // Set z. Should be done in jcvoronoi, but haven't found out how
                     e->pos[0][2] = this->xy[i][2];
@@ -112,9 +99,9 @@ namespace mplot
             }
 
             // To draw triangles iterate over the 'sites' and draw triangles
-            for (int i = 0; i < diagram.numsites && i < ncoords; ++i) {
-                const jcv_site* site = &sites[i];
-                const jcv_graphedge* e = site->edges;
+            for (int i = 0; i < vorman.diagram_numsites() && i < ncoords; ++i) {
+                const jcv::site<double>* site = &sites[i];
+                const jcv::graphedge<double>* e = site->edges;
                 std::array<float, 3> c = mplot::colour::black;
                 if (static_cast<std::size_t>(site->index) < this->colour.size()) { c = this->colour[site->index]; }
                 uint32_t site_triangles = 0;
@@ -128,16 +115,14 @@ namespace mplot
                     e = e->next;
                 }
             }
-            // At end free the Voronoi diagram memory
-            jcv_diagram_free (&diagram);
         }
 
         // latlong, supplied by user
         sm::vvec<sm::vec<T, 2>> latlong;
         // Colour, supplied by user
         sm::vvec<std::array<float, 3>> colour;
-        // xy, result of projection, but in 3D
-        sm::vvec<sm::vec<T, 3>> xy;
+        // xy, result of projection, but in 3D. double precision always
+        sm::vvec<sm::vec<double, 3>> xy;
         // The radius of our sphere
         T radius = T{1};
         // The longitudinal offset

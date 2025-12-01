@@ -13,7 +13,6 @@
 #include <mplot/VisualModel.h>
 #include <mplot/gl/version.h>
 
-#define JC_VORONOI_IMPLEMENTATION
 #include <mplot/jcvoronoi/jc_voronoi.h>
 
 namespace mplot::compoundray
@@ -173,7 +172,7 @@ namespace mplot::compoundray
         }
 
         // 2D positions for the ommatidia centres encoded in 3D vecs. Gets re-used for each projection
-        sm::vvec<sm::vec<float, 3>> omm2d;
+        sm::vvec<sm::vec<double, 3>> omm2d;
 
         /*
          * Possibly each of these need replication for each of multiple 2d projections
@@ -331,8 +330,13 @@ namespace mplot::compoundray
                     std::cout << "NOTE: Cylindrical projections are currently unimplemented\n";
                 } else {
                     // Compute intersections between ommatidia direction vectors and our projection sphere.
+
+                    // Rotate coordinates as the compound eye looks forwards along z, whereas 2D
+                    // projections look forwards along x by convention.
                     sm::mat44<float> coord_rotn;
+                    coord_rotn.rotate (sm::vec<>::uz(), sm::mathconst<float>::pi_over_2);
                     coord_rotn.rotate (sm::vec<>::ux(), sm::mathconst<float>::pi_over_2);
+
                     for (size_t i = this->projections[pri].start_i; i < this->ommatidia->size() && i < this->projections[pri].end_i; ++i) {
                         sm::vec<sm::vec<>, 2> sph_coord = sm::geometry::ray_sphere_intersection (this->projections[pri].proj_centre,
                                                                                                  this->projections[pri].proj_radius,
@@ -343,9 +347,8 @@ namespace mplot::compoundray
                             sm::vec<float, 3> rot_coord = (coord_rotn * sph_coord[0]).less_one_dim();
                             sm::vec<float, 2> ll = sm::geometry::spherical_projection::xyz_to_latlong (rot_coord, this->projections[pri].proj_radius);
                             sm::vec<float, 2> xy = this->spherical_projection (ll, this->projections[pri].proj_type, this->projections[pri].proj_radius);
-                            //xy[0] = -xy[0]; // invert x
                             // Add xy as one of the points that we'll make a Voronoi diagram from.
-                            this->omm2d.push_back (xy.plus_one_dim());
+                            this->omm2d.push_back (xy.plus_one_dim().as<double>());
                         }
                     }
                     // Make 2D Voronoi of omm2d.
@@ -383,32 +386,24 @@ namespace mplot::compoundray
         void voronoi2d (uint32_t pri)
         {
             // Use mplot::range to find the extents of dataCoords. From these create a
-            // rectangle to pass to jcv_diagram_generate.
+            // rectangle to pass to diagram_generate.
             int ncoords = static_cast<int>(this->omm2d.size());
-            sm::range<float> rx, ry;
-            rx.search_init();
-            ry.search_init();
-            for (int i = 0; i < ncoords ; ++i) {
-                rx.update (this->omm2d[i][0]);
-                ry.update (this->omm2d[i][1]);
-            }
-            // Generate the 2D Voronoi diagram
-            jcv_diagram diagram;
-            std::memset (&diagram, 0, sizeof(jcv_diagram));
-            jcv_rect domain = {
-                jcv_point{rx.min - this->border_width, ry.min - this->border_width, 0.0f},
-                jcv_point{rx.max + this->border_width, ry.max + this->border_width, 0.0f}
-            };
-            jcv_diagram_generate (ncoords, this->omm2d.data(), &domain, 0, &diagram);
-            // We obtain access to the Voronoi cell sites:
-            const jcv_site* sites = jcv_diagram_get_sites (&diagram);
-            if (diagram.numsites != ncoords) {
-                std::cout << "WARNING: diagram's ncoords (" << diagram.numsites << ") != ncoords (" << ncoords << ")?!?!\n";
+
+            jcv::manager<double> vorman; // we need double precision for projections, float may run into trouble
+            vorman.border_width = this->border_width;
+            vorman.diagram_generate (this->omm2d);
+
+            int diag_nsites = vorman.diagram_numsites();
+            if (diag_nsites != ncoords) {
+                std::cout << "WARNING: diagram's ncoords (" << diag_nsites << ") != ncoords (" << ncoords << ")?!?!\n";
             }
 
-            for (int i = 0; i < diagram.numsites && i < ncoords; ++i) {
-                const jcv_site* site = &sites[i];
-                jcv_graphedge* e = site->edges; // The very first edge
+            // We obtain access to the Voronoi cell sites:
+            const jcv::site<double>* sites = vorman.diagram_get_sites();
+
+            for (int i = 0; i < diag_nsites && i < ncoords; ++i) {
+                const jcv::site<double>* site = &sites[i];
+                jcv::graphedge<double>* e = site->edges; // The very first edge
                 while (e) {
                     // Set z. Should be done in jcvoronoi, but haven't found out how
                     e->pos[0][2] = this->omm2d[i][2];
@@ -425,9 +420,9 @@ namespace mplot::compoundray
             sm::vvec<sm::vec<>> flat_triangles; // contains a sequence of triplets of vecs
             sm::vvec<std::array<float, 3>> flat_colours;
             // To draw triangles iterate over the 'sites' and draw triangles
-            for (int i = 0; i < diagram.numsites && i < ncoords; ++i) {
-                const jcv_site* site = &sites[i];
-                const jcv_graphedge* e = site->edges;
+            for (int i = 0; i < diag_nsites && i < ncoords; ++i) {
+                const jcv::site<double>* site = &sites[i];
+                const jcv::graphedge<double>* e = site->edges;
                 this->projections[pri].site_indices[i] = site->index;
                 std::array<float, 3> colour = mplot::colour::black;
                 if (site->index + this->projections[pri].start_i < ommData->size()) {
@@ -446,9 +441,9 @@ namespace mplot::compoundray
                     t3 = (this->projections[pri].twod_transform * e->pos[1]).less_one_dim();
                     this->computeTriangle (t1, t2, t3, colour);
 #else
-                    flat_triangles.push_back (site->p);
-                    flat_triangles.push_back (e->pos[0]);
-                    flat_triangles.push_back (e->pos[1]);
+                    flat_triangles.push_back (site->p.as<float>());
+                    flat_triangles.push_back (e->pos[0].as<float>());
+                    flat_triangles.push_back (e->pos[1].as<float>());
                     flat_colours.push_back (colour);
 #endif
                     ++site_triangles;
@@ -468,8 +463,6 @@ namespace mplot::compoundray
                 this->computeTriangle (t1, t2, t3, flat_colours[i/3]);
             }
 #endif
-            // At end free the Voronoi diagram memory
-            jcv_diagram_free (&diagram);
         }
 
         // If false, hide 3D representation (the ommatidial cones and discs)
