@@ -5,9 +5,15 @@
 // Copyright (c) 2015-2023 Mathias Westerdahl
 // For LICENSE (MIT), USAGE or HISTORY, see bottom of file
 
+// This version has been re-written by Seb into a templated C++ style, to allow easy choice between
+// the use of single or double precision floating point values (the type T). It has also been
+// namespaced (jcv) so that type names look like jcv::site instead of jcv_site; jcv::edge rather
+// than jcv_edge, and so on.
+
 #pragma once
 
-#include <stdlib.h> // malloc() & free()
+#include <stdlib.h> // qsort(), malloc() & free(). Seb hasn't altered the C-style memory allocation
+                    // used when diagrams are generated
 #include <iostream> // one sanity message
 #include <limits>
 #include <cmath>
@@ -26,47 +32,49 @@ namespace jcv
 {
 #pragma pack(push, 1)
 
+    // Seb has replaced the original point struct with use of his fixed-size mathematical vector
+    // class, sm::vec
     template<typename T>
     using point = sm::vec<T, 3>;
 
-    // fwd declar graphpedge
+    // forward-declare graphedge
     template <typename T> struct graphedge;
 
     template<typename T>
     struct site
     {
-        point<T>       p;
-        int            index;  // Index into the original list of points
-        graphedge<T>*  edges;  // The half edges owned by the cell
+        point<T>      p;
+        int           index;  // Index into the original list of points
+        graphedge<T>* edges;  // The half edges owned by the cell
     };
 
     // The coefficients a, b and c are from the general line equation: ax * by + c = 0
     template<typename T>
     struct edge
     {
-        struct edge<T>*   next;
-        site<T>*          sites[2];
-        point<T>          pos[2];
-        T            a;
-        T            b;
-        T            c;
+        struct edge<T>* next;
+        site<T>*        sites[2];
+        point<T>        pos[2];
+        T               a;
+        T               b;
+        T               c;
     };
 
     template<typename T>
     struct graphedge
     {
-        struct graphedge<T>*  next;
-        struct edge<T>*       edge_;
-        struct site<T>*       neighbor;
-        point<T>              pos[2];
-        T                     angle;
+        struct graphedge<T>* next;
+        struct edge<T>*      edge_;
+        struct site<T>*      neighbor;
+        point<T>             pos[2];
+        T                    angle;
     };
 
     template<typename T>
     struct delauney_iter
     {
-        const edge<T>*   sentinel;
-        const edge<T>*   current;
+        const edge<T>* sentinel;
+        const edge<T>* current;
     };
 
     template<typename T>
@@ -80,8 +88,8 @@ namespace jcv
     template<typename T>
     struct rect
     {
-        point<T>   min;
-        point<T>   max;
+        point<T> min;
+        point<T> max;
     };
 
     // Forward declare context_internal for the std::function
@@ -94,11 +102,13 @@ namespace jcv
         std::function<int(const clipper<T>* _clipper, const point<T> p)> test_fn;
         // Given an edge, and the clipper, calculates the e->pos[0] and e->pos[1]
         // Returns 0 if not successful
-        std::function<int(const clipper<T>* _clipper, edge<T>* e)> clip_fn;
+        std::function<int(const clipper<T>* _clipper, edge<T>* e)>       clip_fn;
         // Given the clipper, the site and the last edge,
         // closes any gaps in the polygon by adding new edges that follow the bounding shape
         // The internal context is use when allocating new edges.
-        std::function<void(const clipper<T>* _clipper, context_internal<T>* allocator, site<T>* s)> fill_fn;
+        std::function<void(const clipper<T>* _clipper,
+                           context_internal<T>* allocator, site<T>* s)>  fill_fn;
+
         point<T>     min;        // The bounding rect min
         point<T>     max;        // The bounding rect max
         void*        ctx;        // User defined context
@@ -138,39 +148,39 @@ namespace jcv
     template<typename T>
     struct context_internal
     {
-        void*              mem;
-        edge<T>*           edges;
-        halfedge<T>*       beachline_start;
-        halfedge<T>*       beachline_end;
-        halfedge<T>*       last_inserted;
-        priorityqueue*     eventqueue;
+        void*          mem;
+        edge<T>*       edges;
+        halfedge<T>*   beachline_start;
+        halfedge<T>*   beachline_end;
+        halfedge<T>*   last_inserted;
+        priorityqueue* eventqueue;
 
-        site<T>*           sites;
-        site<T>*           bottomsite;
-        int                numsites;
-        int                currentsite;
-        int                _padding;
+        site<T>*       sites;
+        site<T>*       bottomsite;
+        int            numsites;
+        int            currentsite;
+        int            _padding;
 
-        memoryblock*       memblocks;
-        edge<T>*           edgepool;
-        halfedge<T>*       halfedgepool;
-        void**             eventmem;
-        clipper<T>         clipper_;
+        memoryblock*   memblocks;
+        edge<T>*       edgepool;
+        halfedge<T>*   halfedgepool;
+        void**         eventmem;
+        clipper<T>     clipper_;
 
-        void*                         memctx; // Given by the user
-        std::function<FJCVAllocFn>    alloc;
-        std::function<FJCVFreeFn>     free;
+        void*                      memctx; // Given by the user
+        std::function<FJCVAllocFn> alloc;
+        std::function<FJCVFreeFn>  free;
 
-        rect<T>            rect_;
+        rect<T>        rect_;
     };
 
     template<typename T>
     struct diagram
     {
-        context_internal<T>*   internal;
-        int                    numsites;
-        point<T>               min;
-        point<T>               max;
+        context_internal<T>* internal;
+        int                  numsites;
+        point<T>             min;
+        point<T>             max;
     };
 
 #pragma pack(pop)
@@ -191,32 +201,31 @@ namespace jcv
 
         static constexpr T invalid_value = std::numeric_limits<T>::lowest();
 
-        // App specific equality
-        static int T_eq(T a, T b)
+        // App specific equality of scalars
+        static int equal (T a, T b) { return std::abs(a - b) < std::numeric_limits<T>::epsilon(); }
+
+        // Vector equality
+        static int equal (const point<T>* pt1, const point<T>* pt2)
         {
-            return std::abs(a - b) < std::numeric_limits<T>::epsilon();
+            return equal (pt1->y(), pt2->y()) && equal (pt1->x(), pt2->x());
         }
 
-        // point
-        static int point_cmp(const void* p1, const void* p2)
+        // point (i.e. vector) comparison, accepting void pointers
+        static int point_cmp (const void* p1, const void* p2)
         {
             const point<T>* s1 = static_cast<const point<T>*>(p1);
             const point<T>* s2 = static_cast<const point<T>*>(p2);
             return (s1->y() != s2->y()) ? (s1->y() < s2->y() ? -1 : 1) : (s1->x() < s2->x() ? -1 : 1);
         }
 
-        static int point_less (const point<T>* pt1, const point<T>* pt2 )
+        // Return app-specific pt1 < pt2 operation between vectors
+        static int lessthan (const point<T>* pt1, const point<T>* pt2)
         {
             return (pt1->y() == pt2->y()) ? (pt1->x() < pt2->x()) : pt1->y() < pt2->y();
         }
 
-        static int point_eq( const point<T>* pt1, const point<T>* pt2 )
-        {
-            return T_eq(pt1->y(), pt2->y()) && T_eq(pt1->x(), pt2->x());
-        }
-
         [[maybe_unused]]
-        static int point_on_box_edge( const point<T>* pt, const point<T>* min, const point<T>* max )
+        static int point_on_box_edge (const point<T>* pt, const point<T>* min, const point<T>* max)
         {
             return pt->x() == min->x() || pt->y() == min->y() || pt->x() == max->x() || pt->y() == max->y();
         }
@@ -233,75 +242,81 @@ namespace jcv
         static const int CORNER_BOTTOM_RIGHT  = 3;
         static const int CORNER_TOP_RIGHT     = 4;
 
-        static int get_edge_flags( const point<T>* pt, const point<T>* min, const point<T>* max )
+        static int get_edge_flags (const point<T>* pt, const point<T>* min, const point<T>* max)
         {
             int flags = 0;
-            if      (pt->x() == min->x())   flags |= EDGE_LEFT;
-            else if (pt->x() == max->x())   flags |= EDGE_RIGHT;
-            if      (pt->y() == min->y())   flags |= EDGE_BOTTOM;
-            else if (pt->y() == max->y())   flags |= EDGE_TOP;
+            if (pt->x() == min->x()) {
+                flags |= EDGE_LEFT;
+            } else if (pt->x() == max->x()) {
+                flags |= EDGE_RIGHT;
+            }
+            if (pt->y() == min->y()) {
+                flags |= EDGE_BOTTOM;
+            } else if (pt->y() == max->y()) {
+                flags |= EDGE_TOP;
+            }
             return flags;
         }
 
-        static int edge_flags_to_corner(int edge_flags)
+        static int edge_flags_to_corner (int edge_flags)
         {
-#define TEST_FLAGS(_FLAGS, _RETVAL) if ( (_FLAGS) == edge_flags ) return _RETVAL
-            TEST_FLAGS(EDGE_TOP|EDGE_LEFT, CORNER_TOP_LEFT);
-            TEST_FLAGS(EDGE_TOP|EDGE_RIGHT, CORNER_TOP_RIGHT);
-            TEST_FLAGS(EDGE_BOTTOM|EDGE_LEFT, CORNER_BOTTOM_LEFT);
-            TEST_FLAGS(EDGE_BOTTOM|EDGE_RIGHT, CORNER_BOTTOM_RIGHT);
+#define TEST_FLAGS(_FLAGS, _RETVAL) if ( (_FLAGS) == edge_flags) return _RETVAL
+            TEST_FLAGS (EDGE_TOP|EDGE_LEFT, CORNER_TOP_LEFT);
+            TEST_FLAGS (EDGE_TOP|EDGE_RIGHT, CORNER_TOP_RIGHT);
+            TEST_FLAGS (EDGE_BOTTOM|EDGE_LEFT, CORNER_BOTTOM_LEFT);
+            TEST_FLAGS (EDGE_BOTTOM|EDGE_RIGHT, CORNER_BOTTOM_RIGHT);
 #undef TEST_FLAGS
             return 0;
         }
 
         [[maybe_unused]] static int is_corner(int corner) { return corner != 0; }
 
-        static int corner_rotate_90(int corner)
+        static int corner_rotate_90 (int corner)
         {
             corner--;
             corner = (corner+1)%4;
             return corner + 1;
         }
-        static point<T> corner_to_point(int corner, const point<T>* min, const point<T>* max )
+
+        static point<T> corner_to_point (int corner, const point<T>* min, const point<T>* max)
         {
             point<T> p;
             if      (corner == CORNER_TOP_LEFT)     { p[0] = min->x(); p[1] = max->y(); }
             else if (corner == CORNER_TOP_RIGHT)    { p[0] = max->x(); p[1] = max->y(); }
             else if (corner == CORNER_BOTTOM_LEFT)  { p[0] = min->x(); p[1] = min->y(); }
             else if (corner == CORNER_BOTTOM_RIGHT) { p[0] = max->x(); p[1] = min->y(); }
-            else                                        { p[0] = invalid_value; p[1] = invalid_value; }
+            else { p[0] = invalid_value; p[1] = invalid_value; }
             return p;
         }
 
-        static T point_dist_sq( const point<T>* pt1, const point<T>* pt2)
+        static T point_dist_sq (const point<T>* pt1, const point<T>* pt2)
         {
             T diffx = pt1->x() - pt2->x();
             T diffy = pt1->y() - pt2->y();
             return diffx * diffx + diffy * diffy;
         }
 
-        static T point_dist( const point<T>* pt1, const point<T>* pt2 )
+        static T point_dist (const point<T>* pt1, const point<T>* pt2)
         {
             return std::sqrt (point_dist_sq (pt1, pt2));
         }
 
         // Uses free (or the registered custom free function)
-        static void diagram_free( diagram<T>* d )
+        static void diagram_free (diagram<T>* d)
         {
             context_internal<T>* internal = d->internal;
             void* memctx = internal->memctx;
-            while(internal->memblocks)
-            {
+            while (internal->memblocks) {
                 memoryblock* p = internal->memblocks;
                 internal->memblocks = internal->memblocks->next;
-                internal->free( memctx, p );
+                internal->free (memctx, p);
             }
 
-            internal->free( memctx, internal->mem );
+            internal->free (memctx, internal->mem);
         }
 
         // Returns an array of sites, where each index is the same as the original input point array.
-        static const site<T>* diagram_get_sites( const diagram<T>* diagram )
+        static const site<T>* diagram_get_sites (const diagram<T>* diagram)
         {
             return diagram->internal->sites;
         }
@@ -310,10 +325,10 @@ namespace jcv
         const site<T>* diagram_get_sites() { return diagram_get_sites (&this->diagram); }
 
         // Iterates over a list of edges, skipping invalid edges (where p0==p1)
-        const edge<T>* diagram_get_next_edge( const edge<T>* _edge )
+        const edge<T>* diagram_get_next_edge (const edge<T>* _edge)
         {
             const edge<T>* e = _edge->next;
-            while (e != 0 && point_eq(&e->pos[0], &e->pos[1])) {
+            while (e != 0 && equal (&e->pos[0], &e->pos[1])) {
                 e = e->next;
             }
             return e;
@@ -322,43 +337,39 @@ namespace jcv
         // Returns a linked list of all the voronoi edges excluding the ones that lie on the borders of
         // the bounding box.  For a full list of edges, you need to iterate over the sites, and their
         // graph edges.
-        const edge<T>* diagram_get_edges( const diagram<T>* diagram )
+        const edge<T>* diagram_get_edges (const diagram<T>* diagram)
         {
             edge<T> e;
             e.next = diagram->internal->edges;
-            return diagram_get_next_edge(&e);
+            return diagram_get_next_edge (&e);
         }
 
         // Creates an iterator over the delauney edges of a voronoi diagram
-        void delauney_begin( const diagram<T>* diagram, delauney_iter<T>* iter )
+        void delauney_begin (const diagram<T>* diagram, delauney_iter<T>* iter)
         {
             iter->current = 0;
-            iter->sentinel = diagram_get_edges(diagram);
+            iter->sentinel = diagram_get_edges (diagram);
         }
 
         // Steps the iterator and returns the next edge Returns 0 when there are no more edges
-        int delauney_next( delauney_iter<T>* iter, delauney_edge<T>* next )
+        int delauney_next (delauney_iter<T>* iter, delauney_edge<T>* next)
         {
-            if (iter->sentinel)
-            {
+            if (iter->sentinel) {
                 iter->current = iter->sentinel;
                 iter->sentinel = 0;
-            }
-            else {
+            } else {
                 // Note: If we use the raw edges, we still get a proper delauney triangulation
                 // However, the result looks less relevant to the cells contained within the bounding box
                 // E.g. some cells that look isolated from each other, suddenly still are connected,
                 // because they share an edge outside of the bounding box
+                iter->current = diagram_get_next_edge (iter->current);
+            }
+
+            while (iter->current && (iter->current->sites[0] == 0 || iter->current->sites[1] == 0)) {
                 iter->current = diagram_get_next_edge(iter->current);
             }
 
-            while (iter->current && (iter->current->sites[0] == 0 || iter->current->sites[1] == 0))
-            {
-                iter->current = diagram_get_next_edge(iter->current);
-            }
-
-            if (!iter->current)
-                return 0;
+            if (!iter->current) { return 0; }
 
             next->edge_ = iter->current;
             next->sites[0] = next->edge_->sites[0];
@@ -368,17 +379,16 @@ namespace jcv
             return 1;
         }
 
-        static void* align(void* value, size_t alignment)
+        static void* align (void* value, size_t alignment)
         {
             return (void*) (((uintptr_t) value + (alignment-1)) & ~(alignment-1));
         }
 
-        static void* alloc(context_internal<T>* internal, size_t size)
+        static void* alloc (context_internal<T>* internal, size_t size)
         {
-            if( !internal->memblocks || internal->memblocks->sizefree < (size+sizeof(void*)) )
-            {
+            if (!internal->memblocks || internal->memblocks->sizefree < (size + sizeof(void*))) {
                 size_t blocksize = 16 * 1024;
-                memoryblock* block = (memoryblock*)internal->alloc( internal->memctx, blocksize );
+                memoryblock* block = (memoryblock*)internal->alloc (internal->memctx, blocksize);
                 size_t offset = sizeof(memoryblock);
                 block->sizefree = blocksize - offset;
                 block->next = internal->memblocks;
@@ -386,54 +396,52 @@ namespace jcv
                 internal->memblocks = block;
             }
             void* p_raw = internal->memblocks->memory;
-            void* p_aligned = align(p_raw, sizeof(void*));
+            void* p_aligned = align (p_raw, sizeof(void*));
             size += (uintptr_t)p_aligned - (uintptr_t)p_raw;
             internal->memblocks->memory += size;
             internal->memblocks->sizefree -= size;
             return p_aligned;
         }
 
-        static edge<T>* alloc_edge(context_internal<T>* internal)
+        static edge<T>* alloc_edge (context_internal<T>* internal)
         {
-            return (edge<T>*)alloc(internal, sizeof(edge<T>));
+            return (edge<T>*) alloc (internal, sizeof(edge<T>));
         }
 
-        static halfedge<T>* alloc_halfedge(context_internal<T>* internal)
+        static halfedge<T>* alloc_halfedge (context_internal<T>* internal)
         {
-            if( internal->halfedgepool )
-            {
+            if (internal->halfedgepool) {
                 halfedge<T>* edge = internal->halfedgepool;
                 internal->halfedgepool = internal->halfedgepool->right;
                 return edge;
             }
-
-            return (halfedge<T>*)alloc(internal, sizeof(halfedge<T>));
+            return (halfedge<T>*) alloc (internal, sizeof(halfedge<T>));
         }
 
-        static graphedge<T>* alloc_graphedge(context_internal<T>* internal)
+        static graphedge<T>* alloc_graphedge (context_internal<T>* internal)
         {
-            return (graphedge<T>*)alloc(internal, sizeof(graphedge<T>));
+            return (graphedge<T>*) alloc (internal, sizeof(graphedge<T>));
         }
 
-        static void* alloc_fn(void* memctx, size_t size)
-        {
-            (void)memctx;
-            return malloc(size);
-        }
-
-        static void free_fn(void* memctx, void* p)
+        static void* alloc_fn (void* memctx, size_t size)
         {
             (void)memctx;
-            free(p);
+            return malloc (size);
+        }
+
+        static void free_fn (void* memctx, void* p)
+        {
+            (void)memctx;
+            free (p);
         }
 
         // edge methods
-        static int is_valid(const point<T>* p)
+        static int is_valid (const point<T>* p)
         {
             return (p->x() != invalid_value || p->y() != invalid_value) ? 1 : 0;
         }
 
-        static void edge_create(edge<T>* e, site<T>* s1, site<T>* s2)
+        static void edge_create (edge<T>* e, site<T>* s1, site<T>* s2)
         {
             e->next = 0;
             e->sites[0] = s1;
@@ -456,39 +464,36 @@ namespace jcv
             // // Move to the mid point
             // T mx = s1->p[0] + dx * T(0.5);
             // T my = s1->p[1] + dy * T(0.5);
-            // T pc = ( pa * mx + pb * my );
+            // T pc =  (pa * mx + pb * my);
 
             T dx = s2->p[0] - s1->p[0];
             T dy = s2->p[1] - s1->p[1];
             int dx_is_larger = (dx*dx) > (dy*dy); // instead of fabs
 
             // Simplify it, using dx and dy
-            e->c = dx * (s1->p[0] + dx * (T)0.5) + dy * (s1->p[1] + dy * (T)0.5);
+            e->c = dx * (s1->p[0] + dx * T{0.5}) + dy * (s1->p[1] + dy * T{0.5});
 
-            if( dx_is_larger )
-            {
-                e->a = (T)1;
+            if (dx_is_larger) {
+                e->a = T{1};
                 e->b = dy / dx;
                 e->c /= dx;
-            }
-            else
-            {
+            } else {
                 e->a = dx / dy;
-                e->b = (T)1;
+                e->b = T{1};
                 e->c /= dy;
             }
         }
 
         // CLIPPING
-        static int boxshape_test(const clipper<T>* clipper, const point<T> p)
+        static int boxshape_test (const clipper<T>* clipper, const point<T> p)
         {
-            return p[0] >= clipper->min[0] && p[0] <= clipper->max[0] &&
-            p[1] >= clipper->min[1] && p[1] <= clipper->max[1];
+            return p[0] >= clipper->min[0] && p[0] <= clipper->max[0]
+            && p[1] >= clipper->min[1] && p[1] <= clipper->max[1];
         }
 
         // The line equation: ax + by + c = 0
         // see edge_create
-        static int boxshape_clip(const clipper<T>* clipper, edge<T>* e)
+        static int boxshape_clip (const clipper<T>* clipper, edge<T>* e)
         {
             T pxmin = clipper->min[0];
             T pxmax = clipper->max[0];
@@ -498,104 +503,67 @@ namespace jcv
             T x1, y1, x2, y2;
             point<T>* s1;
             point<T>* s2;
-            if (e->a == (T)1 && e->b >= (T)0)
-            {
+            if (e->a == T{1} && e->b >= T{0}) {
                 s1 = is_valid(&e->pos[1]) ? &e->pos[1] : 0;
                 s2 = is_valid(&e->pos[0]) ? &e->pos[0] : 0;
-            }
-            else
-            {
+            } else {
                 s1 = is_valid(&e->pos[0]) ? &e->pos[0] : 0;
                 s2 = is_valid(&e->pos[1]) ? &e->pos[1] : 0;
             }
 
-            if (e->a == (T)1) // delta x is larger
-            {
+            if (e->a == T{1}) { // delta x is larger
                 y1 = pymin;
-                if (s1 != 0 && s1->y() > pymin)
-                {
-                    y1 = s1->y();
-                }
-                if( y1 > pymax )
-                {
-                    y1 = pymax;
-                }
+                if (s1 != 0 && s1->y() > pymin) { y1 = s1->y(); }
+                if (y1 > pymax) { y1 = pymax; }
                 x1 = e->c - e->b * y1;
                 y2 = pymax;
-                if (s2 != 0 && s2->y() < pymax)
-                    y2 = s2->y();
+                if (s2 != 0 && s2->y() < pymax) { y2 = s2->y(); }
 
-                if( y2 < pymin )
-                {
-                    y2 = pymin;
-                }
+                if (y2 < pymin) { y2 = pymin; }
                 x2 = (e->c) - (e->b) * y2;
                 // Never occurs according to lcov
-                // if( ((x1 > pxmax) & (x2 > pxmax)) | ((x1 < pxmin) & (x2 < pxmin)) )
+                // if (((x1 > pxmax) & (x2 > pxmax)) | ((x1 < pxmin) & (x2 < pxmin)))
                 // {
                 //     return 0;
                 // }
-                if (x1 > pxmax)
-                {
+                if (x1 > pxmax) {
                     x1 = pxmax;
                     y1 = (e->c - x1) / e->b;
-                }
-                else if (x1 < pxmin)
-                {
+                } else if (x1 < pxmin) {
                     x1 = pxmin;
                     y1 = (e->c - x1) / e->b;
                 }
-                if (x2 > pxmax)
-                {
+                if (x2 > pxmax) {
                     x2 = pxmax;
                     y2 = (e->c - x2) / e->b;
-                }
-                else if (x2 < pxmin)
-                {
+                } else if (x2 < pxmin) {
                     x2 = pxmin;
                     y2 = (e->c - x2) / e->b;
                 }
-            }
-            else // delta y is larger
-            {
+
+            } else { // delta y is larger
+
                 x1 = pxmin;
-                if( s1 != 0 && s1->x() > pxmin )
-                    x1 = s1->x();
-                if( x1 > pxmax )
-                {
-                    x1 = pxmax;
-                }
+                if (s1 != 0 && s1->x() > pxmin) { x1 = s1->x(); }
+                if (x1 > pxmax) { x1 = pxmax; }
                 y1 = e->c - e->a * x1;
                 x2 = pxmax;
-                if( s2 != 0 && s2->x() < pxmax )
-                    x2 = s2->x();
-                if( x2 < pxmin )
-                {
-                    x2 = pxmin;
-                }
+                if (s2 != 0 && s2->x() < pxmax) { x2 = s2->x(); }
+                if (x2 < pxmin) { x2 = pxmin; }
                 y2 = e->c - e->a * x2;
                 // Never occurs according to lcov
-                // if( ((y1 > pymax) & (y2 > pymax)) | ((y1 < pymin) & (y2 < pymin)) )
-                // {
-                //     return 0;
-                // }
-                if( y1 > pymax )
-                {
+                // if (((y1 > pymax) & (y2 > pymax)) | ((y1 < pymin) & (y2 < pymin))) { return 0; }
+                if (y1 > pymax) {
                     y1 = pymax;
                     x1 = (e->c - y1) / e->a;
-                }
-                else if( y1 < pymin )
-                {
+                } else if (y1 < pymin) {
                     y1 = pymin;
                     x1 = (e->c - y1) / e->a;
                 }
-                if( y2 > pymax )
-                {
+                if (y2 > pymax) {
                     y2 = pymax;
                     x2 = (e->c - y2) / e->a;
-                }
-                else if( y2 < pymin )
-                {
+                } else if (y2 < pymin) {
                     y2 = pymin;
                     x2 = (e->c - y2) / e->a;
                 }
@@ -612,22 +580,22 @@ namespace jcv
 
         // The line equation: ax + by + c = 0
         // see edge_create
-        static int edge_clipline(context_internal<T>* internal, edge<T>* e)
+        static int edge_clipline (context_internal<T>* internal, edge<T>* e)
         {
-            return internal->clipper_.clip_fn(&internal->clipper_, e);
+            return internal->clipper_.clip_fn (&internal->clipper_, e);
         }
 
-        static edge<T>* edge_new(context_internal<T>* internal, site<T>* s1, site<T>* s2)
+        static edge<T>* edge_new (context_internal<T>* internal, site<T>* s1, site<T>* s2)
         {
-            edge<T>* e = alloc_edge(internal);
-            edge_create(e, s1, s2);
+            edge<T>* e = alloc_edge (internal);
+            edge_create (e, s1, s2);
             return e;
         }
 
 
         // halfedge
 
-        static void halfedge_link(halfedge<T>* edge, halfedge<T>* newedge)
+        static void halfedge_link (halfedge<T>* edge, halfedge<T>* newedge)
         {
             newedge->left = edge;
             newedge->right = edge->right;
@@ -635,7 +603,7 @@ namespace jcv
             edge->right = newedge;
         }
 
-        static void halfedge_unlink(halfedge<T>* he)
+        static void halfedge_unlink (halfedge<T>* he)
         {
             he->left->right = he->right;
             he->right->left = he->left;
@@ -643,9 +611,9 @@ namespace jcv
             he->right = 0;
         }
 
-        static halfedge<T>* halfedge_new(context_internal<T>* internal, edge<T>* e, int direction)
+        static halfedge<T>* halfedge_new (context_internal<T>* internal, edge<T>* e, int direction)
         {
-            halfedge<T>* he = alloc_halfedge(internal);
+            halfedge<T>* he = alloc_halfedge (internal);
             he->edge_       = e;
             he->left        = 0;
             he->right       = 0;
@@ -657,65 +625,53 @@ namespace jcv
             return he;
         }
 
-        static void halfedge_delete(context_internal<T>* internal, halfedge<T>* he)
+        static void halfedge_delete (context_internal<T>* internal, halfedge<T>* he)
         {
             he->right = internal->halfedgepool;
             internal->halfedgepool = he;
         }
 
-        static site<T>* halfedge_leftsite(const halfedge<T>* he)
+        static site<T>* halfedge_leftsite (const halfedge<T>* he)
         {
             return he->edge_->sites[he->direction];
         }
 
-        static site<T>* halfedge_rightsite(const halfedge<T>* he)
+        static site<T>* halfedge_rightsite (const halfedge<T>* he)
         {
             return he->edge_ ? he->edge_->sites[1 - he->direction] : 0;
         }
 
-        static int halfedge_rightof(const halfedge<T>* he, const point<T>* p)
+        static int halfedge_rightof (const halfedge<T>* he, const point<T>* p)
         {
             const edge<T>* e = he->edge_;
             const site<T>* topsite = e->sites[1];
 
             int right_of_site = (p->x() > topsite->p[0]) ? 1 : 0;
-            if (right_of_site && he->direction == DIRECTION_LEFT)
-                return 1;
-            if (!right_of_site && he->direction == DIRECTION_RIGHT)
-                return 0;
+            if (right_of_site && he->direction == DIRECTION_LEFT) { return 1; }
+            if (!right_of_site && he->direction == DIRECTION_RIGHT) { return 0; }
 
             T dxp, dyp, dxs, t1, t2, t3, yl;
 
             int above;
-            if (e->a == (T)1)
-            {
+            if (e->a == T{1}) {
                 dyp = p->y() - topsite->p[1];
                 dxp = p->x() - topsite->p[0];
                 int fast = 0;
-                if( (!right_of_site & (e->b < (T)0)) | (right_of_site & (e->b >= (T)0)) )
-                {
+                if ((!right_of_site & (e->b < T{0})) | (right_of_site & (e->b >= T{0}))) {
                     above = dyp >= e->b * dxp;
                     fast = above;
-                }
-                else
-                {
+                } else {
                     above = (p->x() + p->y() * e->b) > e->c;
-                    if (e->b < (T)0)
-                        above = !above;
-                    if (!above)
-                        fast = 1;
+                    if (e->b < T{0}) { above = !above; }
+                    if (!above) { fast = 1; }
                 }
-                if (!fast)
-                {
+                if (!fast) {
                     dxs = topsite->p[0] - e->sites[0]->p[0];
                     above = e->b * (dxp * dxp - dyp * dyp)
-                    < dxs * dyp * ((T)1 + (T)2 * dxp / dxs + e->b * e->b);
-                    if (e->b < (T)0)
-                        above = !above;
+                    < dxs * dyp * (T{1} + T{2} * dxp / dxs + e->b * e->b);
+                    if (e->b < T{0}) { above = !above; }
                 }
-            }
-            else // e->b == 1
-            {
+            } else { // e->b == 1
                 yl = e->c - e->a * p->x();
                 t1 = p->y() - yl;
                 t2 = p->x() - topsite->p[0];
@@ -727,21 +683,18 @@ namespace jcv
 
         // Keeps the priority queue sorted with events sorted in ascending order
         // Return 1 if the edges needs to be swapped
-        static int halfedge_compare( const halfedge<T>* he1, const halfedge<T>* he2 )
+        static int halfedge_compare (const halfedge<T>* he1, const halfedge<T>* he2)
         {
             return  (he1->y == he2->y) ? he1->vertex[0] > he2->vertex[0] : he1->y > he2->y;
         }
 
-        static int halfedge_intersect(const halfedge<T>* he1, const halfedge<T>* he2, point<T>* out)
+        static int halfedge_intersect (const halfedge<T>* he1, const halfedge<T>* he2, point<T>* out)
         {
             const edge<T>* e1 = he1->edge_;
             const edge<T>* e2 = he2->edge_;
 
             T d = e1->a * e2->b - e1->b * e2->a;
-            if(-edge_intersect_threshold < d && d < edge_intersect_threshold)
-            {
-                return 0;
-            }
+            if (-edge_intersect_threshold < d && d < edge_intersect_threshold) { return 0; }
             (*out)[0] = (e1->c * e2->b - e1->b * e2->c) / d;
             (*out)[1] = (e1->a * e2->c - e1->c * e2->a) / d;
             // I considered trying to determine the correct z here, but we don't have all the
@@ -750,20 +703,17 @@ namespace jcv
 
             const edge<T>* e;
             const halfedge<T>* he;
-            if( point_less( &e1->sites[1]->p, &e2->sites[1]->p) )
-            {
+            if (lessthan (&e1->sites[1]->p, &e2->sites[1]->p)) {
                 he = he1;
                 e = e1;
-            }
-            else
-            {
+            } else {
                 he = he2;
                 e = e2;
             }
 
             int right_of_site = out->x() >= e->sites[1]->p[0];
-            if ((right_of_site && he->direction == DIRECTION_LEFT) || (!right_of_site && he->direction == DIRECTION_RIGHT))
-            {
+            if ((right_of_site && he->direction == DIRECTION_LEFT)
+                || (!right_of_site && he->direction == DIRECTION_RIGHT)) {
                 return 0;
             }
 
@@ -773,15 +723,12 @@ namespace jcv
 
         // Priority queue
 
-        static int pq_moveup(priorityqueue* pq, int pos)
+        static int pq_moveup (priorityqueue* pq, int pos)
         {
             halfedge<T>** items = (halfedge<T>**)pq->items;
             halfedge<T>* node = items[pos];
 
-            for( int parent = (pos >> 1);
-                 pos > 1 && halfedge_compare(items[parent], node);
-                 pos = parent, parent = parent >> 1)
-            {
+            for (int parent = (pos >> 1); pos > 1 && halfedge_compare(items[parent], node); pos = parent, parent = parent >> 1) {
                 items[pos] = items[parent];
                 items[pos]->pqpos = pos;
             }
@@ -791,25 +738,22 @@ namespace jcv
             return pos;
         }
 
-        static int pq_maxchild(priorityqueue* pq, int pos)
+        static int pq_maxchild (priorityqueue* pq, int pos)
         {
             int child = pos << 1;
-            if( child >= pq->numitems )
-                return 0;
+            if (child >= pq->numitems) { return 0; }
             halfedge<T>** items = (halfedge<T>**)pq->items;
-            if( (child + 1) < pq->numitems && halfedge_compare(items[child], items[child+1]) )
-                return child+1;
+            if ((child + 1) < pq->numitems && halfedge_compare (items[child], items[child+1])) { return child + 1; }
             return child;
         }
 
-        static int pq_movedown(priorityqueue* pq, int pos)
+        static int pq_movedown (priorityqueue* pq, int pos)
         {
             halfedge<T>** items = (halfedge<T>**)pq->items;
             halfedge<T>* node = items[pos];
 
-            int child = pq_maxchild(pq, pos);
-            while( child && halfedge_compare(node, items[child]) )
-            {
+            int child = pq_maxchild (pq, pos);
+            while (child && halfedge_compare (node, items[child])) {
                 items[pos] = items[child];
                 items[pos]->pqpos = pos;
                 pos = child;
@@ -821,27 +765,24 @@ namespace jcv
             return pos;
         }
 
-        static void pq_create(priorityqueue* pq, int capacity, void** buffer)
+        static void pq_create (priorityqueue* pq, int capacity, void** buffer)
         {
             pq->maxnumitems = capacity;
             pq->numitems    = 1;
             pq->items       = buffer;
         }
 
-        static int pq_empty(priorityqueue* pq)
-        {
-            return pq->numitems == 1 ? 1 : 0;
-        }
+        static int pq_empty (priorityqueue* pq) { return pq->numitems == 1 ? 1 : 0; }
 
-        static int pq_push(priorityqueue* pq, void* node)
+        static int pq_push (priorityqueue* pq, void* node)
         {
-            assert(pq->numitems < pq->maxnumitems);
+            assert (pq->numitems < pq->maxnumitems);
             int n = pq->numitems++;
             pq->items[n] = node;
             return pq_moveup(pq, n);
         }
 
-        static void* pq_pop(priorityqueue* pq)
+        static void* pq_pop (priorityqueue* pq)
         {
             void* node = pq->items[1];
             pq->items[1] = pq->items[--pq->numitems];
@@ -849,234 +790,186 @@ namespace jcv
             return node;
         }
 
-        static void* pq_top(priorityqueue* pq)
-        {
-            return pq->items[1];
-        }
+        static void* pq_top (priorityqueue* pq) { return pq->items[1]; }
 
-        static void pq_remove(priorityqueue* pq, halfedge<T>* node)
+        static void pq_remove (priorityqueue* pq, halfedge<T>* node)
         {
-            if( pq->numitems == 1 )
-                return;
+            if (pq->numitems == 1) { return; }
             int pos = node->pqpos;
-            if( pos == 0 )
-                return;
+            if (pos == 0) { return; }
 
             halfedge<T>** items = (halfedge<T>**)pq->items;
 
             items[pos] = items[--pq->numitems];
-            if( halfedge_compare( node, items[pos] ) )
-                pq_moveup( pq, pos );
-            else
-                pq_movedown( pq, pos );
+            if (halfedge_compare (node, items[pos])) {
+                pq_moveup (pq, pos);
+            } else {
+                pq_movedown (pq, pos);
+            }
             node->pqpos = pos;
         }
 
         // internal functions
 
-        static site<T>* nextsite(context_internal<T>* internal)
+        static site<T>* nextsite (context_internal<T>* internal)
         {
             return (internal->currentsite < internal->numsites) ? &internal->sites[internal->currentsite++] : 0;
         }
 
-        static halfedge<T>* get_edge_above_x(context_internal<T>* internal, const point<T>* p)
+        static halfedge<T>* get_edge_above_x (context_internal<T>* internal, const point<T>* p)
         {
             // Gets the arc on the beach line at the x coordinate (i.e. right above the new site event)
 
             // A good guess it's close by (Can be optimized)
             halfedge<T>* he = internal->last_inserted;
-            if( !he )
-            {
-                if( p->x() < (internal->rect_.max[0] - internal->rect_.min[0]) / 2 )
-                    he = internal->beachline_start;
-                else
-                    he = internal->beachline_end;
+            if (!he) {
+                if (p->x() < (internal->rect_.max[0] - internal->rect_.min[0]) / 2) { he = internal->beachline_start; }
+                else { he = internal->beachline_end; }
             }
 
-            //
-            if( he == internal->beachline_start || (he != internal->beachline_end && halfedge_rightof(he, p)) )
-            {
-                do {
-                    he = he->right;
-                }
-                while( he != internal->beachline_end && halfedge_rightof(he, p) );
+            if (he == internal->beachline_start || (he != internal->beachline_end && halfedge_rightof(he, p))) {
+                do { he = he->right; }
+                while (he != internal->beachline_end && halfedge_rightof(he, p));
 
                 he = he->left;
-            }
-            else
-            {
-                do {
-                    he = he->left;
-                }
-                while( he != internal->beachline_start && !halfedge_rightof(he, p) );
+            } else {
+                do { he = he->left; }
+                while (he != internal->beachline_start && !halfedge_rightof(he, p));
             }
 
             return he;
         }
 
-        static int check_circle_event(const halfedge<T>* he1, const halfedge<T>* he2, point<T>* vertex)
+        static int check_circle_event (const halfedge<T>* he1, const halfedge<T>* he2, point<T>* vertex)
         {
             edge<T>* e1 = he1->edge_;
             edge<T>* e2 = he2->edge_;
-            if( e1 == 0 || e2 == 0 || e1->sites[1] == e2->sites[1] )
-            {
-                return 0;
-            }
+            if (e1 == 0 || e2 == 0 || e1->sites[1] == e2->sites[1]) { return 0; }
 
-            return halfedge_intersect(he1, he2, vertex);
+            return halfedge_intersect (he1, he2, vertex);
         }
 
-        static void site_event(context_internal<T>* internal, site<T>* _site)
+        static void site_event (context_internal<T>* internal, site<T>* _site)
         {
             halfedge<T>* left   = get_edge_above_x(internal, &_site->p);
             halfedge<T>* right  = left->right;
             site<T>*     bottom = halfedge_rightsite(left);
-            if( !bottom )
-                bottom = internal->bottomsite;
+            if (!bottom) { bottom = internal->bottomsite; }
 
-            edge<T>* _edge = edge_new(internal, bottom, _site);
+            edge<T>* _edge = edge_new (internal, bottom, _site);
             _edge->next = internal->edges;
             internal->edges = _edge;
 
-            halfedge<T>* edge1 = halfedge_new(internal, _edge, DIRECTION_LEFT);
-            halfedge<T>* edge2 = halfedge_new(internal, _edge, DIRECTION_RIGHT);
+            halfedge<T>* edge1 = halfedge_new (internal, _edge, DIRECTION_LEFT);
+            halfedge<T>* edge2 = halfedge_new (internal, _edge, DIRECTION_RIGHT);
 
-            halfedge_link(left, edge1);
-            halfedge_link(edge1, edge2);
+            halfedge_link (left, edge1);
+            halfedge_link (edge1, edge2);
 
             internal->last_inserted = right;
 
             point<T> p;
-            if( check_circle_event( left, edge1, &p ) )
-            {
-                pq_remove(internal->eventqueue, left);
+            if (check_circle_event (left, edge1, &p)) {
+                pq_remove (internal->eventqueue, left);
                 left->vertex    = p;
-                left->y         = p[1] + point_dist(&_site->p, &p);
+                left->y         = p[1] + point_dist (&_site->p, &p);
                 pq_push(internal->eventqueue, left);
             }
-            if( check_circle_event( edge2, right, &p ) )
-            {
+            if (check_circle_event (edge2, right, &p)) {
                 edge2->vertex   = p;
-                edge2->y        = p[1] + point_dist(&_site->p, &p);
-                pq_push(internal->eventqueue, edge2);
+                edge2->y        = p[1] + point_dist (&_site->p, &p);
+                pq_push (internal->eventqueue, edge2);
             }
         }
 
         // https://cp-algorithms.com/geometry/oriented-triangle-area.html
-        static T determinant(const point<T>* a, const point<T>* b, const point<T>* c)
+        static T determinant (const point<T>* a, const point<T>* b, const point<T>* c)
         {
             return (b->x() - a->x())*(c->y() - a->y()) - (b->y() - a->y())*(c->x() - a->x());
         }
 
-        static T calc_sort_metric(const site<T>* _site, const graphedge<T>* _edge)
+        static T calc_sort_metric (const site<T>* _site, const graphedge<T>* _edge)
         {
             // We take the average of the two points, since we can better distinguish between very small edges
-            constexpr T half = T{0.5};
-            T x = (_edge->pos[0][0] + _edge->pos[1][0]) * half;
-            T y = (_edge->pos[0][1] + _edge->pos[1][1]) * half;
+            T x = (_edge->pos[0][0] + _edge->pos[1][0]) * T{0.5};
+            T y = (_edge->pos[0][1] + _edge->pos[1][1]) * T{0.5};
             T diffy = y - _site->p[1];
-            T angle = std::atan2( diffy, x - _site->p[0] );
-            if( diffy < 0 ) {
-                angle = angle + sm::mathconst<T>::two_pi;
-            }
+            T angle = std::atan2 (diffy, x - _site->p[0]);
+            if (diffy < 0) { angle = angle + sm::mathconst<T>::two_pi; }
             return angle;
         }
 
-        static int graphedge_eq(graphedge<T>* a, graphedge<T>* b)
+        static int graphedge_eq (graphedge<T>* a, graphedge<T>* b)
         {
-            return T_eq(a->angle, b->angle) && point_eq( &a->pos[0], &b->pos[0] ) && point_eq( &a->pos[1], &b->pos[1] );
+            return equal (a->angle, b->angle) && equal (&a->pos[0], &b->pos[0]) && equal  (&a->pos[1], &b->pos[1]);
         }
 
-        static void sortedges_insert(site<T>* _site, graphedge<T>* _edge)
+        static void sortedges_insert (site<T>* _site, graphedge<T>* _edge)
         {
             // Special case for the head end
             graphedge<T>* prev = 0;
-            if (_site->edges == 0 || _site->edges->angle >= _edge->angle)
-            {
+            if (_site->edges == 0 || _site->edges->angle >= _edge->angle) {
                 _edge->next = _site->edges;
                 _site->edges = _edge;
-            }
-            else
-            {
+            } else {
                 // Locate the node before the point of insertion
                 graphedge<T>* current = _site->edges;
-                while(current->next != 0 && current->next->angle < _edge->angle)
-                {
-                    current = current->next;
-                }
+                while (current->next != 0 && current->next->angle < _edge->angle) { current = current->next; }
                 prev = current;
                 _edge->next = current->next;
                 current->next = _edge;
             }
 
             // check to avoid duplicates
-            if (prev && graphedge_eq(prev, _edge))
-            {
+            if (prev && graphedge_eq(prev, _edge)) {
                 prev->next = _edge->next;
-            }
-            else if (_edge->next && graphedge_eq(_edge, _edge->next))
-            {
+            } else if (_edge->next && graphedge_eq(_edge, _edge->next)) {
                 _edge->next = _edge->next->next;
             }
         }
 
-        static void finishline(context_internal<T>* internal, edge<T>* e)
+        static void finishline (context_internal<T>* internal, edge<T>* e)
         {
-            if( !edge_clipline(internal, e) ) {
-                return;
-            }
+            if (!edge_clipline (internal, e)) { return; }
 
             // Make sure the graph edges are CCW
-            int flip = determinant(&e->sites[0]->p, &e->pos[0], &e->pos[1]) > (T)0 ? 0 : 1;
+            int flip = determinant (&e->sites[0]->p, &e->pos[0], &e->pos[1]) > T{0} ? 0 : 1;
 
-            for( int i = 0; i < 2; ++i )
-            {
-                graphedge<T>* ge = alloc_graphedge(internal);
-
+            for (int i = 0; i < 2; ++i) {
+                graphedge<T>* ge = alloc_graphedge (internal);
                 ge->edge_ = e;
                 ge->next = 0;
                 ge->neighbor = e->sites[1-i];
                 ge->pos[flip] = e->pos[i];
                 ge->pos[1-flip] = e->pos[1-i];
                 ge->angle = calc_sort_metric(e->sites[i], ge);
-
-                sortedges_insert( e->sites[i], ge );
+                sortedges_insert (e->sites[i], ge);
             }
         }
 
 
-        static void endpos(context_internal<T>* internal, edge<T>* e, const point<T>* p, int direction)
+        static void endpos (context_internal<T>* internal, edge<T>* e, const point<T>* p, int direction)
         {
             e->pos[direction] = *p;
-
-            if( !is_valid(&e->pos[1 - direction]) )
-                return;
-
-            finishline(internal, e);
+            if (!is_valid(&e->pos[1 - direction])) { return; }
+            finishline (internal, e);
         }
 
-        static void create_corner_edge(context_internal<T>* internal, const site<T>* site, graphedge<T>* current, graphedge<T>* gap)
+        static void create_corner_edge (context_internal<T>* internal, const site<T>* site, graphedge<T>* current, graphedge<T>* gap)
         {
             gap->neighbor   = 0;
             gap->pos[0]     = current->pos[1];
 
-            if( current->pos[1][0] < internal->rect_.max[0] && current->pos[1][1] == internal->rect_.min[1] )
-            {
+            if (current->pos[1][0] < internal->rect_.max[0] && current->pos[1][1] == internal->rect_.min[1]) {
                 gap->pos[1][0] = internal->rect_.max[0];
                 gap->pos[1][1] = internal->rect_.min[1];
-            }
-            else if( current->pos[1][0] > internal->rect_.min[0] && current->pos[1][1] == internal->rect_.max[1] )
-            {
+            } else if (current->pos[1][0] > internal->rect_.min[0] && current->pos[1][1] == internal->rect_.max[1]) {
                 gap->pos[1][0] = internal->rect_.min[0];
                 gap->pos[1][1] = internal->rect_.max[1];
-            }
-            else if( current->pos[1][1] > internal->rect_.min[1] && current->pos[1][0] == internal->rect_.min[0] )
-            {
+            } else if (current->pos[1][1] > internal->rect_.min[1] && current->pos[1][0] == internal->rect_.min[0]) {
                 gap->pos[1][0] = internal->rect_.min[0];
                 gap->pos[1][1] = internal->rect_.min[1];
-            }
-            else if( current->pos[1][1] < internal->rect_.max[1] && current->pos[1][0] == internal->rect_.max[0] )
-            {
+            } else if (current->pos[1][1] < internal->rect_.max[1] && current->pos[1][0] == internal->rect_.max[0]) {
                 gap->pos[1][0] = internal->rect_.max[0];
                 gap->pos[1][1] = internal->rect_.max[1];
             }
@@ -1084,9 +977,9 @@ namespace jcv
             gap->angle = calc_sort_metric(site, gap);
         }
 
-        static edge<T>* create_gap_edge(context_internal<T>* internal, site<T>* site, graphedge<T>* ge)
+        static edge<T>* create_gap_edge (context_internal<T>* internal, site<T>* site, graphedge<T>* ge)
         {
-            edge<T>* edge  = alloc_edge(internal);
+            edge<T>* edge   = alloc_edge (internal);
             edge->pos[0]    = ge->pos[0];
             edge->pos[1]    = ge->pos[1];
             edge->sites[0]  = site;
@@ -1097,34 +990,32 @@ namespace jcv
             return edge;
         }
 
-        static void boxshape_fillgaps(const clipper<T>* clipper, context_internal<T>* allocator, site<T>* site)
+        static void boxshape_fillgaps (const clipper<T>* clipper, context_internal<T>* allocator, site<T>* site)
         {
             // They're sorted CCW, so if the current->pos[1] != next->pos[0], then we have a gap
             graphedge<T>* current = site->edges;
-            if( !current )
-            {
+            if (!current) {
                 // No edges, then it should be a single cell
-                assert( allocator->numsites == 1 );
+                assert (allocator->numsites == 1);
 
-                graphedge<T>* gap = alloc_graphedge(allocator);
+                graphedge<T>* gap = alloc_graphedge (allocator);
                 gap->neighbor   = 0;
                 gap->pos[0]     = clipper->min;
                 gap->pos[1][0]   = clipper->max[0];
                 gap->pos[1][1]   = clipper->min[1];
                 gap->angle      = calc_sort_metric(site, gap);
                 gap->next       = 0;
-                gap->edge_       = create_gap_edge(allocator, site, gap);
+                gap->edge_       = create_gap_edge (allocator, site, gap);
 
                 current = gap;
                 site->edges = gap;
             }
 
             graphedge<T>* next = current->next;
-            if( !next )
-            {
-                graphedge<T>* gap = alloc_graphedge(allocator);
+            if (!next) {
+                graphedge<T>* gap = alloc_graphedge (allocator);
                 create_corner_edge(allocator, site, current, gap);
-                gap->edge_ = create_gap_edge(allocator, site, gap);
+                gap->edge_ = create_gap_edge (allocator, site, gap);
 
                 gap->next = current->next;
                 current->next = gap;
@@ -1138,11 +1029,10 @@ namespace jcv
             constexpr int loopcount_thresh = 1024;
             int loopcount = 0;
 
-            while (current && next && loopcount < loopcount_thresh)
-            {
+            while (current && next && loopcount < loopcount_thresh) {
+
                 int current_edge_flags = get_edge_flags(&current->pos[1], &clipper->min, &clipper->max);
-                if( current_edge_flags && !point_eq(&current->pos[1], &next->pos[0]))
-                {
+                if (current_edge_flags && !equal(&current->pos[1], &next->pos[0])) {
                     // Cases:
                     //  Current and Next on the same border
                     //  Current on one border, and Next on another border
@@ -1150,29 +1040,24 @@ namespace jcv
                     //  Current on the corner, Next on another border (another corner in between)
 
                     int next_edge_flags = get_edge_flags(&next->pos[0], &clipper->min, &clipper->max);
-                    if (current_edge_flags & next_edge_flags)
-                    {
+                    if (current_edge_flags & next_edge_flags) {
                         // Current and Next on the same border
-                        graphedge<T>* gap = alloc_graphedge(allocator);
+                        graphedge<T>* gap = alloc_graphedge (allocator);
                         gap->neighbor   = 0;
                         gap->pos[0]     = current->pos[1];
                         gap->pos[1]     = next->pos[0];
-                        gap->angle      = calc_sort_metric(site, gap);
-                        gap->edge_       = create_gap_edge(allocator, site, gap);
+                        gap->angle      = calc_sort_metric (site, gap);
+                        gap->edge_      = create_gap_edge (allocator, site, gap);
 
                         gap->next = current->next;
                         current->next = gap;
-                    }
-                    else {
+                    } else {
                         // Current and Next on different borders
-                        int corner_flag = edge_flags_to_corner(current_edge_flags);
-                        if (corner_flag)
-                        {
+                        int corner_flag = edge_flags_to_corner (current_edge_flags);
+                        if (corner_flag) {
                             // we are already at one corner, so we need to find the next one
-                            corner_flag = corner_rotate_90(corner_flag);
-                        }
-                        else
-                        {
+                            corner_flag = corner_rotate_90 (corner_flag);
+                        } else {
                             // we are on the middle of a border
                             // we need to find the adjacent corner, following the borders CCW
                             if      (current_edge_flags == EDGE_TOP)    { corner_flag = CORNER_TOP_LEFT; }
@@ -1181,14 +1066,14 @@ namespace jcv
                             else if (current_edge_flags == EDGE_RIGHT)  { corner_flag = CORNER_TOP_RIGHT; }
 
                         }
-                        point<T> corner = corner_to_point(corner_flag, &clipper->min, &clipper->max);
+                        point<T> corner = corner_to_point (corner_flag, &clipper->min, &clipper->max);
 
-                        graphedge<T>* gap = alloc_graphedge(allocator);
+                        graphedge<T>* gap = alloc_graphedge (allocator);
                         gap->neighbor   = 0;
                         gap->pos[0]     = current->pos[1];
                         gap->pos[1]     = corner;
                         gap->angle      = calc_sort_metric(site, gap);
-                        gap->edge_       = create_gap_edge(allocator, site, gap);
+                        gap->edge_      = create_gap_edge (allocator, site, gap);
 
                         gap->next = current->next;
                         current->next = gap;
@@ -1196,11 +1081,9 @@ namespace jcv
                 }
 
                 current = current->next;
-                if( current )
-                {
+                if (current) {
                     next = current->next;
-                    if( !next )
-                        next = site->edges;
+                    if (!next) { next = site->edges; }
                 }
                 ++loopcount;
                 if (loopcount > 1000) {
@@ -1211,24 +1094,20 @@ namespace jcv
 
 
         // Since the algorithm leaves gaps at the borders/corner, we want to fill them
-        static void fillgaps(diagram<T>* diagram)
+        static void fillgaps (diagram<T>* diagram)
         {
             context_internal<T>* internal = diagram->internal;
-            if (!internal->clipper_.fill_fn)
-                return;
-
-            for( int i = 0; i < internal->numsites; ++i )
-            {
+            if (!internal->clipper_.fill_fn) { return; }
+            for (int i = 0; i < internal->numsites; ++i) {
                 site<T>* site = &internal->sites[i];
-                internal->clipper_.fill_fn(&internal->clipper_, internal, site);
+                internal->clipper_.fill_fn (&internal->clipper_, internal, site);
             }
         }
 
 
-        static void circle_event(context_internal<T>* internal)
+        static void circle_event (context_internal<T>* internal)
         {
-            halfedge<T>* left      = (halfedge<T>*)pq_pop(internal->eventqueue);
-
+            halfedge<T>* left      = (halfedge<T>*)pq_pop (internal->eventqueue);
             halfedge<T>* leftleft  = left->left;
             halfedge<T>* right     = left->right;
             halfedge<T>* rightright= right->right;
@@ -1236,47 +1115,44 @@ namespace jcv
             site<T>* top    = halfedge_rightsite(right);
 
             point<T> vertex = left->vertex;
-            endpos(internal, left->edge_, &vertex, left->direction);
-            endpos(internal, right->edge_, &vertex, right->direction);
+            endpos (internal, left->edge_, &vertex, left->direction);
+            endpos (internal, right->edge_, &vertex, right->direction);
 
             internal->last_inserted = rightright;
 
-            pq_remove(internal->eventqueue, right);
-            halfedge_unlink(left);
-            halfedge_unlink(right);
-            halfedge_delete(internal, left);
-            halfedge_delete(internal, right);
+            pq_remove (internal->eventqueue, right);
+            halfedge_unlink (left);
+            halfedge_unlink (right);
+            halfedge_delete (internal, left);
+            halfedge_delete (internal, right);
 
             int direction = DIRECTION_LEFT;
-            if( bottom->p[1] > top->p[1] )
-            {
+            if (bottom->p[1] > top->p[1]) {
                 site<T>* temp = bottom;
                 bottom = top;
                 top = temp;
                 direction = DIRECTION_RIGHT;
             }
 
-            edge<T>* edge = edge_new(internal, bottom, top);
+            edge<T>* edge = edge_new (internal, bottom, top);
             edge->next = internal->edges;
             internal->edges = edge;
 
-            halfedge<T>* he = halfedge_new(internal, edge, direction);
-            halfedge_link(leftleft, he);
-            endpos(internal, edge, &vertex, DIRECTION_RIGHT - direction);
+            halfedge<T>* he = halfedge_new (internal, edge, direction);
+            halfedge_link (leftleft, he);
+            endpos (internal, edge, &vertex, DIRECTION_RIGHT - direction);
 
             point<T> p;
-            if( check_circle_event( leftleft, he, &p ) )
-            {
-                pq_remove(internal->eventqueue, leftleft);
+            if (check_circle_event (leftleft, he, &p)) {
+                pq_remove (internal->eventqueue, leftleft);
                 leftleft->vertex    = p;
-                leftleft->y         = p[1] + point_dist(&bottom->p, &p);
-                pq_push(internal->eventqueue, leftleft);
+                leftleft->y         = p[1] + point_dist (&bottom->p, &p);
+                pq_push (internal->eventqueue, leftleft);
             }
-            if( check_circle_event( he, rightright, &p ) )
-            {
+            if (check_circle_event (he, rightright, &p)) {
                 he->vertex      = p;
-                he->y           = p[1] + point_dist(&bottom->p, &p);
-                pq_push(internal->eventqueue, he);
+                he->y           = p[1] + point_dist (&bottom->p, &p);
+                pq_push (internal->eventqueue, he);
             }
         }
 
@@ -1286,23 +1162,23 @@ namespace jcv
             void**  voidpp;
         } cast_align_struct;
 
-        static void rect_union(rect<T>* rect, const point<T>* p)
+        static void rect_union (rect<T>* rect, const point<T>* p)
         {
-            rect->min[0] = std::min(rect->min[0], p->x());
-            rect->min[1] = std::min(rect->min[1], p->y());
-            rect->max[0] = std::max(rect->max[0], p->x());
-            rect->max[1] = std::max(rect->max[1], p->y());
+            rect->min[0] = std::min (rect->min[0], p->x());
+            rect->min[1] = std::min (rect->min[1], p->y());
+            rect->max[0] = std::max (rect->max[0], p->x());
+            rect->max[1] = std::max (rect->max[1], p->y());
         }
 
-        static void rect_round(rect<T>* rect)
+        static void rect_round (rect<T>* rect)
         {
-            rect->min[0] = std::floor(rect->min[0]);
-            rect->min[1] = std::floor(rect->min[1]);
-            rect->max[0] = std::ceil(rect->max[0]);
-            rect->max[1] = std::ceil(rect->max[1]);
+            rect->min[0] = std::floor (rect->min[0]);
+            rect->min[1] = std::floor (rect->min[1]);
+            rect->max[0] = std::ceil (rect->max[0]);
+            rect->max[1] = std::ceil (rect->max[1]);
         }
 
-        static void rect_inflate(rect<T>* rect, T amount)
+        static void rect_inflate (rect<T>* rect, T amount)
         {
             rect->min[0] -= amount;
             rect->min[1] -= amount;
@@ -1310,7 +1186,7 @@ namespace jcv
             rect->max[1] += amount;
         }
 
-        static int prune_duplicates(context_internal<T>* internal, rect<T>* _rect)
+        static int prune_duplicates (context_internal<T>* internal, rect<T>* _rect)
         {
             int num_sites = internal->numsites;
             site<T>* sites = internal->sites;
@@ -1321,26 +1197,24 @@ namespace jcv
 
             int offset = 0;
             // Prune duplicates first
-            for (int i = 0; i < num_sites; i++)
-            {
+            for (int i = 0; i < num_sites; i++) {
                 const site<T>* s = &sites[i];
                 // Remove duplicates, to avoid anomalies
-                if( i > 0 && point_eq(&s->p, &sites[i - 1].p) )
-                {
+                if (i > 0 && equal (&s->p, &sites[i - 1].p)) {
                     offset++;
                     continue;
                 }
 
                 sites[i - offset] = sites[i];
 
-                rect_union(&r, &s->p);
+                rect_union (&r, &s->p);
             }
             internal->numsites -= offset;
             if (_rect) { *_rect = r; }
             return offset;
         }
 
-        static int prune_not_in_shape(context_internal<T>* internal, rect<T>* _rect)
+        static int prune_not_in_shape (context_internal<T>* internal, rect<T>* _rect)
         {
             int num_sites = internal->numsites;
             site<T>* sites = internal->sites;
@@ -1350,26 +1224,24 @@ namespace jcv
             r.max[0] = r.max[1] = std::numeric_limits<T>::lowest();
 
             int offset = 0;
-            for (int i = 0; i < num_sites; i++)
-            {
+            for (int i = 0; i < num_sites; i++) {
                 const site<T>* s = &sites[i];
 
-                if (!internal->clipper_.test_fn(&internal->clipper_, s->p))
-                {
+                if (!internal->clipper_.test_fn (&internal->clipper_, s->p)) {
                     offset++;
                     continue;
                 }
 
                 sites[i - offset] = sites[i];
 
-                rect_union(&r, &s->p);
+                rect_union (&r, &s->p);
             }
             internal->numsites -= offset;
             if (_rect) { *_rect = r; }
             return offset;
         }
 
-        static context_internal<T>* alloc_internal(int num_points, void* userallocctx, FJCVAllocFn allocfn, FJCVFreeFn freefn)
+        static context_internal<T>* alloc_internal (int num_points, void* userallocctx, FJCVAllocFn allocfn, FJCVFreeFn freefn)
         {
             // Interesting limits from Euler's equation
             // Slide 81: https://courses.cs.washington.edu/courses/csep521/01au/lectures/lecture10slides.pdf
@@ -1378,11 +1250,11 @@ namespace jcv
             size_t sitessize = (size_t)num_points * sizeof(site<T>);
             size_t memsize = sizeof(priorityqueue) + eventssize + sitessize + sizeof(context_internal<T>) + 16u; // 16 bytes padding for alignment
 
-            char* originalmem = (char*)allocfn(userallocctx, memsize);
-            memset(originalmem, 0, memsize);
+            char* originalmem = (char*)allocfn (userallocctx, memsize);
+            memset (originalmem, 0, memsize);
 
             // align memory
-            char* mem = (char*)align(originalmem, sizeof(void*));
+            char* mem = (char*)align (originalmem, sizeof(void*));
 
             context_internal<T>* internal = (context_internal<T>*)mem;
             mem += sizeof(context_internal<T>);
@@ -1391,20 +1263,20 @@ namespace jcv
             internal->alloc  = allocfn;
             internal->free   = freefn;
 
-            mem = (char*)align(mem, sizeof(void*));
+            mem = (char*)align (mem, sizeof(void*));
             internal->sites = (site<T>*) mem;
             mem += sitessize;
 
-            mem = (char*)align(mem, sizeof(void*));
+            mem = (char*)align (mem, sizeof(void*));
             internal->eventqueue = (priorityqueue*)mem;
             mem += sizeof(priorityqueue);
-            assert( ((uintptr_t)mem & (sizeof(void*)-1)) == 0 );
+            assert (((uintptr_t)mem & (sizeof(void*)-1)) == 0);
 
             cast_align_struct tmp;
             tmp.charp = mem;
             internal->eventmem = tmp.voidpp;
 
-            assert((mem+eventssize) <= (originalmem+memsize));
+            assert ((mem+eventssize) <= (originalmem+memsize));
 
             return internal;
         }
@@ -1414,13 +1286,12 @@ namespace jcv
                                                 const rect<T>* _rect, const clipper<T>* _clipper,
                                                 void* userallocctx, FJCVAllocFn allocfn, FJCVFreeFn freefn, diagram<T>* d)
         {
-            if( d->internal )
-                diagram_free( d );
+            if (d->internal) { diagram_free (d); }
 
-            context_internal<T>* internal = alloc_internal(num_points, userallocctx, allocfn, freefn);
+            context_internal<T>* internal = alloc_internal (num_points, userallocctx, allocfn, freefn);
 
-            internal->beachline_start = halfedge_new(internal, 0, 0);
-            internal->beachline_end = halfedge_new(internal, 0, 0);
+            internal->beachline_start = halfedge_new (internal, 0, 0);
+            internal->beachline_end = halfedge_new (internal, 0, 0);
 
             internal->beachline_start->left     = 0;
             internal->beachline_start->right    = internal->beachline_end;
@@ -1429,20 +1300,19 @@ namespace jcv
 
             internal->last_inserted = 0;
 
-            int max_num_events = num_points*2; // beachline can have max 2*n-5 parabolas
-            pq_create(internal->eventqueue, max_num_events, (void**)internal->eventmem);
+            int max_num_events = num_points * 2; // beachline can have max 2*n-5 parabolas
+            pq_create (internal->eventqueue, max_num_events, (void**)internal->eventmem);
 
             internal->numsites = num_points;
             site<T>* sites = internal->sites;
 
-            for( int i = 0; i < num_points; ++i )
-            {
+            for (int i = 0; i < num_points; ++i) {
                 sites[i].p        = points[i];
                 sites[i].edges    = 0;
                 sites[i].index    = i;
             }
 
-            qsort(sites, (size_t)num_points, sizeof(site<T>), point_cmp);
+            qsort (sites, (size_t)num_points, sizeof(site<T>), point_cmp);
 
             clipper<T> box_clipper;
             if (_clipper == 0) {
@@ -1457,16 +1327,15 @@ namespace jcv
             rect<T> tmp_rect;
             tmp_rect.min[0] = tmp_rect.min[1] = std::numeric_limits<T>::max();
             tmp_rect.max[0] = tmp_rect.max[1] = std::numeric_limits<T>::lowest();
-            prune_duplicates(internal, &tmp_rect);
+            prune_duplicates (internal, &tmp_rect);
 
             // Prune using the test second
-            if (internal->clipper_.test_fn)
-            {
+            if (internal->clipper_.test_fn) {
                 // e.g. used by the box clipper in the test_fn
                 internal->clipper_.min = _rect ? _rect->min : tmp_rect.min;
                 internal->clipper_.max = _rect ? _rect->max : tmp_rect.max;
 
-                prune_not_in_shape(internal, &tmp_rect);
+                prune_not_in_shape (internal, &tmp_rect);
 
                 // The pruning might have made the bounding box smaller
                 if (!_rect) {
@@ -1487,43 +1356,36 @@ namespace jcv
             d->numsites = internal->numsites;
             d->internal = internal;
 
-            internal->bottomsite = nextsite(internal);
+            internal->bottomsite = nextsite (internal);
 
             priorityqueue* pq = internal->eventqueue;
-            site<T>* site = nextsite(internal);
+            site<T>* site = nextsite (internal);
 
             int finished = 0;
-            while( !finished )
-            {
+            while (!finished) {
+
                 point<T> lowest_pq_point;
-                if( !pq_empty(pq) )
-                {
-                    halfedge<T>* he = (halfedge<T>*)pq_top(pq);
+                if (!pq_empty (pq)) {
+                    halfedge<T>* he = (halfedge<T>*)pq_top (pq);
                     lowest_pq_point[0] = he->vertex[0];
                     lowest_pq_point[1] = he->y;
                 }
 
-                if( site != 0 && (pq_empty(pq) || point_less(&site->p, &lowest_pq_point) ) )
-                {
-                    site_event(internal, site);
-                    site = nextsite(internal);
-                }
-                else if( !pq_empty(pq) )
-                {
-                    circle_event(internal);
-                }
-                else
-                {
+                if (site != 0 && (pq_empty(pq) || lessthan (&site->p, &lowest_pq_point))) {
+                    site_event (internal, site);
+                    site = nextsite (internal);
+                } else if (!pq_empty (pq)) {
+                    circle_event (internal);
+                } else {
                     finished = 1;
                 }
             }
 
-            for( halfedge<T>* he = internal->beachline_start->right; he != internal->beachline_end; he = he->right )
-            {
-                finishline(internal, he->edge_);
+            for (halfedge<T>* he = internal->beachline_start->right; he != internal->beachline_end; he = he->right) {
+                finishline (internal, he->edge_);
             }
 
-            fillgaps(d);
+            fillgaps (d);
         }
 
         /**
@@ -1532,7 +1394,7 @@ namespace jcv
          * If rect is null, an automatic bounding box is calculated, with an extra padding of 10 units
          * All points will be culled against the bounding rect, and all edges will be clipped against it.
          */
-        static void diagram_generate( int num_points, const point<T>* points, const rect<T>* rect, const clipper<T>* clipper, diagram<T>* d )
+        static void diagram_generate (int num_points, const point<T>* points, const rect<T>* rect, const clipper<T>* clipper, diagram<T>* d)
         {
             diagram_generate_useralloc(num_points, points, rect, clipper, 0, alloc_fn, free_fn, d);
         }
@@ -1643,13 +1505,13 @@ USAGE:
 
     The api consists of these functions:
 
-    void diagram_generate( int num_points, const point* points, const rect* rect, const clipper* clipper, diagram* diagram );
-    void diagram_generate_useralloc( int num_points, const point* points, const rect* rect, const clipper* clipper, const clipper* clipper, void* userallocctx, FJCVAllocFn allocfn, FJCVFreeFn freefn, diagram* diagram );
-    void diagram_free( diagram* diagram );
+    void diagram_generate (int num_points, const point* points, const rect* rect, const clipper* clipper, diagram* diagram);
+    void diagram_generate_useralloc (int num_points, const point* points, const rect* rect, const clipper* clipper, const clipper* clipper, void* userallocctx, FJCVAllocFn allocfn, FJCVFreeFn freefn, diagram* diagram);
+    void diagram_free (diagram* diagram);
 
-    const site* diagram_get_sites( const diagram* diagram );
-    const edge* diagram_get_edges( const diagram* diagram );
-    const edge* diagram_get_next_edge( const edge* edge );
+    const site* diagram_get_sites (const diagram* diagram);
+    const edge* diagram_get_edges (const diagram* diagram);
+    const edge* diagram_get_next_edge (const edge* edge);
 
     An example usage:
 
@@ -1670,14 +1532,14 @@ USAGE:
         draw_edges(diagram);
         draw_cells(diagram);
 
-        diagram_free( &diagram );
+        diagram_free (&diagram);
     }
 
     void draw_edges(const diagram* diagram)
     {
         // If all you need are the edges
-        const edge* edge = diagram_get_edges( diagram );
-        while( edge )
+        const edge* edge = diagram_get_edges (diagram);
+        while (edge)
         {
             draw_line(edge->pos[0], edge->pos[1]);
             edge = diagram_get_next_edge(edge);
@@ -1688,15 +1550,15 @@ USAGE:
     {
         // If you want to draw triangles, or relax the diagram,
         // you can iterate over the sites and get all edges easily
-        const site* sites = diagram_get_sites( diagram );
-        for( int i = 0; i < diagram->numsites; ++i )
+        const site* sites = diagram_get_sites (diagram);
+        for (int i = 0; i < diagram->numsites; ++i)
         {
             const site* site = &sites[i];
 
             const graphedge* e = site->edges;
-            while( e )
+            while (e)
             {
-                draw_triangle( site->p, e->pos[0], e->pos[1]);
+                draw_triangle (site->p, e->pos[0], e->pos[1]);
                 e = e->next;
             }
         }
@@ -1706,7 +1568,7 @@ USAGE:
     void relax_points(const diagram* diagram, point* points)
     {
         const site* sites = diagram_get_sites(diagram);
-        for( int i = 0; i < diagram->numsites; ++i )
+        for (int i = 0; i < diagram->numsites; ++i)
         {
             const site* site = &sites[i];
             point sum = site->p;
@@ -1714,7 +1576,7 @@ USAGE:
 
             const graphedge* edge = site->edges;
 
-            while( edge )
+            while (edge)
             {
                 sum[0] += edge->pos[0][0];
                 sum[1] += edge->pos[0][1];
