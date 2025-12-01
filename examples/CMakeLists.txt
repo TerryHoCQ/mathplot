@@ -431,7 +431,8 @@ target_link_libraries(rhombo_scene2 OpenGL::GL glfw Freetype::Freetype)
 add_executable(cube cube.cpp)
 target_link_libraries(cube OpenGL::GL glfw Freetype::Freetype)
 
-if(NOT APPLE) # For some reason on mac os runners this fails
+# Eigen finding is not reliable on Github Mac OS runners
+if(NOT APPLE)
   if(Eigen3_FOUND)
     add_executable(cubetrans cubetrans.cpp)
     target_include_directories (cubetrans BEFORE PRIVATE ${EIGEN3_INCLUDE_DIR})
