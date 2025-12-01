@@ -417,8 +417,8 @@ namespace mplot::compoundray
             this->projections[pri].site_indices.resize (ncoords, 0);
             this->projections[pri].triangle_count_sum = 0;
 
-            sm::vvec<sm::vec<>> flat_triangles; // contains a sequence of triplets of vecs
-            sm::vvec<std::array<float, 3>> flat_colours;
+            sm::vvec<sm::vec<>> flat_triangles;          // contains a sequence of triplets of vecs
+            sm::vvec<std::array<float, 3>> flat_colours; // fewer elements than flat_triangles
             // To draw triangles iterate over the 'sites' and draw triangles
             for (int i = 0; i < diag_nsites && i < ncoords; ++i) {
                 const jcv::site<double>* site = &sites[i];
@@ -432,37 +432,24 @@ namespace mplot::compoundray
                 }
                 uint32_t site_triangles = 0;
                 while (e) {
-#if 0
-                    sm::vec<float> t1 = {};
-                    sm::vec<float> t2 = {};
-                    sm::vec<float> t3 = {};
-                    t1 = (this->projections[pri].twod_transform * site->p).less_one_dim();
-                    t2 = (this->projections[pri].twod_transform * e->pos[0]).less_one_dim();
-                    t3 = (this->projections[pri].twod_transform * e->pos[1]).less_one_dim();
-                    this->computeTriangle (t1, t2, t3, colour);
-#else
                     flat_triangles.push_back (site->p.as<float>());
                     flat_triangles.push_back (e->pos[0].as<float>());
                     flat_triangles.push_back (e->pos[1].as<float>());
                     flat_colours.push_back (colour);
-#endif
                     ++site_triangles;
                     e = e->next;
                 }
                 this->projections[pri].triangle_counts[i] = site_triangles;
                 this->projections[pri].triangle_count_sum += site_triangles;
             }
-#if 1
+
             // Can now computeTriangles
-            //sm::vec<float> flat_mean = flat_triangles.mean();
-            //flat_triangles -= flat_mean;
             for (uint32_t i = 0; i < flat_triangles.size(); i += 3) {
                 sm::vec<float> t1 = (this->projections[pri].twod_transform * flat_triangles[i]).less_one_dim();
                 sm::vec<float> t2 = (this->projections[pri].twod_transform * flat_triangles[i + 1]).less_one_dim();
                 sm::vec<float> t3 = (this->projections[pri].twod_transform * flat_triangles[i + 2]).less_one_dim();
                 this->computeTriangle (t1, t2, t3, flat_colours[i/3]);
             }
-#endif
         }
 
         // If false, hide 3D representation (the ommatidial cones and discs)
