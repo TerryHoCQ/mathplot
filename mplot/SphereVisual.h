@@ -1,6 +1,5 @@
 /*
- * You just want a sphere visual model? Here it is. This uses the beautiful icosahedral geodesic
- * sphere primitive (computeSphereGeoFast)
+ * You just want a sphere visual model? Here it is.
  */
 #pragma once
 
@@ -11,7 +10,7 @@
 namespace mplot
 {
     //! This class creates the vertices for a simple sphere in a 3D scene.
-    template<int iterations = 3, int glver = mplot::gl::version_4_1>
+    template<int glver = mplot::gl::version_4_1>
     class SphereVisual : public VisualModel<glver>
     {
     public:
@@ -34,7 +33,7 @@ namespace mplot
 
         void initializeVertices()
         {
-            this->template computeSphereGeoFast<float, iterations> (sm::vec<float>{}, this->sphere_colour, this->radius);
+            this->computeSphere ({0,0,0}, this->sphere_colour, this->radius);
         }
 
         //! The radius of the sphere
