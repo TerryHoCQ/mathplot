@@ -1433,26 +1433,30 @@ namespace jcv
 } // namespace
 
 /*
+ * The Original, pre-mathplot about message follows:
+ */
+
+/*
 
 ABOUT:
 
     A fast single file 2D voronoi diagram generator
 
-(Pre mathplot) HISTORY:
+HISTORY:
     0.9     2023-01-22  - Modified the Delauney iterator creation api
     0.8     2022-12-20  - Added fix for missing border edges
                           More robust removal of duplicate graph edges
                           Added iterator for Delauney edges
     0.7     2019-10-25  - Added support for clipping against convex polygons
-                        - Added EDGE_INTERSECT_THRESHOLD for edge intersections
+                        - Added JCV_EDGE_INTERSECT_THRESHOLD for edge intersections
                         - Fixed issue where the bounds calculation wasn’t considering all points
-    0.6     2018-10-21  - Removed CEIL/FLOOR/FABS
+    0.6     2018-10-21  - Removed JCV_CEIL/JCV_FLOOR/JCV_FABS
                         - Optimizations: Fewer indirections, better beach head approximation
     0.5     2018-10-14  - Fixed issue where the graph edge had the wrong edge assigned (issue #28)
-                        - Fixed issue where a point was falsely passing the is_valid() test (issue #22)
-                        - Fixed diagram_get_edges() so it now returns _all_ edges (issue #28)
-                        - Added diagram_get_next_edge() to skip zero length edges (issue #10)
-                        - Added defines CEIL/FLOOR/FLT_MAX for easier configuration
+                        - Fixed issue where a point was falsely passing the jcv_is_valid() test (issue #22)
+                        - Fixed jcv_diagram_get_edges() so it now returns _all_ edges (issue #28)
+                        - Added jcv_diagram_get_next_edge() to skip zero length edges (issue #10)
+                        - Added defines JCV_CEIL/JCV_FLOOR/JCV_FLT_MAX for easier configuration
     0.4     2017-06-03  - Increased the max number of events that are preallocated
     0.3     2017-04-16  - Added clipping box as input argument (Automatically calculated if needed)
                         - Input points are pruned based on bounding box
@@ -1505,78 +1509,80 @@ USAGE:
 
     The api consists of these functions:
 
-    void diagram_generate (int num_points, const point* points, const rect* rect, const clipper* clipper, diagram* diagram);
-    void diagram_generate_useralloc (int num_points, const point* points, const rect* rect, const clipper* clipper, const clipper* clipper, void* userallocctx, FJCVAllocFn allocfn, FJCVFreeFn freefn, diagram* diagram);
-    void diagram_free (diagram* diagram);
+    void jcv_diagram_generate( int num_points, const jcv_point* points, const jcv_rect* rect, const jcv_clipper* clipper, jcv_diagram* diagram );
+    void jcv_diagram_generate_useralloc( int num_points, const jcv_point* points, const jcv_rect* rect, const jcv_clipper* clipper, const jcv_clipper* clipper, void* userallocctx, FJCVAllocFn allocfn, FJCVFreeFn freefn, jcv_diagram* diagram );
+    void jcv_diagram_free( jcv_diagram* diagram );
 
-    const site* diagram_get_sites (const diagram* diagram);
-    const edge* diagram_get_edges (const diagram* diagram);
-    const edge* diagram_get_next_edge (const edge* edge);
+    const jcv_site* jcv_diagram_get_sites( const jcv_diagram* diagram );
+    const jcv_edge* jcv_diagram_get_edges( const jcv_diagram* diagram );
+    const jcv_edge* jcv_diagram_get_next_edge( const jcv_edge* edge );
 
     An example usage:
 
     #define JC_VORONOI_IMPLEMENTATION
     // If you wish to use doubles
-    //#define REAL_TYPE double
+    //#define JCV_REAL_TYPE double
+    //#define JCV_ATAN2 atan2
+    //#define JCV_FLT_MAX 1.7976931348623157E+308
     #include "jc_voronoi.h"
 
-    void draw_edges(const diagram* diagram);
-    void draw_cells(const diagram* diagram);
+    void draw_edges(const jcv_diagram* diagram);
+    void draw_cells(const jcv_diagram* diagram);
 
-    void generate_and_draw(int numpoints, const point* points)
+    void generate_and_draw(int numpoints, const jcv_point* points)
     {
-        diagram diagram;
-        memset(&diagram, 0, sizeof(diagram));
-        diagram_generate(count, points, 0, 0, &diagram);
+        jcv_diagram diagram;
+        memset(&diagram, 0, sizeof(jcv_diagram));
+        jcv_diagram_generate(count, points, 0, 0, &diagram);
 
         draw_edges(diagram);
         draw_cells(diagram);
 
-        diagram_free (&diagram);
+        jcv_diagram_free( &diagram );
     }
 
-    void draw_edges(const diagram* diagram)
+    void draw_edges(const jcv_diagram* diagram)
     {
         // If all you need are the edges
-        const edge* edge = diagram_get_edges (diagram);
-        while (edge)
+        const jcv_edge* edge = jcv_diagram_get_edges( diagram );
+        while( edge )
         {
             draw_line(edge->pos[0], edge->pos[1]);
-            edge = diagram_get_next_edge(edge);
+            edge = jcv_diagram_get_next_edge(edge);
         }
     }
 
-    void draw_cells(const diagram* diagram)
+    void draw_cells(const jcv_diagram* diagram)
     {
         // If you want to draw triangles, or relax the diagram,
         // you can iterate over the sites and get all edges easily
-        const site* sites = diagram_get_sites (diagram);
-        for (int i = 0; i < diagram->numsites; ++i)
+        const jcv_site* sites = jcv_diagram_get_sites( diagram );
+        for( int i = 0; i < diagram->numsites; ++i )
         {
-            const site* site = &sites[i];
+            const jcv_site* site = &sites[i];
 
-            const graphedge* e = site->edges;
-            while (e)
+            const jcv_graphedge* e = site->edges;
+            while( e )
             {
-                draw_triangle (site->p, e->pos[0], e->pos[1]);
+                draw_triangle( site->p, e->pos[0], e->pos[1]);
                 e = e->next;
             }
         }
     }
 
     // Here is a simple example of how to do the relaxations of the cells
-    void relax_points(const diagram* diagram, point* points)
+    void relax_points(const jcv_diagram* diagram, jcv_point* points)
     {
-        const site* sites = diagram_get_sites(diagram);
-        for (int i = 0; i < diagram->numsites; ++i)
+        const jcv_site* sites = jcv_diagram_get_sites(diagram);
+        for( int i = 0; i < diagram->numsites; ++i )
         {
-            const site* site = &sites[i];
-            point sum = site->p;
+            const jcv_site* site = &sites[i];
+            jcv_point sum = site->p;
             int count = 1;
 
-            const graphedge* edge = site->edges;
+            const jcv_graphedge* edge = site->edges;
 
-            while (edge)
+            while( edge )
             {
                 sum[0] += edge->pos[0][0];
                 sum[1] += edge->pos[0][1];
