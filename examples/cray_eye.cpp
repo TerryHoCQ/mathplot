@@ -27,10 +27,8 @@ int main (int argc, char** argv)
         eyefile = std::string (argv[1]);
     }
 
-    float psrad = 0.6f;
-
-    [[maybe_unused]] float cx = 0.5f;
-    if (argc > 2) { cx = std::atof (argv[2]); }
+    float psrad = 0.5f;
+    if (argc > 2) { psrad = std::atof (argv[2]); }
 
     auto v = mplot::Visual<>(1024, 768, "mplot::compoundray::EyeVisual");
 
@@ -57,24 +55,23 @@ int main (int argc, char** argv)
 
     auto eyevm = std::make_unique<mplot::compoundray::EyeVisual<>> (sm::vec<>{}, &ommatidiaColours, ommatidia.get());
     v.bindmodel (eyevm);
-    eyevm->name = "Big Eye";
-    eyevm->show_cones = false;
+    eyevm->name = "CompoundRay Eye";
+    eyevm->show_cones = true;
 
     auto ptype = mplot::compoundray::EyeVisual<>::projection_type::equirectangular; // mercator, equirectangular or cassini
     sm::vec<> centre = { 0, 0, 0 };
     sm::mat44<float> twod_tr;
-    twod_tr.translate (sm::vec<>{0,0,-2});
+    twod_tr.translate (sm::vec<>{0,0,-0.1});
     eyevm->add_spherical_projection (ptype, twod_tr, centre, psrad);
-
-    //centre = { cx, 0, 0 };
-    //eyevm->add_spherical_projection (ptype, twod_offset, centre, psrad, 780, 1560);
-
+    eyevm->pre_set_cone_length (4e-6f);
+    //eyevm->pre_set_disc_width (0.6e-5f);
     eyevm->show_sphere = true;
-    eyevm->show_rays = true;
+    eyevm->show_rays = false;
     eyevm->finalize();
 
     [[maybe_unused]] auto ep = v.addVisualModel (eyevm);
-    ep->reinitColours();
+    // ep->reinitColours();
+    ep->scaleViewMatrix (1000.0f);
 
     v.keepOpen();
 }
