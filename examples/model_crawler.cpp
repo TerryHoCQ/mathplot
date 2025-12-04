@@ -33,7 +33,8 @@ int main (int argc, char** argv)
     // How high to hover the arrows
     constexpr float hoverheight = 0.05f;
     // Model locations within the scene
-    sm::vec<float, 3> arrows_loc = { 0.01f, radius + 1.5f * hoverheight, 0.2f };
+    //sm::vec<float, 3> arrows_loc = { 0.01f, radius + 1.5f * hoverheight, 0.2f };
+    sm::vec<float, 3> arrows_loc = { 0.0f, radius + 1.5f * hoverheight, 0.0f };
     sm::vec<float, 3> sphere_loc = {};
 
     // A CoordArrows is our "crawling" agent
@@ -84,7 +85,8 @@ int main (int argc, char** argv)
     // Find the triangle that we're initially located above with
     // mplot::NavMesh::find_triangle_hit. This updates internal state in NavMesh. It could be
     // executed automatically in compute_mesh_movement
-    gvp->navmesh->find_triangle_hit (ca_view, sph_view);
+    auto[hp_scene, tn0, ti0] = gvp->navmesh->find_triangle_hit (ca_view, sph_view);
+    std::cout << "Find hit finds hit point " << hp_scene << std::endl;
 
     int move_counter = 0;
     constexpr int move_max = 1000;
@@ -101,6 +103,7 @@ int main (int argc, char** argv)
                 std::cout << "You can handle movements that go off the edge of a flat model\n";
             }
             std::cout << "Exception navigating mesh at movement count " << move_counter << ": " << e.what() << std::endl;
+            throw e;
         }
 
         // Update the viewmatrix of the coord arrows, setting its position within the scene

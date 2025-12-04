@@ -105,11 +105,14 @@ namespace mplot
         //! Holds a copy of the bb of the parent model
         sm::range<sm::vec<float>> bb;
 
-        // When navigating, this is the 'current triangle' that you're located over/near
+        //! When navigating, this is the 'current triangle' that you're located over/near
         std::array<uint32_t, 4> ti0 = {};
 
-        // The normal of ti0
-        sm::vec<> tn0 = {}; // Current triangle normal (in landframe) that our agent/camera is 'next to'
+        /*!
+         * The normal of ti0. This is the current triangle normal (in our mesh's frame of
+         * reference) that our agent/camera is 'next to'
+         */
+        sm::vec<float> tn0 = {};
 
         /*!
          * Return index of this->vertex that is closest to scene_coord. Can use vertexidx_to_indices
@@ -296,6 +299,18 @@ namespace mplot
             return rtn;
         }
 
+        std::tuple<std::array<uint32_t, 4>, sm::vec<float>>
+        first_triangle_containing (uint32_t _idx) const
+        {
+            for (auto t: this->triangles) {
+                auto [ti, tn, tnc, tnd] = t;
+                if (ti[0] == _idx || ti[1] == _idx || ti[2] == _idx) {
+                    return {ti, tn};
+                }
+            }
+            return {};
+        }
+
         /*
          * Find the location, and the triangle indices at which a ray starting from coord (scene
          * frame) with direction vdir - the 'penetration point'.
@@ -305,17 +320,57 @@ namespace mplot
         std::tuple<sm::vec<float>, std::array<uint32_t, 4>, sm::vec<float>>
         find_triangle_crossing (const sm::vec<float>& coord_mf, const sm::vec<float>& vdir) const
         {
-            for (auto tri : triangles) {
+            constexpr auto umax = std::numeric_limits<uint32_t>::max();
+            constexpr auto fmax = std::numeric_limits<float>::max();
+            sm::vec<float> vstart = coord_mf - (vdir / 2.0f);
+
+            // Return objects
+            sm::vec<float> isect_p = { fmax, fmax, fmax };
+            std::array<uint32_t, 4> isect_ti = { umax, umax, umax, 0 };
+            sm::vec<float> isect_tn = { fmax, fmax, fmax };
+
+            auto isect_d = std::numeric_limits<float>::max(); // distance to intersect
+
+            for (auto tri : this->triangles) {
                 auto [ti, tn, tnc, tnd] = tri;
-                auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (this->vertex[ti[0]], this->vertex[ti[1]], this->vertex[ti[2]], coord_mf - (vdir / 2.0f), vdir);
-                if (isect) { return {p, ti, tn}; }
+                auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (this->vertex[ti[0]], this->vertex[ti[1]], this->vertex[ti[2]], vstart, vdir);
+                // What if the triangle is one on the *other side of the model*?? Have to use distance to find the closest one.
+                if (isect) {
+                    //std::cout << "Hit at " << p << "...";
+                    float d = (p - vstart).sos();
+                    if (d < isect_d) {
+                        // FIXME: Control and use length of vdir to find triangle crossing that is close enough
+                        std::cout << "Hit at " << p << " registered d = " << d << " cf vdir length " << vdir.length() << std::endl;;
+                        isect_p = p;
+                        isect_ti = ti;
+                        isect_tn = tn;
+                        isect_d = d;
+                    }
+                    // else { std::cout << std::endl; }
+                }
             }
 
-            // Failed to find, return container full of maxes
-            sm::vec<float> p = {};
-            p.set_from (std::numeric_limits<float>::max());
-            constexpr uint32_t umax = std::numeric_limits<uint32_t>::max();
-            return {p , std::array<uint32_t, 4>{umax, umax, umax, 0}, p};
+            if (isect_p[0] == fmax) {
+                // Found no crossing, check vertices, in case vdir points perfectly at a vertex
+                for (uint32_t ti = 0; ti < this->vertex.size(); ++ti) {
+                    sm::vec<float> vertex_n = find_vertex_normal (ti); // also loops
+                    vertex_n.renormalize();
+                    vstart = coord_mf + (vertex_n / 2.0f);
+                    if (sm::geometry::ray_point_intersection (this->vertex[ti], vstart, -vertex_n)) {
+                        float d = (this->vertex[ti] - vstart).sos();
+                        if (d < isect_d) {
+                            std::cout << "Register vertex triangle_crossing\n";
+                            isect_p = this->vertex[ti];
+                            auto [_ti, _tn] = first_triangle_containing (ti);
+                            isect_ti = _ti;
+                            isect_tn = _tn;
+                            isect_d = d;
+                        }
+                    }
+                }
+            }
+
+            return { isect_p, isect_ti, isect_tn };
         }
 
         // Find the location, and the triangle indices at which a ray between coord (in model frame)
@@ -378,6 +433,30 @@ namespace mplot
                 }
             }
             return rtn;
+        }
+
+        // Find all the neighbours of triangle vertex index a
+        std::vector<std::tuple<std::array<uint32_t, 4>, sm::vec<float>>>
+        find_neighbours (const uint32_t a) const
+        {
+            std::vector<std::tuple<std::array<uint32_t, 4>, sm::vec<float>>> rtn = {};
+            for (auto tri : triangles) {
+                auto [ti, tn, tnc, tnd] = tri;
+                if (ti[0] == a || ti[1] == a || ti[2] == a) { rtn.push_back({ti, tn}); }
+            }
+            return rtn;
+        }
+
+        sm::vec<float> find_vertex_normal (const uint32_t ti) const
+        {
+            auto neighbs = this->find_neighbours (ti);
+            sm::vec<float> vn = {};
+            if (neighbs.size() == 0) { return vn; }
+            for (auto nb : neighbs) {
+                auto [ti, tn] = nb;
+                vn += tn;
+            }
+            return (vn / neighbs.size());
         }
 
         // Find the common vertex (ignoring a/b[3]) between a and b
@@ -721,7 +800,6 @@ namespace mplot
         std::tuple<sm::vec<float>, sm::vec<float>, std::array<uint32_t, 4>>
         find_triangle_hit (const sm::mat44<float>& camspace, const sm::mat44<float>& model_to_scene)
         {
-            constexpr bool debug = false;
             sm::mat44<float> scene_to_model = model_to_scene.inverse();
             // use camera location in gltf to start from, then find model surface.
             sm::vec<float> camloc_mf = (scene_to_model * camspace * sm::vec<float>{}).less_one_dim();
@@ -736,15 +814,12 @@ namespace mplot
             vdir.renormalize();
             vdir *= vdl;
             std::tie (hit, this->ti0, this->tn0) = this->find_triangle_crossing (camloc_mf - (vdir / 2.0f), vdir);
+
             if (this->ti0[0] == std::numeric_limits<uint32_t>::max()) { std::cout << __func__ << ": No hit\n"; }
-            // Can I make hit the centre of the triangle?
-            constexpr bool hit_tri_centre = false;
-            if constexpr (hit_tri_centre) {
-                sm::vec<sm::vec<float>, 3> tv_mf = this->triangle_vertices (this->ti0);
-                hit = tv_mf.mean();
-            }
+
             sm::vec<float> hp_scene = (model_to_scene * hit).less_one_dim();
 
+            constexpr bool debug = true;
             if constexpr (debug) {
                 std::cout << "found hit at " << hit << " (model); " << hp_scene << " (scene)\n";
                 // Check we'll get a hit when we compute_mesh_movement:
@@ -822,7 +897,7 @@ namespace mplot
                                                 const sm::mat44<float>& model_to_scene,
                                                 const float hoverheight)
         {
-            constexpr bool debug_move = false;
+            constexpr bool debug_move = true;
             constexpr bool debug_move2 = true;
 
             // A data-containing exception to throw
@@ -867,6 +942,7 @@ namespace mplot
             sm::mat44<float> cam_to_surface = cam_to_scene;
             cam_to_surface.pretranslate (hov_sf - camloc_sf); // This is now our init pose; the camera is now at the surface
 
+            // Try double precision
             if (isect == false) {
                 std::tie (isect, hov_sf) = sm::geometry::ray_tri_intersection<float, double> (tv_sf[0], tv_sf[1], tv_sf[2], camloc_sf + (this->tn0 / 2.0f), -this->tn0);
                 if constexpr (debug_move2) {
@@ -880,6 +956,28 @@ namespace mplot
                 }
             }
 
+#if 1
+            // Try the triangle vertices
+            if (isect == false) {
+                std::cout << "Try the triangle vertices...\n";
+                for (uint32_t i = 0u; i < 3u; i++) {
+
+                    // We need to use the *vertex* normal for this test - the average of all the adjacent triangle normals!
+                    sm::vec<float> vertex_n = this->find_vertex_normal (this->ti0[i]);
+                    vertex_n.renormalize();
+                    std::cout << "Vertex normal for triangle index " << ti0[i] << " is " << vertex_n << std::endl;
+
+                    if (sm::geometry::ray_point_intersection (tv_sf[i], camloc_sf + (vertex_n / 2.0f), -vertex_n)) {
+                        if constexpr (debug_move2) {
+                            std::cout << "Triangle vertex at " << tv_sf[i]
+                                      << " is the intersection, compare this with hov_sf = " << hov_sf << "\n";
+                        }
+                        //hov_sf = tv_sf[i];
+                        isect = true;
+                    }
+                }
+            }
+#endif
             std::vector<std::array<uint32_t, 4>> trisearched; // the other triangles we search. To place in exception
             if (isect == false) {
 
@@ -922,7 +1020,35 @@ namespace mplot
                         }
                     } // else missing neighbour. Could see if it would land in a neighbour that's just off the edge?
                 }
+#if 1 // New one-neighbours section
+                auto onens = this->find_one_neighbours (this->ti0);
+                for (auto onen : onens) {
+                    // Are we in this one?
+                    auto [_ti, _tn] = onen;
+                    trisearched.push_back (_ti);
 
+                    sm::vec<sm::vec<float>, 3> tv_lf = this->triangle_vertices (_ti, model_to_scene);
+                    _tn = this->triangle_normal (tv_lf);
+                    auto [is, h] = sm::geometry::ray_tri_intersection<float, double> (tv_lf[0], tv_lf[1], tv_lf[2], camloc_sf + (_tn / 2.0f), -_tn);
+
+                    if constexpr (debug_move) {
+                        std::cout << "Start of move " << (is ? "IS" : "is NOT") << " in one-neighbour " << _ti[0] << "," << _ti[1] << "," << _ti[2] << std::endl;
+                    }
+                    if (is) {
+                            if constexpr (debug_move) { std::cout << "*** Correcting!\n"; }
+                            // We're in this neighbour, so update ti0/tn0 and mark isect true
+                            this->ti0 = _ti;
+                            tv_sf = tv_lf;
+                            this->tn0 = _tn;
+                            isect = true;
+                            // This requires a number of matrix recomputations:
+                            hov_sf = h;
+                            cam_to_surface = cam_to_scene;
+                            cam_to_surface.pretranslate (hov_sf - camloc_sf); // This is our init pose, placed on the surface
+                            break;
+                    }
+                }
+#endif
                 if (isect == false) {
                     if constexpr (debug_move2) {
                         std::cout << "No intersection (at start) with triangle "
