@@ -15,9 +15,8 @@ namespace mplot
     //! This class creates a flat projection of spherical data provided as vvecs of
     //! latitude-longitude pairs and scalar or vector values. Use VisualDataModel?
     template<typename T, int glver = mplot::gl::version_4_1> requires std::is_floating_point_v<T>
-    class SphericalProjectionVisual : public mplot::VisualModel<glver>
+    struct SphericalProjectionVisual : public mplot::VisualModel<glver>
     {
-    public:
         SphericalProjectionVisual() {}
         SphericalProjectionVisual (const sm::vec<float, 3> _offset) : mplot::VisualModel<glver>(_offset) {}
 
