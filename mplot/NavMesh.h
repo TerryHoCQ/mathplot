@@ -1018,41 +1018,6 @@ namespace mplot
                     } // else missing neighbour. Could see if it would land in a neighbour that's just off the edge?
                 }
 
-#if 0 // Commented out for now - think this may have been a blind-alley. Will remove in next commit.
-                // No intersecton with a 2-neighbour. Do we need to ray-tri intersect with one-neighbours?
-                if (isect == false) {
-                    auto onens = this->find_one_neighbours (this->ti0);
-                    for (auto onen : onens) {
-                        // Are we in this one?
-                        auto [_ti, _tn] = onen;
-                        trisearched.push_back (_ti);
-
-                        sm::vec<sm::vec<float>, 3> tv_lf = this->triangle_vertices (_ti, model_to_scene);
-                        _tn = this->triangle_normal (tv_lf);
-                        auto [is, h] = sm::geometry::ray_tri_intersection<float, double> (tv_lf[0], tv_lf[1], tv_lf[2], camloc_sf + (_tn / 2.0f), -_tn);
-
-                        if constexpr (debug_move) {
-                            std::cout << "Start of move " << (is ? "IS" : "is NOT") << " in one-neighbour " << _ti[0] << "," << _ti[1] << "," << _ti[2] << std::endl;
-                        }
-                        if (is) {
-                            if constexpr (debug_move) {
-                                std::cout << "*** Correcting ti0 from (" << ti0[0] << "," << ti0[1] << "," << ti0[2] << ") to (" << _ti[0] << "," << _ti[1] << "," << _ti[2] << ")\n";
-                            }
-                            // We're in this neighbour, so update ti0/tn0 and mark isect true
-                            this->ti0 = _ti;
-                            tv_sf = tv_lf;
-                            this->tn0 = _tn;
-                            isect = true;
-                            // This requires a number of matrix recomputations:
-                            hov_sf = h;
-                            cam_to_surface = cam_to_scene;
-                            cam_to_surface.pretranslate (hov_sf - camloc_sf); // This is our init pose, placed on the surface
-                            break;
-                        }
-                    }
-                }
-#endif
-
                 if (isect == false) {
                     if constexpr (debug_move2) {
                         std::cout << "No intersection (at start) with triangle "
