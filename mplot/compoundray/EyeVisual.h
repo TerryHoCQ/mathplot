@@ -268,7 +268,7 @@ namespace mplot::compoundray
             // Determine eye dimensions
             sm::range<sm::vec<float, 3>> ommrng = sm::range<sm::vec<float, 3>>::search_initialized();
             for (size_t i = 0u; i < n_omm; ++i) { ommrng.update ((*ommatidia)[i].relativePosition); }
-            float ray_radius = ommrng.span().max() / 300.0f;
+            float ray_radius = ommrng.span().max() / 500.0f;
 
             // Find mean minimum ommatidial distance to set this->disc_width
             sm::vvec<float> dist_to_other (n_omm, 0.0f);
@@ -400,8 +400,11 @@ namespace mplot::compoundray
                         // Can now find intersections on our sphere
                         sm::vec<> l0 = (*ommatidia)[i].relativePosition;
                         sm::vec<> l = -(*ommatidia)[i].relativeDirection;
+                        // Make rays a sensible length based on projections.proj_radius
+                        l.renormalize();
+                        l *= this->projections[pri].proj_radius * 3.0f;
                         // Show direction vector from ommatidium position
-                        this->computeArrow (l0, l0 + l, mplot::colour::grey80, ray_radius/*0.002f * this->projections[pri].proj_radius*/);
+                        this->computeArrow (l0, l0 + l, mplot::colour::grey80, ray_radius);
                         // Recompute intersections
                         sm::vec<sm::vec<>, 2> intersections = sm::geometry::ray_sphere_intersection (this->projections[pri].proj_centre,
                                                                                                      this->projections[pri].proj_radius, l0, l);
