@@ -952,21 +952,25 @@ namespace mplot
 
 #if 1
             // Try the triangle vertices
+            uint32_t int_vertex = std::numeric_limits<uint32_t>::max(); // intersection vertex
             if (isect == false) {
-                std::cout << "Try the triangle vertices...\n";
+                if constexpr (debug_move) { std::cout << "Try the triangle vertices...\n"; }
                 for (uint32_t i = 0u; i < 3u; i++) {
 
                     // We need to use the *vertex* normal for this test - the average of all the adjacent triangle normals!
                     sm::vec<float> vertex_n = this->find_vertex_normal (this->ti0[i]);
                     vertex_n.renormalize();
-                    std::cout << "Vertex normal for triangle index " << ti0[i] << " is " << vertex_n << std::endl;
+                    if constexpr (debug_move) {
+                        std::cout << "Vertex normal for triangle index " << ti0[i] << " is " << vertex_n << std::endl;
+                    }
 
                     if (sm::geometry::ray_point_intersection (tv_sf[i], camloc_sf + (vertex_n / 2.0f), -vertex_n)) {
                         if constexpr (debug_move2) {
-                            std::cout << "Triangle vertex at " << tv_sf[i]
-                                      << " is the intersection, compare this with hov_sf = " << hov_sf << "\n";
+                            std::cout << "VERTEX INTERSECTION IS the start at " << tv_sf[i] << ", compare this with hov_sf = " << hov_sf << "\n";
+                            // if start is vertex, need to check movement across all the triangle-neighbours of this vertex (see later use of int_vertex)
                         }
-                        //hov_sf = tv_sf[i];
+                        hov_sf = tv_sf[i];
+                        int_vertex = i;
                         isect = true;
                     }
                 }
@@ -1029,17 +1033,19 @@ namespace mplot
                         std::cout << "Start of move " << (is ? "IS" : "is NOT") << " in one-neighbour " << _ti[0] << "," << _ti[1] << "," << _ti[2] << std::endl;
                     }
                     if (is) {
-                            if constexpr (debug_move) { std::cout << "*** Correcting!\n"; }
-                            // We're in this neighbour, so update ti0/tn0 and mark isect true
-                            this->ti0 = _ti;
-                            tv_sf = tv_lf;
-                            this->tn0 = _tn;
-                            isect = true;
-                            // This requires a number of matrix recomputations:
-                            hov_sf = h;
-                            cam_to_surface = cam_to_scene;
-                            cam_to_surface.pretranslate (hov_sf - camloc_sf); // This is our init pose, placed on the surface
-                            break;
+                        if constexpr (debug_move) {
+                            std::cout << "*** Correcting ti0 from (" << ti0[0] << "," << ti0[1] << "," << ti0[2] << ") to (" << _ti[0] << "," << _ti[1] << "," << _ti[2] << ")\n";
+                        }
+                        // We're in this neighbour, so update ti0/tn0 and mark isect true
+                        this->ti0 = _ti;
+                        tv_sf = tv_lf;
+                        this->tn0 = _tn;
+                        isect = true;
+                        // This requires a number of matrix recomputations:
+                        hov_sf = h;
+                        cam_to_surface = cam_to_scene;
+                        cam_to_surface.pretranslate (hov_sf - camloc_sf); // This is our init pose, placed on the surface
+                        break;
                     }
                 }
 #endif
@@ -1091,6 +1097,43 @@ namespace mplot
                 return cam_to_scene;
             }
 
+#if 1
+            if (isect == true && int_vertex != std::numeric_limits<uint32_t>::max()) {
+                // We HAVE a vertex intersection. Check if we either cross, or land in one of this vertex's neighbours to correct our starting triangle and normal.
+                auto onens = this->find_neighbours (this->ti0[int_vertex]);
+                for (auto onen : onens) {
+                    auto [_ti, _tn] = onen;
+                    sm::vec<float> _mv_orthog = _tn * (mv_sf.dot (_tn) / (_tn.dot (_tn)));
+                    sm::vec<float> _mv_inplane = mv_sf - _mv_orthog; // scene frame, a relative movement
+                    sm::vec<sm::vec<float>, 3> tv_nb = this->triangle_vertices (_ti, model_to_scene);
+                    // _tn = this->triangle_normal (tv_nb); // shouldn't need to recompute
+                    crossing_data cd = this->compute_crossing_location (tv_nb, _ti, hov_sf, _mv_inplane, _tn);
+                    if (cd.pm.flags.test (pm_fl::no_cross_point) == false) {
+                        this->ti0 = _ti;
+                        this->tn0 = _tn;
+                        tv_sf = tv_nb;
+                        if constexpr (debug_move) {
+                            std::cout << "Break on cross point with triangle (" << _ti[0] << "," << _ti[1] << "," << _ti[2] << ")\n";
+                        }
+                        break;
+                    } else {
+                        // No crossing, did we land in the triangle?
+                        auto [is, h] = sm::geometry::ray_tri_intersection<float, double> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + _mv_inplane + (_tn / 2.0f), -_tn);
+                        if (is) { // then we DID land in this neighbour tri
+                            this->ti0 = _ti;
+                            this->tn0 = _tn;
+                            tv_sf = tv_nb;
+                            if constexpr (debug_move) {
+                                std::cout << "Break as we landed in triangle (" << _ti[0] << "," << _ti[1] << "," << _ti[2] << ")\n";
+                            }
+                            break;
+                        }
+                    }
+                }
+
+            } // Now carry on with corrected mv_inplane, tn0 and ti0
+#endif
+
             // A 'detected crossing' is one where we had to use a secondary method (comparing the
             // triangle containing the start and the triangle containing the end) to determine that
             // a triangle edge had been crossed, because the original method
@@ -1104,7 +1147,8 @@ namespace mplot
             while (!flags.test (cmm_fl::done)) {
 
                 if constexpr (debug_move) {
-                    std::cout << "\n* loopstart: Processing mv_inplane: " << hov_sf << "," << mv_inplane << std::endl;
+                    std::cout << "\n* loopstart: Processing mv_inplane: " << hov_sf << "," << mv_inplane << " ti0 = ("
+                              << this->ti0[0] << "," << this->ti0[1] << "," << this->ti0[2] << ") with tn0 = " << this->tn0 << std::endl;
                 }
 
                 if (mv_inplane.length() == 0) {
@@ -1153,7 +1197,7 @@ namespace mplot
                         if constexpr (debug_move) {
                             std::cout << "find triangle across edge: find_other_triangle_containing ("
                                       << cd.edge_idx_a << ", " <<  cd.edge_idx_b
-                                      << ", [" <<  this->ti0[0] << "," << this->ti0[1] << "," << this->ti0[2] << "])" << std::endl;
+                                      << ", [" << this->ti0[0] << "," << this->ti0[1] << "," << this->ti0[2] << "])" << std::endl;
                         }
                         std::tie (_ti, _tn) = this->find_other_triangle_containing (cd.edge_idx_a, cd.edge_idx_b, this->ti0);
                     }
