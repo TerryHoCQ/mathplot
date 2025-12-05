@@ -1,6 +1,7 @@
 /*
  * Move one model (mplot::CoordArrows) around another (mplot::GeodesicVisual), as if it were
- * crawling over it. Demonstrates mplot::NavMesh.
+ * crawling over it. Demonstrates mplot::NavMesh, which allows you to move over a triangular
+ * landscape model, following the exact contour defined by the landscape's mesh.
  */
 
 #include <iostream>
@@ -22,7 +23,7 @@ int main (int argc, char** argv)
 {
     int rtn = -1;
 
-    mplot::Visual v(1024, 768, "Crawling a surface");
+    mplot::Visual v(1024, 768, "Crawling a surface with NavMesh features");
     v.rotateAboutNearest (true);
 
     // How big to make the sphere?
@@ -44,7 +45,7 @@ int main (int argc, char** argv)
     [[maybe_unused]] auto cap = v.addVisualModel (ca);
 
     // A ScatterVisual will show the agent's trail
-    sm::vvec<sm::vec<>> sv_points;
+    sm::vvec<sm::vec<float>> sv_points;
     sm::vvec<float> sv_data;
     auto sv = std::make_unique<mplot::ScatterVisual<float>> (sphere_loc);
     v.bindmodel (sv);
@@ -75,8 +76,8 @@ int main (int argc, char** argv)
     gvp->make_navmesh();
 
     // We're going to move the coordinate arrows forwards (along its z-axis), so that it 'orbits'
-    float move_step = 0.1f;
-    sm::vec<> mv_ca = sm::vec<>::uz() * move_step;
+    float move_step = 0.1f; // 0.075 <= move_step and iterations 6 to fail
+    sm::vec<float> mv_ca = sm::vec<float>::uz() * move_step;
 
     // The viewmatrices have to be passed to mplot::NavMesh::compute_mesh_movement
     sm::mat44<float> ca_view = cap->getViewMatrix();
@@ -90,7 +91,7 @@ int main (int argc, char** argv)
 
     int move_counter = 0;
     constexpr int move_max = 1000;
-    while (!v.readyToFinish() && move_counter < move_max) {
+    while (!v.readyToFinish()) {
 
         // Wait .018 s and also poll for mouse/keyboard events
         v.waitevents (0.018);
@@ -110,11 +111,13 @@ int main (int argc, char** argv)
         cap->setViewMatrix (ca_view);
 
         // Compute the new location
-        arrows_loc = (ca_view * sm::vec<>{}).less_one_dim();
+        arrows_loc = (ca_view * sm::vec<float>{}).less_one_dim();
 
         // We're adding and rebuilding the not-very-optimized ScatterVisual, so if move_max is too
         // high, the program will slow down (too many tiny spheres!)
-        svp->add (arrows_loc, static_cast<float>(move_counter++) / move_max);
+        if (move_counter++ < move_max) {
+            svp->add (arrows_loc, static_cast<float>(move_counter) / move_max);
+        }
 
         // Re-render the scene
         v.render();

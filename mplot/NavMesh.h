@@ -807,19 +807,13 @@ namespace mplot
             this->tn0 = {};
             sm::vec<float> hit = {};
             sm::vec<float> vdir = this->bb.mid() - camloc_mf;
-            float bb_len = this->bb.span().longest(); // lengthscale of model
-            // Make vdir long
-            float vdl = vdir.length() * 2.0f; // Twice the distance from camera to BB centroid
-            vdl += bb_len * 2.0f;             // plus twice the longest axis from the BB
-            vdir.renormalize();
-            vdir *= vdl;
-            std::tie (hit, this->ti0, this->tn0) = this->find_triangle_crossing (camloc_mf - (vdir / 2.0f), vdir);
+            std::tie (hit, this->ti0, this->tn0) = this->find_triangle_crossing (camloc_mf , vdir);
 
             if (this->ti0[0] == std::numeric_limits<uint32_t>::max()) { std::cout << __func__ << ": No hit\n"; }
 
             sm::vec<float> hp_scene = (model_to_scene * hit).less_one_dim();
 
-            constexpr bool debug = true;
+            constexpr bool debug = false;
             if constexpr (debug) {
                 std::cout << "found hit at " << hit << " (model); " << hp_scene << " (scene)\n";
                 // Check we'll get a hit when we compute_mesh_movement:
@@ -847,11 +841,11 @@ namespace mplot
          * and z axes randomly oriented. The frame is set to hover hoverheight 'above' the triangle
          */
         sm::mat44<float> position_camera (const sm::vec<float>& hp_scene, const sm::mat44<float>& model_to_scene,
-                                          const sm::vec<float>& _tn0, const float hoverheight)
+                                          const float hoverheight)
         {
             // Let's 'draw' the camera towards the model and then arrange its normal upwards wrt to the normal of the model.
-            if (_tn0[0] == std::numeric_limits<float>::max()) {
-                std::cout << __func__ << ": No hit\n";
+            if (this->tn0[0] == std::numeric_limits<float>::max()) {
+                std::cout << __func__ << ": No hit/triangle normal\n";
                 return sm::mat44<float>{};
             }
 
@@ -860,16 +854,16 @@ namespace mplot
             // and then set z from this random x and the triangle norm (y).
             sm::vec<float> rand_vec;
             rand_vec.randomize();
-            sm::vec<float> _x = rand_vec.cross (_tn0);
+            sm::vec<float> _x = rand_vec.cross (this->tn0);
             _x.renormalize();
-            sm::vec<float> _z = _x.cross (_tn0);
+            sm::vec<float> _z = _x.cross (this->tn0);
 
             // I think this positions correctly now (which is all it has to do). It ignores scaling
             // in model_to_scene. Can be reduced to use fewer mat44s.
             sm::mat44<float> cam_mv_y;
             cam_mv_y.translate (sm::vec<float>{0, hoverheight, 0});
-            // The basis _x, _tn0, _z, where these are vectors in the model frame that define a camera frame
-            sm::mat44<float> cam_to_model_rotn = sm::mat44<float>::frombasis (_x, _tn0, _z);
+            // The basis _x, tn0, _z, where these are vectors in the model frame that define a camera frame
+            sm::mat44<float> cam_to_model_rotn = sm::mat44<float>::frombasis (_x, this->tn0, _z);
             // Get the rotation from scene frame to model
             sm::mat44<float> m_to_sc_rotn = model_to_scene.rotation_mat44();
             sm::mat44<float> hp_m;
