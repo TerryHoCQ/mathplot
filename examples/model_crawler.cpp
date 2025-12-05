@@ -122,12 +122,6 @@ int main (int argc, char** argv)
         // Re-render the scene
         v.render();
     }
-    std::cout << "Completed movements ";
-    if (move_counter >= move_max) {
-        std::cout << "(move_counter exceeded " << move_max << ")\n";
-    } else {
-        std::cout << "(user quit)\n";
-    }
 
     v.keepOpen();
 

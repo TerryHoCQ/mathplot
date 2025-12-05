@@ -950,8 +950,7 @@ namespace mplot
                 }
             }
 
-#if 1
-            // Try the triangle vertices
+            // If that didn't work, try the triangle *vertices*
             uint32_t int_vertex = std::numeric_limits<uint32_t>::max(); // intersection vertex
             if (isect == false) {
                 if constexpr (debug_move) { std::cout << "Try the triangle vertices...\n"; }
@@ -975,7 +974,7 @@ namespace mplot
                     }
                 }
             }
-#endif
+
             std::vector<std::array<uint32_t, 4>> trisearched; // the other triangles we search. To place in exception
             if (isect == false) {
 
@@ -1018,37 +1017,42 @@ namespace mplot
                         }
                     } // else missing neighbour. Could see if it would land in a neighbour that's just off the edge?
                 }
-#if 1 // New one-neighbours section
-                auto onens = this->find_one_neighbours (this->ti0);
-                for (auto onen : onens) {
-                    // Are we in this one?
-                    auto [_ti, _tn] = onen;
-                    trisearched.push_back (_ti);
 
-                    sm::vec<sm::vec<float>, 3> tv_lf = this->triangle_vertices (_ti, model_to_scene);
-                    _tn = this->triangle_normal (tv_lf);
-                    auto [is, h] = sm::geometry::ray_tri_intersection<float, double> (tv_lf[0], tv_lf[1], tv_lf[2], camloc_sf + (_tn / 2.0f), -_tn);
+#if 0 // Commented out for now - think this may have been a blind-alley. Will remove in next commit.
+                // No intersecton with a 2-neighbour. Do we need to ray-tri intersect with one-neighbours?
+                if (isect == false) {
+                    auto onens = this->find_one_neighbours (this->ti0);
+                    for (auto onen : onens) {
+                        // Are we in this one?
+                        auto [_ti, _tn] = onen;
+                        trisearched.push_back (_ti);
 
-                    if constexpr (debug_move) {
-                        std::cout << "Start of move " << (is ? "IS" : "is NOT") << " in one-neighbour " << _ti[0] << "," << _ti[1] << "," << _ti[2] << std::endl;
-                    }
-                    if (is) {
+                        sm::vec<sm::vec<float>, 3> tv_lf = this->triangle_vertices (_ti, model_to_scene);
+                        _tn = this->triangle_normal (tv_lf);
+                        auto [is, h] = sm::geometry::ray_tri_intersection<float, double> (tv_lf[0], tv_lf[1], tv_lf[2], camloc_sf + (_tn / 2.0f), -_tn);
+
                         if constexpr (debug_move) {
-                            std::cout << "*** Correcting ti0 from (" << ti0[0] << "," << ti0[1] << "," << ti0[2] << ") to (" << _ti[0] << "," << _ti[1] << "," << _ti[2] << ")\n";
+                            std::cout << "Start of move " << (is ? "IS" : "is NOT") << " in one-neighbour " << _ti[0] << "," << _ti[1] << "," << _ti[2] << std::endl;
                         }
-                        // We're in this neighbour, so update ti0/tn0 and mark isect true
-                        this->ti0 = _ti;
-                        tv_sf = tv_lf;
-                        this->tn0 = _tn;
-                        isect = true;
-                        // This requires a number of matrix recomputations:
-                        hov_sf = h;
-                        cam_to_surface = cam_to_scene;
-                        cam_to_surface.pretranslate (hov_sf - camloc_sf); // This is our init pose, placed on the surface
-                        break;
+                        if (is) {
+                            if constexpr (debug_move) {
+                                std::cout << "*** Correcting ti0 from (" << ti0[0] << "," << ti0[1] << "," << ti0[2] << ") to (" << _ti[0] << "," << _ti[1] << "," << _ti[2] << ")\n";
+                            }
+                            // We're in this neighbour, so update ti0/tn0 and mark isect true
+                            this->ti0 = _ti;
+                            tv_sf = tv_lf;
+                            this->tn0 = _tn;
+                            isect = true;
+                            // This requires a number of matrix recomputations:
+                            hov_sf = h;
+                            cam_to_surface = cam_to_scene;
+                            cam_to_surface.pretranslate (hov_sf - camloc_sf); // This is our init pose, placed on the surface
+                            break;
+                        }
                     }
                 }
 #endif
+
                 if (isect == false) {
                     if constexpr (debug_move2) {
                         std::cout << "No intersection (at start) with triangle "
@@ -1097,7 +1101,7 @@ namespace mplot
                 return cam_to_scene;
             }
 
-#if 1
+            // New section to handle the case that we started right on a vertex
             if (isect == true && int_vertex != std::numeric_limits<uint32_t>::max()) {
                 // We HAVE a vertex intersection. Check if we either cross, or land in one of this vertex's neighbours to correct our starting triangle and normal.
                 auto onens = this->find_neighbours (this->ti0[int_vertex]);
@@ -1112,6 +1116,8 @@ namespace mplot
                         this->ti0 = _ti;
                         this->tn0 = _tn;
                         tv_sf = tv_nb;
+                        mv_orthog = _mv_orthog;
+                        mv_inplane = _mv_inplane;
                         if constexpr (debug_move) {
                             std::cout << "Break on cross point with triangle (" << _ti[0] << "," << _ti[1] << "," << _ti[2] << ")\n";
                         }
@@ -1123,6 +1129,8 @@ namespace mplot
                             this->ti0 = _ti;
                             this->tn0 = _tn;
                             tv_sf = tv_nb;
+                            mv_orthog = _mv_orthog;
+                            mv_inplane = _mv_inplane;
                             if constexpr (debug_move) {
                                 std::cout << "Break as we landed in triangle (" << _ti[0] << "," << _ti[1] << "," << _ti[2] << ")\n";
                             }
@@ -1130,9 +1138,7 @@ namespace mplot
                         }
                     }
                 }
-
             } // Now carry on with corrected mv_inplane, tn0 and ti0
-#endif
 
             // A 'detected crossing' is one where we had to use a secondary method (comparing the
             // triangle containing the start and the triangle containing the end) to determine that
