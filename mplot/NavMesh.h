@@ -891,7 +891,7 @@ namespace mplot
                                                 const sm::mat44<float>& model_to_scene,
                                                 const float hoverheight)
         {
-            constexpr bool debug_move = true;
+            constexpr bool debug_move = false;
             constexpr bool debug_move2 = true;
 
             // A data-containing exception to throw
@@ -939,7 +939,7 @@ namespace mplot
             // Try double precision
             if (isect == false) {
                 std::tie (isect, hov_sf) = sm::geometry::ray_tri_intersection<float, double> (tv_sf[0], tv_sf[1], tv_sf[2], camloc_sf + (this->tn0 / 2.0f), -this->tn0);
-                if constexpr (debug_move2) {
+                if constexpr (debug_move) {
                     if (isect == false) {
                         std::cout << "No isect at start with " << this->ti0[0] << "," << this->ti0[1] << "," << this->ti0[2]
                                   << " using float OR double internally" << std::endl;
@@ -964,8 +964,8 @@ namespace mplot
                     }
 
                     if (sm::geometry::ray_point_intersection (tv_sf[i], camloc_sf + (vertex_n / 2.0f), -vertex_n)) {
-                        if constexpr (debug_move2) {
-                            std::cout << "VERTEX INTERSECTION IS the start at " << tv_sf[i] << ", compare this with hov_sf = " << hov_sf << "\n";
+                        if constexpr (debug_move) {
+                            std::cout << "A VERTEX intersection is the start at " << tv_sf[i] << ", compare this with hov_sf = " << hov_sf << "\n";
                             // if start is vertex, need to check movement across all the triangle-neighbours of this vertex (see later use of int_vertex)
                         }
                         hov_sf = tv_sf[i];
