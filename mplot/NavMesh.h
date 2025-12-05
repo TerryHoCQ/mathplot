@@ -313,7 +313,9 @@ namespace mplot
 
         /*
          * Find the location, and the triangle indices at which a ray starting from coord (scene
-         * frame) with direction vdir - the 'penetration point'.
+         * frame) with direction vdir - the 'penetration point' intersects with this NavMesh
+         * model. The length of vdir is used to avoid finding the intersection at the 'back' of the
+         * model.
          *
          * \return a tuple containing crossing location, triangle identity (three indices) and triangle normal vector
          */
@@ -334,31 +336,29 @@ namespace mplot
             for (auto tri : this->triangles) {
                 auto [ti, tn, tnc, tnd] = tri;
                 auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (this->vertex[ti[0]], this->vertex[ti[1]], this->vertex[ti[2]], vstart, vdir);
-                // What if the triangle is one on the *other side of the model*?? Have to use distance to find the closest one.
+                // What if the triangle is one on the *other side of the model*?? Have to use
+                // vdir.sos() to exclude those that are too far and the distance^2 to find the
+                // closest one that isn't.
                 if (isect) {
-                    //std::cout << "Hit at " << p << "...";
                     float d = (p - vstart).sos();
-                    if (d < isect_d) {
-                        // FIXME: Control and use length of vdir to find triangle crossing that is close enough
-                        std::cout << "Hit at " << p << " registered d = " << d << " cf vdir length " << vdir.length() << std::endl;;
+                    if (d < isect_d && d < vdir.sos()) {
                         isect_p = p;
                         isect_ti = ti;
                         isect_tn = tn;
                         isect_d = d;
                     }
-                    // else { std::cout << std::endl; }
                 }
             }
 
             if (isect_p[0] == fmax) {
-                // Found no crossing, check vertices, in case vdir points perfectly at a vertex
+                // Found no triangle intersection; check vertices, in case vdir points perfectly at a vertex
                 for (uint32_t ti = 0; ti < this->vertex.size(); ++ti) {
                     sm::vec<float> vertex_n = find_vertex_normal (ti); // also loops
                     vertex_n.renormalize();
                     vstart = coord_mf + (vertex_n / 2.0f);
                     if (sm::geometry::ray_point_intersection (this->vertex[ti], vstart, -vertex_n)) {
                         float d = (this->vertex[ti] - vstart).sos();
-                        if (d < isect_d) {
+                        if (d < isect_d && d < vdir.sos()) {
                             std::cout << "Register vertex triangle_crossing\n";
                             isect_p = this->vertex[ti];
                             auto [_ti, _tn] = first_triangle_containing (ti);

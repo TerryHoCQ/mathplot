@@ -30,7 +30,12 @@ int main (int argc, char** argv)
     constexpr float radius = 2.0f;
     // How many iterations for the geodesic? Try 2, 3 and 4
     int geo_itrns = 4;
-    if (argc > 1) { geo_itrns = std::atoi (argv[1]); }
+    if (argc > 1) {
+        geo_itrns = std::atoi (argv[1]);
+        if (geo_itrns > 6) {
+            std::cout << "Warning: GeodesicVisual takes a long time to build for iterations > 6!" << std::endl;
+        }
+    }
     // How high to hover the arrows
     constexpr float hoverheight = 0.05f;
     // Model locations within the scene
