@@ -17,8 +17,8 @@
 
 namespace mplot::compoundray
 {
-    // This is a binary-compatible equivalent to Ommatidium from cameras/CompoundEyeDataTypes.h in compound-ray.
-    // Use reinterpret_cast<std::vector<mplot::compoundray::Ommatidium>*>(ommatidia) if using compound ray.
+    // This is a binary-compatible equivalent to struct Ommatidium from cameras/CompoundEyeDataTypes.h in compound-ray.
+    // Use reinterpret_cast<std::vector<mplot::compoundray::Ommatidium>*>(ommatidia) if your ommatidia originate inside compound ray.
     struct Ommatidium
     {
         sm::vec<float, 3> relativePosition = {};
@@ -309,9 +309,12 @@ namespace mplot::compoundray
                     sm::vec<float, 3> ommatidial_detector_point = pos - dir * focal_point;
                     // work out a radius from acceptance angle and focal_point
                     float radius = focal_point * std::tan (angle / 2.0f);
-                    // The disc
+                    // The discs
+                    //float dw = this->disc_width;
+                    // or
+                    float dw = min_dist_to_other[i];
                     if (this->disc_width > 0.0f){
-                        this->computeTube (pos, pos + (0.05f * this->disc_width * dir), colour, colour, this->disc_width * 0.5f, tube_faces);
+                        this->computeTube (pos, pos + (0.05f * dw * dir), colour, colour, dw * 0.5f, tube_faces);
                     } else {
                         this->computeTube (pos, pos + (0.1f * radius * dir), colour, colour, radius, tube_faces);
                     }
@@ -354,7 +357,7 @@ namespace mplot::compoundray
             for (uint32_t pri = 0; pri < this->projections.size(); ++pri) {
                 this->omm2d.clear();
                 if (this->projections[pri].proj_type == projection_type::cylindrical) {
-                    std::cout << "NOTE: Cylindrical projections are currently unimplemented\n";
+                    std::cout << "Cylindrical projections are currently unimplemented\n";
                 } else {
                     // Compute intersections between ommatidia direction vectors and our projection sphere.
 
@@ -386,6 +389,8 @@ namespace mplot::compoundray
             for (uint32_t pri = 0; pri < this->projections.size(); ++pri) {
 
                 if (this->show_sphere) {
+                    std::cout << "computeSphere for centre " << this->projections[pri].proj_centre
+                              << " radius " << this->projections[pri].proj_radius << std::endl;
                     this->computeSphere (this->projections[pri].proj_centre, mplot::colour::grey50,
                                          this->projections[pri].proj_radius, 18, 18);
                 }
