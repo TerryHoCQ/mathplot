@@ -213,6 +213,10 @@ endif(BUILD_EXAMPLES)
 # Additional examples (requires BUILD_EXAMPLES ON)
 option(BUILD_DOC_SCREENSHOTS "Build documentation screenshot examples" OFF)
 
+# Some examples may require additional dependencies such as libgbm that can't be detected via
+# a typical find_package() call. Make these optional with a cmake flag.
+option(BUILD_OPTIONAL_EXAMPLES "Build examples that require additional non-find_package-able dependencies" OFF)
+
 # first we can indicate the documentation build as an option and set it to ON by default
 option(BUILD_DOC "Build documentation" OFF)
 if(BUILD_DOC)

@@ -27,14 +27,14 @@ sudo apt install build-essential cmake git \
 ```
 For the optional dependencies it's:
 ```sh
-sudo apt install libarmadillo-dev libhdf5-dev qtcreator qtbase5-dev libwxgtk3.2-dev libgbm-dev libegl-dev
+sudo apt install libarmadillo-dev libhdf5-dev qtcreator qtbase5-dev libwxgtk3.2-dev libegl-dev libgbm-dev
 ```
 * Armadillo. Only required if you use the ```sm::bezcurve``` class.
-* HDF5 library. Required if you use the wrapper class ```sm::hdfdata``` or any of the classes that make use of HdfData (```sm::hexgrid```,```sm::cartgrid```,```sm::anneal```). Their tests and examples should all compile if the libraries are detected and be omitted if not.
+* HDF5 library. Required if you use the wrapper class ```sm::hdfdata``` or any of the classes that make use of `sm::hdfdata` (```sm::hexgrid```,```sm::cartgrid```,```sm::anneal```). Their tests and examples should all compile if the libraries are detected and be omitted if not.
 * Qt library. Installing qtcreator will bring in the Qt5 libraries that are used to compile some Qt-mathplot example programs. It almost certainly possible to install *only* the Qt5 Core, Gui and Widgets libraries, but that hasn't been verified. On recent Ubuntu systems, you may well need qtbase5-dev to get the cmake scripts to `find_package(Qt5...)`.
 * WxWindows. libwxgtk3.2-dev (you'll need Ubuntu 23.04+) will enable the compilation of mathplot-wxWidgets example programs.
+* EGL. Required to build GLES applications that are compatible with Raspberry Pi 4 and 5.
 * GBM. Required only for window-less OpenGL compute compilations. Currently that's one example program only.
-* EGL. Requried to build GLES applications that are compatible with Raspberry Pi 4 and 5.
 
 ### Package-managed dependencies for Arch Linux
 
@@ -74,6 +74,8 @@ By default, the example programs are built with the call to `make`, but unit tes
 cmake .. -DBUILD_TESTS=ON -DBUILD_EXAMPLES=OFF # Build tests but not examples
 # ...etc
 ```
+
+There is also the flag `BUILD_OPTIONAL_EXAMPLES` to enable any programs that use additional dependencies that can't be tested for in the base `CMakeLists.txt`. Currently, that's just one example that uses libgbm.
 
 If you need to build the test programs with a specific compiler, such
 as g++-11 or clang, then you just change the cmake call in the recipe

@@ -13,8 +13,13 @@ if (OpenGL_EGL_FOUND)
   add_executable(shader_naive_scan shader_naive_scan.cpp)
   target_link_libraries(shader_naive_scan OpenGL::EGL glfw)
 
-  add_executable(shader_naive_scan_cli shader_naive_scan_cli.cpp)
-  target_link_libraries(shader_naive_scan_cli OpenGL::EGL gbm)
+  # This example requires the user to install libgbm (`sudo apt
+  # install libgbm-dev` on Debian-like Linux). Because gbm can't be
+  # detected wtih find_package, there's an extra option flag for it.
+  if(BUILD_OPTIONAL_EXAMPLES)
+    add_executable(shader_naive_scan_cli shader_naive_scan_cli.cpp)
+    target_link_libraries(shader_naive_scan_cli OpenGL::EGL gbm)
+  endif()
 
   add_executable(seq_naive_scan naive_scan.cpp)
 endif (OpenGL_EGL_FOUND)
