@@ -17,8 +17,8 @@
 
 namespace mplot::compoundray
 {
-    // This is a binary-compatible equivalent to Ommatidium from cameras/CompoundEyeDataTypes.h in compound-ray.
-    // Use reinterpret_cast<std::vector<mplot::compoundray::Ommatidium>*>(ommatidia) if using compound ray.
+    // This is a binary-compatible equivalent to struct Ommatidium from cameras/CompoundEyeDataTypes.h in compound-ray.
+    // Use reinterpret_cast<std::vector<mplot::compoundray::Ommatidium>*>(ommatidia) if your ommatidia originate inside compound ray.
     struct Ommatidium
     {
         sm::vec<float, 3> relativePosition = {};
@@ -268,9 +268,9 @@ namespace mplot::compoundray
             // Determine eye dimensions
             sm::range<sm::vec<float, 3>> ommrng = sm::range<sm::vec<float, 3>>::search_initialized();
             for (size_t i = 0u; i < n_omm; ++i) { ommrng.update ((*ommatidia)[i].relativePosition); }
-            float ray_radius = ommrng.span().max() / 300.0f;
+            float ray_radius = ommrng.span().max() / 500.0f;
 
-            // Find mean minimum ommatidial distance to set this->disc_width
+            // Find mean minimum ommatidial distance
             sm::vvec<float> dist_to_other (n_omm, 0.0f);
             sm::vvec<float> min_dist_to_other (n_omm, 0.0f);
             for (size_t i = 0u; i < n_omm; ++i) {
@@ -283,8 +283,7 @@ namespace mplot::compoundray
                 }
                 min_dist_to_other[i] = dist_to_other.min();
             }
-            this->disc_width = min_dist_to_other.mean();
-            std::cerr << "Mean ommatidial distance: " << this->disc_width << std::endl;
+            std::cerr << "Mean ommatidial distance: " << min_dist_to_other.mean() << std::endl;
 
             // First find out if all focal points are 0
             this->focal_point_sum = 0.0f;
@@ -293,7 +292,6 @@ namespace mplot::compoundray
             }
 
             if (show_3d && this->focal_point_sum > 0.0f) {
-                std::cout << "Have focal_points\n";
                 // We have focal points, so draw with the relativePosition representing the centre
                 // of the ommatidial lens - the base of a cone - which then extends back to the cone
                 // tip, which can be thought of as the location of the ommatidial 'sensor'
@@ -308,20 +306,18 @@ namespace mplot::compoundray
                     // Tip of cone is 'behind' the position of the ommatidial face/lens
                     sm::vec<float, 3> ommatidial_detector_point = pos - dir * focal_point;
                     // work out a radius from acceptance angle and focal_point
-                    float radius = focal_point * std::tan (angle / 2.0f);
-                    // The disc
-                    if (this->disc_width > 0.0f){
-                        this->computeTube (pos, pos + (0.05f * this->disc_width * dir), colour, colour, this->disc_width * 0.5f, tube_faces);
-                    } else {
-                        this->computeTube (pos, pos + (0.1f * radius * dir), colour, colour, radius, tube_faces);
-                    }
+                    // The discs are based on the inter-ommatidial distances in space, which have to have been computed
+                    float dw = min_dist_to_other[i];
+                    this->computeTube (pos, pos + (0.05f * dw * dir), colour, colour, dw * 0.5f, tube_faces);
+
+                    // This visualizes the optical cones
                     if (this->show_cones == true) {
+                        float optical_radius = focal_point * std::tan (angle / 2.0f);
                         // Colour comes from ommData. ringoffset is 1.0f
-                        this->computeCone (pos, ommatidial_detector_point, 0.0f, colour, radius, tube_faces);
+                        this->computeCone (pos, ommatidial_detector_point, 0.0f, colour, optical_radius, tube_faces);
                     }
                 }
             } else if (show_3d && this->focal_point_sum <= 0.0f) {
-                std::cout << "NO focal_points\n";
                 // All our focal_points are 0. Don't have focal point offset to help define our
                 // cones, only acceptance angle. Use manually specified tube_length (or computed
                 // radius) to figure out the size of a cone, whose tip is the location of the
@@ -333,20 +329,15 @@ namespace mplot::compoundray
                     sm::vec<float, 3> pos = (*ommatidia)[i].relativePosition;
                     sm::vec<float, 3> dir = (*ommatidia)[i].relativeDirection;
                     dir.renormalize();
-                    // do a cone
-                    sm::vec<float, 3> ommatidial_cone_pos = pos + dir * this->cone_length;
-                    float ringoffset = 0.0f;
-                    // work out radius from acceptance angle and focal_point
-                    float radius = this->disc_width / 2.0f; // will be negative if not set
-                    if (radius < 0.0f) { // fall back to using cone_length
-                        std::cout << "cone_length fallback!\n";
-                        radius = this->cone_length * std::tan (angle / 2.0f);
-                    }
-                    // Show a disc. Use disc_width, or if it is -ve, cone_length and computed radius
-                    this->computeTube (pos, pos - (0.1f * radius * dir), colour, colour, radius, tube_faces);
-                    // And optionally a cone
+
+                    float dw = min_dist_to_other[i];
+                    this->computeTube (pos, pos + (0.05f * dw * dir), colour, colour, dw * 0.5f, tube_faces);
+                    // We don't have a focal length to show cones, but we can still show the acceptance angle
                     if (this->show_cones == true) {
-                        this->computeCone (ommatidial_cone_pos, pos, ringoffset, colour, radius, tube_faces);
+                        // do a cone of angle 'acceptanceAngle' using user-supplied cone_length
+                        sm::vec<float, 3> ommatidial_cone_pos = pos + dir * this->cone_length;
+                        float radius = this->cone_length * std::tan (angle / 2.0f);
+                        this->computeCone (ommatidial_cone_pos, pos, 0.0f, colour, radius, tube_faces);
                     }
                 }
             }
@@ -354,7 +345,7 @@ namespace mplot::compoundray
             for (uint32_t pri = 0; pri < this->projections.size(); ++pri) {
                 this->omm2d.clear();
                 if (this->projections[pri].proj_type == projection_type::cylindrical) {
-                    std::cout << "NOTE: Cylindrical projections are currently unimplemented\n";
+                    std::cout << "Cylindrical projections are currently unimplemented\n";
                 } else {
                     // Compute intersections between ommatidia direction vectors and our projection sphere.
 
@@ -395,8 +386,11 @@ namespace mplot::compoundray
                         // Can now find intersections on our sphere
                         sm::vec<> l0 = (*ommatidia)[i].relativePosition;
                         sm::vec<> l = -(*ommatidia)[i].relativeDirection;
+                        // Make rays a sensible length based on projections.proj_radius
+                        l.renormalize();
+                        l *= this->projections[pri].proj_radius * 3.0f;
                         // Show direction vector from ommatidium position
-                        this->computeArrow (l0, l0 + l, mplot::colour::grey80, ray_radius/*0.002f * this->projections[pri].proj_radius*/);
+                        this->computeArrow (l0, l0 + l, mplot::colour::grey80, ray_radius);
                         // Recompute intersections
                         sm::vec<sm::vec<>, 2> intersections = sm::geometry::ray_sphere_intersection (this->projections[pri].proj_centre,
                                                                                                      this->projections[pri].proj_radius, l0, l);
@@ -481,14 +475,14 @@ namespace mplot::compoundray
         // If false, hide 3D representation (the ommatidial cones and discs)
         bool show_3d = true;
         // Visualize in two modes "disc" mode, showing just a 2D disc for each ommatidium and
-        // disc+cone mode, where the acceptance angle is displayed too. Runtime switchable.
+        // disc+cone mode, where the acceptance angle/optical cone is displayed too. Runtime switchable.
         bool show_cones = false;
         // The colours detected by each ommatidium
         std::vector<std::array<float, 3>>* ommData = nullptr;
         // The position and orientation of each ommatidium
         std::vector<mplot::compoundray::Ommatidium>* ommatidia = nullptr;
         // If sum is 0, then we have a special case for rendering the eye as we have no focal point
-        // offsets specified for this eye (and hence the radius of the ommatidium is not known)
+        // offsets specified for this eye (and hence the optical radius of the ommatidium is not known)
         float focal_point_sum = 0.0f;
         // Hard-coded number of faces making up an ommatidial element (the higher this is, the more round it will look)
         static constexpr int tube_faces = 18;
@@ -506,14 +500,10 @@ namespace mplot::compoundray
         }
         void pre_set_cone_length (float _cone_length) { this->cone_length = _cone_length; }
         float get_cone_length() { return this->cone_length; }
-        // Setter for the disc width. To replace cone length? Or operate as alternative?
-        void set_disc_width (float _disc_width) { this->disc_width = _disc_width; this->reinit(); }
-        void pre_set_disc_width (float _disc_width) { this->disc_width = _disc_width; }
-        float get_disc_width() { return this->disc_width; }
 
-        // Should the sphere be shown visually (maybe by external code?
+        // Should projection spheres be shown visually (maybe by external code?
         bool show_sphere = false;
-        // Arrows/intersection locations with the projection sphere(s)
+        // Should we show arrows/intersection locations with the projection sphere(s)?
         bool show_rays = false;
         // Width of borders around 2D map(s)
         float border_width = std::numeric_limits<float>::epsilon();
@@ -521,8 +511,6 @@ namespace mplot::compoundray
     private:
         // User-modifiable ommatidial cone length which is used if there's no focal point offset
         float cone_length = 0.1f;
-        // User-modifiable ommatidial disc width. If negative ignored?
-        float disc_width = -1.0f;
 
         //! Compute a triangle from 3 arbitrary corners
         void computeTriangle (sm::vec<float> c1, sm::vec<float> c2, sm::vec<float> c3, const std::array<float, 3>& colr)
