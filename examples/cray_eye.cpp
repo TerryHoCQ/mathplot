@@ -64,7 +64,6 @@ int main (int argc, char** argv)
     twod_tr.translate (sm::vec<>{0,0,-0.1});
     eyevm->add_spherical_projection (ptype, twod_tr, centre, psrad);
     eyevm->pre_set_cone_length (4e-6f);
-    //eyevm->pre_set_disc_width (0.6e-5f);
     eyevm->show_sphere = true;
     eyevm->show_rays = false;
     eyevm->finalize();
