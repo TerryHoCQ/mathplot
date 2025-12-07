@@ -1,3 +1,6 @@
+// Note: This will need to be brought in-line with changes in jc_voronoi.h made as part of Seb's
+// mathplot work.
+
 // Copyright (c) 2019 Mathias Westerdahl
 // For full LICENSE (MIT) or USAGE, see bottom of file
 

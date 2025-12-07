@@ -360,6 +360,9 @@ if(NOT APPLE)
   target_link_libraries(sphere OpenGL::GL glfw Freetype::Freetype)
 endif()
 
+add_executable(ellipsoid ellipsoid.cpp)
+target_link_libraries(ellipsoid OpenGL::GL glfw Freetype::Freetype)
+
 # constexpr code won't work on Apple Clang
 if(NOT APPLE)
   add_executable(icosahedron icosahedron.cpp)
@@ -377,6 +380,9 @@ if(NOT APPLE)
   target_link_libraries(geodesic_ce OpenGL::GL glfw Freetype::Freetype)
 endif()
 
+add_executable(model_crawler model_crawler.cpp)
+target_link_libraries(model_crawler OpenGL::GL glfw Freetype::Freetype)
+
 add_executable(tri tri.cpp)
 target_link_libraries(tri OpenGL::GL glfw Freetype::Freetype)
 
@@ -385,6 +391,9 @@ target_link_libraries(draw_triangles OpenGL::GL glfw Freetype::Freetype)
 
 add_executable(draw_triangles_intersections draw_triangles_intersections.cpp)
 target_link_libraries(draw_triangles_intersections OpenGL::GL glfw Freetype::Freetype)
+
+add_executable(triangle_intersect triangle_intersect.cpp)
+target_link_libraries(triangle_intersect OpenGL::GL glfw Freetype::Freetype)
 
 add_executable(voronoi_random voronoi_random.cpp)
 target_link_libraries(voronoi_random OpenGL::GL glfw Freetype::Freetype)
@@ -532,3 +541,7 @@ endif()
 
 add_executable(show_boundingboxes show_boundingboxes.cpp)
 target_link_libraries(show_boundingboxes OpenGL::GL glfw Freetype::Freetype)
+
+# if have compound-ray header
+add_executable(cray_eye cray_eye.cpp)
+target_link_libraries(cray_eye OpenGL::GL glfw Freetype::Freetype)

@@ -87,3 +87,6 @@ add_test(testmaketicks testmaketicks)
 
 add_executable(testmakeformatticks testmakeformatticks.cpp)
 add_test(testmakeformatticks testmakeformatticks)
+
+add_executable(unordered_map_vec_set unordered_map_vec_set.cpp)
+add_test(unordered_map_vec_set unordered_map_vec_set)

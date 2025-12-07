@@ -23,6 +23,7 @@ install(
   DatasetStyle.h
   graphing.h
   graphstyles.h
+  NavMesh.h
   TextFeatures.h
   TextGeometry.h
 
@@ -90,6 +91,7 @@ install(
   RodVisual.h
   ScatterVisual.h
   SphereVisual.h
+  SphericalProjectionVisual.h
   TriangleVisual.h
   TriaxesVisual.h
   TriFrameVisual.h

@@ -268,6 +268,9 @@ int main()
     sm::vec<> start = { 2, 0, 5 };
     sm::vec<> dirn = { 0, 0, -10 };
 
+    sm::vec<> start_fr2 = { 1, .9, 5 };
+    sm::vec<> dirn_fr2 = { 0.5, -0.7, -10 };
+
     sm::vec<> start_bh = { 0, 0, -5 };
     sm::vec<> dirn_bh = { 1.5, 1.5, 10 };
 
@@ -277,6 +280,11 @@ int main()
     v.addVisualModel (sv);
 
     sv = std::make_unique<mplot::SphereVisual<>>(start_bh, 0.1, mplot::colour::goldenrod3);
+    v.bindmodel (sv);
+    sv->finalize();
+    v.addVisualModel (sv);
+
+    sv = std::make_unique<mplot::SphereVisual<>>(start_fr2, 0.1, mplot::colour::goldenrod3);
     v.bindmodel (sv);
     sv->finalize();
     v.addVisualModel (sv);
@@ -305,14 +313,26 @@ int main()
     vvm->finalize();
     [[maybe_unused]] auto vvmp2 = v.addVisualModel (vvm);
 
-    tvp->vertex_postprocess();
+    vvm = std::make_unique<mplot::VectorVisual<float, 3>>(start_fr2);
+    v.bindmodel (vvm);
+    vvm->thevec = dirn_fr2;
+    vvm->vgoes = VectorGoes::FromOrigin;
+    vvm->thickness = 0.02f;
+    vvm->arrowhead_prop = 0.1f;
+    vvm->fixed_colour = true;
+    vvm->single_colour = mplot::colour::crimson;
+    vvm->addLabel ("Ray from front through middle", {-0.8, -0.5, 0}, mplot::TextFeatures(0.1f));
+    vvm->finalize();
+    [[maybe_unused]] auto vvmp3 = v.addVisualModel (vvm);
+
+    tvp->make_navmesh();
 
     auto vm = tvp->getViewMatrix();
     auto vmi = vm.inverse();
 
     auto start_wr = (vmi * start).less_one_dim(); // wr to tvp
     std::cout << "start_wr = " << start_wr << std::endl;
-    auto [hit, ti, tn] = tvp->find_triangle_crossing (start_wr, dirn);
+    auto [hit, ti, tn] = tvp->navmesh->find_triangle_crossing (start_wr, dirn);
     if (ti[0] == std::numeric_limits<uint32_t>::max()) {
         std::cout << "NO HIT\n";
     } else {
@@ -325,9 +345,23 @@ int main()
         v.addVisualModel (sv);
     }
 
+    auto start_wr_fr2 = (vmi * start_fr2).less_one_dim(); // wr to tvp
+    auto [hit_fr2, ti_fr2, tn_fr2] = tvp->navmesh->find_triangle_crossing (start_wr_fr2, dirn_fr2);
+    if (ti[0] == std::numeric_limits<uint32_t>::max()) {
+        std::cout << "NO HIT\n";
+    } else {
+        std::cout << "Indices: " << ti_fr2[0] << "," << ti_fr2[1] << "," << ti_fr2[2] << std::endl;
+        std::cout << "Contains hit " << hit_fr2 << std::endl;
+
+        sv = std::make_unique<mplot::SphereVisual<>>(hit_fr2, 0.07, mplot::colour::springgreen2);
+        v.bindmodel (sv);
+        sv->finalize();
+        v.addVisualModel (sv);
+    }
+
     auto start_wr_bh = (vmi * start_bh).less_one_dim(); // wr to tvp
     std::cout << "start_wr = " << start_wr << std::endl;
-    auto [hit_bh, ti_bh, tn_bh] = tvp->find_triangle_crossing (start_wr_bh, dirn_bh);
+    auto [hit_bh, ti_bh, tn_bh] = tvp->navmesh->find_triangle_crossing (start_wr_bh, dirn_bh);
     if (ti_bh[0] == std::numeric_limits<uint32_t>::max()) {
         std::cout << "NO HIT\n";
     } else {
@@ -339,17 +373,7 @@ int main()
         sv->finalize();
         v.addVisualModel (sv);
     }
-#if 0
-    auto dtv = std::make_unique<doubletrivis<>>(sm::vec<float>{3.0f,0.0f,0.0f});
-    v.bindmodel (dtv);
-    dtv->finalize();
-    v.addVisualModel (dtv);
 
-    auto tctv = std::make_unique<twocolourtri<>>(sm::vec<float>{6.0f,0.0f,0.0f});
-    v.bindmodel (tctv);
-    tctv->finalize();
-    v.addVisualModel (tctv);
-#endif
     v.keepOpen();
     return 0;
 }

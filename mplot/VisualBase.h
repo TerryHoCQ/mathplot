@@ -296,6 +296,8 @@ namespace mplot {
             if (found_model == true) { this->vm.erase (this->vm.begin() + modelId); }
         }
 
+        void clear () { this->vm.clear(); }
+
         void set_cursorpos (double _x, double _y) { this->cursorpos = {static_cast<float>(_x), static_cast<float>(_y)}; }
 
         //! A callback function
@@ -513,6 +515,7 @@ namespace mplot {
             this->sceneview.translate (this->scenetrans_default);
             this->sceneview_tr.setToIdentity();
             this->sceneview_tr.translate (this->scenetrans_default);
+            this->d_to_rotation_centre = -this->scenetrans_default[2];
         }
 
         //! Set the scene's x and y values at the same time.
@@ -891,7 +894,7 @@ namespace mplot {
         sm::vec<float, 3> rotation_centre = {};
 
         // Distance to the 'rotation centre'. Used to scale the effect of the scroll wheel
-        float d_to_rotation_centre = 5.0f;
+        float d_to_rotation_centre = -zDefault;
 
         //! The projection matrix is a member of this class. Value is set during setPerspective() or setOrthographic()
         sm::mat44<float> projection;
@@ -1119,6 +1122,7 @@ namespace mplot {
                 this->sceneview_tr.translate (this->scenetrans_default);
                 this->scenetrans_delta.zero();
                 this->rotation_delta.reset();
+                this->d_to_rotation_centre = -this->scenetrans_default[2];
 
                 needs_render = true;
             }
@@ -1387,8 +1391,7 @@ namespace mplot {
 
                 // Add the depth at which the object lies.  Use forward projection to determine the
                 // correct z coordinate for the inverse projection. This assumes only one object.
-                sm::vec<float> st = this->savedSceneview.translation();
-                sm::vec<float, 4> point =  { 0.0f, 0.0f, st.z(), 1.0f };
+                sm::vec<float, 4> point =  { 0.0f, 0.0f, -this->d_to_rotation_centre, 1.0f };
                 sm::vec<float, 4> pp = this->projection * point;
                 float coord_z = pp[2] / pp[3]; // divide by pp[3] is divide by/normalise by 'w'.
 

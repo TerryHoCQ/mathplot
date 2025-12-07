@@ -14,7 +14,7 @@
 
 #include <sm/mathconst>
 #include <sm/vec>
-#include <sm/algo>
+#include <sm/geometry>
 
 #include <mplot/colour.h>
 #include <mplot/VisualModel.h>
@@ -162,16 +162,16 @@ namespace mplot {
                 }
 
                 if (_bi.test(0)) { // bottom
-                    fp = sm::algo::crossing_point (_p, _q, bot_p, bot_q);
+                    fp = sm::geometry::crossing_point (_p, _q, bot_p, bot_q);
                     fp_id = border_id::bottom;
                     if (_ti.test(0)) {
                         // bottom and top edges
-                        fq = sm::algo::crossing_point (_p, _q, top_p, top_q);
+                        fq = sm::geometry::crossing_point (_p, _q, top_p, top_q);
                         fq_id = border_id::top;
 
                     } else if (_li.test(0)) {
                         // bottom and left edges
-                        fq = sm::algo::crossing_point (_p, _q, left_p, left_q);
+                        fq = sm::geometry::crossing_point (_p, _q, left_p, left_q);
                         fq_id = border_id::left;
 
                         // What if it ALSO intersects with the right edge? And the bottom/left
@@ -180,14 +180,14 @@ namespace mplot {
                             // There's a third intersection. Was B==L?
                             if ((fp-fq).length() < thresh) {
                                 // If so, replace L with T:
-                                fq = sm::algo::crossing_point (_p, _q, top_p, top_q);
+                                fq = sm::geometry::crossing_point (_p, _q, top_p, top_q);
                                 fq_id = border_id::top;
                             }
                         } else if (_ri.test(0)) {
                             // There's a third intersection. Was B==L?
                             if ((fp-fq).length() < thresh) {
                                 // If so, replace L with R:
-                                fq = sm::algo::crossing_point (_p, _q, right_p, right_q);
+                                fq = sm::geometry::crossing_point (_p, _q, right_p, right_q);
                                 fq_id = border_id::right;
                             }
                         }
@@ -195,14 +195,14 @@ namespace mplot {
 
                     } else if (_ri.test(0)) {
                         // bottom and right edges
-                        fq = sm::algo::crossing_point (_p, _q, right_p, right_q);
+                        fq = sm::geometry::crossing_point (_p, _q, right_p, right_q);
                         fq_id = border_id::right;
 
                         if (_ti.test(0)) {
                             // There's a third intersection. Was B==R?
                             if ((fp-fq).length() < thresh) {
                                 // If so, replace R with T:
-                                fq = sm::algo::crossing_point (_p, _q, top_p, top_q);
+                                fq = sm::geometry::crossing_point (_p, _q, top_p, top_q);
                                 fq_id = border_id::top;
                             }
                         }
@@ -220,12 +220,12 @@ namespace mplot {
 
                 } else if (_ti.test(0)) {
 
-                    fp = sm::algo::crossing_point (_p, _q, top_p, top_q);
+                    fp = sm::geometry::crossing_point (_p, _q, top_p, top_q);
                     fp_id = border_id::top;
 
                     if (_li.test(0)) {
                         // top and left
-                        fq = sm::algo::crossing_point (_p, _q, left_p, left_q);
+                        fq = sm::geometry::crossing_point (_p, _q, left_p, left_q);
                         fq_id = border_id::left;
 
                         // Third intersection tests
@@ -233,35 +233,35 @@ namespace mplot {
                             // There's a third intersection. Was T==L?
                             if ((fp-fq).length() < thresh) {
                                 // If so, replace L with B:
-                                fq = sm::algo::crossing_point (_p, _q, bot_p, bot_q);
+                                fq = sm::geometry::crossing_point (_p, _q, bot_p, bot_q);
                                 fq_id = border_id::bottom;
                             }
                         } else if (_ri.test(0)) {
                             // There's a third intersection. Was T==L?
                             if ((fp-fq).length() < thresh) {
                                 // If so, replace L with R:
-                                fq = sm::algo::crossing_point (_p, _q, right_p, right_q);
+                                fq = sm::geometry::crossing_point (_p, _q, right_p, right_q);
                                 fq_id = border_id::right;
                             }
                         }
 
                     } else if (_ri.test(0)) {
                         // top and right
-                        fq = sm::algo::crossing_point (_p, _q, right_p, right_q);
+                        fq = sm::geometry::crossing_point (_p, _q, right_p, right_q);
                         fq_id = border_id::right;
 
                         if (_bi.test(0)) {
                             // There's a third intersection. Was T==R?
                             if ((fp-fq).length() < thresh) {
                                 // If so, replace R with B:
-                                fq = sm::algo::crossing_point (_p, _q, bot_p, bot_q);
+                                fq = sm::geometry::crossing_point (_p, _q, bot_p, bot_q);
                                 fq_id = border_id::bottom;
                             }
                         } else if (_li.test(0)) {
                             // There's a third intersection. Was T==R?
                             if ((fp-fq).length() < thresh) {
                                 // If so, replace R with L:
-                                fq = sm::algo::crossing_point (_p, _q, left_p, left_q);
+                                fq = sm::geometry::crossing_point (_p, _q, left_p, left_q);
                                 fq_id = border_id::left;
                             }
                         }
@@ -276,12 +276,12 @@ namespace mplot {
                         }
                     }
                 } else if (_li.test(0)) {
-                    fp = sm::algo::crossing_point (_p, _q, left_p, left_q);
+                    fp = sm::geometry::crossing_point (_p, _q, left_p, left_q);
                     fp_id = border_id::left;
 
                     if (_ri.test(0)) {
                         // left and right
-                        fq = sm::algo::crossing_point (_p, _q, right_p, right_q);
+                        fq = sm::geometry::crossing_point (_p, _q, right_p, right_q);
                         fq_id = border_id::right;
                     } else {
                         fq = fp;
@@ -294,7 +294,7 @@ namespace mplot {
                     }
                 } else if (_ri.test(0)) {
                     // Maybe ri alone
-                    fp = sm::algo::crossing_point (_p, _q, right_p, right_q);
+                    fp = sm::geometry::crossing_point (_p, _q, right_p, right_q);
                     fp_id = border_id::right;
                     fq = fp;
                     // Is fq bottom or top?
@@ -518,10 +518,10 @@ namespace mplot {
                     q1 = p - half_wave;
 
                     // Compute intersections for p1, q1
-                    std::bitset<2> bi = sm::algo::segments_intersect (p1, q1, bot_p, bot_q);
-                    std::bitset<2> ti = sm::algo::segments_intersect (p1, q1, top_p, top_q);
-                    std::bitset<2> li = sm::algo::segments_intersect (p1, q1, left_p, left_q);
-                    std::bitset<2> ri = sm::algo::segments_intersect (p1, q1, right_p, right_q);
+                    std::bitset<2> bi = sm::geometry::segments_intersect (p1, q1, bot_p, bot_q);
+                    std::bitset<2> ti = sm::geometry::segments_intersect (p1, q1, top_p, top_q);
+                    std::bitset<2> li = sm::geometry::segments_intersect (p1, q1, left_p, left_q);
+                    std::bitset<2> ri = sm::geometry::segments_intersect (p1, q1, right_p, right_q);
                     if constexpr (debug_text) {
                         std::cout << "p1/q1 intersections  bi: " << bi << "  ti: " << ti << "  li: " << li << "  ri: " << ri << std::endl;
                     }
@@ -568,10 +568,10 @@ namespace mplot {
                     }
 
                     // repeat computation of intersections for p2, q2.
-                    bi = sm::algo::segments_intersect (p2, q2, bot_p, bot_q);
-                    ti = sm::algo::segments_intersect (p2, q2, top_p, top_q);
-                    li = sm::algo::segments_intersect (p2, q2, left_p, left_q);
-                    ri = sm::algo::segments_intersect (p2, q2, right_p, right_q);
+                    bi = sm::geometry::segments_intersect (p2, q2, bot_p, bot_q);
+                    ti = sm::geometry::segments_intersect (p2, q2, top_p, top_q);
+                    li = sm::geometry::segments_intersect (p2, q2, left_p, left_q);
+                    ri = sm::geometry::segments_intersect (p2, q2, right_p, right_q);
                     if constexpr (debug_text) {
                         std::cout << "p2/q2 intersections  bi: " << bi << "  ti: " << ti << "  li: " << li << "  ri: " << ri << std::endl;
                     }
@@ -636,7 +636,7 @@ namespace mplot {
                         if (!first_off && !second_off) {
                             // both bands are ON, will draw a band.
                             // Does fp1-fp2 intersect with fq1-fq2? (if so triangles for the band will draw badly so swap a pair)
-                            std::bitset<2> fpi = sm::algo::segments_intersect (fp1, fp2, fq1, fq2);
+                            std::bitset<2> fpi = sm::geometry::segments_intersect (fp1, fp2, fq1, fq2);
                             if (fpi.test(0)) { this->swap_pair (fp2, fq2, fp2_id, fq2_id); }
                             if constexpr (debug_text) { std::cout << "** DRAW " << (i%2==0?"G":"B") << " band\n"; }
                             this->draw_band (fp1, fq1, fp2, fq2, col);

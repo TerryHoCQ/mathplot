@@ -35,7 +35,7 @@
 
 #include <mplot/gl/version.h>
 
-#include <sm/geometry>
+#include <sm/geometry_polyhedra>
 #include <sm/quaternion>
 #include <sm/mat44>
 #include <sm/vec>
@@ -48,6 +48,7 @@
 
 #include <mplot/VisualCommon.h>
 #include <mplot/colour.h>
+#include <mplot/NavMesh.h>
 
 namespace mplot {
 
@@ -217,79 +218,6 @@ namespace mplot {
             this->indices.reserve (6u * n_vertices);
         }
 
-        /**
-         * Neighbour vertex mesh code
-         */
-
-        // Minimum set of vertices to generate a topological mesh
-        std::vector<sm::vec<float, 3>> vp1;
-        // Maps index in vp1 to the original this->indices index
-        sm::vvec<sm::vvec<uint32_t>> vp1_to_indices;
-        // The edges that make up the same triangles as are shown with this->indices, but in terms of vp1.
-        // Each edge must be two indices in *ascending numerical order*
-        std::set<std::array<uint32_t, 2>> edges;
-        // Triangles too. Might be more useful than edges. Triangle given as indices into vp1
-        sm::vvec<std::tuple<std::array<uint32_t, 3>, sm::vec<float, 3>, sm::vec<float, 3>, sm::vec<float, 3>>> triangles;
-
-        // Return index of vp1 that is closest to scene_coord. Can use vp1_to_indices to find the indices
-        // into vertexPositions and vertexNormals that this index in the topographic mesh relates to.
-        uint32_t find_vp1_nearest (const sm::vec<float, 3>& scene_coord) const
-        {
-            uint32_t i = std::numeric_limits<uint32_t>::max();
-            // Brute force it. (But we have a mesh; can this guarantee a faster search? I don't think so)
-            float min_d = std::numeric_limits<float>::max();
-            for (uint32_t j = 0; j < this->vp1.size(); ++j) {
-                sm::vec<> vcoord = (this->viewmatrix * vp1[j]).less_one_dim();
-                //std::cout << "vcoord: " << vcoord;
-                float d = (scene_coord - vcoord).length();
-                //std::cout << ", distance " << d << " from " << scene_coord << std::endl;
-                if (d < min_d) {
-                    min_d = d;
-                    i = j;
-                }
-            }
-            return i;
-        }
-
-        sm::vec<sm::vec<float, 3>, 3> triangle_vertices (const std::array<uint32_t, 3>& tri_indices) const
-        {
-            sm::vec<sm::vec<float, 3>, 3> trivert;
-            if (tri_indices[0] < this->vp1.size()) { trivert[0] = this->vp1[tri_indices[0]]; }
-            if (tri_indices[1] < this->vp1.size()) { trivert[1] = this->vp1[tri_indices[1]]; }
-            if (tri_indices[2] < this->vp1.size()) { trivert[2] = this->vp1[tri_indices[2]]; }
-            return trivert;
-        }
-
-        sm::vvec<uint32_t> neighbours (const uint32_t _idx) const
-        {
-            sm::vvec<uint32_t> rtn;
-            // Search edges to find those that include _idx and then pack up the other ends in a return object
-            for (auto e : this->edges) {
-                // we have e[0] and e[1]
-                if (e[0] == _idx) {
-                    // neighb is e[1]
-                    rtn.push_back (e[1]);
-                } else if (e[1] == _idx) {
-                    // neighb is e[0]
-                    rtn.push_back (e[0]);
-                }
-            }
-            return rtn;
-        }
-
-        sm::vvec<std::array<uint32_t, 3>> neighbour_triangles (const uint32_t _idx) const
-        {
-            sm::vvec<std::array<uint32_t, 3>> rtn;
-            for (auto t: this->triangles) {
-                auto [ti, tn, tnc, tnd] = t;
-                // If it includes _idx, add it to rtn
-                if (ti[0] == _idx || ti[1] == _idx || ti[2] == _idx) {
-                    rtn.push_back (ti);
-                }
-            }
-            return rtn;
-        }
-
         // Get a single position from vertexPositions, using the index into the vector<vec>
         // interpretation of vertexPositions
         sm::vec<float, 3> get_position (const uint32_t vec_idx) const
@@ -306,160 +234,120 @@ namespace mplot {
             return (*vn)[vec_idx];
         }
 
-        // Return a tuple containing crossing location, triangle identity (three indices) and triangle normal vector
-        std::tuple<sm::vec<float, 3>, std::array<uint32_t, 3>, sm::vec<float, 3>>
-        find_triangle_crossing (const sm::vec<float, 3>& coord, const sm::vec<float, 3>& vdir) const
-        {
-            for (auto tri : triangles) {
-                auto [ti, tn, tnc, tnd] = tri;
-                auto [isect, p] = sm::algo::ray_tri_intersection<float> (this->vp1[ti[0]], this->vp1[ti[1]], this->vp1[ti[2]], coord - (vdir / 2.0f), vdir);
-                if (isect) { return {p, ti, tn}; }
-            }
+        /**
+         * Neighbour vertex mesh code.
+         */
 
-            // Failed to find, return container full of maxes
-            sm::vec<float, 3> p = {};
-            p.set_from (std::numeric_limits<float>::max());
-            constexpr uint32_t umax = std::numeric_limits<uint32_t>::max();
-            return {p , std::array<uint32_t, 3>{umax, umax, umax}, p};
-
-        }
-
-        // Find a triangle containing indices a and b that isn't 'not_this' and return, along with its normal.
-        std::tuple<std::array<uint32_t, 3>, sm::vec<float>>
-        find_other_triangle_containing (const uint32_t a, const uint32_t b, const std::array<uint32_t, 3>& not_this) const
-        {
-            constexpr bool debug_normals = false;
-
-            constexpr uint32_t umax = std::numeric_limits<uint32_t>::max();
-            std::array<uint32_t, 3> other = {umax, umax, umax};
-            constexpr float fmax = std::numeric_limits<float>::max();
-            sm::vec<float> other_n = {fmax, fmax, fmax};
-            sm::vec<float> my_n = {fmax, fmax, fmax}; // debug
-            for (auto tri : triangles) {
-                auto [ti, tn, tnc, tnd] = tri;
-                if (ti == not_this) {
-                    if constexpr (debug_normals) { my_n = tn; }
-                    continue;
-                }
-                if ((ti[0] == a && (ti[1] == b || ti[2] == b))
-                    || (ti[1] == a && (ti[0] == b || ti[2] == b))
-                    || (ti[2] == a && (ti[0] == b || ti[1] == b))) {
-                    other = ti;
-                    other_n = tn;
-                    if constexpr (!debug_normals) { break; }
-                }
-            }
-            if constexpr (debug_normals) {
-                std::cout << "my_n: " << my_n << " and other_n: " << other_n << std::endl;
-            }
-            return {other, other_n};
-        }
-
-        // Find the location, and the triangle indices at which a ray between coord and the model
-        // centroid cross - the 'penetration point'. This is essentially ray casting and if it gets
-        // used extensively, should go into a compute shader.
-        std::tuple<sm::vec<float, 3>, std::array<uint32_t, 3>, sm::vec<float, 3>>
-        find_triangle_crossing (const sm::vec<float, 3>& coord) const
-        {
-            sm::vec<float, 3> vdir = this->bb.mid() - coord;
-            vdir.renormalize();
-            return this->find_triangle_crossing (coord, vdir);
-        }
+        // Our navigation mesh data struct
+        std::unique_ptr<mplot::NavMesh> navmesh;
 
         /*!
          * Post-process vertices to generate a neighbour relationship mesh. The usual vertices and
-         * indices may not be useful to help a ground-based agent to navigate the surface defined by
-         * the mesh. This is because vertices may be duplicated at any location, so that adjacent
-         * faces can have different normals and colours.
+         * indices may not be useful to help an agent to navigate the surface defined by the
+         * mesh. This is because vertices may be duplicated at any location, so that adjacent faces
+         * can have different normals and colours.
          *
          * To help guide movement across a mesh, it would be useful to have a mesh that always gives
          * neighbour relationships.
          */
-        void vertex_postprocess() // make_neighbour_mesh() ?
+        void make_navmesh()
         {
-            constexpr bool debug = false;
-            constexpr bool debug_reorder = false;
+            constexpr bool debug_mn = false;
+            if constexpr (debug_mn) { std::cout << "make_navmesh: Called" << std::endl; }
 
-            if constexpr (debug) { std::cout << __func__ << " called\n"; }
-            // For each vertex, search for other vertices that have the same or almost the same location
+            if (this->navmesh) { return; } // already made it
+
+            if (this->flags.test (vm_bools::compute_bb) == false) {
+                throw std::runtime_error ("make_navmesh requires compute_bb flag to be true");
+            }
+            this->update_bb();
+
+            // Create a new navmesh
+            this->navmesh = std::make_unique<mplot::NavMesh>();
+
+            // Copy the bounding box
+            navmesh->bb = this->bb;
 
             // Treat vertexPositions as a vector of vec:
             auto vp = reinterpret_cast<const std::vector<sm::vec<float, 3>>*>(&this->vertexPositions);
+
             uint32_t vps = vp->size();
-
-            constexpr float vlen_thresh = 0.0f;
-
-            // For each entry in vp1, list the entries in vertexPositions that are in the same locn
-            std::map<uint32_t, sm::vvec<uint32_t>> equiv;
-
-            // Populate equiv
-            for (uint32_t i = 0; i < vps; ++i) {
-                for (uint32_t j = 0; j < vps; ++j) {
-                    if (((*vp)[i] - (*vp)[j]).length() <= vlen_thresh) { equiv[i].push_back (j); }
-                }
-            }
-            // Prune duplicates
-            std::erase_if (equiv, [](const auto& eq) { const auto& [k, v] = eq; return v.find_first_of (k) > 0; });
-
-            // Make inverse of equiv to translate from original (indices, vertexPositions) index to new topographic mesh index
-            sm::vvec<uint32_t> equiv_top (vps, 0);
-            this->vp1_to_indices.resize (equiv.size());
+            std::unordered_map<sm::vec<float, 3>, std::set<uint32_t>, sm::vec<float, 3>::hash> equiv_v;
             uint32_t i = 0;
-            for (auto eq : equiv) {
-                if constexpr (debug) { std::cout << "equiv[" << eq.first << "] = " << eq.second << std::endl; }
-                this->vp1_to_indices[i] = eq.second;
-                for (auto ev : eq.second) {
-                    equiv_top[ev] = i;
+            for (auto p : *vp) { equiv_v[p].insert (i++); }
+            std::map<uint32_t, std::set<uint32_t>> equiv;
+            for (auto e : equiv_v) { equiv[*e.second.begin()] = e.second; }
+            if constexpr (debug_mn) {
+                for (auto e : equiv) {
+                    std::cout << "make_navmesh: equiv[" << e.first << "] = ";
+                    for (auto idx : e.second) {  std::cout << idx << ","; }
+                    std::cout << std::endl;
+                }
+                std::cout << "make_navmesh: Populated equiv which has "
+                          << equiv.size() << " vvecs" << std::endl;
+            }
+
+            // Make inverse of equiv to translate from original (indices, vertexPositions) index to
+            // new topographic mesh index
+            sm::vvec<uint32_t> navmesh_idx (vps, 0);
+            navmesh->vertexidx_to_indices.resize (equiv.size());
+
+            uint32_t vcount = 0;
+            i = 0;
+            for (auto eqs : equiv) {
+                vcount += eqs.second.size();
+                navmesh->vertexidx_to_indices[i].resize (eqs.second.size());
+                std::copy (eqs.second.begin(), eqs.second.end(), navmesh->vertexidx_to_indices[i].begin());
+                for (auto ev : eqs.second) {
+                    if constexpr (debug_mn) { std::cout << "make_navmesh: set navmesh_idx[" << ev << "] = " << i << std::endl; }
+                    navmesh_idx[ev] = i;
                 }
                 ++i;
             }
-            if constexpr (debug) {
-                uint32_t cntr = 0;
-                for (auto eqi : equiv_top) {
-                    std::cout << "equiv_top[" << cntr++ << "] = " << eqi << std::endl;
-                }
+            if constexpr (debug_mn) {
+                std::cout << "make_navmesh: Created equiv inverse" << std::endl;
             }
-            // Can now populate vp1, a vector of coordinates, if required, or simply access (*vp) as needed using equiv.first
-            vp1.resize (equiv.size(), {0});
+            if (vcount != vps) {
+                std::cout << "make_navmesh: WARNING: Vertex count from equiv is " << vcount
+                          << " which should (but does not) equal " << vps << std::endl;
+            }
+
+            // Can now populate vertex, a vector of coordinates, if required, or simply access (*vp)
+            // as needed using equiv.first
+            navmesh->vertex.resize (equiv.size(), {0});
             i = 0;
-            for (auto eq : equiv) { vp1[i++] = (*vp)[eq.first]; }
-            if constexpr (debug) {
-                for (i = 0; i < vp1.size(); ++i) {
-                    std::cout << "vp1[" << i << "] = " << vp1[i] << std::endl;
-                }
-            }
+            for (auto eq : equiv) { navmesh->vertex[i++] = (*vp)[eq.first]; } // FIXME?
 
             // Lastly, generate edges. For which we require use of indices, which is expressed in
-            // terms of the old indices. That lookup is equiv_top.
-
+            // terms of the old indices. That lookup is navmesh_idx.
             for (uint32_t i = 0; i < this->indices.size(); i += 3) {
                 // Each three entries in indices is a triangle containing 3 edges. NB: Edges must be listed in ascending order!
-                std::array<uint32_t, 2> e = { equiv_top[indices[i]], equiv_top[indices[i+1]] };
+                std::array<uint32_t, 2> e = { navmesh_idx[indices[i]], navmesh_idx[indices[i+1]] };
                 if (e[0] > e[1]) {
                     uint32_t t = e[0];
                     e[0] = e[1];
                     e[1] = t;
                 }
-                this->edges.insert (e);
+                navmesh->edges.insert (e);
 
-                e = { equiv_top[indices[i]], equiv_top[indices[i+2]] };
+                e = { navmesh_idx[indices[i]], navmesh_idx[indices[i+2]] };
                 if (e[0] > e[1]) {
                     uint32_t t = e[0];
                     e[0] = e[1];
                     e[1] = t;
                 }
-                this->edges.insert (e);
+                navmesh->edges.insert (e);
 
-                e = { equiv_top[indices[i+1]], equiv_top[indices[i+2]] };
+                e = { navmesh_idx[indices[i+1]], navmesh_idx[indices[i+2]] };
                 if (e[0] > e[1]) {
                     uint32_t t = e[0];
                     e[0] = e[1];
                     e[1] = t;
                 }
-                this->edges.insert (e);
+                navmesh->edges.insert (e);
 
-                // Direct population of triangles
-                std::array<uint32_t, 3> t = { equiv_top[indices[i]], equiv_top[indices[i+1]], equiv_top[indices[i+2]] };
+                // Direct population of triangles. Three indices and a 4th number to hold flags (with bit0 meaning edge-triangle)
+                std::array<uint32_t, 4> t = { navmesh_idx[indices[i]], navmesh_idx[indices[i+1]], navmesh_idx[indices[i+2]], 0 };
 
                 // The normal vector for this triangle could be obtained from the mesh normals, but
                 // we can't trust them (though they're easy to get, as we're dealing with indices
@@ -470,37 +358,29 @@ namespace mplot {
 
                 // Compute trinorm as well and compare with the one from the mesh - perhaps it's
                 // different? We really want the right normal.
-                const sm::vec<float>& tv0 = vp1[t[0]];
-                const sm::vec<float>& tv1 = vp1[t[1]];
-                const sm::vec<float>& tv2 = vp1[t[2]];
-                sm::vec<float>  nx = (tv1 - tv0);
-                sm::vec<float>  ny = (tv2 - tv0);
-                sm::vec<float, 3> n = nx.cross (ny);
+                const sm::vec<float>& tv0 = navmesh->vertex[t[0]];
+                const sm::vec<float>& tv1 = navmesh->vertex[t[1]];
+                const sm::vec<float>& tv2 = navmesh->vertex[t[2]];
+                sm::vec<float> nx = (tv1 - tv0);
+                sm::vec<float> ny = (tv2 - tv0);
+                sm::vec<float> n = nx.cross (ny);
                 n.renormalize();
 
                 // Check rotational sense of triangles?
                 if (n.dot (trinorm) < 0.0f) {
                     // need to swap order in t:
-                    if constexpr (debug_reorder) { std::cout << "Triangle reordered (corners 1 and 2 switched)\n"; }
                     uint32_t ti = t[2];
                     t[2] = t[1];
                     t[1] = ti;
                     n = -n; // Also reverse n
                 }
 
-                this->triangles.push_back ({t, n, nx, ny}); // n is computed normal
+                navmesh->triangles.push_back ({t, n, nx, ny}); // n is computed normal
             }
+            if constexpr (debug_mn) { std::cout << "make_navmesh: Created triangles" << std::endl; }
 
-            if constexpr (debug) {
-                for (auto e : edges) {
-                    std::cout << "Edge: " << e[0] << "," << e[1] << std::endl;
-                }
-                for (auto t : this->triangles) {
-                    auto [ti, tn, tnc, tnd] = t;
-                    std::cout << "Tri: " << ti[0] << "," << ti[1] << "," << ti[2] << ", norm " << tn << std::endl;
-                }
-                std::cout << this->edges.size() << " edges and " << this->triangles.size() << " triangles in model '" << this->name << "'\n";
-            }
+            //navmesh->mark_edge_triangles();
+            //if constexpr (debug_mn) { std::cout << "make_navmesh: Marked edge triangles and done." << std::endl; }
         }
 
         /**
@@ -533,6 +413,8 @@ namespace mplot {
         //! Pre or post-multiply
         void postmultViewMatrix (const sm::mat44<float>& m) { this->viewmatrix = this->viewmatrix * m; }
         void premultViewMatrix (const sm::mat44<float>& m) { this->viewmatrix = m * this->viewmatrix; }
+
+        void scaleViewMatrix (const float by) { this->viewmatrix.scale (by); }
 
         virtual void setSceneMatrixTexts (const sm::mat44<float>& sv) = 0;
 
@@ -2104,6 +1986,165 @@ namespace mplot {
         }
 
         /*!
+         * Compute an ellipsoid surface of the form x*x/a*a + y*y/b*b + z*z/c*c = 1
+         *
+         * so is the offset position for the ellipsoid
+         *
+         * sc is the colour at one end of the z axis
+         *
+         * sc2 is the colour at the other end
+         *
+         * abc are the three ellipsoid parameters
+         *
+         * rings is the number of rings along the z axis
+         *
+         * segments is the number of segments in each ring along the z axis
+         *
+         * tr transform matrix to apply to each point in the ellipse (applied before so is applied
+         * as a transform)
+         */
+        void computeEllipsoid (sm::vec<float> so,
+                               std::array<float, 3> sc,
+                               std::array<float, 3> sc2,
+                               sm::vec<float> abc,
+                               int rings = 10, int segments = 12,
+                               sm::mat44<float> tr = sm::mat44<float>{})
+        {
+            // We have two angular parameters t and t2. t in range 0-2pi and t2 in range 0-pi. t
+            // gives the 'xy' ellipse; t2 gives the change in size of the xy ellipse as the z axis
+            // is traversed.
+            float t = 0.0f;
+            float t2 = 0.0f;
+            // used computing normals
+            sm::vec<float> two_over_abcsq = 2.0f / abc.sq();
+            // Holding the coordinates of each point on the ellipsoid as we compute it
+            sm::vec<float> p = {};
+            // The normal vector
+            sm::vec<float> n = {};
+
+            // sm::vec versions of the colours
+            sm::vec<float> _sc = {};
+            _sc.set_from (sc);
+            sm::vec<float> _sc2 = {};
+            _sc2.set_from (sc2);
+
+            // Push the central point
+            p = { 0, 0, abc[2] };
+            this->vertex_push (so + (tr * p).less_one_dim(), this->vertexPositions);
+            n = { 0, 0, 1 };
+            this->vertex_push (n, this->vertexNormals);
+            this->vertex_push (_sc, this->vertexColors);
+
+            GLuint capMiddle = this->idx++;
+            GLuint ringStartIdx = this->idx;
+            GLuint lastRingStartIdx = this->idx;
+
+            t2 = sm::mathconst<float>::pi / rings;
+            p[2] = abc[2] * std::cos(t2);
+
+            bool firstseg = true;
+            for (int j = 0; j < segments; j++) {
+
+                t = sm::mathconst<float>::two_pi * static_cast<float>(j) / segments;
+                p[0] = abc[0] * std::cos(t) * std::sin(t2);
+                p[1] = abc[1] * std::sin(t) * std::sin(t2);
+
+                sm::vec<> pp = (tr * p).less_one_dim();
+                this->vertex_push (so + pp, this->vertexPositions);
+
+                n = (tr * (p * two_over_abcsq)).less_one_dim();
+                n.renormalize();
+                this->vertex_push (n, this->vertexNormals);
+
+                sm::vec<float> sc_ring = _sc * (1.0f - 1.0f / rings)  + _sc2 * 1.0f / rings;
+                this->vertex_push (sc_ring, this->vertexColors);
+
+                if (!firstseg) {
+                    this->indices.push_back (capMiddle);
+                    this->indices.push_back (this->idx-1);
+                    this->indices.push_back (this->idx++);
+                } else {
+                    this->idx++;
+                    firstseg = false;
+                }
+            }
+            this->indices.push_back (capMiddle);
+            this->indices.push_back (this->idx-1);
+            this->indices.push_back (capMiddle+1);
+
+            // Now add the triangles around the rings
+            for (int i = 2; i < rings; i++) {
+
+                t2 = sm::mathconst<float>::pi * (static_cast<float>(i) / rings);
+                p[2] = abc[2] * std::cos(t2);
+
+                sm::vec<float> sc_ring = _sc * (1.0f - static_cast<float>(i) / rings)  + _sc2 * static_cast<float>(i) / rings;
+
+                for (int j = 0; j < segments; j++) {
+
+                    // "current" segment
+                    t = sm::mathconst<float>::two_pi * static_cast<float>(j) / segments;
+                    p[0] = abc[0] * std::cos(t) * std::sin(t2);
+                    p[1] = abc[1] * std::sin(t) * std::sin(t2);
+
+                    // NB: Only add ONE vertex per segment. ALREADY have the first ring!
+                    sm::vec<> pp = (tr * p).less_one_dim();
+                    this->vertex_push (so + pp, this->vertexPositions);
+                    // The vertex normal of a vertex that makes up a sphere is
+                    // just a normal vector in the direction of the vertex.
+                    n = (tr * (p * two_over_abcsq)).less_one_dim();
+                    n.renormalize();
+                    this->vertex_push (n, this->vertexNormals);
+
+                    this->vertex_push (sc_ring, this->vertexColors);
+
+                    if (j == segments - 1) {
+                        // Last vertex is back to the start
+                        this->indices.push_back (ringStartIdx++);
+                        this->indices.push_back (this->idx);
+                        this->indices.push_back (lastRingStartIdx);
+                        this->indices.push_back (lastRingStartIdx);
+                        this->indices.push_back (this->idx++);
+                        this->indices.push_back (lastRingStartIdx+segments);
+                    } else {
+                        this->indices.push_back (ringStartIdx++);
+                        this->indices.push_back (this->idx);
+                        this->indices.push_back (ringStartIdx);
+                        this->indices.push_back (ringStartIdx);
+                        this->indices.push_back (this->idx++);
+                        this->indices.push_back (this->idx);
+                    }
+                }
+                lastRingStartIdx += segments;
+            }
+
+            // bottom cap
+
+            // Push the central point of the bottom cap
+            p = { 0, 0, -abc[2] };
+            this->vertex_push (so + (tr * p).less_one_dim(), this->vertexPositions);
+            n = { 0, 0, -1 };
+            this->vertex_push (n, this->vertexNormals);
+            this->vertex_push (_sc2, this->vertexColors);
+            capMiddle = this->idx++;
+            firstseg = true;
+            // No more vertices to push, just do the indices for the bottom cap
+            ringStartIdx = lastRingStartIdx;
+            for (int j = 0; j < segments; j++) {
+                if (j != segments - 1) {
+                    this->indices.push_back (capMiddle);
+                    this->indices.push_back (ringStartIdx++);
+                    this->indices.push_back (ringStartIdx);
+                } else {
+                    // Last segment
+                    this->indices.push_back (capMiddle);
+                    this->indices.push_back (ringStartIdx);
+                    this->indices.push_back (lastRingStartIdx);
+                }
+            }
+        }
+
+        /*!
          * Compute vertices for an icosahedron.
          */
         void computeIcosahedron (sm::vec<float> centre,
@@ -2727,17 +2768,17 @@ namespace mplot {
             sm::vec<float, 2> l_n_1 = e_p.less_one_dim() + (n_ortho * hw) - n_vec;
             sm::vec<float, 2> l_n_2 = n_p.less_one_dim() + (n_ortho * hw) + n_vec;
 
-            std::bitset<2> isect = sm::algo::segments_intersect<float> (l_p_1, l_p_2, l_c_1, l_c_2);
+            std::bitset<2> isect = sm::geometry::segments_intersect<float> (l_p_1, l_p_2, l_c_1, l_c_2);
             if (isect.test(0) == true && isect.test(1) == false) { // test for intersection but not colinear
-                c1_p = sm::algo::crossing_point (l_p_1, l_p_2, l_c_1, l_c_2);
+                c1_p = sm::geometry::crossing_point (l_p_1, l_p_2, l_c_1, l_c_2);
             } else if (isect.test(0) == true && isect.test(1) == true) {
                 c1_p = /*s_p.less_one_dim() +*/ (c_ortho * hw);
             } else { // no intersection. prev could have been start
                 c1_p = /*s_p.less_one_dim() +*/ (c_ortho * hw);
             }
-            isect = sm::algo::segments_intersect<float> (l_c_1, l_c_2, l_n_1, l_n_2);
+            isect = sm::geometry::segments_intersect<float> (l_c_1, l_c_2, l_n_1, l_n_2);
             if (isect.test(0) == true && isect.test(1) == false) {
-                c4_p = sm::algo::crossing_point (l_c_1, l_c_2, l_n_1, l_n_2);
+                c4_p = sm::geometry::crossing_point (l_c_1, l_c_2, l_n_1, l_n_2);
             } else if (isect.test(0) == true && isect.test(1) == true) {
                 c4_p = e_p.less_one_dim() + (c_ortho * hw);
             } else { // no intersection, prev could have been end
@@ -2752,18 +2793,18 @@ namespace mplot {
             sm::vec<float, 2> o_l_n_1 = e_p.less_one_dim() - (n_ortho * hw) - n_vec;
             sm::vec<float, 2> o_l_n_2 = n_p.less_one_dim() - (n_ortho * hw) + n_vec;
 
-            isect = sm::algo::segments_intersect<float> (o_l_p_1, o_l_p_2, o_l_c_1, o_l_c_2);
+            isect = sm::geometry::segments_intersect<float> (o_l_p_1, o_l_p_2, o_l_c_1, o_l_c_2);
             if (isect.test(0) == true && isect.test(1) == false) { // test for intersection but not colinear
-                c2_p = sm::algo::crossing_point (o_l_p_1, o_l_p_2, o_l_c_1, o_l_c_2);
+                c2_p = sm::geometry::crossing_point (o_l_p_1, o_l_p_2, o_l_c_1, o_l_c_2);
             } else if (isect.test(0) == true && isect.test(1) == true) {
                 c2_p = /*s_p.less_one_dim()*/ - (c_ortho * hw);
             } else { // no intersection. prev could have been start
                 c2_p = /*s_p.less_one_dim()*/ - (c_ortho * hw);
             }
 
-            isect = sm::algo::segments_intersect<float> (o_l_c_1, o_l_c_2, o_l_n_1, o_l_n_2);
+            isect = sm::geometry::segments_intersect<float> (o_l_c_1, o_l_c_2, o_l_n_1, o_l_n_2);
             if (isect.test(0) == true && isect.test(1) == false) {
-                c3_p = sm::algo::crossing_point (o_l_c_1, o_l_c_2, o_l_n_1, o_l_n_2);
+                c3_p = sm::geometry::crossing_point (o_l_c_1, o_l_c_2, o_l_n_1, o_l_n_2);
             } else if (isect.test(0) == true && isect.test(1) == true) {
                 c3_p = e_p.less_one_dim() - (c_ortho * hw);
             } else { // no intersection. next could have been end

@@ -1,5 +1,5 @@
 #include <iostream>
-#include <sm/geometry>
+#include <sm/geometry_polyhedra>
 #include <sm/vec>
 
 int main()

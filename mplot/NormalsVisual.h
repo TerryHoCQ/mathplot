@@ -20,6 +20,8 @@ namespace mplot {
         {
             this->mymodel = _mymodel;
             this->viewmatrix = _mymodel->getViewMatrix();
+            // We create the model's navmesh, in case it wasn't already done
+            this->mymodel->make_navmesh();
         }
 
         void initializeVertices()
@@ -49,24 +51,29 @@ namespace mplot {
                                     _clr, tube_r, this->arrowhead_prop, cone_r, this->shapesides);
             }
 
-            std::array<uint32_t, 3> ti = {};
-            sm::vec<float, 3> nv = {};
-            sm::vec<float, 3> nvc = {};
-            sm::vec<float, 3> nvd = {};
-            sm::vec<float, 3> pos = {};
-            // We also have vp1 (public) and triangles (also public)
-            for (auto t : mymodel->triangles) {
-                std::tie(ti, nv, nvc, nvd) = t;
-                // Plot tn at mean location of ti
-                pos = (mymodel->vp1[ti[0]] + mymodel->vp1[ti[1]] + mymodel->vp1[ti[2]]) / 3.0f;
-                // Mesh triangle normals
-                this->computeArrow (pos, (pos + nv * this->scale_factor),
-                                    clr, tube_r, this->arrowhead_prop, cone_r, this->shapesides);
-                // Computed triangle normals
-                this->computeArrow (pos, (pos + nvc * this->scale_factor),
-                                    clrnc, tube_r, this->arrowhead_prop, cone_r, this->shapesides);
-                this->computeArrow (pos, (pos + nvd * scale_factor),
-                                    clrnd, tube_r, this->arrowhead_prop, cone_r, this->shapesides);
+
+            // If we also have the navmesh, then use its triangles to show face normals
+            if (mymodel->navmesh) {
+
+                std::array<uint32_t, 4> ti = {};
+                sm::vec<float, 3> nv = {};
+                sm::vec<float, 3> nvc = {};
+                sm::vec<float, 3> nvd = {};
+                sm::vec<float, 3> pos = {};
+
+                for (auto t : mymodel->navmesh->triangles) {
+                    std::tie(ti, nv, nvc, nvd) = t;
+                    // Plot tn at mean location of ti
+                    pos = (mymodel->navmesh->vertex[ti[0]] + mymodel->navmesh->vertex[ti[1]] + mymodel->navmesh->vertex[ti[2]]) / 3.0f;
+                    // Mesh triangle normals
+                    this->computeArrow (pos, (pos + nv * this->scale_factor),
+                                        clr, tube_r, this->arrowhead_prop, cone_r, this->shapesides);
+                    // Computed triangle normals
+                    this->computeArrow (pos, (pos + nvc * this->scale_factor),
+                                        clrnc, tube_r, this->arrowhead_prop, cone_r, this->shapesides);
+                    this->computeArrow (pos, (pos + nvd * scale_factor),
+                                        clrnd, tube_r, this->arrowhead_prop, cone_r, this->shapesides);
+                }
             }
         };
 
