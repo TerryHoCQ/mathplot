@@ -14,8 +14,8 @@
 #include <mplot/VisualModel.h>
 #include <mplot/colour.h>
 
-namespace mplot {
-
+namespace mplot
+{
     //! This class creates the vertices for a set of coordinate arrows to be rendered
     //! in a 3-D scene.
     template<int glver = mplot::gl::version_4_1>

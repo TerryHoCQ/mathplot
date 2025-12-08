@@ -20,11 +20,12 @@
 # include <mplot/VisualTextModelImplNoMX.h>
 #endif
 
-namespace mplot {
+namespace mplot
+{
     // glad_type is set in VisualOwnableNoMX.h or VisualOwnableMX.h
     template <int glver = mplot::gl::version_4_1>
     struct VisualTextModel : public mplot::VisualTextModelImpl<glver, mplot::gl::multicontext> {
         VisualTextModel(mplot::TextFeatures _tf)
             : mplot::VisualTextModelImpl<glver, mplot::gl::multicontext>::VisualTextModelImpl(_tf) {}
     };
-} // namespace mplot
+}

@@ -5,8 +5,8 @@
 #include <mplot/VisualModel.h>
 #include <mplot/ColourMap.h>
 
-namespace mplot {
-
+namespace mplot
+{
     //! This class creates the vertices for a rhombohedron
     template<int glver = mplot::gl::version_4_1>
     class RhomboVisual : public VisualModel<glver>

@@ -13,8 +13,8 @@
 #include <mplot/graphing.h>
 #include <mplot/graphstyles.h> // Share tickstyle, axestyle
 
-namespace mplot {
-
+namespace mplot
+{
     template <typename Flt, int glver = mplot::gl::version_4_1>
     class TriaxesVisual : public VisualModel<glver>
     {

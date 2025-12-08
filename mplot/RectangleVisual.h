@@ -6,8 +6,8 @@
 #include <sm/mat22>
 #include <mplot/VisualModel.h>
 
-namespace mplot {
-
+namespace mplot
+{
     //! This class creates the vertices for a simple flat rectangle in a 3D scene.
     template<int glver = mplot::gl::version_4_1>
     class RectangleVisual : public VisualModel<glver>

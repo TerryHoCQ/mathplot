@@ -9,8 +9,8 @@
 
 #include <string>
 
-namespace mplot {
-
+namespace mplot
+{
     //! A version definition for the whole of mathplot
     static constexpr unsigned int version_major = 1;
     static constexpr unsigned int version_minor = 0;

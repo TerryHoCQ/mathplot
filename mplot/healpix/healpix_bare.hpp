@@ -31,8 +31,8 @@
 #include <sm/mathconst>
 
 // The healpix namespace contains code from the HEALPix C library, slightly modified.
-namespace hp {
-
+namespace hp
+{
     // Lookup tables
     static const int jrll[] = { 2,2,2,2,3,3,3,3,4,4,4,4 };
     static const int jpll[] = { 1,3,5,7,0,2,4,6,1,3,5,7 };

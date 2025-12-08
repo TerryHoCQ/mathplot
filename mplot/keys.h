@@ -6,8 +6,8 @@
 // numeric keys are slightly different. GLFW_KEY_0 is mplot::key::n0, GLFW_KEY_1 is
 // mplot::key::n1 etc. (because mplot::key::1 would be illegal C++ code).
 
-namespace mplot {
-
+namespace mplot
+{
     struct key
     {
         // The unknown key

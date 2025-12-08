@@ -8,8 +8,8 @@
 #include <mplot/VisualModel.h>
 #include <mplot/ColourMap.h>
 
-namespace mplot {
-
+namespace mplot
+{
     /*!
      * This class creates the vertices for an geodesic polyhedron in a 3D scene.
      *

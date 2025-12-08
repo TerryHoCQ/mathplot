@@ -5,9 +5,8 @@
 
 #include <array>
 
-namespace mplot {
-  namespace cet {
-
+namespace mplot::cet
+{
     constexpr std::array<std::array<float, 3>, 256> cm_CET_C4s = {{
             { 0.1020000f, 0.3900000f, 0.8970000f },
             { 0.1120000f, 0.3920000f, 0.8970000f },
@@ -15288,5 +15287,5 @@ namespace mplot {
             { 0.8490000f, 0.0310000f, 0.0520000f },
             { 0.8420000f, 0.0200000f, 0.0520000f }
         }}; // cm_CET_R4
-  } // namespace cet
-} // namespace mplot
+
+} // namespace mplot::cet

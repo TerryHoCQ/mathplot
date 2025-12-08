@@ -19,9 +19,10 @@
 #include <mplot/colour.h>
 #include <mplot/VisualModel.h>
 
-namespace mplot {
-
-    enum class border_id {
+namespace mplot
+{
+    enum class border_id
+    {
         top,
         bottom,
         left,

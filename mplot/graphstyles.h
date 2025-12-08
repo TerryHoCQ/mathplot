@@ -4,8 +4,8 @@
 
 #pragma once
 
-namespace mplot {
-
+namespace mplot
+{
     //! What shape for the graph markers?
     enum class markerstyle
     {

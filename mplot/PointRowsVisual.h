@@ -11,8 +11,8 @@
 #include <mplot/tools.h>
 #include <mplot/VisualDataModel.h>
 
-namespace mplot {
-
+namespace mplot
+{
     /*!
      * The template argument Flt is the type of the data which this PointRowsVisual will visualize.
      *

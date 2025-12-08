@@ -16,8 +16,8 @@
 # include <mplot/VisualModelImplNoMX.h>
 #endif
 
-namespace mplot {
-
+namespace mplot
+{
     /*!
      * An OpenGL model class
      *
@@ -45,5 +45,4 @@ namespace mplot {
         VisualModel(const sm::vec<float, 3>& _offset)
             : mplot::VisualModelImpl<glver, mplot::gl::multicontext>::VisualModelImpl(_offset) {}
     };
-
-} // namespace mplot
+}

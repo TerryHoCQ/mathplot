@@ -9,16 +9,18 @@
  */
 #pragma once
 
-namespace mplot {
-
+namespace mplot
+{
     //! The shape of the cartesian grid. Only used by CartGrid.h as Grid.h only specifies rectangular grids.
-    enum class GridDomainShape {
+    enum class GridDomainShape
+    {
         Rectangle,
         Boundary // The shape of the arbitrary boundary set with CartGrid::setBoundary
     };
 
     //! The wrapping employed for the Cartesian grid.
-    enum class GridDomainWrap {
+    enum class GridDomainWrap
+    {
         None,        // No wrapping
         Horizontal,  // The eastern neighbour of the most eastern element is the most western element on that row
         Vertical,    // The northern neighbour of the most northern element is the most southern element on that col

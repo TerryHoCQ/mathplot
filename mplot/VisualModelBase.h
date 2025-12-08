@@ -50,8 +50,8 @@
 #include <mplot/colour.h>
 #include <mplot/NavMesh.h>
 
-namespace mplot {
-
+namespace mplot
+{
     union float_bytes
     {
         float f;

@@ -26,7 +26,7 @@
 
 // By including this header, you take out a contract that you are not using multicontext (MX) GLAD
 // headers. This must appear BEFORE the rest of the mplot headers.
-namespace mplot { namespace gl { static constexpr int multicontext = 0; } }
+namespace mplot::gl { static constexpr int multicontext = 0; }
 
 #include <mplot/VisualResourcesNoMX.h>
 #include <mplot/VisualTextModel.h>
@@ -34,8 +34,8 @@ namespace mplot { namespace gl { static constexpr int multicontext = 0; } }
 #include <mplot/gl/loadshaders_nomx.h>
 #include <mplot/gl/util_nomx.h>
 
-namespace mplot {
-
+namespace mplot
+{
     /*!
      * VisualOwnableNoMX - adds GL calls to the 'scene' base class, VisualBase
      *

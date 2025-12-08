@@ -5,8 +5,8 @@
 /*!
  * Listed colour maps, copied from _cm_listed.py
  */
-namespace mplot {
-
+namespace mplot
+{
     /*!
      * Magma
      */

@@ -17,8 +17,8 @@
 #include <sm/vec>
 #include <sm/vvec>
 
-namespace mplot {
-
+namespace mplot
+{
     /*
      * Wrap lodepng::decode to load a PNG from file, placing the data into the
      * image_data array. Figure out based on the type of T, how to scale the numbers.

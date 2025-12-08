@@ -17,8 +17,8 @@
 #include <iostream>
 #include <stdexcept>
 
-namespace mplot {
-
+namespace mplot
+{
     //! Singleton resource class for mplot::Visual scenes.
     template<int glver>
     class VisualGlfw

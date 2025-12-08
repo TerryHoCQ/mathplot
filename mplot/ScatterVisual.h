@@ -14,8 +14,8 @@
 #include <mplot/VisualDataModel.h>
 #include <mplot/graphstyles.h>
 
-namespace mplot {
-
+namespace mplot
+{
     //! The template argument Flt is the type of the data which this ScatterVisual
     //! will visualize.
     template <typename Flt, int glver = mplot::gl::version_4_1>

@@ -15,8 +15,8 @@
 #include <mplot/colour.h>
 #include <mplot/graphstyles.h>
 
-namespace mplot {
-
+namespace mplot
+{
     //! A class to make quiver plots
     template <typename Flt, int glver = mplot::gl::version_4_1>
     class QuiverVisual : public VisualDataModel<Flt, glver>

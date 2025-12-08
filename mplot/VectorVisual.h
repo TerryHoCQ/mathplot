@@ -10,12 +10,13 @@
 #include <mplot/ColourMap.h>
 #include <mplot/VisualModel.h>
 
-namespace mplot {
-
+namespace mplot
+{
     //! How should the visualized vector go? Does it start at the origin? If so, it goes 'from'
     //! the origin; FromOrigin. Does it instead sit on top of the origin (OnOrigin)?
     //! Alternatively, it could go 'to' the origin; ToOrigin.
-    enum class VectorGoes {
+    enum class VectorGoes
+    {
         FromOrigin,
         ToOrigin,
         OnOrigin

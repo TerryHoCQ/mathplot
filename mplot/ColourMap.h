@@ -16,8 +16,8 @@
 #include <sm/flags>
 #include <sm/crc32>
 
-namespace mplot {
-
+namespace mplot
+{
     //! Different colour maps types.
     enum class ColourMapType : uint32_t
     {

@@ -4,8 +4,8 @@
 #include <sm/vec>
 #include <mplot/VisualModel.h>
 
-namespace mplot {
-
+namespace mplot
+{
     // A simple ring class that uses the primitive VisualModel::computeRing
     template <int glver = mplot::gl::version_4_1>
     struct RingVisual : public mplot::VisualModel<glver>
