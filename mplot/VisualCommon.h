@@ -9,8 +9,41 @@
 #include <stdexcept>
 #include <iostream>
 #include <cstring>
+#include <string>
+#include <array>
 #include <sm/vec>
+#include <sm/range>
+#include <sm/vvec>
+#include <sm/mat44>
 #include <mplot/tools.h>
+#include <mplot/colour.h>
+
+namespace mplot
+{
+    // A very simple mesh struct. No textures, materials or owt
+    struct meshgroup
+    {
+        std::string name;
+        sm::mat44<float> transform;
+        sm::vvec<uint32_t> indices;
+        sm::vvec<sm::vec<float>> positions;
+        sm::vvec<sm::vec<float>> normals;
+        sm::vvec<sm::vec<float>> colours;
+        sm::range<sm::vec<float>> object_aabb;
+        sm::range<sm::vec<float>> world_aabb;
+        // Single colour is used if colours is empty
+        std::array<float, 3> single_colour = mplot::colour::grey50;
+        void validate() const
+        {
+            if (this->positions.size() != this->normals.size()) {
+                throw std::runtime_error ("meshgroup has different numbers of positions and normals");
+            }
+            if (!this->colours.empty() && this->colours.size() != this->positions.size()) {
+                throw std::runtime_error ("meshgroup has different numbers of positions and colours");
+            }
+        }
+    };
+}
 
 namespace mplot::visgl
 {

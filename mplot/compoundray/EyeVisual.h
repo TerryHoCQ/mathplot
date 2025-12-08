@@ -76,20 +76,23 @@ namespace mplot::compoundray
         //! Initialise with offset, start and end coordinates, radius and a single colour.
         EyeVisual (const sm::vec<float, 3> _offset,
                    std::vector<std::array<float, 3>>* _ommData,
-                   std::vector<mplot::compoundray::Ommatidium>* _ommatidia)
+                   std::vector<mplot::compoundray::Ommatidium>* _ommatidia,
+                   const mplot::meshgroup* _head_mesh = nullptr)
         {
-            this->init (_offset, _ommData, _ommatidia);
+            this->init (_offset, _ommData, _ommatidia, _head_mesh);
         }
 
         ~EyeVisual() {}
 
         void init (const sm::vec<float, 3> _offset,
                    std::vector<std::array<float, 3>>* _ommData,
-                   std::vector<mplot::compoundray::Ommatidium>* _ommatidia)
+                   std::vector<mplot::compoundray::Ommatidium>* _ommatidia,
+                   const mplot::meshgroup* _head_mesh = nullptr)
         {
             this->viewmatrix.translate (_offset);
             this->ommData = _ommData;
             this->ommatidia = _ommatidia;
+            this->head_mesh = _head_mesh;
         }
 
         void reinitColours()
@@ -311,10 +314,15 @@ namespace mplot::compoundray
                     this->computeTube (pos, pos + (0.05f * dw * dir), colour, colour, dw * 0.5f, tube_faces);
 
                     // This visualizes the optical cones
-                    if (this->show_cones == true) {
+                    if (this->show_cones == true && this->show_fov == false) {
                         float optical_radius = focal_point * std::tan (angle / 2.0f);
                         // Colour comes from ommData. ringoffset is 1.0f
                         this->computeCone (pos, ommatidial_detector_point, 0.0f, colour, optical_radius, tube_faces);
+                    } else if (this->show_fov == true) {
+                        // do a cone of angle 'acceptanceAngle' using user-supplied cone_length, starting FROM the disc to show field of view of the eye
+                        sm::vec<float, 3> ommatidial_cone_pos = pos + dir * this->cone_length;
+                        float radius = this->cone_length * std::tan (angle / 2.0f);
+                        this->computeCone (ommatidial_cone_pos, pos, 0.0f, colour, radius, tube_faces);
                     }
                 }
             } else if (show_3d && this->focal_point_sum <= 0.0f) {
@@ -333,7 +341,7 @@ namespace mplot::compoundray
                     float dw = min_dist_to_other[i];
                     this->computeTube (pos, pos + (0.05f * dw * dir), colour, colour, dw * 0.5f, tube_faces);
                     // We don't have a focal length to show cones, but we can still show the acceptance angle
-                    if (this->show_cones == true) {
+                    if (this->show_fov == true) {
                         // do a cone of angle 'acceptanceAngle' using user-supplied cone_length
                         sm::vec<float, 3> ommatidial_cone_pos = pos + dir * this->cone_length;
                         float radius = this->cone_length * std::tan (angle / 2.0f);
@@ -342,6 +350,7 @@ namespace mplot::compoundray
                 }
             }
 
+            // 2D projections
             for (uint32_t pri = 0; pri < this->projections.size(); ++pri) {
                 this->omm2d.clear();
                 if (this->projections[pri].proj_type == projection_type::cylindrical) {
@@ -374,6 +383,7 @@ namespace mplot::compoundray
                 }
             }
 
+            // Sphere and rays for finding a suitable 2D projection
             for (uint32_t pri = 0; pri < this->projections.size(); ++pri) {
 
                 if (this->show_sphere) {
@@ -401,6 +411,9 @@ namespace mplot::compoundray
                     }
                 }
             }
+
+            // Optional head
+            if (this->head_mesh != nullptr) { this->computeMeshgroup (*this->head_mesh); }
         }
 
         void voronoi2d (uint32_t pri)
@@ -474,13 +487,17 @@ namespace mplot::compoundray
 
         // If false, hide 3D representation (the ommatidial cones and discs)
         bool show_3d = true;
-        // Visualize in two modes "disc" mode, showing just a 2D disc for each ommatidium and
-        // disc+cone mode, where the acceptance angle/optical cone is displayed too. Runtime switchable.
+        // If true, show optical cones, if possible
         bool show_cones = false;
+        // If true, show 'field of view' cones. Overrides show_cones. Control size of cones with
+        // this->cone_length
+        bool show_fov = false;
         // The colours detected by each ommatidium
         std::vector<std::array<float, 3>>* ommData = nullptr;
         // The position and orientation of each ommatidium
         std::vector<mplot::compoundray::Ommatidium>* ommatidia = nullptr;
+        // An optional head mesh
+        const mplot::meshgroup* head_mesh = nullptr;
         // If sum is 0, then we have a special case for rendering the eye as we have no focal point
         // offsets specified for this eye (and hence the optical radius of the ommatidium is not known)
         float focal_point_sum = 0.0f;
