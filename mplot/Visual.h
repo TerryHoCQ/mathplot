@@ -15,8 +15,8 @@
 
 #include <mplot/VisualMX.h>
 
-namespace mplot {
-
+namespace mplot
+{
     /*!
      * Visual 'scene' class
      *

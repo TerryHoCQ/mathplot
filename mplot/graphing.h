@@ -25,8 +25,8 @@
 #include <sm/algo>
 #include <sm/vvec>
 
-namespace mplot::graphing {
-
+namespace mplot::graphing
+{
     //! Graph-specific number formatting for tick labels. You must pass in an adjacent
     //! label (which affects the optimum precision to use for formatting)
     template <typename F>

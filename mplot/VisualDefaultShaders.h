@@ -95,8 +95,8 @@ OpenGL 4.5
 
 #include <mplot/gl/version.h>
 
-namespace mplot {
-
+namespace mplot
+{
     // The default vertex shader. To study this GLSL, see Visual.vert.glsl, which has
     // some code comments.
     const char* defaultVtxShader = "uniform mat4 m_matrix;\n"

@@ -13,8 +13,8 @@
 #include <mplot/tools.h>
 #include <mplot/VisualDataModel.h>
 
-namespace mplot {
-
+namespace mplot
+{
     template <typename Flt, int glver = mplot::gl::version_4_1>
     class QuadsMeshVisual : public VisualDataModel<Flt, glver>
     {

@@ -5,9 +5,8 @@
 
 #include <array>
 
-namespace mplot {
-  namespace crameri {
-
+namespace mplot::crameri
+{
     constexpr std::array<std::array<float, 3>, 256> cm_lipari = {{
             { 0.0113700f, 0.0732400f, 0.1482840f },
             { 0.0139650f, 0.0790620f, 0.1553700f },
@@ -10367,5 +10366,4 @@ namespace mplot {
             { 0.9929940f, 0.9929850f, 0.9929450f },
             { 1.0000000f, 1.0000000f, 1.0000000f }
         }}; // cm_bilbao
-  } // namespace crameri
-} // namespace mplot
+} // namespace mplot::crameri

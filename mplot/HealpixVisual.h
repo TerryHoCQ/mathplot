@@ -8,7 +8,8 @@
 #include <mplot/VisualModel.h>
 #include <mplot/ColourMap.h>
 
-namespace mplot {
+namespace mplot
+{
     /*
      * Type T for the data. A HEALPix VisualModel which visualizes the values in
      * pixeldata, which should be indexed with the Healpix NEST index scheme.

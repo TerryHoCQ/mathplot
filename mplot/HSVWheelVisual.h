@@ -10,8 +10,8 @@
 #include <mplot/VisualModel.h>
 #include <mplot/GraphVisual.h>
 
-namespace mplot {
-
+namespace mplot
+{
     template <typename F, int glver = mplot::gl::version_4_1>
     class HSVWheelVisual : public VisualModel<glver>
     {

@@ -11,8 +11,8 @@
 #include <string>
 #include <mplot/Visual.h>
 
-namespace mplot::compoundray {
-
+namespace mplot::compoundray
+{
     template <int glver = mplot::gl::version_4_1>
     struct Visual : public mplot::Visual<glver>
     {

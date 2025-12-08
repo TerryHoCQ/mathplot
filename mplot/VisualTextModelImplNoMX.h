@@ -22,8 +22,8 @@
 #include <mplot/VisualFaceNoMX.h>
 #include <mplot/VisualResourcesNoMX.h>
 
-namespace mplot {
-
+namespace mplot
+{
     //! Forward declaration of a VisualBase class
     template <int> class VisualBase;
 

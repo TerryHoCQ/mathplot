@@ -13,8 +13,8 @@
 #include <mplot/graphing.h>
 #include <mplot/graphstyles.h>
 
-namespace mplot {
-
+namespace mplot
+{
     // Should our colourbar be horizontal or vertical? Horizontal bars always have
     // min->max from left to right. Vertical bars always have min->max from bottom to
     // top. Make your own ColourBarVisual if you need reversed mappings!

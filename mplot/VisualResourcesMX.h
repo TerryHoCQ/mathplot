@@ -14,8 +14,8 @@
 #include <mplot/VisualResourcesBase.h>
 #include <mplot/gl/util_mx.h>
 
-namespace mplot {
-
+namespace mplot
+{
     // Pointers to mplot::VisualBase are used to index font faces
     template<int>
     class VisualBase;

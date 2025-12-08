@@ -161,256 +161,253 @@ extern const char __start_dvsansbi_ttf[];
 extern const char __stop_dvsansbi_ttf[];
 #endif
 
-namespace mplot {
+namespace mplot::visgl
+{
+    struct VisualFaceBase
+    {
+        VisualFaceBase () {}
+        ~VisualFaceBase () {}
 
-    namespace visgl {
+        //! Set true for informational/debug messages
+        static constexpr bool debug_visualface = false;
 
-        struct VisualFaceBase
+        //! The FT_Face that we're managing
+        FT_Face face;
+
+        //! The OpenGL character info stuff
+        std::map<char32_t, mplot::visgl::CharInfo> glchars;
+
+    protected:
+
+        void init_common (const mplot::VisualFont _font, unsigned int fontpixels, FT_Library& ft_freetype)
         {
-            VisualFaceBase () {}
-            ~VisualFaceBase () {}
-
-            //! Set true for informational/debug messages
-            static constexpr bool debug_visualface = false;
-
-            //! The FT_Face that we're managing
-            FT_Face face;
-
-            //! The OpenGL character info stuff
-            std::map<char32_t, mplot::visgl::CharInfo> glchars;
-
-        protected:
-
-            void init_common (const mplot::VisualFont _font, unsigned int fontpixels, FT_Library& ft_freetype)
-            {
-                std::string fontpath = "";
+            std::string fontpath = "";
 #ifdef _MSC_VER
-		char* userprofile = getenv ("USERPROFILE");
-		std::string uppath("");
-		if (userprofile != nullptr) {
-		    uppath = std::string (userprofile);
-		}
+            char* userprofile = getenv ("USERPROFILE");
+            std::string uppath("");
+            if (userprofile != nullptr) {
+                uppath = std::string (userprofile);
+            }
 
-                switch (_font) {
-                case VisualFont::DVSans:
-                {
-                    fontpath = uppath + "\\AppData\\Local\\Temp\\DejaVuSans.ttf";
-                    this->makeTempFontFile<const unsigned char> (fontpath, vf_dvsansData, vf_dvsansEnd);
-                    break;
-                }
-                case VisualFont::DVSansItalic:
-                {
-                    fontpath = uppath + "\\AppData\\Local\\Temp\\DejaVuSans-Oblique.ttf";
-                    this->makeTempFontFile<const unsigned char> (fontpath, vf_dvsansitData, vf_dvsansitEnd);
-                    break;
-                }
-                case VisualFont::DVSansBold:
-                {
-                    fontpath = uppath + "\\AppData\\Local\\Temp\\DejaVuSans-Bold.ttf";
-                    this->makeTempFontFile<const unsigned char> (fontpath, vf_dvsansbdData, vf_dvsansbdEnd);
-                    break;
-                }
-                case VisualFont::DVSansBoldItalic:
-                {
-                    fontpath = uppath + "\\AppData\\Local\\Temp\\DejaVuSans-BoldOblique.ttf";
-                    this->makeTempFontFile<const unsigned char> (fontpath, vf_dvsansbiData, vf_dvsansbiEnd);
-                    break;
-                }
-                case VisualFont::Vera:
-                {
-                    fontpath = uppath + "\\AppData\\Local\\Temp\\Vera.ttf";
-                    this->makeTempFontFile<const unsigned char> (fontpath, vf_veraData, vf_veraEnd);
-                    break;
-                }
-                case VisualFont::VeraItalic:
-                {
-                    fontpath = uppath + "\\AppData\\Local\\Temp\\VeraIt.ttf";
-                    this->makeTempFontFile<const unsigned char> (fontpath, vf_veraitData, vf_veraitEnd);
-                    break;
-                }
-                case VisualFont::VeraBold:
-                {
-                    fontpath = uppath + "\\AppData\\Local\\Temp\\VeraBd.ttf";
-                    this->makeTempFontFile<const unsigned char> (fontpath, vf_verabdData, vf_verabdEnd);
-                    break;
-                }
-                case VisualFont::VeraBoldItalic:
-                {
-                    fontpath = uppath + "\\AppData\\Local\\Temp\\VeraBI.ttf";
-                    this->makeTempFontFile<const unsigned char> (fontpath, vf_verabiData, vf_verabiEnd);
-                    break;
-                }
-                case VisualFont::VeraMono:
-                {
-                    fontpath = uppath + "\\AppData\\Local\\Temp\\VeraMono.ttf";
-                    this->makeTempFontFile<const unsigned char> (fontpath, vf_veramonoData, vf_veramonoEnd);
-                    break;
-                }
-                case VisualFont::VeraMonoBold:
-                {
-                    fontpath = uppath + "\\AppData\\Local\\Temp\\VeraMoBd.ttf";
-                    this->makeTempFontFile<const unsigned char> (fontpath, vf_veramobdData, vf_veramobdEnd);
-                    break;
-                }
-                case VisualFont::VeraMonoItalic:
-                {
-                    fontpath = uppath + "\\AppData\\Local\\Temp\\VeraMoIt.ttf";
-                    this->makeTempFontFile<const unsigned char> (fontpath, vf_veramoitData, vf_veramoitEnd);
-                    break;
-                }
-                case VisualFont::VeraMonoBoldItalic:
-                {
-                    fontpath = uppath + "\\AppData\\Local\\Temp\\VeraMoBI.ttf";
-                    this->makeTempFontFile<const unsigned char> (fontpath, vf_veramobiData, vf_veramobiEnd);
-                    break;
-                }
-                case VisualFont::VeraSerif:
-                {
-                    fontpath = uppath + "\\AppData\\Local\\Temp\\VeraSe.ttf";
-                    this->makeTempFontFile<const unsigned char> (fontpath, vf_veraseData, vf_veraseEnd);
-                    break;
-                }
-                case VisualFont::VeraSerifBold:
-                {
-                    fontpath = uppath + "\\AppData\\Local\\Temp\\VeraSeBd.ttf";
-                    this->makeTempFontFile<const unsigned char> (fontpath, vf_verasebdData, vf_verasebdEnd);
-                    break;
-                }
-                default:
-                {
-                    std::cout << "ERROR::Unsupported mplot font\n";
-                    break;
-                }
-                }
+            switch (_font) {
+            case VisualFont::DVSans:
+            {
+                fontpath = uppath + "\\AppData\\Local\\Temp\\DejaVuSans.ttf";
+                this->makeTempFontFile<const unsigned char> (fontpath, vf_dvsansData, vf_dvsansEnd);
+                break;
+            }
+            case VisualFont::DVSansItalic:
+            {
+                fontpath = uppath + "\\AppData\\Local\\Temp\\DejaVuSans-Oblique.ttf";
+                this->makeTempFontFile<const unsigned char> (fontpath, vf_dvsansitData, vf_dvsansitEnd);
+                break;
+            }
+            case VisualFont::DVSansBold:
+            {
+                fontpath = uppath + "\\AppData\\Local\\Temp\\DejaVuSans-Bold.ttf";
+                this->makeTempFontFile<const unsigned char> (fontpath, vf_dvsansbdData, vf_dvsansbdEnd);
+                break;
+            }
+            case VisualFont::DVSansBoldItalic:
+            {
+                fontpath = uppath + "\\AppData\\Local\\Temp\\DejaVuSans-BoldOblique.ttf";
+                this->makeTempFontFile<const unsigned char> (fontpath, vf_dvsansbiData, vf_dvsansbiEnd);
+                break;
+            }
+            case VisualFont::Vera:
+            {
+                fontpath = uppath + "\\AppData\\Local\\Temp\\Vera.ttf";
+                this->makeTempFontFile<const unsigned char> (fontpath, vf_veraData, vf_veraEnd);
+                break;
+            }
+            case VisualFont::VeraItalic:
+            {
+                fontpath = uppath + "\\AppData\\Local\\Temp\\VeraIt.ttf";
+                this->makeTempFontFile<const unsigned char> (fontpath, vf_veraitData, vf_veraitEnd);
+                break;
+            }
+            case VisualFont::VeraBold:
+            {
+                fontpath = uppath + "\\AppData\\Local\\Temp\\VeraBd.ttf";
+                this->makeTempFontFile<const unsigned char> (fontpath, vf_verabdData, vf_verabdEnd);
+                break;
+            }
+            case VisualFont::VeraBoldItalic:
+            {
+                fontpath = uppath + "\\AppData\\Local\\Temp\\VeraBI.ttf";
+                this->makeTempFontFile<const unsigned char> (fontpath, vf_verabiData, vf_verabiEnd);
+                break;
+            }
+            case VisualFont::VeraMono:
+            {
+                fontpath = uppath + "\\AppData\\Local\\Temp\\VeraMono.ttf";
+                this->makeTempFontFile<const unsigned char> (fontpath, vf_veramonoData, vf_veramonoEnd);
+                break;
+            }
+            case VisualFont::VeraMonoBold:
+            {
+                fontpath = uppath + "\\AppData\\Local\\Temp\\VeraMoBd.ttf";
+                this->makeTempFontFile<const unsigned char> (fontpath, vf_veramobdData, vf_veramobdEnd);
+                break;
+            }
+            case VisualFont::VeraMonoItalic:
+            {
+                fontpath = uppath + "\\AppData\\Local\\Temp\\VeraMoIt.ttf";
+                this->makeTempFontFile<const unsigned char> (fontpath, vf_veramoitData, vf_veramoitEnd);
+                break;
+            }
+            case VisualFont::VeraMonoBoldItalic:
+            {
+                fontpath = uppath + "\\AppData\\Local\\Temp\\VeraMoBI.ttf";
+                this->makeTempFontFile<const unsigned char> (fontpath, vf_veramobiData, vf_veramobiEnd);
+                break;
+            }
+            case VisualFont::VeraSerif:
+            {
+                fontpath = uppath + "\\AppData\\Local\\Temp\\VeraSe.ttf";
+                this->makeTempFontFile<const unsigned char> (fontpath, vf_veraseData, vf_veraseEnd);
+                break;
+            }
+            case VisualFont::VeraSerifBold:
+            {
+                fontpath = uppath + "\\AppData\\Local\\Temp\\VeraSeBd.ttf";
+                this->makeTempFontFile<const unsigned char> (fontpath, vf_verasebdData, vf_verasebdEnd);
+                break;
+            }
+            default:
+            {
+                std::cout << "ERROR::Unsupported mplot font\n";
+                break;
+            }
+            }
 #else	 // Non-windows:
-                switch (_font) {
-                case VisualFont::DVSans:
-                {
-                    fontpath = "/tmp/DejaVuSans.ttf";
-                    this->makeTempFontFile (fontpath, __start_dvsans_ttf, __stop_dvsans_ttf);
-                    break;
-                }
-                case VisualFont::DVSansItalic:
-                {
-                    fontpath = "/tmp/DejaVuSans-Oblique.ttf";
-                    this->makeTempFontFile (fontpath, __start_dvsansit_ttf, __stop_dvsansit_ttf);
-                    break;
-                }
-                case VisualFont::DVSansBold:
-                {
-                    fontpath = "/tmp/DejaVuSans-Bold.ttf";
-                    this->makeTempFontFile (fontpath, __start_dvsansbd_ttf, __stop_dvsansbd_ttf);
-                    break;
-                }
-                case VisualFont::DVSansBoldItalic:
-                {
-                    fontpath = "/tmp/DejaVuSans-BoldOblique.ttf";
-                    this->makeTempFontFile (fontpath, __start_dvsansbi_ttf, __stop_dvsansbi_ttf);
-                    break;
-                }
-                case VisualFont::Vera:
-                {
-                    fontpath = "/tmp/Vera.ttf";
-                    this->makeTempFontFile (fontpath, __start_vera_ttf, __stop_vera_ttf);
-                    break;
-                }
-                case VisualFont::VeraItalic:
-                {
-                    fontpath = "/tmp/VeraIt.ttf";
-                    this->makeTempFontFile (fontpath, __start_verait_ttf, __stop_verait_ttf);
-                    break;
-                }
-                case VisualFont::VeraBold:
-                {
-                    fontpath = "/tmp/VeraBd.ttf";
-                    this->makeTempFontFile (fontpath, __start_verabd_ttf, __stop_verabd_ttf);
-                    break;
-                }
-                case VisualFont::VeraBoldItalic:
-                {
-                    fontpath = "/tmp/VeraBI.ttf";
-                    this->makeTempFontFile (fontpath, __start_verabi_ttf, __stop_verabi_ttf);
-                    break;
-                }
-                case VisualFont::VeraMono:
-                {
-                    fontpath = "/tmp/VeraMono.ttf";
-                    this->makeTempFontFile (fontpath, __start_veramono_ttf, __stop_veramono_ttf);
-                    break;
-                }
-                case VisualFont::VeraMonoBold:
-                {
-                    fontpath = "/tmp/VeraMoBd.ttf";
-                    this->makeTempFontFile (fontpath, __start_veramobd_ttf, __stop_veramobd_ttf);
-                    break;
-                }
-                case VisualFont::VeraMonoItalic:
-                {
-                    fontpath = "/tmp/VeraMoIt.ttf";
-                    this->makeTempFontFile (fontpath, __start_veramoit_ttf, __stop_veramoit_ttf);
-                    break;
-                }
-                case VisualFont::VeraMonoBoldItalic:
-                {
-                    fontpath = "/tmp/VeraMoBI.ttf";
-                    this->makeTempFontFile (fontpath, __start_veramobi_ttf, __stop_veramobi_ttf);
-                    break;
-                }
-                case VisualFont::VeraSerif:
-                {
-                    fontpath = "/tmp/VeraSe.ttf";
-                    this->makeTempFontFile (fontpath, __start_verase_ttf, __stop_verase_ttf);
-                    break;
-                }
-                case VisualFont::VeraSerifBold:
-                {
-                    fontpath = "/tmp/VeraSeBd.ttf";
-                    this->makeTempFontFile (fontpath, __start_verasebd_ttf, __stop_verasebd_ttf);
-                    break;
-                }
-                default:
-                {
-                    std::cout << "ERROR::Unsupported mplot font\n";
-                    break;
-                }
-                }
+            switch (_font) {
+            case VisualFont::DVSans:
+            {
+                fontpath = "/tmp/DejaVuSans.ttf";
+                this->makeTempFontFile (fontpath, __start_dvsans_ttf, __stop_dvsans_ttf);
+                break;
+            }
+            case VisualFont::DVSansItalic:
+            {
+                fontpath = "/tmp/DejaVuSans-Oblique.ttf";
+                this->makeTempFontFile (fontpath, __start_dvsansit_ttf, __stop_dvsansit_ttf);
+                break;
+            }
+            case VisualFont::DVSansBold:
+            {
+                fontpath = "/tmp/DejaVuSans-Bold.ttf";
+                this->makeTempFontFile (fontpath, __start_dvsansbd_ttf, __stop_dvsansbd_ttf);
+                break;
+            }
+            case VisualFont::DVSansBoldItalic:
+            {
+                fontpath = "/tmp/DejaVuSans-BoldOblique.ttf";
+                this->makeTempFontFile (fontpath, __start_dvsansbi_ttf, __stop_dvsansbi_ttf);
+                break;
+            }
+            case VisualFont::Vera:
+            {
+                fontpath = "/tmp/Vera.ttf";
+                this->makeTempFontFile (fontpath, __start_vera_ttf, __stop_vera_ttf);
+                break;
+            }
+            case VisualFont::VeraItalic:
+            {
+                fontpath = "/tmp/VeraIt.ttf";
+                this->makeTempFontFile (fontpath, __start_verait_ttf, __stop_verait_ttf);
+                break;
+            }
+            case VisualFont::VeraBold:
+            {
+                fontpath = "/tmp/VeraBd.ttf";
+                this->makeTempFontFile (fontpath, __start_verabd_ttf, __stop_verabd_ttf);
+                break;
+            }
+            case VisualFont::VeraBoldItalic:
+            {
+                fontpath = "/tmp/VeraBI.ttf";
+                this->makeTempFontFile (fontpath, __start_verabi_ttf, __stop_verabi_ttf);
+                break;
+            }
+            case VisualFont::VeraMono:
+            {
+                fontpath = "/tmp/VeraMono.ttf";
+                this->makeTempFontFile (fontpath, __start_veramono_ttf, __stop_veramono_ttf);
+                break;
+            }
+            case VisualFont::VeraMonoBold:
+            {
+                fontpath = "/tmp/VeraMoBd.ttf";
+                this->makeTempFontFile (fontpath, __start_veramobd_ttf, __stop_veramobd_ttf);
+                break;
+            }
+            case VisualFont::VeraMonoItalic:
+            {
+                fontpath = "/tmp/VeraMoIt.ttf";
+                this->makeTempFontFile (fontpath, __start_veramoit_ttf, __stop_veramoit_ttf);
+                break;
+            }
+            case VisualFont::VeraMonoBoldItalic:
+            {
+                fontpath = "/tmp/VeraMoBI.ttf";
+                this->makeTempFontFile (fontpath, __start_veramobi_ttf, __stop_veramobi_ttf);
+                break;
+            }
+            case VisualFont::VeraSerif:
+            {
+                fontpath = "/tmp/VeraSe.ttf";
+                this->makeTempFontFile (fontpath, __start_verase_ttf, __stop_verase_ttf);
+                break;
+            }
+            case VisualFont::VeraSerifBold:
+            {
+                fontpath = "/tmp/VeraSeBd.ttf";
+                this->makeTempFontFile (fontpath, __start_verasebd_ttf, __stop_verasebd_ttf);
+                break;
+            }
+            default:
+            {
+                std::cout << "ERROR::Unsupported mplot font\n";
+                break;
+            }
+            }
 #endif // Windows/Non-windows
 
-                // Keep the face as a mplot::Visual owned resource, shared by VisTextModels?
-                if constexpr (debug_visualface == true) {
-                    std::cout << "FT_New_Face (ft_freetype, " << fontpath << ", 0, &this->face);\n";
-                }
-                if (FT_New_Face (ft_freetype, fontpath.c_str(), 0, &this->face)) {
-                    std::cout << "ERROR::FREETYPE: Failed to load font (font file may be invalid)" << std::endl;
-                }
-
-                FT_Set_Pixel_Sizes (this->face, 0, fontpixels);
-
-                // Can I check this->face for how many glyphs it has? Yes:
-                // std::cout << "This face has " << this->face->num_glyphs << " glyphs.\n";
+            // Keep the face as a mplot::Visual owned resource, shared by VisTextModels?
+            if constexpr (debug_visualface == true) {
+                std::cout << "FT_New_Face (ft_freetype, " << fontpath << ", 0, &this->face);\n";
+            }
+            if (FT_New_Face (ft_freetype, fontpath.c_str(), 0, &this->face)) {
+                std::cout << "ERROR::FREETYPE: Failed to load font (font file may be invalid)" << std::endl;
             }
 
-            //! Create a temporary font file at fontpath, using the embedded data
-            //! starting from filestart and extending to filenend
-            template <typename T = const char>
-            void makeTempFontFile (const std::string& fontpath, T* file_start, T* file_stop)
-            {
-                T* p;
-                if (!mplot::tools::fileExists (fontpath)) {
-                    std::ofstream fout;
-                    fout.open (fontpath.c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
-                    if (fout.is_open()) {
-                        for (p = file_start; p < file_stop; p++) { fout << *p; }
-                        fout.close();
-                    } else {
-                        std::cout << "WARNING: Failed to open " << fontpath << "!!\n";
-                    }
+            FT_Set_Pixel_Sizes (this->face, 0, fontpixels);
+
+            // Can I check this->face for how many glyphs it has? Yes:
+            // std::cout << "This face has " << this->face->num_glyphs << " glyphs.\n";
+        }
+
+        //! Create a temporary font file at fontpath, using the embedded data
+        //! starting from filestart and extending to filenend
+        template <typename T = const char>
+        void makeTempFontFile (const std::string& fontpath, T* file_start, T* file_stop)
+        {
+            T* p;
+            if (!mplot::tools::fileExists (fontpath)) {
+                std::ofstream fout;
+                fout.open (fontpath.c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
+                if (fout.is_open()) {
+                    for (p = file_start; p < file_stop; p++) { fout << *p; }
+                    fout.close();
                 } else {
-                    if constexpr (debug_visualface == true) {
-                        std::cout << "INFO: " << fontpath << " already exists, no need to re-create it\n";
-                    }
+                    std::cout << "WARNING: Failed to open " << fontpath << "!!\n";
+                }
+            } else {
+                if constexpr (debug_visualface == true) {
+                    std::cout << "INFO: " << fontpath << " already exists, no need to re-create it\n";
                 }
             }
-        };
-    } // namespace gl
-} // namespace mplot
+        }
+    };
+} // namespace

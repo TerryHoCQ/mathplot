@@ -25,7 +25,8 @@
 #include <mutex>
 #include <chrono>
 
-namespace mplot {
+namespace mplot
+{
     // With mplot::Visual, we use a GLFW window which is owned by mplot::Visual.
     using win_t = GLFWwindow;
 }
@@ -33,8 +34,8 @@ namespace mplot {
 #include <mplot/VisualOwnableMX.h>
 #include <mplot/VisualGlfw.h>
 
-namespace mplot {
-
+namespace mplot
+{
     /*!
      * Visual 'scene' class
      *

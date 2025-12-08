@@ -4,9 +4,11 @@
  * This is just an enumerated class that defines the fonts we pack into a mplot binary
  */
 
-namespace mplot {
+namespace mplot
+{
     //! The fonts supported (i.e. compiled in) to mplot::Visual
-    enum class VisualFont {
+    enum class VisualFont
+    {
         DVSans,             // fonts/dejavu/DejaVuSans.ttf
         DVSansItalic,       // fonts/dejavu/DejaVuSans-Oblique.ttf
         DVSansBold,         // fonts/dejavu/DejaVuSans-Bold.ttf
@@ -22,4 +24,4 @@ namespace mplot {
         VeraSerif,          // fonts/ttf-bitstream-vera/VeraSe.ttf
         VeraSerifBold       // fonts/ttf-bitstream-vera/VeraSeBd.ttf
     };
-} // mplot
+}

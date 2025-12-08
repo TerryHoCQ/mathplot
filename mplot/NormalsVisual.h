@@ -9,8 +9,8 @@
 #include <mplot/colour.h>
 #include <mplot/VisualModel.h>
 
-namespace mplot {
-
+namespace mplot
+{
     //! A class to visualize normals for another model
     template <int glver = mplot::gl::version_4_1>
     class NormalsVisual : public VisualModel<glver>

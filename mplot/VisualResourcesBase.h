@@ -21,8 +21,8 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-namespace mplot {
-
+namespace mplot
+{
     // Pointers to mplot::VisualBase are used to index font faces
     template<int>
     class VisualBase;

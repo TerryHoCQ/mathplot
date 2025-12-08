@@ -5,8 +5,8 @@
 #include <sm/vec>
 #include <mplot/VisualModel.h>
 
-namespace mplot {
-
+namespace mplot
+{
     //! This class creates the vertices for an icosahedron in a 3D scene.
     template<int glver = mplot::gl::version_4_1>
     class IcosaVisual : public VisualModel<glver>

@@ -535,4 +535,4 @@ namespace mplot::compoundray
         }
     };
 
-} // namespace comray
+} // namespace mplot::compoundray

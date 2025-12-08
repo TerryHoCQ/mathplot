@@ -14,8 +14,8 @@
 #include <mplot/tools.h>
 #include <mplot/TextFeatures.h>
 
-namespace mplot {
-
+namespace mplot
+{
     template<int glver = mplot::gl::version_4_1>
     class TxtVisual : public VisualModel<glver>
     {
@@ -38,5 +38,4 @@ namespace mplot {
         std::string text;
         mplot::TextFeatures tfeatures;
     };
-
-} // namespace mplot
+}

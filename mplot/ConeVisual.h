@@ -9,8 +9,8 @@
 #include <mplot/colour.h>
 #include <mplot/VisualModel.h>
 
-namespace mplot {
-
+namespace mplot
+{
     //! A class to visualize a single vector
     template <int glver = mplot::gl::version_4_1>
     struct ConeVisual : public VisualModel<glver>
@@ -34,5 +34,4 @@ namespace mplot {
         // compromise. You can set this before calling finalize().
         int shapesides = 12;
     };
-
-} // namespace mplot
+}

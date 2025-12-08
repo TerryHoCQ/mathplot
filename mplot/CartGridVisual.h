@@ -35,8 +35,8 @@
 #define R_NSW(hi) (this->cg->d_nsw[hi])
 #define R_HAS_NSW(hi) (this->cg->d_nsw[hi] == -1 ? false : true)
 
-namespace mplot {
-
+namespace mplot
+{
     enum class CartVisMode
     {
         Triangles, // Render triangles with a triangle vertex at the centre of each Rect.

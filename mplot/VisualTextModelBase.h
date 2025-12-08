@@ -30,8 +30,8 @@
 #include <mplot/TextFeatures.h>
 #include <mplot/colour.h>
 
-namespace mplot {
-
+namespace mplot
+{
     //! Forward declaration of a VisualBase class
     template <int> class VisualBase;
 

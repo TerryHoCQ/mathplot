@@ -8,8 +8,8 @@
 #include <mplot/ColourMap.h>
 #include <mplot/colour.h>
 
-namespace mplot {
-
+namespace mplot
+{
     // Boolean flags relating to quiver plots that form part of a DatasetStyle
     enum class quiver_flags : unsigned int
     {

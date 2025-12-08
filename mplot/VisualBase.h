@@ -44,8 +44,8 @@
 #define LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS 1
 #include <mplot/lodepng.h>
 
-namespace mplot {
-
+namespace mplot
+{
     //! Here are our boolean state flags
     enum class visual_state : uint32_t
     {

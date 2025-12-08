@@ -48,8 +48,8 @@
 #define IF_HAS_NSW(hi, yesval, noval) (HAS_NSW(hi) ? yesval : noval)
 #define IF_HAS_NSE(hi, yesval, noval) (HAS_NSE(hi) ? yesval : noval)
 
-namespace mplot {
-
+namespace mplot
+{
     enum class HexVisMode
     {
         Triangles, // Render triangles with a triangle vertex at the centre of each Hex. Fast (x3.7 cf. HexInterp).

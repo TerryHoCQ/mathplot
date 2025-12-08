@@ -11,8 +11,8 @@
 
 #include <string>
 
-namespace mplot::unicode {
-
+namespace mplot::unicode
+{
     /*
      * These constants are defined to make program code that uses unicode::toUtf8()
      * and unicode::append easier to read. You can also pass the raw codes.

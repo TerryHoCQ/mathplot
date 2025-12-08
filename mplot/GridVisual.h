@@ -12,8 +12,8 @@
 #include <mplot/ColourMap.h>
 #include <mplot/VisualDataModel.h>
 
-namespace mplot {
-
+namespace mplot
+{
     /*!
      * How to visualize a grid. You could draw a triangle map with vertices at the centres of the
      * elements or you could draw a rectangular pixel for each element. Triangles is

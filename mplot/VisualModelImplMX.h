@@ -23,8 +23,8 @@
 #include <mplot/VisualTextModel.h>
 #include <mplot/TextGeometry.h>
 
-namespace mplot {
-
+namespace mplot
+{
     //! Forward declaration of base classes
     template <int> class VisualBase;
     template <int> class VisualOwnableMX;

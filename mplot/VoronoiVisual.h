@@ -27,8 +27,8 @@
 
 #include <mplot/jcvoronoi/jc_voronoi.h>
 
-namespace mplot {
-
+namespace mplot
+{
     //! The template argument F is the type of the data which this VoronoiVisual
     //! will visualize.
     template <typename F, int n_epsilons = 0, int glver = mplot::gl::version_4_1>

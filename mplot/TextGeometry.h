@@ -1,6 +1,7 @@
 #pragma once
 
-namespace mplot {
+namespace mplot
+{
     /*!
      * A class containing information about a text string, as it would be displayed on
      * the screen in some font, at a given size. The units should be the same as those

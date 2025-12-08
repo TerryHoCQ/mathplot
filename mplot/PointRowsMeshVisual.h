@@ -12,8 +12,8 @@
 #include <mplot/VisualDataModel.h>
 #include <mplot/ColourMap.h>
 
-namespace mplot {
-
+namespace mplot
+{
     /*!
      * The template argument Flt is the type of the data which this PointRowsMeshVisual
      * will visualize.

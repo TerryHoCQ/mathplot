@@ -4,8 +4,8 @@
 #include <mplot/colour.h>
 #include <mplot/VisualFont.h>
 
-namespace mplot {
-
+namespace mplot
+{
     // A way to bundle up font size, colour, etc into a single object. Constructors chosen for max convenience.
     struct TextFeatures
     {

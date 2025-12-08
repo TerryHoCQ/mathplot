@@ -34,8 +34,8 @@
 #include <mplot/DatasetStyle.h>
 #include <mplot/VisualTextModel.h>
 
-namespace mplot {
-
+namespace mplot
+{
     /*!
      * A VisualModel for showing a 2D graph.
      */
