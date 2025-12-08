@@ -859,6 +859,28 @@ namespace mplot
         virtual void setupVBO (GLuint& buf, std::vector<float>& dat, unsigned int bufferAttribPosition) = 0;
 
     protected:
+        /*!
+         * Add the given meshgroup to this VisualModel
+         */
+        void computeMeshgroup (const mplot::meshgroup& mg)
+        {
+            mg.validate();
+            bool single_colr = mg.colours.empty();
+            for (uint32_t i = 0; i < mg.positions.size(); ++i) {
+                this->vertex_push (mg.positions[i], this->vertexPositions);
+                this->vertex_push (mg.normals[i], this->vertexNormals);
+                if (single_colr) {
+                    this->vertex_push (mg.single_colour, this->vertexColors);
+                } else {
+                    this->vertex_push (mg.colours[i], this->vertexColors);
+                }
+            }
+            for (uint32_t i = 0; i < mg.indices.size(); ++i) {
+                this->indices.push_back (mg.indices[i] + this->idx);
+            }
+            this->idx += mg.positions.size();
+        }
+
         /**
          * START vertex/index computation code
          *

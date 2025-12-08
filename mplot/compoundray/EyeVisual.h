@@ -76,20 +76,23 @@ namespace mplot::compoundray
         //! Initialise with offset, start and end coordinates, radius and a single colour.
         EyeVisual (const sm::vec<float, 3> _offset,
                    std::vector<std::array<float, 3>>* _ommData,
-                   std::vector<mplot::compoundray::Ommatidium>* _ommatidia)
+                   std::vector<mplot::compoundray::Ommatidium>* _ommatidia,
+                   const mplot::meshgroup* _head_mesh = nullptr)
         {
-            this->init (_offset, _ommData, _ommatidia);
+            this->init (_offset, _ommData, _ommatidia, _head_mesh);
         }
 
         ~EyeVisual() {}
 
         void init (const sm::vec<float, 3> _offset,
                    std::vector<std::array<float, 3>>* _ommData,
-                   std::vector<mplot::compoundray::Ommatidium>* _ommatidia)
+                   std::vector<mplot::compoundray::Ommatidium>* _ommatidia,
+                   const mplot::meshgroup* _head_mesh = nullptr)
         {
             this->viewmatrix.translate (_offset);
             this->ommData = _ommData;
             this->ommatidia = _ommatidia;
+            this->head_mesh = _head_mesh;
         }
 
         void reinitColours()
@@ -342,6 +345,7 @@ namespace mplot::compoundray
                 }
             }
 
+            // 2D projections
             for (uint32_t pri = 0; pri < this->projections.size(); ++pri) {
                 this->omm2d.clear();
                 if (this->projections[pri].proj_type == projection_type::cylindrical) {
@@ -374,6 +378,7 @@ namespace mplot::compoundray
                 }
             }
 
+            // Sphere and rays for finding a suitable 2D projection
             for (uint32_t pri = 0; pri < this->projections.size(); ++pri) {
 
                 if (this->show_sphere) {
@@ -401,6 +406,9 @@ namespace mplot::compoundray
                     }
                 }
             }
+
+            // Optional head
+            if (this->head_mesh != nullptr) { this->computeMeshgroup (*this->head_mesh); }
         }
 
         void voronoi2d (uint32_t pri)
@@ -481,6 +489,8 @@ namespace mplot::compoundray
         std::vector<std::array<float, 3>>* ommData = nullptr;
         // The position and orientation of each ommatidium
         std::vector<mplot::compoundray::Ommatidium>* ommatidia = nullptr;
+        // An optional head mesh
+        const mplot::meshgroup* head_mesh = nullptr;
         // If sum is 0, then we have a special case for rendering the eye as we have no focal point
         // offsets specified for this eye (and hence the optical radius of the ommatidium is not known)
         float focal_point_sum = 0.0f;
