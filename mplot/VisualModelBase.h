@@ -841,18 +841,25 @@ namespace mplot
         //! Push three floats onto the vector of floats \a vp
         void vertex_push (const float& x, const float& y, const float& z, std::vector<float>& vp)
         {
-            sm::vec<float> vec = { x, y, z };
-            std::copy (vec.begin(), vec.end(), std::back_inserter (vp));
+            vp.emplace_back (x);
+            vp.emplace_back (y);
+            vp.emplace_back (z);
         }
         //! Push array of 3 floats onto the vector of floats \a vp
-        void vertex_push (const std::array<float, 3>& arr, std::vector<float>& vp)
+        template<std::size_t N = 3> requires (N == 3 || N == 4)
+        void vertex_push (const std::array<float, N>& arr, std::vector<float>& vp)
         {
-            std::copy (arr.begin(), arr.end(), std::back_inserter (vp));
+            vp.emplace_back (arr[0]);
+            vp.emplace_back (arr[1]);
+            vp.emplace_back (arr[2]);
         }
         //! Push sm::vec of 3 floats onto the vector of floats \a vp
-        void vertex_push (const sm::vec<float>& vec, std::vector<float>& vp)
+        template<std::size_t N = 3> requires (N == 3 || N == 4)
+        void vertex_push (const sm::vec<float, N>& vec, std::vector<float>& vp)
         {
-            std::copy (vec.begin(), vec.end(), std::back_inserter (vp));
+            vp.emplace_back (vec[0]);
+            vp.emplace_back (vec[1]);
+            vp.emplace_back (vec[2]);
         }
 
         //! Set up a vertex buffer object - bind, buffer and set vertex array object attribute
@@ -865,10 +872,14 @@ namespace mplot
         void computeMeshgroup (const mplot::meshgroup& mg)
         {
             mg.validate();
+
             bool single_colr = mg.colours.empty();
             for (uint32_t i = 0; i < mg.positions.size(); ++i) {
-                this->vertex_push (mg.positions[i], this->vertexPositions);
-                this->vertex_push (mg.normals[i], this->vertexNormals);
+                // We apply mg.transform *here*, rather than writing it into the viewmatrix. This is
+                // because other elements of this visual model may be added with the assumption of an
+                // identity viewmatrix.
+                this->vertex_push (mg.transform * mg.positions[i], this->vertexPositions);
+                this->vertex_push (mg.transform * mg.normals[i], this->vertexNormals);
                 if (single_colr) {
                     this->vertex_push (mg.single_colour, this->vertexColors);
                 } else {
