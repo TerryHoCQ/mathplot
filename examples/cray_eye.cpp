@@ -27,10 +27,11 @@ int main (int argc, char** argv)
         eyefile = std::string (argv[1]);
     }
 
+    // Compound eyes are tiny. We make them larger in our scene by this factor
+    constexpr float eye_scaleup = 1000.0f;
+
     float psrad = 0.5f;
     if (argc > 2) { psrad = std::atof (argv[2]); }
-
-    auto v = mplot::Visual<>(1024, 768, "mplot::compoundray::EyeVisual");
 
     // We read the information from the eye file into a vector of Ommatidium objects.  Ommatidium is
     // defined in "cameras/CompoundEyeDataTypes.h" in compound ray, mplot::Ommatidium is a
@@ -42,6 +43,18 @@ int main (int argc, char** argv)
     // Read the eye file into ommatidia data structure. compound ray does this internally when we're
     // using it, but for this example we instead make use of mplot::compoundray::readEye
     if (mplot::compoundray::readEye (ommatidia.get(), eyefile) == nullptr) { std::cout << "Failed to read eye\n"; return -1; }
+
+    sm::range<sm::vec<float>> ommspan = sm::range<sm::vec<float>>::search_initialized();
+    // Use the eye spacing to control the size of the coord arrows
+    for (auto omm : *ommatidia.get()) {
+        // omm is an Ommatidium. Want to know the x, y and z spans
+        ommspan.update (omm.relativePosition);
+    }
+    float ca_len = eye_scaleup * ommspan.span().max() / 3.0f;
+    auto v = mplot::Visual<>(1024, 768, "mplot::compoundray::EyeVisual");
+    v.showCoordArrows (true);
+    v.coordArrowsInScene (true);
+    v.updateCoordLengths ({ ca_len, ca_len, ca_len }, 1.0f);
 
     // Make some dummy data to demo the eye
     sm::vvec<float> ommatidiaData;
@@ -70,7 +83,7 @@ int main (int argc, char** argv)
 
     [[maybe_unused]] auto ep = v.addVisualModel (eyevm);
     // ep->reinitColours();
-    ep->scaleViewMatrix (1000.0f);
+    ep->scaleViewMatrix (eye_scaleup);
 
     v.keepOpen();
 }
