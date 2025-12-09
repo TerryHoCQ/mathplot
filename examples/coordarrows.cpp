@@ -25,8 +25,8 @@ int main()
     cavm->finalize();
     v.addVisualModel (cavm);
 
-    // I define unit vector here, because it makes the calls to CoordArrows::init easy to read, but
-    // you can also use sm::vec<float>::ux(), etc to get static, constexpr unit vectors
+    // I define some unit vectors here, because it makes the calls to CoordArrows::init easy to
+    // read, but you can also use sm::vec<float>::ux(), etc to get static, constexpr unit vectors
     constexpr sm::vec<float> ux = {1,0,0};
     constexpr sm::vec<float> uy = {0,1,0};
     constexpr sm::vec<float> uz = {0,0,1};
