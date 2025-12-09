@@ -794,11 +794,20 @@ namespace mplot
          *
          * \param model_to_scene The model to scene transformation for the parent of the navmesh
          *
+         * \param search_dist_mult a multiplier on the search distance. The length of vdir in this
+         * function should cross the landscape model. By default it's the vector from the camera
+         * location in the model frame of reference to the middle of the bounding box. If the vector
+         * is too long when finding the surface of a convex hull, such as a model of a rock, it is
+         * possible to mis-identify the back side of the model. However, for finding a location on a
+         * large, flat, one-sided landscape, we want to make vdir long. search_dist_mult is applied
+         * to vdir.
+         *
          * \return tuple containing: the hit point in scene coordinates; the triangle normal of the
          * triangle we hit; and the indices of the triangle we hit.
          */
         std::tuple<sm::vec<float>, sm::vec<float>, std::array<uint32_t, 4>>
-        find_triangle_hit (const sm::mat44<float>& camspace, const sm::mat44<float>& model_to_scene)
+        find_triangle_hit (const sm::mat44<float>& camspace, const sm::mat44<float>& model_to_scene,
+                           const float search_dist_mult = 1.0f)
         {
             sm::mat44<float> scene_to_model = model_to_scene.inverse();
             // use camera location in gltf to start from, then find model surface.
@@ -807,15 +816,16 @@ namespace mplot
             this->tn0 = {};
             sm::vec<float> hit = {};
             sm::vec<float> vdir = this->bb.mid() - camloc_mf;
-            std::tie (hit, this->ti0, this->tn0) = this->find_triangle_crossing (camloc_mf , vdir);
+            vdir *= search_dist_mult;
+            std::tie (hit, this->ti0, this->tn0) = this->find_triangle_crossing (camloc_mf, vdir);
 
             if (this->ti0[0] == std::numeric_limits<uint32_t>::max()) { std::cout << __func__ << ": No hit\n"; }
 
             sm::vec<float> hp_scene = (model_to_scene * hit).less_one_dim();
 
-            constexpr bool debug = false;
+            constexpr bool debug = true;
             if constexpr (debug) {
-                std::cout << "found hit at " << hit << " (model); " << hp_scene << " (scene)\n";
+                std::cout << "found hit at " << hit << " (model); " << hp_scene << " (scene) in direction " << vdir << "\n";
                 // Check we'll get a hit when we compute_mesh_movement:
                 sm::vec<sm::vec<float>, 3> tv_mf = this->triangle_vertices (this->ti0);
                 std::cout << "tn0: " << this->tn0 << ", length " << this->tn0.length() << std::endl;
