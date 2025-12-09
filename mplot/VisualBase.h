@@ -397,10 +397,13 @@ namespace mplot
             this->coordArrows->reinit();
         }
 
+        // Update the lengths of the CoordArrows that (usually) appear in the corner of the screen
         void updateCoordLengths (const sm::vec<float, 3>& _lengths, const float _thickness = 1.0f)
         {
             this->coordArrows->lengths = _lengths;
             this->coordArrows->thickness = _thickness;
+            this->coordArrows->clear();
+            this->coordArrows->initAxisLabels();
             this->coordArrows->reinit();
         }
 
