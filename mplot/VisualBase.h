@@ -115,7 +115,17 @@ namespace mplot
          * If true, then turn on the bounding box for the VM about which we are rotating and turn
          * the others off (ignoring the value of 'showBoundingBoxes')
          */
-        highlightRotationVM
+        highlightRotationVM,
+        /*!
+         * If true, the view of the scene follows a model translation (one of the VisualModels in
+         * the scene has to be nominated as the 'model to follow'. Useful for top-down views. The
+         * selected model to follow is in a member attribute followedModel
+         */
+        viewFollowsVMTranslations,
+        /*!
+         * The view 'camera' rotates with the selected VM (followedModel)
+         */
+        viewFollowsVMRotations,
     };
 
     //! Whether to render with perspective or orthographic (or even a cylindrical projection)
@@ -268,6 +278,17 @@ namespace mplot
                 }
             }
             return rtn;
+        }
+
+        void setFollowedVM (const mplot::VisualModel<glver>* vm_to_follow)
+        {
+            for (unsigned int modelId = 0; modelId < this->vm.size(); ++modelId) {
+                if (this->vm[modelId].get() == vm_to_follow) {
+                    this->followedVM = this->vm[modelId].get();
+                    this->followedLastViewMatrix = this->followedVM->getViewMatrix();
+                    break;
+                }
+            }
         }
 
         /*!
@@ -787,8 +808,19 @@ namespace mplot
             this->sceneview_tr = sv_tr * this->savedSceneview_tr;
         }
 
+        // This is called every time render() is called
         void computeSceneview()
         {
+            sm::vec<float> fol_sceneframe = {};
+            if (this->options.test (visual_options::viewFollowsVMTranslations)) {
+
+                // Move camera the difference between followedLastViewMatrix and followedVM->getViewMatrix().
+                fol_sceneframe = followedVM->getViewMatrix().translation() - followedLastViewMatrix.translation();
+                sm::vec<float> fol_screenframe = (this->sceneview * followedVM->getViewMatrix().translation()
+                                                  - this->sceneview * followedLastViewMatrix.translation()).less_one_dim();
+                this->scenetrans_delta -= fol_screenframe;
+            }
+
             if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
                 // Calculate model view transformation - transforming from "model space" to "worldspace".
                 this->computeSceneview_about_rotation_centre();
@@ -798,11 +830,26 @@ namespace mplot
                 this->scenetrans_delta.zero();
                 this->state.reset (visual_state::scrolling);
             }
+
+            // Compute vector/translation/tranformation to followed agent?
+            if ((this->options.test (visual_options::viewFollowsVMTranslations)
+                 || this->options.test (visual_options::viewFollowsVMRotations)) && this->followedVM != nullptr) {
+                this->followedLastViewMatrix = this->followedVM->getViewMatrix();
+            }
         }
 
         //! A vector of pointers to all the mplot::VisualModels (HexGridVisual,
         //! ScatterVisual, etc) which are going to be rendered in the scene.
         std::vector<std::unique_ptr<mplot::VisualModel<glver>>> vm;
+
+        //! If the view should follow a model (options viewFollowsVMTranslations and ...Rotations), this is the one.
+        mplot::VisualModel<glver>* followedVM = nullptr;
+
+        //! Holds the viewmatrix of the followedVM the last time we called render
+        sm::mat44<float> followedLastViewMatrix;
+
+        //! Add some parameters for the following smoothing here
+        float follower_tau = 1.0f; // or something
 
         // Initialize OpenGL shaders, set some flags (Alpha, Anti-aliasing), read in any external
         // state from json, and set up the coordinate arrows and any VisualTextModels that will be
