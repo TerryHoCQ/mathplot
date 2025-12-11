@@ -65,6 +65,7 @@ namespace mplot
         twodimensional,         // If true, then this VisualModel should always be viewed in a plane - it's a 2D model
         hide,                   // If true, then calls to VisualModel::render should return
         wireframe,              // If true, draw in GL's polygon mode
+        instance_model,         // If true, draw this as an array instance model
         show_bb,                // If true, draw vertices/indices for the bounding box frame
         compute_bb              // For some models, it's not useful to compute the bounding box (e.g. coordinate arrows)
     };
