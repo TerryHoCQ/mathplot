@@ -64,6 +64,7 @@ namespace mplot
         postVertexInitRequired,
         twodimensional,         // If true, then this VisualModel should always be viewed in a plane - it's a 2D model
         hide,                   // If true, then calls to VisualModel::render should return
+        wireframe,              // If true, draw in GL's polygon mode
         show_bb,                // If true, draw vertices/indices for the bounding box frame
         compute_bb              // For some models, it's not useful to compute the bounding box (e.g. coordinate arrows)
     };
@@ -746,6 +747,7 @@ namespace mplot
             _flags.set (vm_bools::postVertexInitRequired, false);
             _flags.set (vm_bools::twodimensional, false);
             _flags.set (vm_bools::hide, false);
+            _flags.set (vm_bools::wireframe, false);
             _flags.set (vm_bools::show_bb, false);
             _flags.set (vm_bools::compute_bb, true);
             return _flags;
@@ -764,6 +766,9 @@ namespace mplot
 
         void twodimensional (const bool val) { this->flags.set (vm_bools::twodimensional, val); }
         bool twodimensional() const { return this->flags.test (vm_bools::twodimensional); }
+
+        void wireframe (const bool val) { this->flags.set (vm_bools::wireframe, val); }
+        bool wireframe() const { return this->flags.test (vm_bools::wireframe); }
 
         //! Getter for vertex positions (for mplot::NormalsVisual)
         std::vector<float> getVertexPositions() { return this->vertexPositions; }

@@ -215,6 +215,14 @@ namespace mplot
             _glfn->UseProgram (this->get_gprog(this->parentVis));
 
             if (!this->indices.empty()) {
+
+                // Enable/disable wireframe mode per-model on each render call
+                if (this->flags.test (vm_bools::wireframe)) {
+                    _glfn->PolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+                } else {
+                    _glfn->PolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+                }
+
                 // It is only necessary to bind the vertex array object before rendering
                 // (not the vertex buffer objects)
                 _glfn->BindVertexArray (this->vao);
@@ -252,6 +260,7 @@ namespace mplot
             mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
 
             // Now render any VisualTextModels
+            _glfn->PolygonMode (GL_FRONT_AND_BACK, GL_FILL);
             auto ti = this->texts.begin();
             while (ti != this->texts.end()) { (*ti)->render(); ti++; }
 
