@@ -811,16 +811,6 @@ namespace mplot
         // This is called every time render() is called
         void computeSceneview()
         {
-            sm::vec<float> fol_sceneframe = {};
-            if (this->options.test (visual_options::viewFollowsVMTranslations)) {
-
-                // Move camera the difference between followedLastViewMatrix and followedVM->getViewMatrix().
-                fol_sceneframe = followedVM->getViewMatrix().translation() - followedLastViewMatrix.translation();
-                sm::vec<float> fol_screenframe = (this->sceneview * followedVM->getViewMatrix().translation()
-                                                  - this->sceneview * followedLastViewMatrix.translation()).less_one_dim();
-                this->scenetrans_delta -= fol_screenframe;
-            }
-
             if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
                 // Calculate model view transformation - transforming from "model space" to "worldspace".
                 this->computeSceneview_about_rotation_centre();
@@ -831,9 +821,20 @@ namespace mplot
                 this->state.reset (visual_state::scrolling);
             }
 
-            // Compute vector/translation/tranformation to followed agent?
-            if ((this->options.test (visual_options::viewFollowsVMTranslations)
-                 || this->options.test (visual_options::viewFollowsVMRotations)) && this->followedVM != nullptr) {
+            if (this->options.test (visual_options::viewFollowsVMTranslations)
+                && this->followedVM != nullptr
+                && this->followedLastViewMatrix != this->followedVM->getViewMatrix()) {
+
+                // Move camera the difference between followedLastViewMatrix and
+                // followedVM->getViewMatrix() in the screen frame of reference.
+                sm::vec<float> fol_screenframe = (this->sceneview * followedLastViewMatrix.translation()
+                                                  - this->sceneview * followedVM->getViewMatrix().translation()).less_one_dim();
+
+                this->sceneview.pretranslate (fol_screenframe);
+                this->sceneview_tr.pretranslate (fol_screenframe);
+                this->savedSceneview.pretranslate (fol_screenframe);
+                this->savedSceneview_tr.pretranslate (fol_screenframe);
+
                 this->followedLastViewMatrix = this->followedVM->getViewMatrix();
             }
         }
@@ -847,9 +848,6 @@ namespace mplot
 
         //! Holds the viewmatrix of the followedVM the last time we called render
         sm::mat44<float> followedLastViewMatrix;
-
-        //! Add some parameters for the following smoothing here
-        float follower_tau = 1.0f; // or something
 
         // Initialize OpenGL shaders, set some flags (Alpha, Anti-aliasing), read in any external
         // state from json, and set up the coordinate arrows and any VisualTextModels that will be
