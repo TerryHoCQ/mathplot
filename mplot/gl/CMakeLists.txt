@@ -8,6 +8,7 @@ install(
   compute_manager_cli.h
   compute_shaderprog.h
   ssbo_nomx.h
+  ssbo_mx.h
   loadshaders_nomx.h
   loadshaders_mx.h
   util_nomx.h
