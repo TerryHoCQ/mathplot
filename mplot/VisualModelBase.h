@@ -64,8 +64,8 @@ namespace mplot
         postVertexInitRequired,
         twodimensional,         // If true, then this VisualModel should always be viewed in a plane - it's a 2D model
         hide,                   // If true, then calls to VisualModel::render should return
-        wireframe,              // If true, draw in GL's polygon mode
-        instance_model,         // If true, draw this as an array instance model
+        wireframe,              // If true, draw in GL's polygon GL_LINES mode (instead of GL_FILL)
+        instanced,              // If true, draw this VisualModel with 'instancing' 1 or more times
         show_bb,                // If true, draw vertices/indices for the bounding box frame
         compute_bb              // For some models, it's not useful to compute the bounding box (e.g. coordinate arrows)
     };
@@ -718,6 +718,9 @@ namespace mplot
         GLuint idx = 0u;
         GLuint idx_bb = 0u;
 
+        //! If drawing with instancing, how many instances?
+        unsigned int instance_count = 1;
+
         /*!
          * A function that will be runtime defined to get_shaderprogs from a pointer to
          * Visual (saving a boilerplate argument and avoiding that killer circular
@@ -770,6 +773,9 @@ namespace mplot
 
         void wireframe (const bool val) { this->flags.set (vm_bools::wireframe, val); }
         bool wireframe() const { return this->flags.test (vm_bools::wireframe); }
+
+        void instanced (const bool val) { this->flags.set (vm_bools::instanced, val); }
+        bool instanced() const { return this->flags.test (vm_bools::instanced); }
 
         //! Getter for vertex positions (for mplot::NormalsVisual)
         std::vector<float> getVertexPositions() { return this->vertexPositions; }
@@ -901,7 +907,10 @@ namespace mplot
         /**
          * START vertex/index computation code
          *
-         * ALL methods below this point are for computing vertices
+         * ALL methods below this point are for computing vertices.
+         *
+         * The metheds compute vertexPositions/Normals/Colors along with indices in a form suitable
+         * for use with GL's DrawElements (or DrawElementsInstanced) drawing call.
          */
 
         /*!

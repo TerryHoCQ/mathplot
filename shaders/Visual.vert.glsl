@@ -1,5 +1,8 @@
 // The coded-in shaders tell non-Mac platforms that they use OpenGL 4.5, but Mac limited to 4.1
-#version 410
+#version 430
+
+// SSBO to be added optionally
+
 
 // ProjMatrix * RotnMatrix operation can be carried out on CPU with a single matrix
 //uniform mat4 mvp_matrix;
@@ -10,10 +13,13 @@ uniform mat4 v_matrix; // scene view matrix
 uniform mat4 p_matrix; // projection matrix
 // alpha - to make a model see-through
 uniform float alpha;
+uniform int instanced = 0;
 
 layout(location = 0) in vec4 position; // Attrib location 0
 layout(location = 1) in vec4 normalin; // Attrib location 1
 layout(location = 2) in vec3 color;    // Attrib location 2
+
+layout (std430, binding = 1) buffer InputBlock { float instance_data[]; };
 
 out VERTEX
 {
@@ -24,7 +30,14 @@ out VERTEX
 
 void main (void)
 {
-    gl_Position = (p_matrix * v_matrix * m_matrix * position);
+    if (instanced != 0) {
+        vec4 offset = { instance_data[gl_InstanceID * 4], instance_data[gl_InstanceID * 4 + 1], instance_data[gl_InstanceID * 4 + 2], 1 };
+        float dval = instance_data[gl_InstanceID * 4 + 3];
+        // Make colour from dval? Or rather, pass colour as three floats.
+        gl_Position = (p_matrix * v_matrix * m_matrix * (position + offset));
+    } else {
+        gl_Position = (p_matrix * v_matrix * m_matrix * position);
+    }
     vertex.color = vec4(color, alpha);
     vertex.fragpos = vec3(m_matrix * position);
     // Normals are all automatically computed, so there's no need for

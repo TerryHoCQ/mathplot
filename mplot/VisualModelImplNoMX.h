@@ -31,7 +31,7 @@ namespace mplot
     /*!
      * Single context safe implementation (mplot::gl::multicontext == 0)
      */
-    template <int glver = mplot::gl::version_4_1, int mx = mplot::gl::multicontext, std::enable_if_t<mx==0, bool> = true >
+    template <int glver = mplot::gl::version_4_1, int mx = mplot::gl::multicontext> requires (mx == 0)
     struct VisualModelImpl : public mplot::VisualModelBase<glver>
     {
         VisualModelImpl() : mplot::VisualModelBase<glver>::VisualModelBase() {}

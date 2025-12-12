@@ -20,6 +20,7 @@
 #include <mplot/VisualModelBase.h>
 
 #include <mplot/gl/util_mx.h>
+#include <mplot/gl/ssbo_mx.h>
 #include <mplot/VisualTextModel.h>
 #include <mplot/TextGeometry.h>
 
@@ -32,7 +33,7 @@ namespace mplot
     /*!
      * Multiple context safe implementation (mplot::gl::multicontext == 1)
      */
-    template <int glver = mplot::gl::version_4_1, int mx = mplot::gl::multicontext, std::enable_if_t<mx==1, bool> = true >
+    template <int glver = mplot::gl::version_4_1, int mx = mplot::gl::multicontext> requires (mx == 1)
     struct VisualModelImpl : public mplot::VisualModelBase<glver>
     {
         VisualModelImpl() : mplot::VisualModelBase<glver>::VisualModelBase() {}
@@ -44,7 +45,7 @@ namespace mplot
             // Explicitly clear owned VisualTextModels
             this->texts.clear();
             if (this->vbos != nullptr) {
-                GladGLContext* _glfn = this->get_glfn(this->parentVis);
+                GladGLContext* _glfn = this->get_glfn (this->parentVis);
                 _glfn->DeleteBuffers (this->numVBO, this->vbos.get());
                 _glfn->DeleteVertexArrays (1, &this->vao);
             }
@@ -104,6 +105,11 @@ namespace mplot
             // Unbind only the vertex array (not the buffers, that causes GL_INVALID_ENUM errors)
             _glfn->BindVertexArray(0); // carefully unbind and rebind
             mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
+
+            if (this->flags.test (vm_bools::instanced)) {
+                // Ensure instance_data is over on the GPU
+                this->instance_data.copy_to_gpu();
+            }
 
             /*
              * Now do the same for the bounding box
@@ -245,7 +251,15 @@ namespace mplot
                 }
 
                 // Draw the triangles
-                _glfn->DrawElements (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0);
+                GLint loc_i = _glfn->GetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("instanced"));
+                if (this->flags.test (vm_bools::instanced)) {
+                    if (loc_i != -1) { _glfn->Uniform1i (loc_i, 1); }
+                    _glfn->DrawElementsInstanced (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0,
+                                                  this->instance_count);
+                } else {
+                    if (loc_i != -1) { _glfn->Uniform1i (loc_i, 0); }
+                    _glfn->DrawElements (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0);
+                }
 
                 // Unbind the VAO
                 _glfn->BindVertexArray(0);
@@ -399,6 +413,13 @@ namespace mplot
         //! Get the GladGLContext function pointer
         std::function<GladGLContext*(mplot::VisualBase<glver>*)> get_glfn;
 
+        //! Shader Storage Buffer Object for instanced rendering
+        static constexpr unsigned int instance_index = 1; // instance data stored in SSBO index 1 (must match GLSL code)
+        static constexpr unsigned int max_instances = 1024; // Each instance has: location (3 floats), scale (1 float)
+        static constexpr unsigned int max_instance_limit = 4 * max_instances;
+        mplot::gl::ssbo<instance_index, float, max_instance_limit> instance_data;
+        constexpr unsigned int max_instanced_items() { return max_instances; }
+
     protected:
 
         //! A vector of pointers to text models that should be rendered.
@@ -418,6 +439,14 @@ namespace mplot
             mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
             _glfn->EnableVertexAttribArray (bufferAttribPosition);
             mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
+
+            if (this->flags.test (vm_bools::instanced)) {
+                if constexpr (mplot::gl::version::has_ssbo (glver) == true) {
+                    this->instance_data.init (_glfn);
+                } else {
+                    throw std::runtime_error ("Instanced rendering requires OpenGL 4.3 or higher");
+                }
+            }
         }
     };
 

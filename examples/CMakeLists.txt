@@ -247,6 +247,12 @@ if(NOT APPLE)
 
   add_executable(scatter_geodesic scatter_geodesic.cpp)
   target_link_libraries(scatter_geodesic OpenGL::GL glfw Freetype::Freetype)
+
+  # Instancing also not available on Apple (limited to OpenGL 4.1)
+  add_executable(scatter_instanced scatter_instanced.cpp)
+  target_link_libraries(scatter_instanced OpenGL::GL glfw Freetype::Freetype)
+  add_executable(breadcrumbs breadcrumbs.cpp)
+  target_link_libraries(breadcrumbs OpenGL::GL glfw Freetype::Freetype)
 endif()
 
 add_executable(scatter_dynamic scatter_dynamic.cpp)
