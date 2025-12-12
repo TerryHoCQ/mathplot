@@ -13,7 +13,7 @@
 #include <mplot/gl/compute_manager.h>
 #include <mplot/gl/util_nomx.h>
 #include <mplot/gl/texture.h>
-#include <mplot/gl/ssbo.h>
+#include <mplot/gl/ssbo_nomx.h>
 #include <mplot/loadpng.h>
 
 namespace my {
