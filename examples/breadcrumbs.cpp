@@ -76,7 +76,8 @@ int main()
 
         v.render();
         v.waitevents (0.001);
-#else
+
+#else // I haven't mastered updating a subrange of data in an SSBO
         // update circularly, change isvp->instance_start each time
         std::cout << "updating data with points[i%dsz] = " << points[i%dsz] << std::endl;
         isvp->update_data (points, data, (i % dsz), (i % dsz));
