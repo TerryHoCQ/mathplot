@@ -27,7 +27,9 @@ namespace mplot::gl
         // The name of the buffer, generated with glGenBuffers()
         unsigned int name = 0;
         // The CPU-side data for the buffer
-        //sm::vec<T, N> data;
+        sm::vec<T, N> data = {};
+
+        bool ready() const { return this->name != 0u; }
 
         ssbo() {}
         ~ssbo() {}
@@ -41,10 +43,9 @@ namespace mplot::gl
 
         void init_buffer_object()
         {
-            sm::vec<T, N> data = {};
             glBindBufferBase (GL_SHADER_STORAGE_BUFFER, index, this->name);
             mplot::gl::Util::checkError (__FILE__, __LINE__);
-            glBufferData (GL_SHADER_STORAGE_BUFFER, N * sizeof(T), data.data(), GL_STATIC_DRAW);
+            glBufferData (GL_SHADER_STORAGE_BUFFER, N * sizeof(T), this->data.data(), GL_STATIC_DRAW);
             mplot::gl::Util::checkError (__FILE__, __LINE__);
             glBindBuffer (GL_SHADER_STORAGE_BUFFER, 0);
             mplot::gl::Util::checkError (__FILE__, __LINE__);
@@ -53,15 +54,40 @@ namespace mplot::gl
         // Copy data in the sm::vec data over to the GPU, once it has been initialized with init_buffer_object
         // data may contain less than N elements, and may be copied at an offset
         template<std::size_t _N = N>
-        void copy_to_gpu (sm::vec<T, _N>& data, std::size_t offset = 0u)
+        void copy_to_gpu (sm::vec<T, _N>& _data, std::size_t offset = 0u)
         {
             static_assert (_N <= N);
+
+            // Update local cached version of data, a portion of which we're about to write to the SSBO
+            for (unsigned int i = 0; i < _N; ++i) { this->data[i + offset] = _data[i]; }
+
             glBindBufferBase (GL_SHADER_STORAGE_BUFFER, index, this->name);
             mplot::gl::Util::checkError (__FILE__, __LINE__);
             T* cpuptr = static_cast<T*>(glMapBufferRange (GL_SHADER_STORAGE_BUFFER, offset * sizeof(T), _N * sizeof(T), GL_MAP_WRITE_BIT));
-            mplot::gl::Util::checkError (__FILE__, __LINE__);
+            if (cpuptr == nullptr) {
+                std::cout << "ssbo::copy_to_gpu(sm::vec<T, _N>&): MapBufferRange error" << std::endl;
+                mplot::gl::Util::checkError (__FILE__, __LINE__);
+                return;
+            }
             // Note: cpuptr is a 'pointer to the beginning of the mapped range' and so we don't incorporate offset again, below:
-            for (unsigned int i = 0; i < _N; ++i) { cpuptr[i] = data[i]; }
+            for (unsigned int i = 0; i < _N; ++i) { cpuptr[i] = _data[i]; }
+            glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
+            glBindBuffer (GL_SHADER_STORAGE_BUFFER, 0);
+            mplot::gl::Util::checkError (__FILE__, __LINE__);
+        }
+
+        void copy_to_gpu ()
+        {
+            glBindBufferBase (GL_SHADER_STORAGE_BUFFER, index, this->name);
+            mplot::gl::Util::checkError (__FILE__, __LINE__);
+            T* cpuptr = static_cast<T*>(glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, N * sizeof(T), GL_MAP_WRITE_BIT));
+            if (cpuptr == nullptr) {
+                std::cout << "ssbo::copy_to_gpu(): MapBufferRange error" << std::endl;
+                mplot::gl::Util::checkError (__FILE__, __LINE__);
+                return;
+            }
+            // Note: cpuptr is a 'pointer to the beginning of the mapped range' and so we don't incorporate offset again, below:
+            for (unsigned int i = 0; i < N; ++i) { cpuptr[i] = this->data[i]; }
             glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
             glBindBuffer (GL_SHADER_STORAGE_BUFFER, 0);
             mplot::gl::Util::checkError (__FILE__, __LINE__);
@@ -72,14 +98,18 @@ namespace mplot::gl
         // *already in CPU accessible memory* after glMapBufferRange().
         // However, in case you need it, here it is.
         template<std::size_t _N = N>
-        void copy_from_gpu (sm::vec<T, _N>& data, std::size_t offset = 0u)
+        void copy_from_gpu (std::size_t offset = 0u)
         {
             static_assert (_N <= N);
             glBindBufferBase (GL_SHADER_STORAGE_BUFFER, index, this->name);
             mplot::gl::Util::checkError (__FILE__, __LINE__);
             T* cpuptr = static_cast<T*>(glMapBufferRange (GL_SHADER_STORAGE_BUFFER, offset * sizeof(T), _N * sizeof(T), GL_MAP_READ_BIT));
-            mplot::gl::Util::checkError (__FILE__, __LINE__);
-            for (unsigned int i = 0; i < _N; ++i) { data[i] = cpuptr[i]; }
+            if (cpuptr == nullptr) {
+                std::cout << "ssbo::copy_from_gpu(): MapBufferRange error" << std::endl;
+                mplot::gl::Util::checkError (__FILE__, __LINE__);
+                return;
+            }
+            for (unsigned int i = 0; i < _N; ++i) { data[i + offset] = cpuptr[i]; }
             glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
             glBindBuffer (GL_SHADER_STORAGE_BUFFER, 0);
             mplot::gl::Util::checkError (__FILE__, __LINE__);
@@ -97,7 +127,11 @@ namespace mplot::gl
             glBindBufferBase (GL_SHADER_STORAGE_BUFFER, index, this->name);
             mplot::gl::Util::checkError (__FILE__, __LINE__);
             T* cpuptr = static_cast<T*>(glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, N * sizeof(T), GL_MAP_READ_BIT));
-            mplot::gl::Util::checkError (__FILE__, __LINE__);
+            if (cpuptr == nullptr) {
+                std::cout << "ssbo::get_range(): MapBufferRange error" << std::endl;
+                mplot::gl::Util::checkError (__FILE__, __LINE__);
+                return r;
+            }
             for (unsigned int i = 0; i < N; ++i) { r.update (cpuptr[i]); }
             glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
             glBindBuffer (GL_SHADER_STORAGE_BUFFER, 0);

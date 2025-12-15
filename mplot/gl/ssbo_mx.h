@@ -28,7 +28,7 @@ namespace mplot::gl
         unsigned int name = 0;
         // The OpenGL function pointer
         GladGLContext* glfn = nullptr;
-        // Our CPU side data buffer
+        // The CPU-side data for the buffer
         sm::vec<T, N> data = {};
 
         bool ready() const { return this->name != 0u; }
@@ -69,7 +69,11 @@ namespace mplot::gl
             mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
             T* cpuptr = static_cast<T*>(this->glfn->MapBufferRange (GL_SHADER_STORAGE_BUFFER,
                                                                     offset * sizeof(T), _N * sizeof(T), GL_MAP_WRITE_BIT));
-            mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
+            if (cpuptr == nullptr) {
+                std::cout << "ssbo::copy_to_gpu(sm::vec<T, _N>&): MapBufferRange error" << std::endl;
+                mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
+                return;
+            }
             // Note: cpuptr is a 'pointer to the beginning of the mapped range' and so we don't incorporate offset again, below:
             for (unsigned int i = 0; i < _N; ++i) { cpuptr[i] = _data[i]; }
             this->glfn->UnmapBuffer (GL_SHADER_STORAGE_BUFFER);
@@ -83,16 +87,15 @@ namespace mplot::gl
             mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
             T* cpuptr = static_cast<T*>(this->glfn->MapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, N * sizeof(T), GL_MAP_WRITE_BIT));
             if (cpuptr == nullptr) {
-                // Error
                 std::cout << "ssbo::copy_to_gpu(): MapBufferRange error" << std::endl;
                 mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
-            } else {
-                // Note: cpuptr is a 'pointer to the beginning of the mapped range' and so we don't incorporate offset again, below:
-                for (unsigned int i = 0; i < N; ++i) { cpuptr[i] = this->data[i]; }
-                this->glfn->UnmapBuffer (GL_SHADER_STORAGE_BUFFER);
-                this->glfn->BindBuffer (GL_SHADER_STORAGE_BUFFER, 0);
-                mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
+                return;
             }
+            // Note: cpuptr is a 'pointer to the beginning of the mapped range' and so we don't incorporate offset again, below:
+            for (unsigned int i = 0; i < N; ++i) { cpuptr[i] = this->data[i]; }
+            this->glfn->UnmapBuffer (GL_SHADER_STORAGE_BUFFER);
+            this->glfn->BindBuffer (GL_SHADER_STORAGE_BUFFER, 0);
+            mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
         }
 
         // Map the GPU memory to CPU space, then copy the values into data. NB: it's a
@@ -109,7 +112,11 @@ namespace mplot::gl
             mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
             T* cpuptr = static_cast<T*>(this->glfn->MapBufferRange (GL_SHADER_STORAGE_BUFFER,
                                                                     offset * sizeof(T), _N * sizeof(T), GL_MAP_READ_BIT));
-            mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
+            if (cpuptr == nullptr) {
+                std::cout << "ssbo::copy_from_gpu(): MapBufferRange error" << std::endl;
+                mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
+                return;
+            }
             for (unsigned int i = 0; i < _N; ++i) { this->data[i + offset] = cpuptr[i]; }
             this->glfn->UnmapBuffer (GL_SHADER_STORAGE_BUFFER);
             this->glfn->BindBuffer (GL_SHADER_STORAGE_BUFFER, 0);
@@ -128,7 +135,11 @@ namespace mplot::gl
             this->glfn->BindBufferBase (GL_SHADER_STORAGE_BUFFER, index, this->name);
             mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
             T* cpuptr = static_cast<T*>(this->glfn->MapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, N * sizeof(T), GL_MAP_READ_BIT));
-            mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
+            if (cpuptr == nullptr) {
+                std::cout << "ssbo::get_range(): MapBufferRange error" << std::endl;
+                mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
+                return r;
+            }
             for (unsigned int i = 0; i < N; ++i) { r.update (cpuptr[i]); }
             this->glfn->UnmapBuffer (GL_SHADER_STORAGE_BUFFER);
             this->glfn->BindBuffer (GL_SHADER_STORAGE_BUFFER, 0);

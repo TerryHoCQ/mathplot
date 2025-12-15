@@ -4,7 +4,7 @@
  */
 
 // You have to include the GL headers manually so that you will be sure you have the
-// right ones. THis is because for OpenGL version 4.3, you would include GL3/gl3.h and
+// right ones. This is because for OpenGL version 4.3, you would include GL3/gl3.h and
 // GL/glext.h whereas if you are targeting OpenGL 3.1 ES, you want to include
 // GLES3/gl3[12].h (and maybe GLES3/gl3ext.h).
 #include <GLES3/gl31.h>
@@ -18,8 +18,10 @@
 
 namespace my {
 
+    static constexpr int glver = mplot::gl::version_3_1_es;
+
     // Use OpenGL 3.1 ES here
-    struct compute_manager : public mplot::gl::compute_manager<mplot::gl::version_3_1_es>
+    struct compute_manager : public mplot::gl::compute_manager<glver>
     {
         static constexpr int dwidth = 256;
         static constexpr int dheight = 65;
@@ -122,7 +124,7 @@ namespace my {
             this->compute_program.load_shaders (shaders);
 
             // We'll reuse the vertex/fragment shaders from the shadercompute example
-            std::string defVtxShdr = mplot::getDefaultVtxShader (mplot::gl::version_3_1_es);
+            std::string defVtxShdr = mplot::getDefaultVtxShader (glver);
             std::vector<mplot::gl::ShaderInfo> vtxshaders = {
                 {GL_VERTEX_SHADER, "../examples/gl_compute/shader_ssbo.vert.glsl", defVtxShdr.c_str(), 0 },
                 {GL_FRAGMENT_SHADER, "../examples/gl_compute/shader_ssbo.frag.glsl", mplot::defaultFragShader, 0 }
@@ -206,7 +208,7 @@ namespace my {
         // CPU side input data. This will be SSBO index 1.
         mplot::gl::ssbo<1, float, dsz> input_ssbo;
         // You will need at least one gl::compute_shaderprog
-        mplot::gl::compute_shaderprog<mplot::gl::version_3_1_es> compute_program;
+        mplot::gl::compute_shaderprog<glver> compute_program;
     };
 } // namespace my
 
