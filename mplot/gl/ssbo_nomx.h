@@ -27,7 +27,7 @@ namespace mplot::gl
         // The name of the buffer, generated with glGenBuffers()
         unsigned int name = 0;
         // The CPU-side data for the buffer
-        sm::vec<T, N> data;
+        //sm::vec<T, N> data;
 
         ssbo() {}
         ~ssbo() {}
@@ -36,16 +36,33 @@ namespace mplot::gl
         void init()
         {
             glGenBuffers (1, &this->name);
-            this->copy_to_gpu();
+            this->init_buffer_object();
         }
 
-        // Copy the data in the sm::vec data over to the GPU
-        void copy_to_gpu()
+        void init_buffer_object()
         {
+            sm::vec<T, N> data = {};
             glBindBufferBase (GL_SHADER_STORAGE_BUFFER, index, this->name);
             mplot::gl::Util::checkError (__FILE__, __LINE__);
-            glBufferData (GL_SHADER_STORAGE_BUFFER, N * sizeof(T), this->data.data(), GL_STATIC_DRAW);
+            glBufferData (GL_SHADER_STORAGE_BUFFER, N * sizeof(T), data.data(), GL_STATIC_DRAW);
             mplot::gl::Util::checkError (__FILE__, __LINE__);
+            glBindBuffer (GL_SHADER_STORAGE_BUFFER, 0);
+            mplot::gl::Util::checkError (__FILE__, __LINE__);
+        }
+
+        // Copy data in the sm::vec data over to the GPU, once it has been initialized with init_buffer_object
+        // data may contain less than N elements, and may be copied at an offset
+        template<std::size_t _N = N>
+        void copy_to_gpu (sm::vec<T, _N>& data, std::size_t offset = 0u)
+        {
+            static_assert (_N <= N);
+            glBindBufferBase (GL_SHADER_STORAGE_BUFFER, index, this->name);
+            mplot::gl::Util::checkError (__FILE__, __LINE__);
+            T* cpuptr = static_cast<T*>(glMapBufferRange (GL_SHADER_STORAGE_BUFFER, offset * sizeof(T), _N * sizeof(T), GL_MAP_WRITE_BIT));
+            mplot::gl::Util::checkError (__FILE__, __LINE__);
+            // Note: cpuptr is a 'pointer to the beginning of the mapped range' and so we don't incorporate offset again, below:
+            for (unsigned int i = 0; i < _N; ++i) { cpuptr[i] = data[i]; }
+            glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
             glBindBuffer (GL_SHADER_STORAGE_BUFFER, 0);
             mplot::gl::Util::checkError (__FILE__, __LINE__);
         }
@@ -54,14 +71,15 @@ namespace mplot::gl
         // performance hit to *copy* to the mapped data to our sm::vec, because the data is
         // *already in CPU accessible memory* after glMapBufferRange().
         // However, in case you need it, here it is.
-        void copy_from_gpu()
+        template<std::size_t _N = N>
+        void copy_from_gpu (sm::vec<T, _N>& data, std::size_t offset = 0u)
         {
+            static_assert (_N <= N);
             glBindBufferBase (GL_SHADER_STORAGE_BUFFER, index, this->name);
             mplot::gl::Util::checkError (__FILE__, __LINE__);
-            T* cpuptr = static_cast<T*>(glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, N*sizeof(T), GL_MAP_READ_BIT));
+            T* cpuptr = static_cast<T*>(glMapBufferRange (GL_SHADER_STORAGE_BUFFER, offset * sizeof(T), _N * sizeof(T), GL_MAP_READ_BIT));
             mplot::gl::Util::checkError (__FILE__, __LINE__);
-            //this->data.resize(N);
-            for (unsigned int i = 0; i < N; ++i) { this->data[i] = cpuptr[i]; }
+            for (unsigned int i = 0; i < _N; ++i) { data[i] = cpuptr[i]; }
             glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);
             glBindBuffer (GL_SHADER_STORAGE_BUFFER, 0);
             mplot::gl::Util::checkError (__FILE__, __LINE__);
@@ -78,7 +96,7 @@ namespace mplot::gl
             r.search_init();
             glBindBufferBase (GL_SHADER_STORAGE_BUFFER, index, this->name);
             mplot::gl::Util::checkError (__FILE__, __LINE__);
-            T* cpuptr = static_cast<T*>(glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, N*sizeof(T), GL_MAP_READ_BIT));
+            T* cpuptr = static_cast<T*>(glMapBufferRange (GL_SHADER_STORAGE_BUFFER, 0, N * sizeof(T), GL_MAP_READ_BIT));
             mplot::gl::Util::checkError (__FILE__, __LINE__);
             for (unsigned int i = 0; i < N; ++i) { r.update (cpuptr[i]); }
             glUnmapBuffer (GL_SHADER_STORAGE_BUFFER);

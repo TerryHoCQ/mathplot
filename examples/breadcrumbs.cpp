@@ -17,6 +17,20 @@
 // Instanced rendering requires OpenGL 4.3 or higher (for the SSBO)
 constexpr int glver = mplot::gl::version_4_3;
 
+constexpr float st = sm::mathconst<float>::two_pi / 360;
+constexpr float z = 0.0f;
+sm::vec<float, 3> f (int i)
+{
+    float phi = st * i;
+    float r = 1.0f + 0.1f * std::sin (phi * 10.0f);
+    sm::vec<float, 3> xyz = {
+        r * std::sin (phi),
+        r * std::cos (phi),
+        0.0f
+    };
+    return xyz;
+}
+
 int main()
 {
     int rtn = -1;
@@ -24,34 +38,36 @@ int main()
     mplot::Visual<glver> v(1024, 768, "mplot::InstancedScatterVisual");
     v.lightingEffects();
 
-    std::deque<sm::vec<float, 3>> points(50);
-    std::deque<float> data(50);
+    constexpr int dsz = 260;
+    std::deque<sm::vec<float, 3>> points(dsz);
+    std::deque<float> data(dsz);
 
-    for (int i = 0; i < 50; ++i) {
-        float x = i/50.0f;
-        float y = std::sqrt (1.0f - x*x);
-        // z is some function of x, y
-        float z = x * std::exp(-(x*x) - (y*y));
-        points[i] = {x, y, z};
-        // std::cout << "points[" << i << "] = " << points[i] << std::endl;
-        data[i] = z;
+    int i = 0;
+    sm::vec<float, 3> xyz = {};
+    for (i = 0; i < dsz; ++i) {
+        xyz = f (i);
+        points[i] = xyz;
+        data[i] = xyz[2];
     }
 
     auto isv = std::make_unique<mplot::InstancedScatterVisual<glver>> (sm::vec<>{});
     v.bindmodel (isv);
-    // Place data in SSBO
-    isv->set_data (points, data);
     isv->radiusFixed = 0.03f;
-    //isv->cm.setType (mplot::ColourMapType::Plasma);
+
     isv->finalize();
-    v.addVisualModel (isv);
+    auto isvp = v.addVisualModel (isv);
 
     while (!v.readyToFinish()) {
         v.render();
-        v.wait (0.4);
-        points.push_back (points.back() + sm::vec<>::uy() * 0.04f);
-        points.pop_front();
-        isv->set_data (points, data);
+        v.wait (0.008);
+
+        // Update all points/data
+        xyz = f (i);
+        points[i%dsz] = xyz;
+        data[i%dsz] = xyz[2];
+        ++i;
+        // Place data in SSBO. first call of set_data should occur after first call to v.render()
+        isvp->set_data (points, data);
     }
 
     return rtn;

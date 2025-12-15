@@ -48,34 +48,40 @@ namespace mplot
 
         void set_data (const std::deque<sm::vec<float, 3>>& points, const std::deque<float>& data)
         {
+            if (this->instance_data.ready() == false) { throw std::runtime_error ("instance_data ssbo is not ready"); }
             if (points.size() != data.size()) { throw std::runtime_error ("points and data must have same size"); }
             if (points.size() > this->max_instanced_items()) { throw std::runtime_error ("Not enough space"); }
 
             size_t j = 0;
+
+            sm::vec<float, mplot::VisualModel<glver>::max_instance_limit> replacement_data;
             for (size_t i = 0; i < points.size(); ++i) {
                 sm::vec<float, 3> c = points[i];
-                this->instance_data.data[j++] = c[0];
-                this->instance_data.data[j++] = c[1];
-                this->instance_data.data[j++] = c[2];
-                this->instance_data.data[j++] = data[i];
+                replacement_data[j++] = c[0];
+                replacement_data[j++] = c[1];
+                replacement_data[j++] = c[2];
+                replacement_data[j++] = data[i];
             }
             this->instance_count = points.size();
+            this->instance_data.copy_to_gpu (replacement_data);
         }
 
         void set_data (const sm::vvec<sm::vec<float, 3>>& points, const sm::vvec<float>& data)
         {
+            if (this->instance_data.ready() == false) { throw std::runtime_error ("instance_data ssbo is not ready"); }
             if (points.size() != data.size()) { throw std::runtime_error ("points and data must have same size"); }
             if (points.size() > this->max_instanced_items()) { throw std::runtime_error ("Not enough space"); }
 
             size_t j = 0;
             for (size_t i = 0; i < points.size(); ++i) {
                 sm::vec<float, 3> c = points[i];
-                this->instance_data.data[j++] = c[0];
-                this->instance_data.data[j++] = c[1];
-                this->instance_data.data[j++] = c[2];
-                this->instance_data.data[j++] = data[i];
+                this->idata[j++] = c[0];
+                this->idata[j++] = c[1];
+                this->idata[j++] = c[2];
+                this->idata[j++] = data[i];
             }
             this->instance_count = points.size();
+            this->instance_data.copy_to_gpu (this->idata);
         }
 
         //! Compute spheres for a scatter plot
