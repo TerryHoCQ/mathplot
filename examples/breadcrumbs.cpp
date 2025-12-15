@@ -66,7 +66,7 @@ int main()
         points[i%dsz] = xyz;
         data[i%dsz] = xyz[2];
         ++i;
-        // Place data in SSBO. first call of set_data should occur after first call to v.render()
+        // Place data in SSBO. first call of set_data must occur after first call to v.render()
         isvp->set_data (points, data);
     }
 

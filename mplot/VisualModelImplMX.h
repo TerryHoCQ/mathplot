@@ -71,6 +71,18 @@ namespace mplot
             model->releaseContext = &mplot::VisualBase<glver>::release_context;
         }
 
+        void init_instance_data()
+        {
+            if constexpr (mplot::gl::version::has_ssbo (glver) == true) {
+                if (this->instance_data.ready() == false) {
+                    GladGLContext* _glfn = this->get_glfn (this->parentVis);
+                    this->instance_data.init (_glfn);
+                }
+            } else {
+                throw std::runtime_error ("Instanced rendering requires OpenGL 4.3 or higher");
+            }
+        }
+
         //! Common code to call after the vertices have been set up. GL has to have been initialised.
         void postVertexInit() final
         {
@@ -106,17 +118,8 @@ namespace mplot
             _glfn->BindVertexArray(0); // carefully unbind and rebind
             mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
 
-            if (this->flags.test (vm_bools::instanced)) {
-                if constexpr (mplot::gl::version::has_ssbo (glver) == true) {
-                    this->instance_data.init (_glfn);
-                } else {
-                    throw std::runtime_error ("Instanced rendering requires OpenGL 4.3 or higher");
-                }
-            }
-
-            if (this->flags.test (vm_bools::instanced)) {
-                // Ensure instance_data is over on the GPU
-                this->instance_data.copy_to_gpu (this->idata);
+            if (this->flags.test (vm_bools::instanced) && this->instance_data.ready() == false) {
+                this->init_instance_data();
             }
 
             /*
@@ -426,7 +429,6 @@ namespace mplot
         static constexpr unsigned int max_instances = 1024; // Each instance has: location (3 floats), scale (1 float)
         static constexpr unsigned int max_instance_limit = 4 * max_instances;
         mplot::gl::ssbo<instance_index, float, max_instance_limit> instance_data;
-        sm::vec<float, max_instance_limit> idata = {};
         constexpr unsigned int max_instanced_items() { return max_instances; }
 
     protected:

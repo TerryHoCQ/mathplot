@@ -42,12 +42,13 @@ int main()
 
     auto isv = std::make_unique<mplot::InstancedScatterVisual<glver>> (sm::vec<>{});
     v.bindmodel (isv);
-    // Place data in SSBO
-    isv->set_data (points, data);
     isv->radiusFixed = 0.03f;
-    //isv->cm.setType (mplot::ColourMapType::Plasma);
     isv->finalize();
-    v.addVisualModel (isv);
+    auto isvp = v.addVisualModel (isv);
+
+    v.render();
+    // Place data in SSBO. You have to call v.render() once first.
+    isvp->set_data (points, data);
 
     v.keepOpen();
 
