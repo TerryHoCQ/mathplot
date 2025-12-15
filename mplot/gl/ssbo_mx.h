@@ -93,20 +93,24 @@ namespace mplot::gl
 
             this->glfn->BindBufferBase (GL_SHADER_STORAGE_BUFFER, index, this->name);
             mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
+            std::cout << "Mapping buffer range at offset " << offset << " floats = " << (offset * sizeof(T)) << " bytes" << std::endl;
             T* cpuptr = static_cast<T*>(this->glfn->MapBufferRange (GL_SHADER_STORAGE_BUFFER,
-                                                                    offset * sizeof(T), _data.size() * sizeof(T), GL_MAP_WRITE_BIT));
+                                                                    offset * sizeof(T), _data.size() * sizeof(T),
+                                                                    GL_MAP_WRITE_BIT));
             if (cpuptr == nullptr) {
                 std::cout << "ssbo::copy_to_gpu(sm::vec<T, _N>&): MapBufferRange error" << std::endl;
                 mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
                 return;
             }
             // Note: cpuptr is a 'pointer to the beginning of the mapped range' and so we don't incorporate offset again, below:
-            for (unsigned int i = 0; i <  _data.size(); ++i) {
-                //std::cout << "Writing value " << " _data[i] = " << _data[i] << " to mapped range" << std::endl;
+            std::cout << "About to copy " << _data.size() << " things (prolly floats)...\n";
+            for (unsigned int i = 0; i < _data.size(); ++i) {
+                std::cout << "Writing value " << " _data[i] = " << _data[i] << " into mapped range" << std::endl;
                 cpuptr[i] = _data[i];
             }
-            this->glfn->UnmapBuffer (GL_SHADER_STORAGE_BUFFER);
-            this->glfn->BindBuffer (GL_SHADER_STORAGE_BUFFER, 0);
+
+            this->glfn->UnmapBuffer (GL_SHADER_STORAGE_BUFFER);    // necessary
+            this->glfn->BindBuffer (GL_SHADER_STORAGE_BUFFER, 0);  // optional
             mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
         }
 
@@ -121,6 +125,7 @@ namespace mplot::gl
                 return;
             }
             // Note: cpuptr is a 'pointer to the beginning of the mapped range' and so we don't incorporate offset again, below:
+            //std::cout << "About to copy " << N << " things (prolly floats)...\n";
             for (unsigned int i = 0; i < N; ++i) { cpuptr[i] = this->data[i]; }
             this->glfn->UnmapBuffer (GL_SHADER_STORAGE_BUFFER);
             this->glfn->BindBuffer (GL_SHADER_STORAGE_BUFFER, 0);
