@@ -9,7 +9,6 @@
 #include <iostream>
 #include <vector>
 #include <array>
-#include <deque>
 #include <sm/vec>
 #include <mplot/tools.h>
 #include <mplot/VisualModel.h>
@@ -46,7 +45,7 @@ namespace mplot
             }
         }
 
-        void set_data (const std::deque<sm::vec<float, 3>>& points, const std::deque<float>& data)
+        void set_data (const sm::vvec<sm::vec<float, 3>>& points, const sm::vvec<float>& data)
         {
             if (points.size() != data.size()) { throw std::runtime_error ("points and data must have same size"); }
             if (points.size() > this->max_instanced_items()) { throw std::runtime_error ("Not enough space"); }
@@ -63,21 +62,26 @@ namespace mplot
             this->instance_data.copy_to_gpu();
         }
 
-        void set_data (const sm::vvec<sm::vec<float, 3>>& points, const sm::vvec<float>& data)
+        // Update the instance_data from points and data. Update the range of data starting at
+        // points/data index i_s and ending at i_e.
+        void update_data (const sm::vvec<sm::vec<float, 3>>& points, const sm::vvec<float>& data,
+                          std::size_t i_s, std::size_t i_e)
         {
             if (points.size() != data.size()) { throw std::runtime_error ("points and data must have same size"); }
             if (points.size() > this->max_instanced_items()) { throw std::runtime_error ("Not enough space"); }
 
+            sm::vvec<float> updated(4 * (1 + i_e - i_s));
             size_t j = 0;
-            for (size_t i = 0; i < points.size(); ++i) {
+            for (size_t i = i_s; i <= i_e; ++i) {
+                //std::cout << "writing points/data["<<i<<"]\n";
                 sm::vec<float, 3> c = points[i];
-                this->instance_data.data[j++] = c[0];
-                this->instance_data.data[j++] = c[1];
-                this->instance_data.data[j++] = c[2];
-                this->instance_data.data[j++] = data[i];
+                updated[j++] = c[0];
+                updated[j++] = c[1];
+                updated[j++] = c[2];
+                updated[j++] = data[i];
             }
-            this->instance_count = points.size();
-            this->instance_data.copy_to_gpu();
+            //std::cout << "Copy updated, size " << updated.size() << " to gpu with offset " << i_s << "\n";
+            this->instance_data.copy_to_gpu (updated, i_s);
         }
 
         //! Compute spheres for a scatter plot

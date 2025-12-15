@@ -720,6 +720,8 @@ namespace mplot
 
         //! If drawing with instancing, how many instances?
         unsigned int instance_count = 1;
+        //! Which datum in the instance buffer is the one to be drawn by the first thread?
+        unsigned int instance_start = 0;
 
         /*!
          * A function that will be runtime defined to get_shaderprogs from a pointer to

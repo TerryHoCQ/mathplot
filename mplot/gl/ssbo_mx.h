@@ -81,6 +81,35 @@ namespace mplot::gl
             mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
         }
 
+        void copy_to_gpu (sm::vvec<T>& _data, std::size_t offset = 0u)
+        {
+            if (_data.size() > N) { throw std::runtime_error ("Too big"); }
+
+            // Update local cached version of data, a portion of which we're about to write to the SSBO
+            //std::cout << "Copy " << _data.size() << " elements from _data[0] to this->data[" << offset << "]\n";
+            for (unsigned int i = 0; i < _data.size(); ++i) { this->data[i + offset] = _data[i]; }
+
+            //std::cout << "this->data is now\n\n" << this->data << std::endl;
+
+            this->glfn->BindBufferBase (GL_SHADER_STORAGE_BUFFER, index, this->name);
+            mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
+            T* cpuptr = static_cast<T*>(this->glfn->MapBufferRange (GL_SHADER_STORAGE_BUFFER,
+                                                                    offset * sizeof(T), _data.size() * sizeof(T), GL_MAP_WRITE_BIT));
+            if (cpuptr == nullptr) {
+                std::cout << "ssbo::copy_to_gpu(sm::vec<T, _N>&): MapBufferRange error" << std::endl;
+                mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
+                return;
+            }
+            // Note: cpuptr is a 'pointer to the beginning of the mapped range' and so we don't incorporate offset again, below:
+            for (unsigned int i = 0; i <  _data.size(); ++i) {
+                //std::cout << "Writing value " << " _data[i] = " << _data[i] << " to mapped range" << std::endl;
+                cpuptr[i] = _data[i];
+            }
+            this->glfn->UnmapBuffer (GL_SHADER_STORAGE_BUFFER);
+            this->glfn->BindBuffer (GL_SHADER_STORAGE_BUFFER, 0);
+            mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
+        }
+
         void copy_to_gpu()
         {
             this->glfn->BindBufferBase (GL_SHADER_STORAGE_BUFFER, index, this->name);
