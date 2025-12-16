@@ -14,7 +14,8 @@ namespace mplot
     "uniform mat4 v_matrix;\n"
     "uniform mat4 p_matrix;\n"
     "uniform float alpha;\n"
-    "uniform int instanced = 0;\n"
+    "uniform int instance_count = 0;\n"
+    "uniform int instance_start = -1;\n"
     "layout(location = 0) in vec4 position;\n"
     "layout(location = 1) in vec4 normalin;\n"
     "layout(location = 2) in vec3 color;\n";
@@ -28,7 +29,7 @@ namespace mplot
     "} vertex;\n"
     "void main()\n"
     "    {\n"
-    "    if (instanced != 0) {\n"
+    "    if (instance_count > 0) {\n"
     "        vec4 offset = { instance_data[gl_InstanceID * 4], instance_data[gl_InstanceID * 4 + 1], instance_data[gl_InstanceID * 4 + 2], 1 };\n"
     "        float dval = instance_data[gl_InstanceID * 4 + 3];\n"
     "        gl_Position = (p_matrix * v_matrix * m_matrix * (position + offset));\n"
