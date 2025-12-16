@@ -16,7 +16,7 @@
 
 namespace mplot
 {
-    template <int glver = mplot::gl::version_4_1>
+    template <int glver = mplot::gl::version_4_3>
     class InstancedScatterVisual : public VisualModel<glver>
     {
     public:
