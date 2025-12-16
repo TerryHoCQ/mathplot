@@ -270,6 +270,7 @@ namespace mplot
                     _glfn->DrawElementsInstanced (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0, this->instance_count);
                 } else {
                     if (loc_is != -1) { _glfn->Uniform1i (loc_is, -1); }
+                    if (loc_ic != -1) { _glfn->Uniform1i (loc_ic, -1); }
                     _glfn->DrawElements (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0);
                 }
 

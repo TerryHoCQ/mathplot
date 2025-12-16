@@ -724,7 +724,7 @@ namespace mplot
         static constexpr unsigned int max_instance_limit = 4 * max_instances;
         constexpr unsigned int max_instanced_items() { return max_instances; }
         //! If drawing with instancing, how many instances?
-        unsigned int instance_count = 1;
+        unsigned int instance_count = 0;
         //! Which datum in the instance buffer is the one to be drawn by the first thread?
         unsigned int instance_start = 0;
 

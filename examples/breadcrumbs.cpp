@@ -13,6 +13,7 @@
 #include <mplot/Visual.h>
 #include <mplot/ColourMap.h>
 #include <mplot/InstancedScatterVisual.h>
+#include <mplot/GeodesicVisual.h>
 
 // Instanced rendering requires OpenGL 4.3 or higher (for the SSBO)
 constexpr int glver = mplot::gl::version_4_3;
@@ -37,6 +38,19 @@ int main()
 
     mplot::Visual<glver> v(1024, 768, "mplot::InstancedScatterVisual");
     v.lightingEffects();
+
+    // A normal, non instanced model. A sphere to orbit around.
+    auto gv1 = std::make_unique<mplot::GeodesicVisual<float,glver>> (sm::vec<>{}, 0.2f);
+    v.bindmodel (gv1);
+    gv1->iterations = 3;
+    gv1->cm.setType (mplot::ColourMapType::Tofino);
+    gv1->finalize();
+    // re-colour after construction
+    auto gv1p = v.addVisualModel (gv1);
+    // sequential colouring:
+    size_t sz1 = gv1p->data.size();
+    gv1p->data.linspace (0.0f, 1.0f, sz1);
+    gv1p->reinitColours();
 
     constexpr int dsz = 260;
     sm::vvec<sm::vec<float, 3>> points(dsz);
@@ -75,7 +89,7 @@ int main()
         isvp->set_data (points, data);
 
         v.render();
-        v.waitevents (0.001);
+        v.waitevents (0.03);
 
 #else // I haven't mastered updating a subrange of data in an SSBO
         // update circularly, change isvp->instance_start each time
