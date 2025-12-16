@@ -88,7 +88,7 @@ namespace mplot
         void initializeVertices()
         {
             // Draw one marker. It will then be instanced as many using instanced rendering
-            this->marker (sm::vec<>{}, mplot::colour::grey50, this->radiusFixed);
+            this->marker (sm::vec<>{}, mplot::colour::gold1, this->radiusFixed);
         }
 
         // The constexpr, unordered geodesic code is no slower than the regular
