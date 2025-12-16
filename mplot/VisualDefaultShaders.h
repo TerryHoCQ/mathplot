@@ -30,7 +30,7 @@ namespace mplot
     "void main()\n"
     "    {\n"
     "    if (instance_count > 0) {\n"
-    "        vec4 offset = { instance_data[gl_InstanceID * 4], instance_data[gl_InstanceID * 4 + 1], instance_data[gl_InstanceID * 4 + 2], 1 };\n"
+    "        vec4 offset = { instance_data[gl_InstanceID * 4], instance_data[gl_InstanceID * 4 + 1], instance_data[gl_InstanceID * 4 + 2], 0 };\n"
     "        float dval = instance_data[gl_InstanceID * 4 + 3];\n"
     "        gl_Position = (p_matrix * v_matrix * m_matrix * (position + offset));\n"
     "    } else {\n"
