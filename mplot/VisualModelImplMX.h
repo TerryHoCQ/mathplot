@@ -263,14 +263,11 @@ namespace mplot
 
                 // Draw the triangles
                 GLint loc_is = _glfn->GetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("instance_start"));
+                GLint loc_ic = _glfn->GetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("instance_count"));
                 if (this->flags.test (vm_bools::instanced)) {
-                    if (loc_is != -1) {
-                        _glfn->Uniform1i (loc_is, this->instance_start);
-                        GLint loc_ic = _glfn->GetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("instance_count"));
-                        _glfn->Uniform1i (loc_ic, this->instance_count);
-                    }
-                    _glfn->DrawElementsInstanced (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0,
-                                                  this->instance_count);
+                    if (loc_is != -1) { _glfn->Uniform1i (loc_is, this->instance_start); }
+                    if (loc_ic != -1) { _glfn->Uniform1i (loc_ic, this->instance_count); }
+                    _glfn->DrawElementsInstanced (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0, this->instance_count);
                 } else {
                     if (loc_is != -1) { _glfn->Uniform1i (loc_is, -1); }
                     _glfn->DrawElements (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0);
