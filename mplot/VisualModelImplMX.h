@@ -426,11 +426,8 @@ namespace mplot
         std::function<GladGLContext*(mplot::VisualBase<glver>*)> get_glfn;
 
         //! Shader Storage Buffer Object for instanced rendering
-        static constexpr unsigned int instance_index = 1; // instance data stored in SSBO index 1 (must match GLSL code)
-        static constexpr unsigned int max_instances = 1024; // Each instance has: location (3 floats), scale (1 float)
-        static constexpr unsigned int max_instance_limit = 4 * max_instances;
-        mplot::gl::ssbo<instance_index, float, max_instance_limit> instance_data;
-        constexpr unsigned int max_instanced_items() { return max_instances; }
+        mplot::gl::ssbo<mplot::VisualModelBase<glver>::instance_index,
+                        float, mplot::VisualModelBase<glver>::max_instance_limit> instance_data;
 
     protected:
 

@@ -718,6 +718,11 @@ namespace mplot
         GLuint idx = 0u;
         GLuint idx_bb = 0u;
 
+        //! Instanced rendering mode (SSBO access)
+        static constexpr unsigned int instance_index = 1; // instance data stored in SSBO index 1 (must match GLSL code)
+        static constexpr unsigned int max_instances = 1024; // Each instance has: location (3 floats), scale (1 float)
+        static constexpr unsigned int max_instance_limit = 4 * max_instances;
+        constexpr unsigned int max_instanced_items() { return max_instances; }
         //! If drawing with instancing, how many instances?
         unsigned int instance_count = 1;
         //! Which datum in the instance buffer is the one to be drawn by the first thread?
