@@ -428,7 +428,7 @@ namespace mplot
 
         //! Shader Storage Buffer Object for instanced rendering
         mplot::gl::ssbo<mplot::VisualModelBase<glver>::instance_index,
-                        float, mplot::VisualModelBase<glver>::max_instance_limit> instance_data;
+                        float, mplot::VisualModelBase<glver>::max_instance_floats> instance_data;
 
     protected:
 

@@ -721,9 +721,9 @@ namespace mplot
         //! Instanced rendering mode (SSBO access)
         static constexpr unsigned int instance_index = 1; // instance data stored in SSBO index 1 (must match GLSL code)
         // Each instance has: location (3 floats), scale (1 float), rot (4 floats) colour/alpha (4 floats), so that's 48 bytes.
-        // 10^7 instances would be 500 MB of GPU RAM. But this crashes (even for 50 MB).
-        static constexpr unsigned int max_instances = 1024 * 1024;
-        static constexpr unsigned int max_instance_limit = 4 * max_instances;
+        static constexpr unsigned int floats_per_instance = 4; // May become 12
+        static constexpr unsigned int max_instances = 256 * 1024;
+        static constexpr unsigned int max_instance_floats = floats_per_instance * max_instances;
         constexpr unsigned int max_instanced_items() { return max_instances; }
         //! If drawing with instancing, how many instances?
         unsigned int instance_count = 0;

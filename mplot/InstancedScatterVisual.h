@@ -51,8 +51,11 @@ namespace mplot
             if (points.size() > this->max_instanced_items()) { throw std::runtime_error ("Not enough space"); }
 
             size_t j = 0;
+            this->instance_data.data.resize (mplot::VisualModelBase<glver>::floats_per_instance * points.size());
             for (size_t i = 0; i < points.size(); ++i) {
                 sm::vec<float, 3> c = points[i];
+                // This to be a Member of VisualModelBase?
+                // this->addInstanceParams (c, data[i], scale, rotn, colour); // or something
                 this->instance_data.data[j++] = c[0];
                 this->instance_data.data[j++] = c[1];
                 this->instance_data.data[j++] = c[2];
@@ -70,7 +73,7 @@ namespace mplot
             if (points.size() != data.size()) { throw std::runtime_error ("points and data must have same size"); }
             if (points.size() > this->max_instanced_items()) { throw std::runtime_error ("Not enough space"); }
 
-            sm::vvec<float> updated(4 * (1 + i_e - i_s));
+            sm::vvec<float> updated(mplot::VisualModelBase<glver>::floats_per_instance * (1 + i_e - i_s));
             size_t j = 0;
             for (size_t i = i_s; i <= i_e; ++i) {
                 //std::cout << "writing points/data["<<i<<"]\n";
