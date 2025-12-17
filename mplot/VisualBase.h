@@ -1015,6 +1015,7 @@ namespace mplot
                           << "Ctrl-u: Reduce zNear cutoff plane\n"
                           << "Ctrl-i: Increase zNear cutoff plane\n"
                           << "Ctrl-j: Toggle bounding boxes\n"
+                          << "Ctrl-Shift-s: Output shaders to stdout\n"
                           << "F1-F10: Select model index (with shift: toggle hide)\n"
                           << "Shift-Left: Decrease opacity of selected model\n"
                           << "Shift-Right: Increase opacity of selected model\n"
@@ -1037,14 +1038,33 @@ namespace mplot
                 } // else no-op
             }
 
-            if (_key == key::s && (mods & keymod::control) && action == keyaction::press) {
-                std::string fname (this->title);
-                mplot::tools::stripFileSuffix (fname);
-                fname += ".png";
-                // Make fname 'filename safe'
-                mplot::tools::conditionAsFilename (fname);
-                this->saveImage (fname);
-                std::cout << "Saved image to '" << fname << "'\n";
+            if (_key == key::s && (mods & (keymod::control | keymod::shift)) && action == keyaction::press) {
+
+                if ((mods & (keymod::control | keymod::shift)) == (keymod::control | keymod::shift)) {
+                    // Ctrl-Shift-s gives you the default shaders
+                    std::cout << "The built-in shader programs are:\n";
+                    std::cout << "\nVisual.vert.glsl\n"
+                              << "----------------\n"
+                              << mplot::getDefaultVtxShader(glver) << std::endl;
+                    std::cout << "\nVisual.frag.glsl\n"
+                              << "----------------\n"
+                              << mplot::getDefaultFragShader(glver) << std::endl;
+                    std::cout << "\nVisText.vert.glsl\n"
+                              << "----------------\n"
+                              << mplot::getDefaultTextVtxShader(glver) << std::endl;
+                    std::cout << "\nVisText.frag.glsl\n"
+                              << "----------------\n"
+                              << mplot::getDefaultTextFragShader(glver) << std::endl;
+                } else if (mods & keymod::control) {
+                    // Ctrl-s saves a PNG
+                    std::string fname (this->title);
+                    mplot::tools::stripFileSuffix (fname);
+                    fname += ".png";
+                    // Make fname 'filename safe'
+                    mplot::tools::conditionAsFilename (fname);
+                    this->saveImage (fname);
+                    std::cout << "Saved image to '" << fname << "'\n";
+                }
             }
 
             // Save gltf 3D file
