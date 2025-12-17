@@ -25,9 +25,12 @@ int main()
     v.lightingEffects();
 
     sm::vvec<sm::vec<float, 3>> points(20*20);
-    sm::vvec<float> data(20*20);
+    sm::vvec<float> alpha(20*20, 1.0f);
+    sm::vvec<float> scale(20*20);
+    sm::vvec<std::array<float, 3>> clrs(20*20);
     size_t k = 0;
 
+    mplot::ColourMap<float> cm (mplot::ColourMapType::Plasma);
     for (int i = -10; i < 10; ++i) {
         for (int j = -10; j < 10; ++j) {
             float x = 0.1*i;
@@ -35,7 +38,8 @@ int main()
             // z is some function of x, y
             float z = x * std::exp(-(x*x) - (y*y));
             points[k] = {x, y, z};
-            data[k] = z;
+            scale[k] = 1.0f + z;
+            clrs[k] = cm.convert (z);
             k++;
         }
     }
@@ -47,8 +51,8 @@ int main()
     auto isvp = v.addVisualModel (isv);
 
     v.render();
-    // Place data in SSBO. You have to call v.render() once first.
-    isvp->set_instance_data (points, data);
+    // We set the instance data, which adds points, colours, alpha and scale
+    isvp->set_instance_data (points, clrs, alpha, scale);
 
     v.keepOpen();
 

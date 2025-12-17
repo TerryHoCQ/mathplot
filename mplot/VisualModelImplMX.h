@@ -86,8 +86,16 @@ namespace mplot
         {
             sm::vvec<std::array<float, 3>> c = { mplot::colour::crimson };
             sm::vvec<float> a = { 1.0f };
-            //sm::vvec< sm::vec<float, 4> > r = { sm::vec<float, 4>{1.0f, 0, 0, 0} };
             sm::vvec<float> s = { 1.0f };
+            this->set_instance_data (position, c, a, s);
+        }
+
+        void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position, const std::array<float, 3>& colour,
+                                const float alpha = 1.0f, const float scale = 1.0f) final
+        {
+            sm::vvec<std::array<float, 3>> c = { colour };
+            sm::vvec<float> a = { alpha };
+            sm::vvec<float> s = { scale };
             this->set_instance_data (position, c, a, s);
         }
 
@@ -128,6 +136,7 @@ namespace mplot
             this->instparam_data.copy_to_gpu();
         }
 
+#if 0
         // Update the instance_data from points and data. Update the range of data starting at
         // points/data index i_s and ending at i_e.
         void update_instance_data (const sm::vvec<sm::vec<float, 3>>& points, const sm::vvec<float>& data,
@@ -148,6 +157,7 @@ namespace mplot
             //std::cout << "Copy updated, size " << updated.size() << " to gpu with offset " << i_s << "\n";
             this->instance_data.copy_to_gpu (updated, i_s);
         }
+#endif
 
         //! Common code to call after the vertices have been set up. GL has to have been initialised.
         void postVertexInit() final

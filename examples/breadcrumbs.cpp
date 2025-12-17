@@ -67,13 +67,21 @@ int main()
     auto isv = std::make_unique<mplot::InstancedScatterVisual<glver>> (sm::vec<>{});
     v.bindmodel (isv);
     isv->radiusFixed = 0.03f;
-
     isv->finalize();
     auto isvp = v.addVisualModel (isv);
+
+    // Another one
+    isv = std::make_unique<mplot::InstancedScatterVisual<glver>> (sm::vec<>{0,1,0});
+    v.bindmodel (isv);
+    isv->radiusFixed = 0.03f;
+    isv->finalize();
+    auto isvp2 = v.addVisualModel (isv);
 
     v.render();
     isvp->set_instance_data (points); // colour, alpha, scale
     std::cout << "isvp->instance_count = " << isvp->instance_count << std::endl;
+
+    isvp2->set_instance_data (points * 1.2f, mplot::colour::black, 0.7f, 1.0f);
 
     sm::vvec<std::array<float, 3>> col = { mplot::colour::blue, mplot::colour::springgreen };
     sm::vvec<float> alph = { 0.5f, 1.0f };

@@ -758,16 +758,28 @@ namespace mplot
         //! Release OpenGL context. Should call parentVis->releaseContext().
         std::function<void(mplot::VisualBase<glver>*)> releaseContext;
 
-        //! Set up the instance positions and params (colour, rotn, scale)
+        //! Set up the instance positions (with default params for colour, rotn, scale)
         virtual void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position) = 0;
+
+        //! Set instance positions, with a single colour, alpha and scale to apply to all points
+        virtual void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position,
+                                        const std::array<float, 3>& colour,
+                                        const float alpha,
+                                        const float scale) = 0;
+
+        //! Set instance positions, with an array containing colour, alpha and scale values to apply
+        //! to the instances. The size of colour, alpha and scale must match, but it may be of a
+        //! different size to position.
         virtual void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position,
                                         const sm::vvec<std::array<float, 3>>& colour,
                                         const sm::vvec<float>& alpha,
                                         const sm::vvec<float>& scale) = 0;
+
+#if 0
         //! Update the instance positions and params (colour, rotn, scale) in a range
         virtual void update_instance_data (const sm::vvec<sm::vec<float, 3>>& points, const sm::vvec<float>& data,
                                            std::size_t i_s, std::size_t i_e) = 0;
-
+#endif
         //! Setter for the parent pointer, parentVis
         void set_parent (mplot::VisualBase<glver>* _vis)
         {

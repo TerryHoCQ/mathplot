@@ -20,6 +20,7 @@
 #include <mplot/VisualModelBase.h>
 
 #include <mplot/gl/util_nomx.h>
+#include <mplot/gl/ssbo_nomx.h>
 #include <mplot/VisualTextModel.h>
 #include <mplot/TextGeometry.h>
 
@@ -65,6 +66,70 @@ namespace mplot
             model->releaseContext = &mplot::VisualBase<glver>::release_context;
         }
 
+        void init_instance_data()
+        {
+            if constexpr (mplot::gl::version::has_ssbo (glver) == true) {
+                if (this->instance_data.ready() == false) { this->instance_data.init(); }
+                if (this->instparam_data.ready() == false) { this->instparam_data.init(); }
+            } else {
+                throw std::runtime_error ("Instanced rendering requires OpenGL 4.3 or higher");
+            }
+        }
+
+        void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position) final
+        {
+            sm::vvec<std::array<float, 3>> c = { mplot::colour::crimson };
+            sm::vvec<float> a = { 1.0f };
+            sm::vvec<float> s = { 1.0f };
+            this->set_instance_data (position, c, a, s);
+        }
+
+        void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position, const std::array<float, 3>& colour,
+                                const float alpha = 1.0f, const float scale = 1.0f) final
+        {
+            sm::vvec<std::array<float, 3>> c = { colour };
+            sm::vvec<float> a = { alpha };
+            sm::vvec<float> s = { scale };
+            this->set_instance_data (position, c, a, s);
+        }
+
+        //! Set up the instance positions and params (colour, alpha, scale). Add rotation later on.
+        void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position,
+                                const sm::vvec<std::array<float, 3>>& colour,
+                                const sm::vvec<float>& alpha, const sm::vvec<float>& scale) final
+        {
+            if (position.size() < 1) { throw std::runtime_error ("set_instance_data: pass some instance positions in"); }
+            if (position.size() > this->max_instanced_items()) { throw std::runtime_error ("set_instance_data: not enough space"); }
+
+            size_t j = 0;
+            this->instance_data.data.resize (mplot::VisualModelBase<glver>::floats_per_instance * position.size());
+            for (size_t i = 0; i < position.size(); ++i) {
+                sm::vec<float, 3> p = position[i];
+                this->instance_data.data[j++] = p[0];
+                this->instance_data.data[j++] = p[1];
+                this->instance_data.data[j++] = p[2];
+            }
+            this->instance_count = position.size();
+
+            if (colour.size() != scale.size() || colour.size() != alpha.size()) {
+                throw std::runtime_error ("set_instance_data: params vvecs should all have same size (colour, rotn, scale)");
+            }
+
+            this->instparam_data.data.resize (mplot::VisualModelBase<glver>::floats_per_instparam * colour.size());
+            j = 0;
+            for (size_t i = 0; i < colour.size(); ++i) {
+                this->instparam_data.data[j++] = colour[i][0];
+                this->instparam_data.data[j++] = colour[i][1];
+                this->instparam_data.data[j++] = colour[i][2];
+                this->instparam_data.data[j++] = alpha[i];
+                this->instparam_data.data[j++] = scale[i];
+            }
+            this->instparam_count = colour.size();
+
+            this->instance_data.copy_to_gpu();
+            this->instparam_data.copy_to_gpu();
+        }
+
         //! Common code to call after the vertices have been set up. GL has to have been initialised.
         void postVertexInit() final
         {
@@ -97,6 +162,10 @@ namespace mplot
             // Unbind only the vertex array (not the buffers, that causes GL_INVALID_ENUM errors)
             glBindVertexArray(0); // carefully unbind and rebind
             mplot::gl::Util::checkError (__FILE__, __LINE__);
+
+            if (this->flags.test (vm_bools::instanced) && this->instance_data.ready() == false) {
+                this->init_instance_data();
+            }
 
             /*
              * Now do the same for the bounding box
@@ -235,6 +304,20 @@ namespace mplot
 
                 // Draw the triangles
                 glDrawElements (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0);
+
+                GLint loc_is = glGetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("instance_start"));
+                GLint loc_ic = glGetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("instance_count"));
+                GLint loc_ipc = glGetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("instparam_count"));
+                if (this->flags.test (vm_bools::instanced)) {
+                    if (loc_is != -1) { glUniform1i (loc_is, this->instance_start); }
+                    if (loc_ic != -1) { glUniform1i (loc_ic, this->instance_count); }
+                    if (loc_ipc != -1) { glUniform1i (loc_ipc, this->instparam_count); }
+                    glDrawElementsInstanced (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0, this->instance_count);
+                } else {
+                    if (loc_is != -1) { glUniform1i (loc_is, -1); }
+                    if (loc_ic != -1) { glUniform1i (loc_ic, -1); }
+                    glDrawElements (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0);
+                }
 
                 // Unbind the VAO
                 glBindVertexArray(0);
@@ -383,6 +466,12 @@ namespace mplot
             auto ti = this->texts.begin();
             while (ti != this->texts.end()) { (*ti)->addViewRotation (r); ti++; }
         }
+
+        //! Shader Storage Buffer Object for instanced rendering
+        mplot::gl::ssbo<mplot::VisualModelBase<glver>::instance_index,
+                        float, mplot::VisualModelBase<glver>::max_instance_floats> instance_data;
+        mplot::gl::ssbo<mplot::VisualModelBase<glver>::instparam_index,
+                        float, mplot::VisualModelBase<glver>::max_instparam_floats> instparam_data;
 
     protected:
 

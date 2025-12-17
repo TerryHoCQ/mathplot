@@ -29,7 +29,22 @@ namespace mplot
     "    vec3 fragpos;\n"
     "} vertex;\n"
     "void main()\n"
-    "    {\n"
+    "{\n"
+    "    gl_Position = (p_matrix * v_matrix * m_matrix * position);\n"
+    "    vertex.color = vec4(color, alpha);\n"
+    "    vertex.fragpos = vec3(m_matrix * position);\n"
+    "    vertex.normal = normalin;\n"
+    "}\n";
+
+    const char* defaultVtxShader_part2_inst =
+    "out VERTEX\n"
+    "{\n"
+    "    vec4 normal;\n"
+    "    vec4 color;\n"
+    "    vec3 fragpos;\n"
+    "} vertex;\n"
+    "void main()\n"
+    "{\n"
     "    if (instance_count > 0) {\n"
     "        vec4 iposv = { ipos[gl_InstanceID * 3], ipos[gl_InstanceID * 3 + 1], ipos[gl_InstanceID * 3 + 2], 0 };\n"
     "        if (instparam_count > 0) {\n"
@@ -61,8 +76,10 @@ namespace mplot
         if (mplot::gl::version::has_ssbo (glver)) {
             shdr += "layout (std430, binding = 1) buffer InstPos { float ipos[]; };\n";
             shdr += "layout (std430, binding = 2) buffer InstParam { float iparam[]; };\n";
+            shdr += defaultVtxShader_part2_inst;
+        } else {
+            shdr += defaultVtxShader_part2;
         }
-        shdr += defaultVtxShader_part2;
         return shdr;
     }
 
