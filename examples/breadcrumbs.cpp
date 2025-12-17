@@ -54,14 +54,14 @@ int main()
 
     constexpr int dsz = 260;
     sm::vvec<sm::vec<float, 3>> points(dsz);
-    sm::vvec<float> data(dsz);
+    sm::vvec<float> psz(dsz);
 
     int i = 0;
     sm::vec<float, 3> xyz = {};
     for (i = 0; i < dsz; ++i) {
         xyz = f (i);
         points[i] = xyz;
-        data[i] = xyz[2];
+        psz[i] = xyz[2];
     }
 
     auto isv = std::make_unique<mplot::InstancedScatterVisual<glver>> (sm::vec<>{});
@@ -72,8 +72,12 @@ int main()
     auto isvp = v.addVisualModel (isv);
 
     v.render();
-    isvp->set_instance_data (points, data); // colour, rotn, scale
-    std::cout << "isvp->instance_count = " <<  isvp->instance_count << std::endl;
+    isvp->set_instance_data (points); // colour, alpha, scale
+    std::cout << "isvp->instance_count = " << isvp->instance_count << std::endl;
+
+    sm::vvec<std::array<float, 3>> col = { mplot::colour::blue, mplot::colour::springgreen };
+    sm::vvec<float> alph = { 0.5f, 1.0f };
+    sm::vvec<float> scl = { 1.0f, 1.2f };
 
     while (!v.readyToFinish()) {
 
@@ -81,12 +85,12 @@ int main()
         //std::cout << "i = " << i << ", i%dsz = " << (i%dsz) << ", i%360 = " << (i%360) << " f(i%360) = " << xyz << " -> points[" << (i%dsz)<< "]" <<  std::endl;
 
         points[i%dsz] = xyz;
-        data[i%dsz] = xyz[2];
+        psz[i%dsz] = xyz[2];
 
 #if 1
-        // Update all points/data
+        // Update all points/psz
         // Place data in SSBO. first call of set_data must occur after first call to v.render()
-        isvp->set_instance_data (points, data);
+        isvp->set_instance_data (points, col, alph, scl);
 
         v.render();
         v.waitevents (0.03);

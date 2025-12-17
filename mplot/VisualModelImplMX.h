@@ -82,24 +82,50 @@ namespace mplot
             }
         }
 
-        //! Set up the instance positions and params (colour, rotn, scale)
-        void set_instance_data (const sm::vvec<sm::vec<float, 3>>& points, const sm::vvec<float>& data)
+        void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position) final
         {
-            if (points.size() != data.size()) { throw std::runtime_error ("points and data must have same size"); }
-            if (points.size() > this->max_instanced_items()) { throw std::runtime_error ("Not enough space"); }
+            sm::vvec<std::array<float, 3>> c = { mplot::colour::crimson };
+            sm::vvec<float> a = { 1.0f };
+            //sm::vvec< sm::vec<float, 4> > r = { sm::vec<float, 4>{1.0f, 0, 0, 0} };
+            sm::vvec<float> s = { 1.0f };
+            this->set_instance_data (position, c, a, s);
+        }
+
+        //! Set up the instance positions and params (colour, alpha, scale). Add rotation later on.
+        void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position,
+                                const sm::vvec<std::array<float, 3>>& colour,
+                                const sm::vvec<float>& alpha, const sm::vvec<float>& scale) final
+        {
+            if (position.size() < 1) { throw std::runtime_error ("set_instance_data: pass some instance positions in"); }
+            if (position.size() > this->max_instanced_items()) { throw std::runtime_error ("set_instance_data: not enough space"); }
 
             size_t j = 0;
-            this->instance_data.data.resize (mplot::VisualModelBase<glver>::floats_per_instance * points.size());
-            for (size_t i = 0; i < points.size(); ++i) {
-                sm::vec<float, 3> c = points[i];
-                // This to be a Member of VisualModelBase?
-                // this->addInstanceParams (c, data[i], scale, rotn, colour); // or something
-                this->instance_data.data[j++] = c[0];
-                this->instance_data.data[j++] = c[1];
-                this->instance_data.data[j++] = c[2];
+            this->instance_data.data.resize (mplot::VisualModelBase<glver>::floats_per_instance * position.size());
+            for (size_t i = 0; i < position.size(); ++i) {
+                sm::vec<float, 3> p = position[i];
+                this->instance_data.data[j++] = p[0];
+                this->instance_data.data[j++] = p[1];
+                this->instance_data.data[j++] = p[2];
             }
-            this->instance_count = points.size();
+            this->instance_count = position.size();
+
+            if (colour.size() != scale.size() || colour.size() != alpha.size()) {
+                throw std::runtime_error ("set_instance_data: params vvecs should all have same size (colour, rotn, scale)");
+            }
+
+            this->instparam_data.data.resize (mplot::VisualModelBase<glver>::floats_per_instparam * colour.size());
+            j = 0;
+            for (size_t i = 0; i < colour.size(); ++i) {
+                this->instparam_data.data[j++] = colour[i][0];
+                this->instparam_data.data[j++] = colour[i][1];
+                this->instparam_data.data[j++] = colour[i][2];
+                this->instparam_data.data[j++] = alpha[i];
+                this->instparam_data.data[j++] = scale[i];
+            }
+            this->instparam_count = colour.size();
+
             this->instance_data.copy_to_gpu();
+            this->instparam_data.copy_to_gpu();
         }
 
         // Update the instance_data from points and data. Update the range of data starting at
@@ -304,9 +330,11 @@ namespace mplot
                 // Draw the triangles
                 GLint loc_is = _glfn->GetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("instance_start"));
                 GLint loc_ic = _glfn->GetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("instance_count"));
+                GLint loc_ipc = _glfn->GetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("instparam_count"));
                 if (this->flags.test (vm_bools::instanced)) {
                     if (loc_is != -1) { _glfn->Uniform1i (loc_is, this->instance_start); }
                     if (loc_ic != -1) { _glfn->Uniform1i (loc_ic, this->instance_count); }
+                    if (loc_ipc != -1) { _glfn->Uniform1i (loc_ipc, this->instparam_count); }
                     _glfn->DrawElementsInstanced (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0, this->instance_count);
                 } else {
                     if (loc_is != -1) { _glfn->Uniform1i (loc_is, -1); }

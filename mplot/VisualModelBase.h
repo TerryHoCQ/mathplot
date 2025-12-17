@@ -724,8 +724,10 @@ namespace mplot
         static constexpr unsigned int instparam_index = 2;
         //! one 3D vector is 3 floats
         static constexpr unsigned int floats_per_instance = 3;
-        //! Instance params are: colour/alpha (4 floats), rot (4 floats), scale (1 float)
-        static constexpr unsigned int floats_per_instparam = 9;
+        //! Instance params are: colour/alpha (4 floats), scale (1 float)
+        static constexpr unsigned int floats_per_instparam = 5;
+        //! later:
+        // static constexpr unsigned int floats_per_instrotn = 4;
         //! This will control how much GPU RAM is allocated when using instanced rendering (the RAM
         //! is *only* allocated if this VisualModel is 'instanced').
         static constexpr unsigned int max_instances = 256 * 1024;
@@ -736,6 +738,9 @@ namespace mplot
         unsigned int instance_count = 0;
         //! Which datum in the instance buffer is the one to be drawn by the first thread?
         unsigned int instance_start = 0;
+        //! If drawing with instancing, how many params will be used (these will be cycled through
+        //! per-instance and there may be fewer than instance_count parameters)
+        unsigned int instparam_count = 0;
 
         /*!
          * A function that will be runtime defined to get_shaderprogs from a pointer to
@@ -754,7 +759,11 @@ namespace mplot
         std::function<void(mplot::VisualBase<glver>*)> releaseContext;
 
         //! Set up the instance positions and params (colour, rotn, scale)
-        virtual void set_instance_data (const sm::vvec<sm::vec<float, 3>>& points, const sm::vvec<float>& data) = 0;
+        virtual void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position) = 0;
+        virtual void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position,
+                                        const sm::vvec<std::array<float, 3>>& colour,
+                                        const sm::vvec<float>& alpha,
+                                        const sm::vvec<float>& scale) = 0;
         //! Update the instance positions and params (colour, rotn, scale) in a range
         virtual void update_instance_data (const sm::vvec<sm::vec<float, 3>>& points, const sm::vvec<float>& data,
                                            std::size_t i_s, std::size_t i_e) = 0;

@@ -16,6 +16,7 @@ namespace mplot
     "uniform float alpha;\n"
     "uniform int instance_count = 0;\n"
     "uniform int instance_start = -1;\n"
+    "uniform int instparam_count = 0;\n"
     "layout(location = 0) in vec4 position;\n"
     "layout(location = 1) in vec4 normalin;\n"
     "layout(location = 2) in vec3 color;\n";
@@ -30,13 +31,25 @@ namespace mplot
     "void main()\n"
     "    {\n"
     "    if (instance_count > 0) {\n"
-    "        vec4 offset = { instance_data[gl_InstanceID * 3], instance_data[gl_InstanceID * 3 + 1], instance_data[gl_InstanceID * 3 + 2], 0 };\n"
-    "        gl_Position = (p_matrix * v_matrix * m_matrix * (position + offset));\n"
+    "        vec4 iposv = { ipos[gl_InstanceID * 3], ipos[gl_InstanceID * 3 + 1], ipos[gl_InstanceID * 3 + 2], 0 };\n"
+    "        if (instparam_count > 0) {\n"
+    "            int idx = gl_InstanceID % instparam_count;\n"
+    "            float s = iparam[idx * 5 + 4] * 0.5f;\n"
+    "            vec3 p_three = vec3(position) * s;\n"
+    "            vec4 p_scaled = vec4(p_three, 1.0);\n"
+    "            gl_Position = (p_matrix * v_matrix * m_matrix * (p_scaled + iposv));\n"
+    "            vertex.color = vec4(iparam[idx * 5], iparam[idx * 5 + 1], iparam[idx * 5 + 2], iparam[idx * 5 + 3]);\n"
+    "            vertex.fragpos = vec3(m_matrix * p_scaled);\n"
+    "        } else {\n"
+    "            gl_Position = (p_matrix * v_matrix * m_matrix * (position + iposv));\n"
+    "            vertex.color = vec4(color, alpha);\n"
+    "            vertex.fragpos = vec3(m_matrix * position);\n"
+    "        }\n"
     "    } else {\n"
     "        gl_Position = (p_matrix * v_matrix * m_matrix * position);\n"
+    "        vertex.color = vec4(color, alpha);\n"
+    "        vertex.fragpos = vec3(m_matrix * position);\n"
     "    }\n"
-    "    vertex.color = vec4(color, alpha);\n"
-    "    vertex.fragpos = vec3(m_matrix * position);\n"
     "    vertex.normal = normalin;\n"
     "}\n";
 
@@ -46,7 +59,8 @@ namespace mplot
         shdr += mplot::gl::version::shaderpreamble (glver);
         shdr += defaultVtxShader_part1;
         if (mplot::gl::version::has_ssbo (glver)) {
-            shdr += "layout (std430, binding = 1) buffer InputBlock { float instance_data[]; };\n";
+            shdr += "layout (std430, binding = 1) buffer InstPos { float ipos[]; };\n";
+            shdr += "layout (std430, binding = 2) buffer InstParam { float iparam[]; };\n";
         }
         shdr += defaultVtxShader_part2;
         return shdr;
