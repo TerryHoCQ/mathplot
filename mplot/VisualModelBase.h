@@ -718,12 +718,19 @@ namespace mplot
         GLuint idx = 0u;
         GLuint idx_bb = 0u;
 
-        //! Instanced rendering mode (SSBO access)
-        static constexpr unsigned int instance_index = 1; // instance data stored in SSBO index 1 (must match GLSL code)
-        // Each instance has: location (3 floats), scale (1 float), rot (4 floats) colour/alpha (4 floats), so that's 48 bytes.
-        static constexpr unsigned int floats_per_instance = 4; // May become 12
+        //! Instanced rendering mode (SSBO access). position data stored in SSBO index 1 (must match GLSL code)
+        static constexpr unsigned int instance_index = 1;
+        //! colour, scale, rotation stored in SSBO index 2
+        static constexpr unsigned int instparam_index = 2;
+        //! one 3D vector is 3 floats
+        static constexpr unsigned int floats_per_instance = 3;
+        //! Instance params are: colour/alpha (4 floats), rot (4 floats), scale (1 float)
+        static constexpr unsigned int floats_per_instparam = 9;
+        //! This will control how much GPU RAM is allocated when using instanced rendering (the RAM
+        //! is *only* allocated if this VisualModel is 'instanced').
         static constexpr unsigned int max_instances = 256 * 1024;
         static constexpr unsigned int max_instance_floats = floats_per_instance * max_instances;
+        static constexpr unsigned int max_instparam_floats = floats_per_instparam * max_instances;
         constexpr unsigned int max_instanced_items() { return max_instances; }
         //! If drawing with instancing, how many instances?
         unsigned int instance_count = 0;
@@ -745,6 +752,12 @@ namespace mplot
         std::function<void(mplot::VisualBase<glver>*)> setContext;
         //! Release OpenGL context. Should call parentVis->releaseContext().
         std::function<void(mplot::VisualBase<glver>*)> releaseContext;
+
+        //! Set up the instance positions and params (colour, rotn, scale)
+        virtual void set_instance_data (const sm::vvec<sm::vec<float, 3>>& points, const sm::vvec<float>& data) = 0;
+        //! Update the instance positions and params (colour, rotn, scale) in a range
+        virtual void update_instance_data (const sm::vvec<sm::vec<float, 3>>& points, const sm::vvec<float>& data,
+                                           std::size_t i_s, std::size_t i_e) = 0;
 
         //! Setter for the parent pointer, parentVis
         void set_parent (mplot::VisualBase<glver>* _vis)

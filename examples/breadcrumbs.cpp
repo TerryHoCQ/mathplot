@@ -72,7 +72,7 @@ int main()
     auto isvp = v.addVisualModel (isv);
 
     v.render();
-    isvp->set_data (points, data);
+    isvp->set_instance_data (points, data); // colour, rotn, scale
     std::cout << "isvp->instance_count = " <<  isvp->instance_count << std::endl;
 
     while (!v.readyToFinish()) {
@@ -86,7 +86,7 @@ int main()
 #if 1
         // Update all points/data
         // Place data in SSBO. first call of set_data must occur after first call to v.render()
-        isvp->set_data (points, data);
+        isvp->set_instance_data (points, data);
 
         v.render();
         v.waitevents (0.03);
@@ -94,7 +94,7 @@ int main()
 #else // I haven't mastered updating a subrange of data in an SSBO
         // update circularly, change isvp->instance_start each time
         std::cout << "updating data with points[i%dsz] = " << points[i%dsz] << std::endl;
-        isvp->update_data (points, data, (i % dsz), (i % dsz));
+        isvp->update_instance_data (points, data, (i % dsz), (i % dsz));
 
         std::cout << "Before render, isvp->instance_start is " << isvp->instance_start << std::endl;
 

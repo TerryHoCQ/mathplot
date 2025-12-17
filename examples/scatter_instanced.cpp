@@ -48,7 +48,7 @@ int main()
 
     v.render();
     // Place data in SSBO. You have to call v.render() once first.
-    isvp->set_data (points, data);
+    isvp->set_instance_data (points, data);
 
     v.keepOpen();
 

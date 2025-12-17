@@ -13,7 +13,8 @@ uniform mat4 v_matrix; // scene view matrix
 uniform mat4 p_matrix; // projection matrix
 // alpha - to make a model see-through
 uniform float alpha;
-uniform int instanced = 0;
+uniform int instance_count = 0;
+uniform int instance_start = -1;
 
 layout(location = 0) in vec4 position; // Attrib location 0
 layout(location = 1) in vec4 normalin; // Attrib location 1
@@ -30,10 +31,8 @@ out VERTEX
 
 void main (void)
 {
-    if (instanced != 0) {
-        vec4 offset = { instance_data[gl_InstanceID * 4], instance_data[gl_InstanceID * 4 + 1], instance_data[gl_InstanceID * 4 + 2], 1 };
-        float dval = instance_data[gl_InstanceID * 4 + 3];
-        // Make colour from dval? Or rather, pass colour as three floats.
+    if (instance_count > 0) {
+        vec4 offset = { instance_data[gl_InstanceID * 3], instance_data[gl_InstanceID * 3 + 1], instance_data[gl_InstanceID * 3 + 2], 0 };
         gl_Position = (p_matrix * v_matrix * m_matrix * (position + offset));
     } else {
         gl_Position = (p_matrix * v_matrix * m_matrix * position);

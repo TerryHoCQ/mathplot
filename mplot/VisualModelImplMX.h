@@ -74,13 +74,53 @@ namespace mplot
         void init_instance_data()
         {
             if constexpr (mplot::gl::version::has_ssbo (glver) == true) {
-                if (this->instance_data.ready() == false) {
-                    GladGLContext* _glfn = this->get_glfn (this->parentVis);
-                    this->instance_data.init (_glfn);
-                }
+                GladGLContext* _glfn = this->get_glfn (this->parentVis);
+                if (this->instance_data.ready() == false) { this->instance_data.init (_glfn); }
+                if (this->instparam_data.ready() == false) { this->instparam_data.init (_glfn); }
             } else {
                 throw std::runtime_error ("Instanced rendering requires OpenGL 4.3 or higher");
             }
+        }
+
+        //! Set up the instance positions and params (colour, rotn, scale)
+        void set_instance_data (const sm::vvec<sm::vec<float, 3>>& points, const sm::vvec<float>& data)
+        {
+            if (points.size() != data.size()) { throw std::runtime_error ("points and data must have same size"); }
+            if (points.size() > this->max_instanced_items()) { throw std::runtime_error ("Not enough space"); }
+
+            size_t j = 0;
+            this->instance_data.data.resize (mplot::VisualModelBase<glver>::floats_per_instance * points.size());
+            for (size_t i = 0; i < points.size(); ++i) {
+                sm::vec<float, 3> c = points[i];
+                // This to be a Member of VisualModelBase?
+                // this->addInstanceParams (c, data[i], scale, rotn, colour); // or something
+                this->instance_data.data[j++] = c[0];
+                this->instance_data.data[j++] = c[1];
+                this->instance_data.data[j++] = c[2];
+            }
+            this->instance_count = points.size();
+            this->instance_data.copy_to_gpu();
+        }
+
+        // Update the instance_data from points and data. Update the range of data starting at
+        // points/data index i_s and ending at i_e.
+        void update_instance_data (const sm::vvec<sm::vec<float, 3>>& points, const sm::vvec<float>& data,
+                                   std::size_t i_s, std::size_t i_e)
+        {
+            if (points.size() != data.size()) { throw std::runtime_error ("points and data must have same size"); }
+            if (points.size() > this->max_instanced_items()) { throw std::runtime_error ("Not enough space"); }
+
+            sm::vvec<float> updated(mplot::VisualModelBase<glver>::floats_per_instance * (1 + i_e - i_s));
+            size_t j = 0;
+            for (size_t i = i_s; i <= i_e; ++i) {
+                //std::cout << "writing points/data["<<i<<"]\n";
+                sm::vec<float, 3> c = points[i];
+                updated[j++] = c[0];
+                updated[j++] = c[1];
+                updated[j++] = c[2];
+            }
+            //std::cout << "Copy updated, size " << updated.size() << " to gpu with offset " << i_s << "\n";
+            this->instance_data.copy_to_gpu (updated, i_s);
         }
 
         //! Common code to call after the vertices have been set up. GL has to have been initialised.
@@ -429,6 +469,8 @@ namespace mplot
         //! Shader Storage Buffer Object for instanced rendering
         mplot::gl::ssbo<mplot::VisualModelBase<glver>::instance_index,
                         float, mplot::VisualModelBase<glver>::max_instance_floats> instance_data;
+        mplot::gl::ssbo<mplot::VisualModelBase<glver>::instparam_index,
+                        float, mplot::VisualModelBase<glver>::max_instparam_floats> instparam_data;
 
     protected:
 
