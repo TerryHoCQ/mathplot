@@ -381,6 +381,24 @@ namespace mplot
         //! Strength of the diffuse light source
         float diffuse_intensity = 0.0f;
 
+        //! Instanced rendering mode (SSBO access). position data stored in SSBO index 1 (must match GLSL code)
+        static constexpr unsigned int instance_index = 1;
+        //! colour, scale, rotation stored in SSBO index 2
+        static constexpr unsigned int instparam_index = 2;
+        //! one 3D vector is 3 floats
+        static constexpr unsigned int floats_per_instance = 3;
+        //! Instance params are: colour/alpha (4 floats), scale (1 float)
+        static constexpr unsigned int floats_per_instparam = 5;
+
+        //! This will control how much GPU RAM is allocated when using instanced rendering (the RAM
+        //! is *only* allocated if at least one VisualModel is 'instanced').
+        static constexpr unsigned int max_instances = 256 * 1024;
+        static constexpr unsigned int max_instance_floats = floats_per_instance * max_instances;
+        static constexpr unsigned int max_instparam_floats = floats_per_instparam * max_instances;
+        constexpr unsigned int max_instanced_items() { return max_instances; }
+
+        //static void init_instance_data (mplot::VisualBase<glver>* _v) = 0;
+
         //! Compute position and rotation of coordinate arrows in the bottom left of the screen
         void positionCoordArrows()
         {

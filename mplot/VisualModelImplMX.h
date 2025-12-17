@@ -71,17 +71,6 @@ namespace mplot
             model->releaseContext = &mplot::VisualBase<glver>::release_context;
         }
 
-        void init_instance_data()
-        {
-            if constexpr (mplot::gl::version::has_ssbo (glver) == true) {
-                GladGLContext* _glfn = this->get_glfn (this->parentVis);
-                if (this->instance_data.ready() == false) { this->instance_data.init (_glfn); }
-                if (this->instparam_data.ready() == false) { this->instparam_data.init (_glfn); }
-            } else {
-                throw std::runtime_error ("Instanced rendering requires OpenGL 4.3 or higher");
-            }
-        }
-
         void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position) final
         {
             sm::vvec<std::array<float, 3>> c = { mplot::colour::crimson };
@@ -105,15 +94,24 @@ namespace mplot
                                 const sm::vvec<float>& alpha, const sm::vvec<float>& scale) final
         {
             if (position.size() < 1) { throw std::runtime_error ("set_instance_data: pass some instance positions in"); }
-            if (position.size() > this->max_instanced_items()) { throw std::runtime_error ("set_instance_data: not enough space"); }
+            //if (position.size() > this->max_instanced_items()) { throw std::runtime_error ("set_instance_data: not enough space"); }
+            std::cout << "Colour, alpha, scale sizes: "
+                      << colour.size() << ", " << alpha.size() << ", " << scale.size() << std::endl;
 
+#if 0
             size_t j = 0;
-            this->instance_data.data.resize (mplot::VisualModelBase<glver>::floats_per_instance * position.size());
+            resize_instance_data (this->parentVis, position.size()); // callback to parent.
+
+            //this->instance_data.data.resize (mplot::VisualBase<glver>::floats_per_instance * position.size());
+
             for (size_t i = 0; i < position.size(); ++i) {
                 sm::vec<float, 3> p = position[i];
-                this->instance_data.data[j++] = p[0];
-                this->instance_data.data[j++] = p[1];
-                this->instance_data.data[j++] = p[2];
+                this->push_instance_data (this->parentVis, p[0]);
+                this->push_instance_data (this->parentVis, p[1]);
+                this->push_instance_data (this->parentVis, p[2]);
+                //this->instance_data.data[j++] = p[0];
+                //this->instance_data.data[j++] = p[1];
+                //this->instance_data.data[j++] = p[2];
             }
             this->instance_count = position.size();
 
@@ -121,19 +119,22 @@ namespace mplot
                 throw std::runtime_error ("set_instance_data: params vvecs should all have same size (colour, rotn, scale)");
             }
 
-            this->instparam_data.data.resize (mplot::VisualModelBase<glver>::floats_per_instparam * colour.size());
-            j = 0;
+            // resize_instance_data also does this:
+            //this->instparam_data.data.resize (mplot::VisualBase<glver>::floats_per_instparam * colour.size());                     j = 0;
             for (size_t i = 0; i < colour.size(); ++i) {
-                this->instparam_data.data[j++] = colour[i][0];
-                this->instparam_data.data[j++] = colour[i][1];
-                this->instparam_data.data[j++] = colour[i][2];
-                this->instparam_data.data[j++] = alpha[i];
-                this->instparam_data.data[j++] = scale[i];
+
+                this->push_instparam_data (this->parentVis, colour[i][0]);
+                this->push_instparam_data (this->parentVis, colour[i][1]);
+                this->push_instparam_data (this->parentVis, colour[i][2]);
+                this->push_instparam_data (this->parentVis, alpha[i]);
+                this->push_instparam_data (this->parentVis, scale[i]);
             }
             this->instparam_count = colour.size();
 
-            this->instance_data.copy_to_gpu();
-            this->instparam_data.copy_to_gpu();
+            // This has to occur once only
+            // this->instance_data.copy_to_gpu();
+            // this->instparam_data.copy_to_gpu();
+#endif
         }
 
 #if 0
@@ -194,8 +195,8 @@ namespace mplot
             _glfn->BindVertexArray(0); // carefully unbind and rebind
             mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
 
-            if (this->flags.test (vm_bools::instanced) && this->instance_data.ready() == false) {
-                this->init_instance_data();
+            if (this->flags.test (vm_bools::instanced)) {
+                this->init_instance_data (this->parentVis);
             }
 
             /*
@@ -503,12 +504,6 @@ namespace mplot
 
         //! Get the GladGLContext function pointer
         std::function<GladGLContext*(mplot::VisualBase<glver>*)> get_glfn;
-
-        //! Shader Storage Buffer Object for instanced rendering
-        mplot::gl::ssbo<mplot::VisualModelBase<glver>::instance_index,
-                        float, mplot::VisualModelBase<glver>::max_instance_floats> instance_data;
-        mplot::gl::ssbo<mplot::VisualModelBase<glver>::instparam_index,
-                        float, mplot::VisualModelBase<glver>::max_instparam_floats> instparam_data;
 
     protected:
 

@@ -335,6 +335,7 @@ namespace mplot
             model->get_gprog = &mplot::VisualBase<glver>::get_gprog;
             model->get_tprog = &mplot::VisualBase<glver>::get_tprog;
             model->get_glfn = &mplot::VisualOwnableMX<glver>::get_glfn;
+            model->init_instance_data = &mplot::VisualOwnableMX<glver>::init_instance_data;
         }
 
         //! Add a label _text to the scene at position _toffset. Font features are
@@ -386,6 +387,47 @@ namespace mplot
             this->releaseContext();
             return tm->getTextGeometry();
         }
+
+        static void init_instance_data (mplot::VisualBase<glver>* _v)
+        {
+            if constexpr (mplot::gl::version::has_ssbo (glver) == true) {
+                if (_v->instance_data.ready() == false) { _v->instance_data.init (_v->glfn); }
+                if (_v->instparam_data.ready() == false) { _v->instparam_data.init (_v->glfn); }
+            } else {
+                throw std::runtime_error ("Instanced rendering requires OpenGL 4.3 or higher");
+            }
+        }
+#if 0
+        static void resize_instance_data (mplot::VisualBase<glver>* _v, std::size_t n_instances)
+        {
+            if (this->instance_data.ready()) {
+                // Or rather, n_instances + n_already_reserved
+                this->instance_data.data.resize (n_instances * mplot::VisualBase<glver>::floats_per_instance);
+            }
+            cur_instance_ptr = 0;
+            if (this->instparam_data.ready()) {
+                this->instparam_data.data.resize (n_instances * mplot::VisualBase<glver>::floats_per_instparam);
+            }
+            cur_instparam_ptr = 0;
+        }
+
+        static void push_instance_data (mplot::VisualBase<glver>* _v, const float datum)
+        {
+            _v->instance_data.data[cur_instance_ptr++] = datum;
+        }
+
+        static void push_instparam_data (mplot::VisualBase<glver>* _v, const float datum)
+        {
+            _v->instparam_data.data[cur_instparam_ptr++] = datum;
+        }
+#endif
+        //! Shader Storage Buffer Object for instanced rendering
+        std::size_t cur_instance_ptr = 0;
+        mplot::gl::ssbo<mplot::VisualBase<glver>::instance_index,
+                        float, mplot::VisualBase<glver>::max_instance_floats> instance_data;
+        std::size_t cur_instparam_ptr = 0;
+        mplot::gl::ssbo<mplot::VisualBase<glver>::instparam_index,
+                        float, mplot::VisualBase<glver>::max_instparam_floats> instparam_data;
 
     protected:
         // Initialize OpenGL shaders, set some flags (Alpha, Anti-aliasing), read in any external
