@@ -421,12 +421,12 @@ namespace mplot
         {
             _v->instparam_data.data[cur_instparam_ptr++] = datum;
         }
+        std::size_t cur_instance_ptr = 0;
+        std::size_t cur_instparam_ptr = 0;
 #endif
         //! Shader Storage Buffer Object for instanced rendering
-        std::size_t cur_instance_ptr = 0;
         mplot::gl::ssbo<mplot::VisualBase<glver>::instance_index,
                         float, mplot::VisualBase<glver>::max_instance_floats> instance_data;
-        std::size_t cur_instparam_ptr = 0;
         mplot::gl::ssbo<mplot::VisualBase<glver>::instparam_index,
                         float, mplot::VisualBase<glver>::max_instparam_floats> instparam_data;
 
