@@ -124,6 +124,8 @@ namespace mplot
                 if (n_to_reserve + this->instance_top <= this->max_instances) {
                     reservation = this->instance_top;
                     this->instance_top += n_to_reserve;
+                    this->instance_data.resize (this->instance_top * this->floats_per_instance);
+                    this->instparam_data.resize (this->instance_top * this->floats_per_instparam);
                 }
             } else {
                 throw std::runtime_error ("Instanced rendering requires OpenGL 4.3 or higher");
@@ -154,6 +156,12 @@ namespace mplot
             this->instparam_data.data[cur_fidx++] = colour[2];
             this->instparam_data.data[cur_fidx++] = alpha;
             this->instparam_data.data[cur_fidx++] = scale;
+        }
+
+        void copy_instance_ssbo_to_gpu()
+        {
+            if (this->instance_data.ready()) { this->instance_data.copy_to_gpu(); }
+            if (this->instparam_data.ready()) { this->instparam_data.copy_to_gpu(); }
         }
 
         //! Shader Storage Buffer Object for instanced rendering - this holds positions only

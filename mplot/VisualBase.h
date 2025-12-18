@@ -61,7 +61,9 @@ namespace mplot
         //! When true, cursor movements induce translation of scene
         translateMode,
         //! We are scrolling (and so we will need to zero scenetrans_delta after enacting the change)
-        scrolling
+        scrolling,
+        //! True means that at least one of our VisualModels is an instanced rendering model
+        haveInstanced
     };
 
     //! Boolean options - similar to state, but more likely to be modified by client code
@@ -248,6 +250,7 @@ namespace mplot
         unsigned int addVisualModelId (std::unique_ptr<T>& model)
         {
             std::unique_ptr<mplot::VisualModel<glver>> vmp = std::move(model);
+            if (vmp->instanced()) { this->state.set (visual_state::haveInstanced, true); }
             this->vm.push_back (std::move(vmp));
             unsigned int rtn = (this->vm.size()-1);
             return rtn;
@@ -260,6 +263,7 @@ namespace mplot
         T* addVisualModel (std::unique_ptr<T>& model)
         {
             std::unique_ptr<mplot::VisualModel<glver>> vmp = std::move(model);
+            if (vmp->instanced()) { this->state.set (visual_state::haveInstanced, true); }
             this->vm.push_back (std::move(vmp));
             return static_cast<T*>(this->vm.back().get());
         }
@@ -460,6 +464,9 @@ namespace mplot
 
         //! Returns true if we are in the paused state
         bool paused() const { return this->state.test (visual_state::paused); }
+
+        //! True if one of our added VisualModels is an instanced model
+        bool haveInstanced() const { return this->state.test (visual_state::haveInstanced); }
 
         /*
          * User-settable projection values for the near clipping distance, the far clipping distance

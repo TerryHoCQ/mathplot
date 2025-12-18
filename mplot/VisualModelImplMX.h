@@ -113,18 +113,12 @@ namespace mplot
                 // the location defined by this->instance_offset + i
                 this->insert_instance_data (this->instance_offset + i, position[i]);
             }
-
             this->instance_count = position.size();
-
 
             for (size_t i = 0; i < colour.size(); ++i) {
                 this->insert_instparam_data (this->instance_offset + i, colour[i], alpha[i], scale[i]);
             }
             this->instparam_count = colour.size();
-
-            // This has to occur once only, in the right place (FIXME). (In Visual::render)
-            // this->instance_data.copy_to_gpu();
-            // this->instparam_data.copy_to_gpu();
         }
 
         //! Common code to call after the vertices have been set up. GL has to have been initialised.

@@ -33,6 +33,12 @@ namespace mplot::gl
 
         bool ready() const { return this->name != 0u; }
 
+        void resize (std::size_t sz)
+        {
+            if (sz > N) {  throw std::runtime_error ("ssbo: can't resize to this size"); }
+            this->data.resize (sz);
+        }
+
         ssbo() {}
         ~ssbo() {}
 
