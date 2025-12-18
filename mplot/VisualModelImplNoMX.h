@@ -66,16 +66,6 @@ namespace mplot
             model->releaseContext = &mplot::VisualBase<glver>::release_context;
         }
 
-        void init_instance_data()
-        {
-            if constexpr (mplot::gl::version::has_ssbo (glver) == true) {
-                if (this->instance_data.ready() == false) { this->instance_data.init(); }
-                if (this->instparam_data.ready() == false) { this->instparam_data.init(); }
-            } else {
-                throw std::runtime_error ("Instanced rendering requires OpenGL 4.3 or higher");
-            }
-        }
-
         void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position) final
         {
             sm::vvec<std::array<float, 3>> c = { mplot::colour::crimson };
@@ -98,36 +88,35 @@ namespace mplot
                                 const sm::vvec<std::array<float, 3>>& colour,
                                 const sm::vvec<float>& alpha, const sm::vvec<float>& scale) final
         {
-            if (position.size() < 1) { throw std::runtime_error ("set_instance_data: pass some instance positions in"); }
-            if (position.size() > this->max_instanced_items()) { throw std::runtime_error ("set_instance_data: not enough space"); }
-
-            size_t j = 0;
-            this->instance_data.data.resize (mplot::VisualModelBase<glver>::floats_per_instance * position.size());
-            for (size_t i = 0; i < position.size(); ++i) {
-                sm::vec<float, 3> p = position[i];
-                this->instance_data.data[j++] = p[0];
-                this->instance_data.data[j++] = p[1];
-                this->instance_data.data[j++] = p[2];
+            if (position.size() < 1) {
+                throw std::runtime_error ("set_instance_data: pass some instance positions in");
             }
-            this->instance_count = position.size();
-
+            if (position.size() > this->max_instances) {
+                throw std::runtime_error ("set_instance_data: Haven't reserved enough space for that");
+            }
+            if (!this->insert_instance_data) {
+                throw std::runtime_error ("set_instance_data: Function insert_instance_data is not bound");
+            }
+            if (!this->insert_instparam_data) {
+                throw std::runtime_error ("set_instance_data: Function insert_instparam_data is not bound");
+            }
             if (colour.size() != scale.size() || colour.size() != alpha.size()) {
                 throw std::runtime_error ("set_instance_data: params vvecs should all have same size (colour, rotn, scale)");
             }
 
-            this->instparam_data.data.resize (mplot::VisualModelBase<glver>::floats_per_instparam * colour.size());
-            j = 0;
+            for (size_t i = 0; i < position.size(); ++i) {
+                // Get access to the SSBO in VisualResources and add the 3 floats in position[i] at
+                // the location defined by this->instance_start + i
+                this->insert_instance_data (this->instance_start + i, position[i]);
+            }
+            this->instance_count = position.size();
+
             for (size_t i = 0; i < colour.size(); ++i) {
-                this->instparam_data.data[j++] = colour[i][0];
-                this->instparam_data.data[j++] = colour[i][1];
-                this->instparam_data.data[j++] = colour[i][2];
-                this->instparam_data.data[j++] = alpha[i];
-                this->instparam_data.data[j++] = scale[i];
+                this->insert_instparam_data (this->instance_start + i, colour[i], alpha[i], scale[i]);
             }
             this->instparam_count = colour.size();
 
-            this->instance_data.copy_to_gpu();
-            this->instparam_data.copy_to_gpu();
+            this->instanced_needs_update (this->parentVis);
         }
 
         //! Common code to call after the vertices have been set up. GL has to have been initialised.
@@ -163,8 +152,13 @@ namespace mplot
             glBindVertexArray(0); // carefully unbind and rebind
             mplot::gl::Util::checkError (__FILE__, __LINE__);
 
-            if (this->flags.test (vm_bools::instanced) && this->instance_data.ready() == false) {
-                this->init_instance_data();
+            if (this->flags.test (vm_bools::instanced) && this->init_instance_data) {
+                // Here, we cause the SSBOs to be intialized if they haven't already, and we reserve
+                // some space in the SSBOs for *this model*
+                this->instance_start = this->init_instance_data (this->parentVis, this->max_instances);
+                if (this->instance_start == std::numeric_limits<unsigned int>::max()) {
+                    throw std::runtime_error ("Failed to reserve space in SSBO");
+                }
             }
 
             /*
@@ -466,12 +460,6 @@ namespace mplot
             auto ti = this->texts.begin();
             while (ti != this->texts.end()) { (*ti)->addViewRotation (r); ti++; }
         }
-
-        //! Shader Storage Buffer Object for instanced rendering
-        mplot::gl::ssbo<mplot::VisualModelBase<glver>::instance_index,
-                        float, mplot::VisualModelBase<glver>::max_instance_floats> instance_data;
-        mplot::gl::ssbo<mplot::VisualModelBase<glver>::instparam_index,
-                        float, mplot::VisualModelBase<glver>::max_instparam_floats> instparam_data;
 
     protected:
 

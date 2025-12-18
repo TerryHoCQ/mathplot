@@ -259,6 +259,11 @@ namespace mplot
                 this->userFrame->render();
             }
 
+            if (this->haveInstanced() && this->instancedNeedsUpdate()) {
+                this->copy_instance_data_to_gpu();
+                this->instancedNeedsUpdate (false);
+            }
+
             auto vmi = this->vm.begin();
             while (vmi != this->vm.end()) {
                 if ((*vmi)->twodimensional() == true) {
@@ -327,6 +332,7 @@ namespace mplot
             }
         }
 
+        // Note: We have to have both VisualOwnableMX::bindmodel AND VisualMX::bindmodel (which calls VisualBase::bindmodel)
         template <typename T>
         void bindmodel (std::unique_ptr<T>& model)
         {
@@ -334,7 +340,11 @@ namespace mplot
             model->get_shaderprogs = &mplot::VisualBase<glver>::get_shaderprogs;
             model->get_gprog = &mplot::VisualBase<glver>::get_gprog;
             model->get_tprog = &mplot::VisualBase<glver>::get_tprog;
+            model->instanced_needs_update = &mplot::VisualBase<glver>::instanced_needs_update;
             model->get_glfn = &mplot::VisualOwnableMX<glver>::get_glfn;
+            model->init_instance_data = &mplot::VisualOwnableMX<glver>::init_instance_data;
+            model->insert_instance_data = &mplot::VisualOwnableMX<glver>::insert_instance_data;
+            model->insert_instparam_data = &mplot::VisualOwnableMX<glver>::insert_instparam_data;
         }
 
         //! Add a label _text to the scene at position _toffset. Font features are
@@ -385,6 +395,29 @@ namespace mplot
             this->texts.push_back (std::move(tmup));
             this->releaseContext();
             return tm->getTextGeometry();
+        }
+
+        static unsigned int init_instance_data (mplot::VisualBase<glver>* _v, const unsigned int n_to_reserve)
+        {
+            auto __v = reinterpret_cast<mplot::VisualOwnableMX<glver>*>(_v);
+            unsigned int reservation = mplot::VisualResourcesMX<glver>::i().init_instance_ssbo (__v->glfn, n_to_reserve);
+            return reservation;
+        }
+
+        static void insert_instance_data (const unsigned int instance_idx, const sm::vec<float, 3>& coord)
+        {
+            mplot::VisualResourcesMX<glver>::i().insert_instance_data (instance_idx, coord);
+        }
+
+        static void insert_instparam_data (const unsigned int instance_idx,
+                                           const std::array<float, 3>& colour, const float& alpha, const float& scale)
+        {
+            mplot::VisualResourcesMX<glver>::i().insert_instparam_data (instance_idx, colour, alpha, scale);
+        }
+
+        static void copy_instance_data_to_gpu()
+        {
+            mplot::VisualResourcesMX<glver>::i().copy_instance_ssbo_to_gpu();
         }
 
     protected:

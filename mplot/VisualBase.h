@@ -61,7 +61,11 @@ namespace mplot
         //! When true, cursor movements induce translation of scene
         translateMode,
         //! We are scrolling (and so we will need to zero scenetrans_delta after enacting the change)
-        scrolling
+        scrolling,
+        //! True means that at least one of our VisualModels is an instanced rendering model
+        haveInstanced,
+        //! When true, the instanced data SSBO needs to be copied to the GPU
+        instancedNeedsUpdate
     };
 
     //! Boolean options - similar to state, but more likely to be modified by client code
@@ -238,6 +242,7 @@ namespace mplot
             model->get_shaderprogs = &mplot::VisualBase<glver>::get_shaderprogs;
             model->get_gprog = &mplot::VisualBase<glver>::get_gprog;
             model->get_tprog = &mplot::VisualBase<glver>::get_tprog;
+            model->instanced_needs_update = &mplot::VisualBase<glver>::instanced_needs_update;
         }
 
         /*!
@@ -248,6 +253,7 @@ namespace mplot
         unsigned int addVisualModelId (std::unique_ptr<T>& model)
         {
             std::unique_ptr<mplot::VisualModel<glver>> vmp = std::move(model);
+            if (vmp->instanced()) { this->state.set (visual_state::haveInstanced, true); }
             this->vm.push_back (std::move(vmp));
             unsigned int rtn = (this->vm.size()-1);
             return rtn;
@@ -260,6 +266,7 @@ namespace mplot
         T* addVisualModel (std::unique_ptr<T>& model)
         {
             std::unique_ptr<mplot::VisualModel<glver>> vmp = std::move(model);
+            if (vmp->instanced()) { this->state.set (visual_state::haveInstanced, true); }
             this->vm.push_back (std::move(vmp));
             return static_cast<T*>(this->vm.back().get());
         }
@@ -372,6 +379,8 @@ namespace mplot
         static GLuint get_gprog (mplot::VisualBase<glver>* _v) { return _v->shaders.gprog; };
         static GLuint get_tprog (mplot::VisualBase<glver>* _v) { return _v->shaders.tprog; };
 
+        static void instanced_needs_update (mplot::VisualBase<glver>* _v) { _v->instancedNeedsUpdate (true); }
+
         //! The colour of ambient and diffuse light sources
         sm::vec<float, 3> light_colour = { 1.0f, 1.0f, 1.0f };
         //! Strength of the ambient light
@@ -460,6 +469,13 @@ namespace mplot
 
         //! Returns true if we are in the paused state
         bool paused() const { return this->state.test (visual_state::paused); }
+
+        //! True if one of our added VisualModels is an instanced model
+        bool haveInstanced() const { return this->state.test (visual_state::haveInstanced); }
+
+        //! Does our instanced data need to be pushed over to the GPU during render()?
+        bool instancedNeedsUpdate() const { return this->state.test (visual_state::instancedNeedsUpdate); }
+        void instancedNeedsUpdate (const bool val) { this->state.set (visual_state::instancedNeedsUpdate, val); }
 
         /*
          * User-settable projection values for the near clipping distance, the far clipping distance

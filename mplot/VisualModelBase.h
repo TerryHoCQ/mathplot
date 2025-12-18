@@ -718,26 +718,17 @@ namespace mplot
         GLuint idx = 0u;
         GLuint idx_bb = 0u;
 
-        //! Instanced rendering mode (SSBO access). position data stored in SSBO index 1 (must match GLSL code)
-        static constexpr unsigned int instance_index = 1;
-        //! colour, scale, rotation stored in SSBO index 2
-        static constexpr unsigned int instparam_index = 2;
-        //! one 3D vector is 3 floats
-        static constexpr unsigned int floats_per_instance = 3;
-        //! Instance params are: colour/alpha (4 floats), scale (1 float)
-        static constexpr unsigned int floats_per_instparam = 5;
-        //! later:
-        // static constexpr unsigned int floats_per_instrotn = 4;
-        //! This will control how much GPU RAM is allocated when using instanced rendering (the RAM
-        //! is *only* allocated if this VisualModel is 'instanced').
-        static constexpr unsigned int max_instances = 256 * 1024;
-        static constexpr unsigned int max_instance_floats = floats_per_instance * max_instances;
-        static constexpr unsigned int max_instparam_floats = floats_per_instparam * max_instances;
-        constexpr unsigned int max_instanced_items() { return max_instances; }
-        //! If drawing with instancing, how many instances?
-        unsigned int instance_count = 0;
-        //! Which datum in the instance buffer is the one to be drawn by the first thread?
+        /*!
+         * This is the upper limit for instance_count. We reserve max_isntances of space in the SSBO.
+         *
+         * Max number of instances in a model. Each *model* has to reserve space in the SSBOs which
+         * are managed by VisualResources. VisualResources<glver>::max_instances must be larger than this.
+         */
+        unsigned int max_instances = 16 * 1024;
+        //! The offset into the SSBOs for the instance data for this VisualModel
         unsigned int instance_start = 0;
+        //! If drawing with instancing, how many instances? <= this->max_instances
+        unsigned int instance_count = 0;
         //! If drawing with instancing, how many params will be used (these will be cycled through
         //! per-instance and there may be fewer than instance_count parameters)
         unsigned int instparam_count = 0;
@@ -757,6 +748,12 @@ namespace mplot
         std::function<void(mplot::VisualBase<glver>*)> setContext;
         //! Release OpenGL context. Should call parentVis->releaseContext().
         std::function<void(mplot::VisualBase<glver>*)> releaseContext;
+
+        //! Init the SSBOs for instanced rendering
+        std::function<unsigned int(mplot::VisualBase<glver>*, const unsigned int)> init_instance_data;
+        std::function<void(const unsigned int, const sm::vec<float, 3>&)> insert_instance_data;
+        std::function<void(const unsigned int, const std::array<float, 3>&, const float, const float)> insert_instparam_data;
+        std::function<void(mplot::VisualBase<glver>*)> instanced_needs_update;
 
         //! Set up the instance positions (with default params for colour, rotn, scale)
         virtual void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position) = 0;

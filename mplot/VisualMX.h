@@ -165,17 +165,19 @@ namespace mplot
         void bindmodel (std::unique_ptr<T>& model)
         {
             mplot::VisualBase<glver>::template bindmodel<T> (model); // base class binds
-            model->setContext = &mplot::VisualBase<glver>::set_context;
-            model->releaseContext = &mplot::VisualBase<glver>::release_context;
-            model->get_glfn = &mplot::VisualOwnableMX<glver>::get_glfn;
+            this->bindextra (model);
         }
 
+        // The GL-dependent binds
         template <typename T>
         void bindextra (std::unique_ptr<T>& model)
         {
             model->setContext = &mplot::VisualBase<glver>::set_context;
             model->releaseContext = &mplot::VisualBase<glver>::release_context;
             model->get_glfn = &mplot::VisualOwnableMX<glver>::get_glfn;
+            model->init_instance_data = &mplot::VisualOwnableMX<glver>::init_instance_data;
+            model->insert_instance_data = &mplot::VisualOwnableMX<glver>::insert_instance_data;
+            model->insert_instparam_data = &mplot::VisualOwnableMX<glver>::insert_instparam_data;
         }
 
         /*

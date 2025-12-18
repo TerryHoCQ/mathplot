@@ -33,6 +33,12 @@ namespace mplot::gl
 
         bool ready() const { return this->name != 0u; }
 
+        void resize (std::size_t sz)
+        {
+            if (sz > N) {  throw std::runtime_error ("ssbo: can't resize to this size"); }
+            this->data.resize (sz);
+        }
+
         ssbo() {}
         ~ssbo() {}
 
@@ -87,15 +93,11 @@ namespace mplot::gl
             if (_data.size() > N) { throw std::runtime_error ("Too big"); }
 
             // Update local cached version of data, a portion of which we're about to write to the SSBO
-            //std::cout << "Copy " << _data.size() << " elements from _data[0] to this->data[" << offset << "]\n";
             this->data.resize (_data.size());
             for (unsigned int i = 0; i < _data.size(); ++i) { this->data[i + offset] = _data[i]; }
 
-            //std::cout << "this->data is now\n\n" << this->data << std::endl;
-
             this->glfn->BindBufferBase (GL_SHADER_STORAGE_BUFFER, index, this->name);
             mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
-            std::cout << "Mapping buffer range at offset " << offset << " floats = " << (offset * sizeof(T)) << " bytes" << std::endl;
             T* cpuptr = static_cast<T*>(this->glfn->MapBufferRange (GL_SHADER_STORAGE_BUFFER,
                                                                     offset * sizeof(T), _data.size() * sizeof(T),
                                                                     GL_MAP_WRITE_BIT));
@@ -105,9 +107,7 @@ namespace mplot::gl
                 return;
             }
             // Note: cpuptr is a 'pointer to the beginning of the mapped range' and so we don't incorporate offset again, below:
-            std::cout << "About to copy " << _data.size() << " things (prolly floats)...\n";
             for (unsigned int i = 0; i < _data.size(); ++i) {
-                std::cout << "Writing value " << " _data[i] = " << _data[i] << " into mapped range" << std::endl;
                 cpuptr[i] = _data[i];
             }
 
