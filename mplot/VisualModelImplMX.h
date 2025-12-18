@@ -186,8 +186,8 @@ namespace mplot
             _glfn->BindVertexArray(0); // carefully unbind and rebind
             mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
 
-            if (this->flags.test (vm_bools::instanced)) {
-                if (this->init_instance_data) { this->init_instance_data (this->parentVis); }
+            if (this->flags.test (vm_bools::instanced) && this->init_instance_data) {
+                this->init_instance_data (this->parentVis);
             }
 
             /*
