@@ -99,9 +99,7 @@ namespace mplot
                       << colour.size() << ", " << alpha.size() << ", " << scale.size() << std::endl;
 
 #if 0
-            size_t j = 0;
             resize_instance_data (this->parentVis, position.size()); // callback to parent.
-
             for (size_t i = 0; i < position.size(); ++i) {
                 sm::vec<float, 3> p = position[i];
                 this->push_instance_data (this->parentVis, p[0]);
@@ -116,7 +114,6 @@ namespace mplot
 
             // resize_instance_data also resizes instparam_data
             for (size_t i = 0; i < colour.size(); ++i) {
-
                 this->push_instparam_data (this->parentVis, colour[i][0]);
                 this->push_instparam_data (this->parentVis, colour[i][1]);
                 this->push_instparam_data (this->parentVis, colour[i][2]);
