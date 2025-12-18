@@ -228,6 +228,7 @@ namespace mplot
         //! SSBOs are unused in VisualTextModels, but these functions have to be present
         std::function<unsigned int(mplot::VisualBase<glver>*, const unsigned int)> init_instance_data;
         std::function<void(const unsigned int, const sm::vec<float, 3>&)> insert_instance_data;
+        std::function<void(const unsigned int, const std::array<float, 3>&, const float, const float)> insert_instparam_data;
 
         //! Setter for the parent pointer, parentVis
         void set_parent (mplot::VisualBase<glver>* _vis)

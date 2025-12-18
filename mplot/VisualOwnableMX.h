@@ -338,6 +338,7 @@ namespace mplot
             model->get_glfn = &mplot::VisualOwnableMX<glver>::get_glfn;
             model->init_instance_data = &mplot::VisualOwnableMX<glver>::init_instance_data;
             model->insert_instance_data = &mplot::VisualOwnableMX<glver>::insert_instance_data;
+            model->insert_instparam_data = &mplot::VisualOwnableMX<glver>::insert_instparam_data;
         }
 
         //! Add a label _text to the scene at position _toffset. Font features are
@@ -400,6 +401,12 @@ namespace mplot
         static void insert_instance_data (const unsigned int instance_idx, const sm::vec<float, 3>& coord)
         {
             mplot::VisualResourcesMX<glver>::i().insert_instance_data (instance_idx, coord);
+        }
+
+        static void insert_instparam_data (const unsigned int instance_idx,
+                                           const std::array<float, 3>& colour, const float& alpha, const float& scale)
+        {
+            mplot::VisualResourcesMX<glver>::i().insert_instparam_data (instance_idx, colour, alpha, scale);
         }
 
     protected:

@@ -92,43 +92,39 @@ namespace mplot
                                 const sm::vvec<std::array<float, 3>>& colour,
                                 const sm::vvec<float>& alpha, const sm::vvec<float>& scale) final
         {
-            if (position.size() < 1) { throw std::runtime_error ("set_instance_data: pass some instance positions in"); }
-            //if (position.size() > this->max_instanced_items()) { throw std::runtime_error ("set_instance_data: not enough space"); }
-
+            if (position.size() < 1) {
+                throw std::runtime_error ("set_instance_data: pass some instance positions in");
+            }
             if (position.size() > this->max_instances) {
                 throw std::runtime_error ("set_instance_data: Haven't reserved enough space for that");
             }
-            //if (!this->insert_instance_data) {
-            //    throw std::runtime_error ("set_instance_data: Haven't connected insert_instance_data");
-            //}
-
-            if (this->insert_instance_data) {
-                for (size_t i = 0; i < position.size(); ++i) {
-                    // Get access to the SSBO in VisualResources and add the 3 floats in position[i] at
-                    // the location defined by this->instance_offset + i
-                    this->insert_instance_data (this->instance_offset + i, position[i]);
-                }
-            } else {
-                std::cout << "No insert instance data?" << std::endl;
+            if (!this->insert_instance_data) {
+                throw std::runtime_error ("set_instance_data: Function insert_instance_data is not bound");
             }
-            this->instance_count = position.size();
-
+            if (!this->insert_instparam_data) {
+                throw std::runtime_error ("set_instance_data: Function insert_instparam_data is not bound");
+            }
             if (colour.size() != scale.size() || colour.size() != alpha.size()) {
                 throw std::runtime_error ("set_instance_data: params vvecs should all have same size (colour, rotn, scale)");
             }
-#if 0
-            // resize_instance_data also resizes instparam_data
+
+            for (size_t i = 0; i < position.size(); ++i) {
+                // Get access to the SSBO in VisualResources and add the 3 floats in position[i] at
+                // the location defined by this->instance_offset + i
+                this->insert_instance_data (this->instance_offset + i, position[i]);
+            }
+
+            this->instance_count = position.size();
+
+
             for (size_t i = 0; i < colour.size(); ++i) {
-                this->push_instparam_data (this->parentVis, colour, alpha, scale);
-                //this->push_instparam_data (this->parentVis, alpha[i]);
-                //this->push_instparam_data (this->parentVis, scale[i]);
+                this->insert_instparam_data (this->instance_offset + i, colour[i], alpha[i], scale[i]);
             }
             this->instparam_count = colour.size();
 
-            // This has to occur once only, in the right place (FIXME)
+            // This has to occur once only, in the right place (FIXME). (In Visual::render)
             // this->instance_data.copy_to_gpu();
             // this->instparam_data.copy_to_gpu();
-#endif
         }
 
         //! Common code to call after the vertices have been set up. GL has to have been initialised.

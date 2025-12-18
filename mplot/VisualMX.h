@@ -177,6 +177,7 @@ namespace mplot
             model->get_glfn = &mplot::VisualOwnableMX<glver>::get_glfn;
             model->init_instance_data = &mplot::VisualOwnableMX<glver>::init_instance_data;
             model->insert_instance_data = &mplot::VisualOwnableMX<glver>::insert_instance_data;
+            model->insert_instparam_data = &mplot::VisualOwnableMX<glver>::insert_instparam_data;
         }
 
         /*

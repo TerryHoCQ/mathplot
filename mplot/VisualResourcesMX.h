@@ -142,6 +142,20 @@ namespace mplot
             this->instance_data.data[cur_fidx++] = coord[2];
         }
 
+        void insert_instparam_data (const unsigned int instance_idx,
+                                    const std::array<float, 3>& colour, const float& alpha, const float& scale)
+        {
+            if (instance_idx >= this->max_instances) {
+                throw std::runtime_error ("insert_instparam_data: bad instance_idx");
+            }
+            unsigned int cur_fidx = instance_idx * this->floats_per_instparam;
+            this->instparam_data.data[cur_fidx++] = colour[0];
+            this->instparam_data.data[cur_fidx++] = colour[1];
+            this->instparam_data.data[cur_fidx++] = colour[2];
+            this->instparam_data.data[cur_fidx++] = alpha;
+            this->instparam_data.data[cur_fidx++] = scale;
+        }
+
         //! Shader Storage Buffer Object for instanced rendering - this holds positions only
         mplot::gl::ssbo<mplot::VisualResourcesBase<glver>::instance_index,
                         float, mplot::VisualResourcesBase<glver>::max_instance_floats> instance_data;
