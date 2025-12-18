@@ -390,9 +390,10 @@ namespace mplot
 
         static void init_instance_data (mplot::VisualBase<glver>* _v)
         {
+            auto __v = reinterpret_cast<mplot::VisualOwnableMX<glver>*>(_v);
             if constexpr (mplot::gl::version::has_ssbo (glver) == true) {
-                if (_v->instance_data.ready() == false) { _v->instance_data.init (_v->glfn); }
-                if (_v->instparam_data.ready() == false) { _v->instparam_data.init (_v->glfn); }
+                if (__v->instance_data.ready() == false) { __v->instance_data.init (__v->glfn); }
+                if (__v->instparam_data.ready() == false) { __v->instparam_data.init (__v->glfn); }
             } else {
                 throw std::runtime_error ("Instanced rendering requires OpenGL 4.3 or higher");
             }

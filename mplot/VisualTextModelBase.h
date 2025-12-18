@@ -222,6 +222,9 @@ namespace mplot
         //! Release OpenGL context. Should call parentVis->releaseContext().
         std::function<void(mplot::VisualBase<glver>*)> releaseContext;
 
+        //! Unused, but have to be present
+        std::function<void(mplot::VisualBase<glver>*)> init_instance_data;
+
         //! Setter for the parent pointer, parentVis
         void set_parent (mplot::VisualBase<glver>* _vis)
         {

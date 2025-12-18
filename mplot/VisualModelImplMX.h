@@ -196,7 +196,7 @@ namespace mplot
             mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
 
             if (this->flags.test (vm_bools::instanced)) {
-                this->init_instance_data (this->parentVis);
+                if (this->init_instance_data) { this->init_instance_data (this->parentVis); }
             }
 
             /*
