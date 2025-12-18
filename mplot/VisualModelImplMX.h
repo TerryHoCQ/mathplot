@@ -102,16 +102,11 @@ namespace mplot
             size_t j = 0;
             resize_instance_data (this->parentVis, position.size()); // callback to parent.
 
-            //this->instance_data.data.resize (mplot::VisualBase<glver>::floats_per_instance * position.size());
-
             for (size_t i = 0; i < position.size(); ++i) {
                 sm::vec<float, 3> p = position[i];
                 this->push_instance_data (this->parentVis, p[0]);
                 this->push_instance_data (this->parentVis, p[1]);
                 this->push_instance_data (this->parentVis, p[2]);
-                //this->instance_data.data[j++] = p[0];
-                //this->instance_data.data[j++] = p[1];
-                //this->instance_data.data[j++] = p[2];
             }
             this->instance_count = position.size();
 
@@ -119,8 +114,7 @@ namespace mplot
                 throw std::runtime_error ("set_instance_data: params vvecs should all have same size (colour, rotn, scale)");
             }
 
-            // resize_instance_data also does this:
-            //this->instparam_data.data.resize (mplot::VisualBase<glver>::floats_per_instparam * colour.size());                     j = 0;
+            // resize_instance_data also resizes instparam_data
             for (size_t i = 0; i < colour.size(); ++i) {
 
                 this->push_instparam_data (this->parentVis, colour[i][0]);
@@ -131,7 +125,7 @@ namespace mplot
             }
             this->instparam_count = colour.size();
 
-            // This has to occur once only
+            // This has to occur once only, in the right place (FIXME)
             // this->instance_data.copy_to_gpu();
             // this->instparam_data.copy_to_gpu();
 #endif
