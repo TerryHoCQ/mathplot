@@ -41,14 +41,15 @@ int main()
 
     // Make some dummy data (a sine wave) to make an interesting surface
     std::vector<float> data(hg.num(), 0.0f);
-    for (unsigned int ri=0; ri<hg.num(); ++ri) {
-        data[ri] = 0.05f + 0.05f*std::sin(20.0f*hg.d_x[ri]) * std::sin(10.0f*hg.d_y[ri]) ; // Range 0->1
+    for (unsigned int ri = 0; ri < hg.num(); ++ri) {
+        data[ri] = 0.05f + 0.05f * std::sin (20.0f * hg.d_x[ri]) * std::sin (10.0f * hg.d_y[ri]) ; // Range 0->1
     }
 
     // Add a HexGridVisual to display the HexGrid within the sm::Visual scene
     sm::vec<float, 3> offset = { 0.0f, -0.05f, 0.0f };
     auto hgv = std::make_unique<mplot::HexGridVisual<float, mplot::gl::version_4_1>>(&hg, offset);
     v.bindmodel (hgv);
+    hgv->wireframe (true);
     hgv->cm.setType (mplot::ColourMapType::Ice);
     hgv->setScalarData (&data);
     hgv->hexVisMode = mplot::HexVisMode::HexInterp; // Or sm::HexVisMode::Triangles for a smoother surface plot

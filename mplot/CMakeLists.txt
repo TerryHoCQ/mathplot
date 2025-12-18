@@ -76,6 +76,7 @@ install(
   HexGridVisual.h
   HSVWheelVisual.h
   IcosaVisual.h
+  InstancedScatterVisual.h
   LengthscaleVisual.h
   NormalsVisual.h
   PointRowsMeshVisual.h
