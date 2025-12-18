@@ -19,7 +19,6 @@
 constexpr int glver = mplot::gl::version_4_3;
 
 constexpr float st = sm::mathconst<float>::two_pi / 360;
-constexpr float z = 0.0f;
 sm::vec<float, 3> f (int i, float _z = 0.0f)
 {
     float phi = st * i;
