@@ -9,14 +9,16 @@ namespace mplot
 {
     // The default vertex shader. To study this GLSL, see Visual.vert.glsl, which has
     // some code comments.
-    const char* defaultVtxShader_part1 =
+    const char* defaultVtxShader_part1a =
     "uniform mat4 m_matrix;\n"
     "uniform mat4 v_matrix;\n"
     "uniform mat4 p_matrix;\n"
-    "uniform float alpha;\n"
+    "uniform float alpha;\n";
+    const char* defaultVtxShader_instance_uniforms =
     "uniform int instance_count = 0;\n"
     "uniform int instance_start = -1;\n"
-    "uniform int instparam_count = 0;\n"
+    "uniform int instparam_count = 0;\n";
+    const char* defaultVtxShader_part1b =
     "layout(location = 0) in vec4 position;\n"
     "layout(location = 1) in vec4 normalin;\n"
     "layout(location = 2) in vec3 color;\n";
@@ -74,7 +76,11 @@ namespace mplot
     {
         std::string shdr;
         shdr += mplot::gl::version::shaderpreamble (glver);
-        shdr += defaultVtxShader_part1;
+        shdr += defaultVtxShader_part1a;
+        if (mplot::gl::version::has_ssbo (glver)) {
+            shdr += defaultVtxShader_instance_uniforms;
+        }
+        shdr += defaultVtxShader_part1b;
         if (mplot::gl::version::has_ssbo (glver)) {
             shdr += "layout (std430, binding = 1) buffer InstPos { float ipos[]; };\n";
             shdr += "layout (std430, binding = 2) buffer InstParam { float iparam[]; };\n";
