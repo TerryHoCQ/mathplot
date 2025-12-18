@@ -21,7 +21,7 @@ namespace mplot::gl
     // @tparam index: The index of the buffer, used in the GLSL
     // @tparam T: The type of the data in the SSBO
     // @tparam N: The max number of elements of type T in the SSBO
-    template <unsigned int index, typename T, std::size_t N> // Could add version template params if necessary, to select correct gl function calls
+    template <unsigned int index, typename T, std::size_t N>
     struct ssbo
     {
         // The name of the buffer, generated with glGenBuffers()
@@ -30,6 +30,12 @@ namespace mplot::gl
         sm::vvec<T> data = {};
 
         bool ready() const { return this->name != 0u; }
+
+        void resize (std::size_t sz)
+        {
+            if (sz > N) {  throw std::runtime_error ("ssbo: can't resize to this size"); }
+            this->data.resize (sz);
+        }
 
         ssbo() {}
         ~ssbo() {}
@@ -88,7 +94,6 @@ namespace mplot::gl
 
             glBindBufferBase (GL_SHADER_STORAGE_BUFFER, index, this->name);
             mplot::gl::Util::checkError (__FILE__, __LINE__);
-            std::cout << "Mapping buffer range at offset " << offset << " floats = " << (offset * sizeof(T)) << " bytes" << std::endl;
             T* cpuptr = static_cast<T*>(glMapBufferRange (GL_SHADER_STORAGE_BUFFER,
                                                           offset * sizeof(T), _data.size() * sizeof(T),
                                                           GL_MAP_WRITE_BIT));
@@ -98,9 +103,7 @@ namespace mplot::gl
                 return;
             }
             // Note: cpuptr is a 'pointer to the beginning of the mapped range' and so we don't incorporate offset again, below:
-            std::cout << "About to copy " << _data.size() << " things (prolly floats)...\n";
             for (unsigned int i = 0; i < _data.size(); ++i) {
-                std::cout << "Writing value " << " _data[i] = " << _data[i] << " into mapped range" << std::endl;
                 cpuptr[i] = _data[i];
             }
 

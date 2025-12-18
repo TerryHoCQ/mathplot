@@ -170,7 +170,6 @@ namespace mplot
         //! Shader Storage Buffer Object for instanced rendering - this holds colour, alpha and scale
         mplot::gl::ssbo<mplot::VisualResourcesBase<glver>::instparam_index,
                         float, mplot::VisualResourcesBase<glver>::max_instparam_floats> instparam_data;
-
     };
 
 } // namespace mplot
