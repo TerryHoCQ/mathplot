@@ -94,30 +94,34 @@ namespace mplot
         {
             if (position.size() < 1) { throw std::runtime_error ("set_instance_data: pass some instance positions in"); }
             //if (position.size() > this->max_instanced_items()) { throw std::runtime_error ("set_instance_data: not enough space"); }
-            std::cout << "Colour, alpha, scale sizes: "
-                      << colour.size() << ", " << alpha.size() << ", " << scale.size() << std::endl;
 
-#if 0
-            resize_instance_data (this->parentVis, position.size()); // callback to parent.
-            for (size_t i = 0; i < position.size(); ++i) {
-                sm::vec<float, 3> p = position[i];
-                this->push_instance_data (this->parentVis, p[0]);
-                this->push_instance_data (this->parentVis, p[1]);
-                this->push_instance_data (this->parentVis, p[2]);
+            if (position.size() > this->max_instances) {
+                throw std::runtime_error ("set_instance_data: Haven't reserved enough space for that");
+            }
+            //if (!this->insert_instance_data) {
+            //    throw std::runtime_error ("set_instance_data: Haven't connected insert_instance_data");
+            //}
+
+            if (this->insert_instance_data) {
+                for (size_t i = 0; i < position.size(); ++i) {
+                    // Get access to the SSBO in VisualResources and add the 3 floats in position[i] at
+                    // the location defined by this->instance_offset + i
+                    this->insert_instance_data (this->instance_offset + i, position[i]);
+                }
+            } else {
+                std::cout << "No insert instance data?" << std::endl;
             }
             this->instance_count = position.size();
 
             if (colour.size() != scale.size() || colour.size() != alpha.size()) {
                 throw std::runtime_error ("set_instance_data: params vvecs should all have same size (colour, rotn, scale)");
             }
-
+#if 0
             // resize_instance_data also resizes instparam_data
             for (size_t i = 0; i < colour.size(); ++i) {
-                this->push_instparam_data (this->parentVis, colour[i][0]);
-                this->push_instparam_data (this->parentVis, colour[i][1]);
-                this->push_instparam_data (this->parentVis, colour[i][2]);
-                this->push_instparam_data (this->parentVis, alpha[i]);
-                this->push_instparam_data (this->parentVis, scale[i]);
+                this->push_instparam_data (this->parentVis, colour, alpha, scale);
+                //this->push_instparam_data (this->parentVis, alpha[i]);
+                //this->push_instparam_data (this->parentVis, scale[i]);
             }
             this->instparam_count = colour.size();
 
@@ -126,29 +130,6 @@ namespace mplot
             // this->instparam_data.copy_to_gpu();
 #endif
         }
-
-#if 0
-        // Update the instance_data from points and data. Update the range of data starting at
-        // points/data index i_s and ending at i_e.
-        void update_instance_data (const sm::vvec<sm::vec<float, 3>>& points, const sm::vvec<float>& data,
-                                   std::size_t i_s, std::size_t i_e)
-        {
-            if (points.size() != data.size()) { throw std::runtime_error ("points and data must have same size"); }
-            if (points.size() > this->max_instanced_items()) { throw std::runtime_error ("Not enough space"); }
-
-            sm::vvec<float> updated(mplot::VisualModelBase<glver>::floats_per_instance * (1 + i_e - i_s));
-            size_t j = 0;
-            for (size_t i = i_s; i <= i_e; ++i) {
-                //std::cout << "writing points/data["<<i<<"]\n";
-                sm::vec<float, 3> c = points[i];
-                updated[j++] = c[0];
-                updated[j++] = c[1];
-                updated[j++] = c[2];
-            }
-            //std::cout << "Copy updated, size " << updated.size() << " to gpu with offset " << i_s << "\n";
-            this->instance_data.copy_to_gpu (updated, i_s);
-        }
-#endif
 
         //! Common code to call after the vertices have been set up. GL has to have been initialised.
         void postVertexInit() final
@@ -186,7 +167,12 @@ namespace mplot
             mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
 
             if (this->flags.test (vm_bools::instanced) && this->init_instance_data) {
-                this->init_instance_data (this->parentVis);
+                // Here, we cause the SSBOs to be intialized if they haven't already, and we reserve
+                // some space in the SSBOs for *this model*
+                this->instance_offset = this->init_instance_data (this->parentVis, this->max_instances);
+                if (this->instance_offset == std::numeric_limits<unsigned int>::max()) {
+                    throw std::runtime_error ("Failed to reserve space in SSBO");
+                }
             }
 
             /*

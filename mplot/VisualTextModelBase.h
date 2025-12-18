@@ -201,6 +201,9 @@ namespace mplot
         virtual void postVertexInit() = 0;
 
     public:
+        // A VisualTextModel may be given a name
+        std::string name = "VisualTextModel";
+
         //! The colour of the text
         std::array<float, 3> clr_text = {0.0f, 0.0f, 0.0f};
         //! Line spacing, in multiples of the height of an 'h'
@@ -222,8 +225,9 @@ namespace mplot
         //! Release OpenGL context. Should call parentVis->releaseContext().
         std::function<void(mplot::VisualBase<glver>*)> releaseContext;
 
-        //! Unused, but have to be present
-        std::function<void(mplot::VisualBase<glver>*)> init_instance_data;
+        //! SSBOs are unused in VisualTextModels, but these functions have to be present
+        std::function<unsigned int(mplot::VisualBase<glver>*, const unsigned int)> init_instance_data;
+        std::function<void(const unsigned int, const sm::vec<float, 3>&)> insert_instance_data;
 
         //! Setter for the parent pointer, parentVis
         void set_parent (mplot::VisualBase<glver>* _vis)

@@ -111,17 +111,35 @@ namespace mplot
         }
 
         /*!
-         * We also manage some programm-wide SSBO objects for instanced rendering data in
-         * VisualResources.
+         * We also manage some programm-wide SSBO objects for instanced rendering
+         * VisualResourcesdata in . Reserve n_to_reserve instances of data in the SSBOs. Return the
+         * start offset into the buffers in terms of number of instances
          */
-        void init_instance_data (GladGLContext* glfn)
+        unsigned int init_instance_ssbo (GladGLContext* glfn, const unsigned int n_to_reserve)
         {
+            unsigned int reservation = std::numeric_limits<unsigned int>::max();
             if constexpr (mplot::gl::version::has_ssbo (glver) == true) {
                 if (this->instance_data.ready() == false) { this->instance_data.init (glfn); }
                 if (this->instparam_data.ready() == false) { this->instparam_data.init (glfn); }
+                if (n_to_reserve + this->instance_top <= this->max_instances) {
+                    reservation = this->instance_top;
+                    this->instance_top += n_to_reserve;
+                }
             } else {
                 throw std::runtime_error ("Instanced rendering requires OpenGL 4.3 or higher");
             }
+            return reservation;
+        }
+
+        void insert_instance_data (const unsigned int instance_idx, const sm::vec<float, 3>& coord)
+        {
+            if (instance_idx >= this->max_instances) {
+                throw std::runtime_error ("insert_instance_data: bad instance_idx");
+            }
+            unsigned int cur_fidx = instance_idx * this->floats_per_instance;
+            this->instance_data.data[cur_fidx++] = coord[0];
+            this->instance_data.data[cur_fidx++] = coord[1];
+            this->instance_data.data[cur_fidx++] = coord[2];
         }
 
         //! Shader Storage Buffer Object for instanced rendering - this holds positions only

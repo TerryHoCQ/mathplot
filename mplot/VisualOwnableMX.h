@@ -327,6 +327,7 @@ namespace mplot
             }
         }
 
+        // Note: We have to have both VisualOwnableMX::bindmodel AND VisualMX::bindmodel (which calls VisualBase::bindmodel)
         template <typename T>
         void bindmodel (std::unique_ptr<T>& model)
         {
@@ -336,6 +337,7 @@ namespace mplot
             model->get_tprog = &mplot::VisualBase<glver>::get_tprog;
             model->get_glfn = &mplot::VisualOwnableMX<glver>::get_glfn;
             model->init_instance_data = &mplot::VisualOwnableMX<glver>::init_instance_data;
+            model->insert_instance_data = &mplot::VisualOwnableMX<glver>::insert_instance_data;
         }
 
         //! Add a label _text to the scene at position _toffset. Font features are
@@ -388,38 +390,17 @@ namespace mplot
             return tm->getTextGeometry();
         }
 
-        static void init_instance_data (mplot::VisualBase<glver>* _v)
+        static unsigned int init_instance_data (mplot::VisualBase<glver>* _v, const unsigned int n_to_reserve)
         {
             auto __v = reinterpret_cast<mplot::VisualOwnableMX<glver>*>(_v);
-            mplot::VisualResourcesMX<glver>::i().init_instance_data (__v->glfn);
-            // Also claim a start point/size within the SSBOs?
-        }
-#if 0
-        static void resize_instance_data (mplot::VisualBase<glver>* _v, std::size_t n_instances)
-        {
-            if (this->instance_data.ready()) {
-                // Or rather, n_instances + n_already_reserved
-                this->instance_data.data.resize (n_instances * mplot::VisualBase<glver>::floats_per_instance);
-            }
-            cur_instance_ptr = 0;
-            if (this->instparam_data.ready()) {
-                this->instparam_data.data.resize (n_instances * mplot::VisualBase<glver>::floats_per_instparam);
-            }
-            cur_instparam_ptr = 0;
+            unsigned int reservation = mplot::VisualResourcesMX<glver>::i().init_instance_ssbo (__v->glfn, n_to_reserve);
+            return reservation;
         }
 
-        static void push_instance_data (mplot::VisualBase<glver>* _v, const float datum)
+        static void insert_instance_data (const unsigned int instance_idx, const sm::vec<float, 3>& coord)
         {
-            _v->instance_data.data[cur_instance_ptr++] = datum;
+            mplot::VisualResourcesMX<glver>::i().insert_instance_data (instance_idx, coord);
         }
-
-        static void push_instparam_data (mplot::VisualBase<glver>* _v, const float datum)
-        {
-            _v->instparam_data.data[cur_instparam_ptr++] = datum;
-        }
-        std::size_t cur_instance_ptr = 0;
-        std::size_t cur_instparam_ptr = 0;
-#endif
 
     protected:
         // Initialize OpenGL shaders, set some flags (Alpha, Anti-aliasing), read in any external
@@ -470,6 +451,7 @@ namespace mplot
 
             // Use coordArrowsOffset to set the location of the CoordArrows *scene*
             this->coordArrows = std::make_unique<mplot::CoordArrows<glver>>();
+            this->coordArrows->name = "Scene axes";
             // For CoordArrows, because we don't add via Visual::addVisualModel(), we
             // have to set the get_shaderprogs function here:
             this->bindmodel (this->coordArrows);
@@ -480,6 +462,7 @@ namespace mplot
 
             // Create 'user frame of reference object'
             this->userFrame = std::make_unique<mplot::RodVisual<glver>>();
+            this->userFrame->name = "User frame of ref object";
             this->bindmodel (this->userFrame);
             this->userFrame->init (sm::vec<float, 3>{},
                                    sm::vec<float, 3>{0.0f, 0.0f, -100.0f}, sm::vec<float, 3>{0.1f, 0.1f, 1.0f}, 0.05f,
@@ -494,6 +477,7 @@ namespace mplot
             // Set up the title, which may or may not be rendered
             mplot::TextFeatures title_tf(0.035f, 64);
             this->textModel = std::make_unique<mplot::VisualTextModel<glver>> (title_tf);
+            this->textModel->name = "Title text";
             this->bindmodel (this->textModel);
             this->textModel->setSceneTranslation ({0.0f, 0.0f, 0.0f});
             this->textModel->setupText (this->title);

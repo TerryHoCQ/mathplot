@@ -41,6 +41,7 @@ int main()
 
     // A normal, non instanced model. A sphere to orbit around.
     auto gv1 = std::make_unique<mplot::GeodesicVisual<float,glver>> (sm::vec<>{}, 0.2f);
+    gv1->name = "geodesic";
     v.bindmodel (gv1);
     gv1->iterations = 3;
     gv1->cm.setType (mplot::ColourMapType::Tofino);
@@ -65,6 +66,7 @@ int main()
     }
 
     auto isv = std::make_unique<mplot::InstancedScatterVisual<glver>> (sm::vec<>{});
+    isv->name = "isv1";
     v.bindmodel (isv);
     isv->radiusFixed = 0.03f;
     isv->finalize();
@@ -72,6 +74,7 @@ int main()
 
     // Another one
     isv = std::make_unique<mplot::InstancedScatterVisual<glver>> (sm::vec<>{0,1,0});
+    isv->name = "isv2";
     v.bindmodel (isv);
     isv->radiusFixed = 0.03f;
     isv->finalize();
@@ -79,7 +82,6 @@ int main()
 
     v.render();
     isvp->set_instance_data (points); // colour, alpha, scale
-    std::cout << "isvp->instance_count = " << isvp->instance_count << std::endl;
 
     isvp2->set_instance_data (points * 1.2f, mplot::colour::black, 0.7f, 1.0f);
 
