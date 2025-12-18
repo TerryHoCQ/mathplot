@@ -68,14 +68,16 @@ int main()
     auto isv = std::make_unique<mplot::InstancedScatterVisual<glver>> (sm::vec<>{});
     isv->name = "isv1";
     v.bindmodel (isv);
+    isv->max_instances = dsz;
     isv->radiusFixed = 0.03f;
     isv->finalize();
     auto isvp = v.addVisualModel (isv);
 
     // Another one
-    isv = std::make_unique<mplot::InstancedScatterVisual<glver>> (sm::vec<>{0,1,0});
+    isv = std::make_unique<mplot::InstancedScatterVisual<glver>> (sm::vec<>{0,0.1,0});
     isv->name = "isv2";
     v.bindmodel (isv);
+    isv->max_instances = dsz;
     isv->radiusFixed = 0.03f;
     isv->finalize();
     auto isvp2 = v.addVisualModel (isv);
@@ -103,7 +105,7 @@ int main()
         isvp->set_instance_data (points, col, alph, scl);
 
         v.render();
-        v.waitevents (0.03);
+        v.waitevents (0.018);
 
 #else // I haven't mastered updating a subrange of data in an SSBO
         // update circularly, change isvp->instance_start each time
