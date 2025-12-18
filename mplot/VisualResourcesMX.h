@@ -13,6 +13,7 @@
 #include <mplot/VisualFaceMX.h>
 #include <mplot/VisualResourcesBase.h>
 #include <mplot/gl/util_mx.h>
+#include <mplot/gl/ssbo_mx.h>
 
 namespace mplot
 {
@@ -108,6 +109,28 @@ namespace mplot
                 } else { f++; }
             }
         }
+
+        /*!
+         * We also manage some programm-wide SSBO objects for instanced rendering data in
+         * VisualResources.
+         */
+        void init_instance_data (GladGLContext* glfn)
+        {
+            if constexpr (mplot::gl::version::has_ssbo (glver) == true) {
+                if (this->instance_data.ready() == false) { this->instance_data.init (glfn); }
+                if (this->instparam_data.ready() == false) { this->instparam_data.init (glfn); }
+            } else {
+                throw std::runtime_error ("Instanced rendering requires OpenGL 4.3 or higher");
+            }
+        }
+
+        //! Shader Storage Buffer Object for instanced rendering - this holds positions only
+        mplot::gl::ssbo<mplot::VisualResourcesBase<glver>::instance_index,
+                        float, mplot::VisualResourcesBase<glver>::max_instance_floats> instance_data;
+        //! Shader Storage Buffer Object for instanced rendering - this holds colour, alpha and scale
+        mplot::gl::ssbo<mplot::VisualResourcesBase<glver>::instparam_index,
+                        float, mplot::VisualResourcesBase<glver>::max_instparam_floats> instparam_data;
+
     };
 
 } // namespace mplot

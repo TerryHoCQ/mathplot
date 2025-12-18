@@ -73,6 +73,26 @@ namespace mplot
 
         // Note: get/clearVisualFace functions are in derived classes
         virtual void clearVisualFaces (mplot::VisualBase<glver>* _vis) = 0;
+
+        /*!
+         * SSBO management
+         */
+        //! Instanced rendering mode (SSBO access). position data stored in SSBO index 1 (must match GLSL code)
+        static constexpr unsigned int instance_index = 1;
+        //! colour, scale, rotation stored in SSBO index 2
+        static constexpr unsigned int instparam_index = 2;
+        //! one 3D vector is 3 floats
+        static constexpr unsigned int floats_per_instance = 3;
+        //! Instance params are: colour/alpha (4 floats), scale (1 float)
+        static constexpr unsigned int floats_per_instparam = 5;
+
+        //! This will control how much GPU RAM is allocated when using instanced rendering
+        //! (Hopefully, when I'm finished, the RAM will be allocated only if at least one
+        //! VisualModel is marked 'instanced').
+        static constexpr unsigned int max_instances = 256 * 1024;
+        static constexpr unsigned int max_instance_floats = floats_per_instance * max_instances;
+        static constexpr unsigned int max_instparam_floats = floats_per_instparam * max_instances;
+        //constexpr unsigned int max_instanced_items() { return max_instances; }
     };
 
 } // namespace mplot

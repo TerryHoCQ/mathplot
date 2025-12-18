@@ -391,12 +391,8 @@ namespace mplot
         static void init_instance_data (mplot::VisualBase<glver>* _v)
         {
             auto __v = reinterpret_cast<mplot::VisualOwnableMX<glver>*>(_v);
-            if constexpr (mplot::gl::version::has_ssbo (glver) == true) {
-                if (__v->instance_data.ready() == false) { __v->instance_data.init (__v->glfn); }
-                if (__v->instparam_data.ready() == false) { __v->instparam_data.init (__v->glfn); }
-            } else {
-                throw std::runtime_error ("Instanced rendering requires OpenGL 4.3 or higher");
-            }
+            mplot::VisualResourcesMX<glver>::i().init_instance_data (__v->glfn);
+            // Also claim a start point/size within the SSBOs?
         }
 #if 0
         static void resize_instance_data (mplot::VisualBase<glver>* _v, std::size_t n_instances)
@@ -424,11 +420,6 @@ namespace mplot
         std::size_t cur_instance_ptr = 0;
         std::size_t cur_instparam_ptr = 0;
 #endif
-        //! Shader Storage Buffer Object for instanced rendering
-        mplot::gl::ssbo<mplot::VisualBase<glver>::instance_index,
-                        float, mplot::VisualBase<glver>::max_instance_floats> instance_data;
-        mplot::gl::ssbo<mplot::VisualBase<glver>::instparam_index,
-                        float, mplot::VisualBase<glver>::max_instparam_floats> instparam_data;
 
     protected:
         // Initialize OpenGL shaders, set some flags (Alpha, Anti-aliasing), read in any external

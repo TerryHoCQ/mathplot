@@ -20,7 +20,6 @@
 #include <mplot/VisualModelBase.h>
 
 #include <mplot/gl/util_mx.h>
-#include <mplot/gl/ssbo_mx.h>
 #include <mplot/VisualTextModel.h>
 #include <mplot/TextGeometry.h>
 
