@@ -755,6 +755,7 @@ namespace mplot
         std::function<unsigned int(mplot::VisualBase<glver>*, const unsigned int)> init_instance_data;
         std::function<void(const unsigned int, const sm::vec<float, 3>&)> insert_instance_data;
         std::function<void(const unsigned int, const std::array<float, 3>&, const float, const float)> insert_instparam_data;
+        std::function<void(mplot::VisualBase<glver>*)> instanced_needs_update;
 
         //! Set up the instance positions (with default params for colour, rotn, scale)
         virtual void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position) = 0;

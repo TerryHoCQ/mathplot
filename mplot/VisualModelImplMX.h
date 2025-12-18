@@ -119,6 +119,8 @@ namespace mplot
                 this->insert_instparam_data (this->instance_offset + i, colour[i], alpha[i], scale[i]);
             }
             this->instparam_count = colour.size();
+
+            this->instanced_needs_update (this->parentVis);
         }
 
         //! Common code to call after the vertices have been set up. GL has to have been initialised.

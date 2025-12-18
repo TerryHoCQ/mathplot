@@ -259,7 +259,10 @@ namespace mplot
                 this->userFrame->render();
             }
 
-            if (this->haveInstanced()) { this->copy_instance_data_to_gpu(); }
+            if (this->haveInstanced() && this->instancedNeedsUpdate()) {
+                this->copy_instance_data_to_gpu();
+                this->instancedNeedsUpdate (false);
+            }
 
             auto vmi = this->vm.begin();
             while (vmi != this->vm.end()) {
@@ -337,6 +340,7 @@ namespace mplot
             model->get_shaderprogs = &mplot::VisualBase<glver>::get_shaderprogs;
             model->get_gprog = &mplot::VisualBase<glver>::get_gprog;
             model->get_tprog = &mplot::VisualBase<glver>::get_tprog;
+            model->instanced_needs_update = &mplot::VisualBase<glver>::instanced_needs_update;
             model->get_glfn = &mplot::VisualOwnableMX<glver>::get_glfn;
             model->init_instance_data = &mplot::VisualOwnableMX<glver>::init_instance_data;
             model->insert_instance_data = &mplot::VisualOwnableMX<glver>::insert_instance_data;

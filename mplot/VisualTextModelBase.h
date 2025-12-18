@@ -229,6 +229,7 @@ namespace mplot
         std::function<unsigned int(mplot::VisualBase<glver>*, const unsigned int)> init_instance_data;
         std::function<void(const unsigned int, const sm::vec<float, 3>&)> insert_instance_data;
         std::function<void(const unsigned int, const std::array<float, 3>&, const float, const float)> insert_instparam_data;
+        std::function<void(mplot::VisualBase<glver>*)> instanced_needs_update;
 
         //! Setter for the parent pointer, parentVis
         void set_parent (mplot::VisualBase<glver>* _vis)
