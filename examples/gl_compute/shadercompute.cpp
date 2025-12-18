@@ -12,7 +12,6 @@
  * https://learnopengl.com/Guest-Articles/2022/Compute-Shaders/Introduction
  */
 
-
 // You have to include the GL headers manually so that you will be sure you have the
 // right ones. This is because for OpenGL version 4.3, you would include GL3/gl3.h and
 // GL/glext.h whereas if you are targeting OpenGL 3.1 ES, you want to include
@@ -25,8 +24,10 @@
 
 namespace my {
 
+    static constexpr int glver = mplot::gl::version_4_5;
+
     // Specify OpenGL version 4.5 (4.3 is min for compute)
-    struct compute_manager : public mplot::gl::compute_manager<mplot::gl::version_4_5>
+    struct compute_manager : public mplot::gl::compute_manager<glver>
     {
         // Call init in your constructor, ensuring *your* version of load_shaders() is called.
         compute_manager()
@@ -80,8 +81,9 @@ namespace my {
             };
             this->compute_program.load_shaders (shaders);
 
+            std::string defVtxShdr = mplot::getDefaultVtxShader (glver);
             std::vector<mplot::gl::ShaderInfo> vtxshaders = {
-                {GL_VERTEX_SHADER, "../examples/gl_compute/shadercompute.vert.glsl", mplot::defaultVtxShader, 0 },
+                {GL_VERTEX_SHADER, "../examples/gl_compute/shadercompute.vert.glsl", defVtxShdr.c_str(), 0 },
                 {GL_FRAGMENT_SHADER, "../examples/gl_compute/shadercompute.frag.glsl", mplot::defaultFragShader, 0 }
             };
             this->vtxprog = mplot::gl::LoadShaders (vtxshaders);
@@ -137,7 +139,7 @@ namespace my {
         unsigned int vao = 0;
         unsigned int vbo = 0;
         // You will need at least one gl::compute_shaderprog
-        mplot::gl::compute_shaderprog<mplot::gl::version_4_5> compute_program;
+        mplot::gl::compute_shaderprog<glver> compute_program;
     };
 } // namespace my
 

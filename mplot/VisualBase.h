@@ -61,7 +61,11 @@ namespace mplot
         //! When true, cursor movements induce translation of scene
         translateMode,
         //! We are scrolling (and so we will need to zero scenetrans_delta after enacting the change)
-        scrolling
+        scrolling,
+        //! True means that at least one of our VisualModels is an instanced rendering model
+        haveInstanced,
+        //! When true, the instanced data SSBO needs to be copied to the GPU
+        instancedNeedsUpdate
     };
 
     //! Boolean options - similar to state, but more likely to be modified by client code
@@ -115,7 +119,17 @@ namespace mplot
          * If true, then turn on the bounding box for the VM about which we are rotating and turn
          * the others off (ignoring the value of 'showBoundingBoxes')
          */
-        highlightRotationVM
+        highlightRotationVM,
+        /*!
+         * If true, the view of the scene follows a model translation (one of the VisualModels in
+         * the scene has to be nominated as the 'model to follow'. Useful for top-down views. The
+         * selected model to follow is in a member attribute followedModel
+         */
+        viewFollowsVMTranslations,
+        /*!
+         * The view 'camera' rotates with the selected VM (followedModel)
+         */
+        viewFollowsVMRotations,
     };
 
     //! Whether to render with perspective or orthographic (or even a cylindrical projection)
@@ -228,6 +242,7 @@ namespace mplot
             model->get_shaderprogs = &mplot::VisualBase<glver>::get_shaderprogs;
             model->get_gprog = &mplot::VisualBase<glver>::get_gprog;
             model->get_tprog = &mplot::VisualBase<glver>::get_tprog;
+            model->instanced_needs_update = &mplot::VisualBase<glver>::instanced_needs_update;
         }
 
         /*!
@@ -238,6 +253,7 @@ namespace mplot
         unsigned int addVisualModelId (std::unique_ptr<T>& model)
         {
             std::unique_ptr<mplot::VisualModel<glver>> vmp = std::move(model);
+            if (vmp->instanced()) { this->state.set (visual_state::haveInstanced, true); }
             this->vm.push_back (std::move(vmp));
             unsigned int rtn = (this->vm.size()-1);
             return rtn;
@@ -250,6 +266,7 @@ namespace mplot
         T* addVisualModel (std::unique_ptr<T>& model)
         {
             std::unique_ptr<mplot::VisualModel<glver>> vmp = std::move(model);
+            if (vmp->instanced()) { this->state.set (visual_state::haveInstanced, true); }
             this->vm.push_back (std::move(vmp));
             return static_cast<T*>(this->vm.back().get());
         }
@@ -268,6 +285,17 @@ namespace mplot
                 }
             }
             return rtn;
+        }
+
+        void setFollowedVM (const mplot::VisualModel<glver>* vm_to_follow)
+        {
+            for (unsigned int modelId = 0; modelId < this->vm.size(); ++modelId) {
+                if (this->vm[modelId].get() == vm_to_follow) {
+                    this->followedVM = this->vm[modelId].get();
+                    this->followedLastViewMatrix = this->followedVM->getViewMatrix();
+                    break;
+                }
+            }
         }
 
         /*!
@@ -350,6 +378,8 @@ namespace mplot
         static mplot::visgl::visual_shaderprogs get_shaderprogs (mplot::VisualBase<glver>* _v) { return _v->shaders; };
         static GLuint get_gprog (mplot::VisualBase<glver>* _v) { return _v->shaders.gprog; };
         static GLuint get_tprog (mplot::VisualBase<glver>* _v) { return _v->shaders.tprog; };
+
+        static void instanced_needs_update (mplot::VisualBase<glver>* _v) { _v->instancedNeedsUpdate (true); }
 
         //! The colour of ambient and diffuse light sources
         sm::vec<float, 3> light_colour = { 1.0f, 1.0f, 1.0f };
@@ -439,6 +469,13 @@ namespace mplot
 
         //! Returns true if we are in the paused state
         bool paused() const { return this->state.test (visual_state::paused); }
+
+        //! True if one of our added VisualModels is an instanced model
+        bool haveInstanced() const { return this->state.test (visual_state::haveInstanced); }
+
+        //! Does our instanced data need to be pushed over to the GPU during render()?
+        bool instancedNeedsUpdate() const { return this->state.test (visual_state::instancedNeedsUpdate); }
+        void instancedNeedsUpdate (const bool val) { this->state.set (visual_state::instancedNeedsUpdate, val); }
 
         /*
          * User-settable projection values for the near clipping distance, the far clipping distance
@@ -787,6 +824,7 @@ namespace mplot
             this->sceneview_tr = sv_tr * this->savedSceneview_tr;
         }
 
+        // This is called every time render() is called
         void computeSceneview()
         {
             if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
@@ -798,11 +836,34 @@ namespace mplot
                 this->scenetrans_delta.zero();
                 this->state.reset (visual_state::scrolling);
             }
+
+            if (this->options.test (visual_options::viewFollowsVMTranslations)
+                && this->followedVM != nullptr
+                && this->followedLastViewMatrix != this->followedVM->getViewMatrix()) {
+
+                // Move camera the difference between followedLastViewMatrix and
+                // followedVM->getViewMatrix() in the screen frame of reference.
+                sm::vec<float> fol_screenframe = (this->sceneview * followedLastViewMatrix.translation()
+                                                  - this->sceneview * followedVM->getViewMatrix().translation()).less_one_dim();
+
+                this->sceneview.pretranslate (fol_screenframe);
+                this->sceneview_tr.pretranslate (fol_screenframe);
+                this->savedSceneview.pretranslate (fol_screenframe);
+                this->savedSceneview_tr.pretranslate (fol_screenframe);
+
+                this->followedLastViewMatrix = this->followedVM->getViewMatrix();
+            }
         }
 
         //! A vector of pointers to all the mplot::VisualModels (HexGridVisual,
         //! ScatterVisual, etc) which are going to be rendered in the scene.
         std::vector<std::unique_ptr<mplot::VisualModel<glver>>> vm;
+
+        //! If the view should follow a model (options viewFollowsVMTranslations and ...Rotations), this is the one.
+        mplot::VisualModel<glver>* followedVM = nullptr;
+
+        //! Holds the viewmatrix of the followedVM the last time we called render
+        sm::mat44<float> followedLastViewMatrix;
 
         // Initialize OpenGL shaders, set some flags (Alpha, Anti-aliasing), read in any external
         // state from json, and set up the coordinate arrows and any VisualTextModels that will be
@@ -970,6 +1031,7 @@ namespace mplot
                           << "Ctrl-u: Reduce zNear cutoff plane\n"
                           << "Ctrl-i: Increase zNear cutoff plane\n"
                           << "Ctrl-j: Toggle bounding boxes\n"
+                          << "Ctrl-Shift-s: Output shaders to stdout\n"
                           << "F1-F10: Select model index (with shift: toggle hide)\n"
                           << "Shift-Left: Decrease opacity of selected model\n"
                           << "Shift-Right: Increase opacity of selected model\n"
@@ -992,14 +1054,33 @@ namespace mplot
                 } // else no-op
             }
 
-            if (_key == key::s && (mods & keymod::control) && action == keyaction::press) {
-                std::string fname (this->title);
-                mplot::tools::stripFileSuffix (fname);
-                fname += ".png";
-                // Make fname 'filename safe'
-                mplot::tools::conditionAsFilename (fname);
-                this->saveImage (fname);
-                std::cout << "Saved image to '" << fname << "'\n";
+            if (_key == key::s && (mods & (keymod::control | keymod::shift)) && action == keyaction::press) {
+
+                if ((mods & (keymod::control | keymod::shift)) == (keymod::control | keymod::shift)) {
+                    // Ctrl-Shift-s gives you the default shaders
+                    std::cout << "The built-in shader programs are:\n";
+                    std::cout << "\nVisual.vert.glsl\n"
+                              << "----------------\n"
+                              << mplot::getDefaultVtxShader(glver) << std::endl;
+                    std::cout << "\nVisual.frag.glsl\n"
+                              << "----------------\n"
+                              << mplot::getDefaultFragShader(glver) << std::endl;
+                    std::cout << "\nVisText.vert.glsl\n"
+                              << "----------------\n"
+                              << mplot::getDefaultTextVtxShader(glver) << std::endl;
+                    std::cout << "\nVisText.frag.glsl\n"
+                              << "----------------\n"
+                              << mplot::getDefaultTextFragShader(glver) << std::endl;
+                } else if (mods & keymod::control) {
+                    // Ctrl-s saves a PNG
+                    std::string fname (this->title);
+                    mplot::tools::stripFileSuffix (fname);
+                    fname += ".png";
+                    // Make fname 'filename safe'
+                    mplot::tools::conditionAsFilename (fname);
+                    this->saveImage (fname);
+                    std::cout << "Saved image to '" << fname << "'\n";
+                }
             }
 
             // Save gltf 3D file

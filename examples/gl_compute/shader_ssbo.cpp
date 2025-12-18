@@ -4,7 +4,7 @@
  */
 
 // You have to include the GL headers manually so that you will be sure you have the
-// right ones. THis is because for OpenGL version 4.3, you would include GL3/gl3.h and
+// right ones. This is because for OpenGL version 4.3, you would include GL3/gl3.h and
 // GL/glext.h whereas if you are targeting OpenGL 3.1 ES, you want to include
 // GLES3/gl3[12].h (and maybe GLES3/gl3ext.h).
 #include <GLES3/gl31.h>
@@ -13,13 +13,15 @@
 #include <mplot/gl/compute_manager.h>
 #include <mplot/gl/util_nomx.h>
 #include <mplot/gl/texture.h>
-#include <mplot/gl/ssbo.h>
+#include <mplot/gl/ssbo_nomx.h>
 #include <mplot/loadpng.h>
 
 namespace my {
 
+    static constexpr int glver = mplot::gl::version_3_1_es;
+
     // Use OpenGL 3.1 ES here
-    struct compute_manager : public mplot::gl::compute_manager<mplot::gl::version_3_1_es>
+    struct compute_manager : public mplot::gl::compute_manager<glver>
     {
         static constexpr int dwidth = 256;
         static constexpr int dheight = 65;
@@ -86,9 +88,12 @@ namespace my {
             sm::vec<unsigned int, 2> _dims = mplot::loadpng ("../examples/gl_compute/bike.png", inputvv);
             if ((_dims - dims) > 0) { throw std::runtime_error ("Loaded image is not expected size"); }
 
+            this->input_ssbo.init (); // could take the image data as arg
+
             // Set that data into the SSBO object (where it is stored in a vec<>)
-            std::copy (inputvv.begin(), inputvv.end(), this->input_ssbo.data.begin());
-            this->input_ssbo.init();
+            sm::vec<float, dsz> data;
+            std::copy (inputvv.begin(), inputvv.end(), data.begin());
+            this->input_ssbo.copy_to_gpu (data);
         }
 
         ~compute_manager()
@@ -119,8 +124,9 @@ namespace my {
             this->compute_program.load_shaders (shaders);
 
             // We'll reuse the vertex/fragment shaders from the shadercompute example
+            std::string defVtxShdr = mplot::getDefaultVtxShader (glver);
             std::vector<mplot::gl::ShaderInfo> vtxshaders = {
-                {GL_VERTEX_SHADER, "../examples/gl_compute/shader_ssbo.vert.glsl", mplot::defaultVtxShader, 0 },
+                {GL_VERTEX_SHADER, "../examples/gl_compute/shader_ssbo.vert.glsl", defVtxShdr.c_str(), 0 },
                 {GL_FRAGMENT_SHADER, "../examples/gl_compute/shader_ssbo.frag.glsl", mplot::defaultFragShader, 0 }
             };
             this->vtxprog = mplot::gl::LoadShaders (vtxshaders);
@@ -130,10 +136,12 @@ namespace my {
         // Override your one time/non-rendering compute function
         void compute() final
         {
-            // To copy updated data:
-            this->input_ssbo.data[0] = std::abs (std::sin (compstep)); // Make a pixel pulse
+            // To copy updated data. Would be nice to give a data subrange to update.
+            sm::vec<float, 2> data_update;
+            data_update[0] = std::abs (std::sin (compstep)); // Make a pixel pulse
+            data_update[1] = std::abs (std::cos (compstep));
             compstep += 0.0001;
-            this->input_ssbo.copy_to_gpu();
+            this->input_ssbo.copy_to_gpu (data_update, 2);
 
             this->measure_compute(); // optional
             this->compute_program.use();
@@ -142,8 +150,14 @@ namespace my {
             // To retreive data from the SSBO:
             // sm::range<float> ssbo_range = this->input_ssbo.get_range();
             // or
-            this->input_ssbo.copy_from_gpu();
-            // and access input_ssbo.data.
+#if 0
+            sm::vec<float, 6> data_rtn;
+            this->input_ssbo.copy_from_gpu (data_rtn, 0);
+            std::cout << "data_rtn[0-5] = "
+                      << data_rtn[0] << ", " << data_rtn[1] << ", "
+                      << data_rtn[2] << ", " << data_rtn[3] << ", "
+                      << data_rtn[4] << ", " << data_rtn[5] << std::endl;
+#endif
         }
 
         // Override the render method to do whatever visualization you want
@@ -194,7 +208,7 @@ namespace my {
         // CPU side input data. This will be SSBO index 1.
         mplot::gl::ssbo<1, float, dsz> input_ssbo;
         // You will need at least one gl::compute_shaderprog
-        mplot::gl::compute_shaderprog<mplot::gl::version_3_1_es> compute_program;
+        mplot::gl::compute_shaderprog<glver> compute_program;
     };
 } // namespace my
 

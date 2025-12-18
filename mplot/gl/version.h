@@ -66,6 +66,21 @@ namespace mplot::gl
         {
             return (((gl_version_number >> 30) & 0x1) > 0x0) ? true : false;
         }
+        // True if this version suports shader storage buffer objects
+        static bool constexpr has_ssbo (const int gl_version_number)
+        {
+            if (mplot::gl::version::gles (gl_version_number) == true) {
+                // OpenGL ES 3.1 and up supports SSBO
+                return (mplot::gl::version::major (gl_version_number) > 3
+                        || (mplot::gl::version::major (gl_version_number) == 3
+                            && mplot::gl::version::minor (gl_version_number)  >= 1));
+            } else {
+                // OpenGL 4.3 and up supports SSBO
+                return (mplot::gl::version::major (gl_version_number) > 4
+                        || (mplot::gl::version::major (gl_version_number) == 4
+                            && mplot::gl::version::minor (gl_version_number)  >= 3));
+            }
+        }
         // Output a string describing the version number
         static inline std::string vstring (const int gl_version_number)
         {

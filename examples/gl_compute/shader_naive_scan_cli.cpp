@@ -17,7 +17,7 @@
 
 #include <mplot/gl/compute_manager_cli.h>
 #include <mplot/gl/texture.h>
-#include <mplot/gl/ssbo.h>
+#include <mplot/gl/ssbo_nomx.h>
 #include <mplot/loadpng.h>
 
 namespace my {
