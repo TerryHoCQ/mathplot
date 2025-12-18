@@ -110,13 +110,13 @@ namespace mplot
 
             for (size_t i = 0; i < position.size(); ++i) {
                 // Get access to the SSBO in VisualResources and add the 3 floats in position[i] at
-                // the location defined by this->instance_offset + i
-                this->insert_instance_data (this->instance_offset + i, position[i]);
+                // the location defined by this->instance_start + i
+                this->insert_instance_data (this->instance_start + i, position[i]);
             }
             this->instance_count = position.size();
 
             for (size_t i = 0; i < colour.size(); ++i) {
-                this->insert_instparam_data (this->instance_offset + i, colour[i], alpha[i], scale[i]);
+                this->insert_instparam_data (this->instance_start + i, colour[i], alpha[i], scale[i]);
             }
             this->instparam_count = colour.size();
 
@@ -161,8 +161,8 @@ namespace mplot
             if (this->flags.test (vm_bools::instanced) && this->init_instance_data) {
                 // Here, we cause the SSBOs to be intialized if they haven't already, and we reserve
                 // some space in the SSBOs for *this model*
-                this->instance_offset = this->init_instance_data (this->parentVis, this->max_instances);
-                if (this->instance_offset == std::numeric_limits<unsigned int>::max()) {
+                this->instance_start = this->init_instance_data (this->parentVis, this->max_instances);
+                if (this->instance_start == std::numeric_limits<unsigned int>::max()) {
                     throw std::runtime_error ("Failed to reserve space in SSBO");
                 }
             }

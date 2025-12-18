@@ -725,11 +725,9 @@ namespace mplot
          * are managed by VisualResources. VisualResources<glver>::max_instances must be larger than this.
          */
         unsigned int max_instances = 16 * 1024;
-        //! The offset in the SSBO for the instances for this VisualModel
-        unsigned int instance_offset = 0;
-        //! Which datum in the instance buffer is the one to be drawn by the first thread?
+        //! The offset into the SSBOs for the instance data for this VisualModel
         unsigned int instance_start = 0;
-        //! If drawing with instancing, how many instances?
+        //! If drawing with instancing, how many instances? <= this->max_instances
         unsigned int instance_count = 0;
         //! If drawing with instancing, how many params will be used (these will be cycled through
         //! per-instance and there may be fewer than instance_count parameters)
