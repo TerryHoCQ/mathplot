@@ -88,8 +88,9 @@ namespace mplot
 
         //! This will control how much GPU RAM is allocated when using instanced rendering
         //! (Hopefully, when I'm finished, the RAM will be allocated only if at least one
-        //! VisualModel is marked 'instanced').
-        static constexpr unsigned int max_instances = 256 * 1024;
+        //! VisualModel is marked 'instanced'). Makes a big difference to speed of operation (unless
+        //! I can send a portion of a buffer to the GPU).
+        static constexpr unsigned int max_instances = 32 * 1024;
         static constexpr unsigned int max_instance_floats = floats_per_instance * max_instances;
         static constexpr unsigned int max_instparam_floats = floats_per_instparam * max_instances;
 
