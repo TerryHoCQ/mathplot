@@ -32,7 +32,7 @@ namespace mplot
     /*!
      * Multiple context safe implementation (mplot::gl::multicontext == 1)
      */
-    template <int glver = mplot::gl::version_4_1, int mx = mplot::gl::multicontext, std::enable_if_t<mx==1, bool> = true >
+    template <int glver = mplot::gl::version_4_1, int mx = mplot::gl::multicontext> requires (mx == 1)
     struct VisualModelImpl : public mplot::VisualModelBase<glver>
     {
         VisualModelImpl() : mplot::VisualModelBase<glver>::VisualModelBase() {}
@@ -44,7 +44,7 @@ namespace mplot
             // Explicitly clear owned VisualTextModels
             this->texts.clear();
             if (this->vbos != nullptr) {
-                GladGLContext* _glfn = this->get_glfn(this->parentVis);
+                GladGLContext* _glfn = this->get_glfn (this->parentVis);
                 _glfn->DeleteBuffers (this->numVBO, this->vbos.get());
                 _glfn->DeleteVertexArrays (1, &this->vao);
             }
@@ -68,6 +68,59 @@ namespace mplot
 
             model->setContext = &mplot::VisualBase<glver>::set_context;
             model->releaseContext = &mplot::VisualBase<glver>::release_context;
+        }
+
+        void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position) final
+        {
+            sm::vvec<std::array<float, 3>> c = { mplot::colour::crimson };
+            sm::vvec<float> a = { 1.0f };
+            sm::vvec<float> s = { 1.0f };
+            this->set_instance_data (position, c, a, s);
+        }
+
+        void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position, const std::array<float, 3>& colour,
+                                const float alpha = 1.0f, const float scale = 1.0f) final
+        {
+            sm::vvec<std::array<float, 3>> c = { colour };
+            sm::vvec<float> a = { alpha };
+            sm::vvec<float> s = { scale };
+            this->set_instance_data (position, c, a, s);
+        }
+
+        //! Set up the instance positions and params (colour, alpha, scale). Add rotation later on.
+        void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position,
+                                const sm::vvec<std::array<float, 3>>& colour,
+                                const sm::vvec<float>& alpha, const sm::vvec<float>& scale) final
+        {
+            if (position.size() < 1) {
+                throw std::runtime_error ("set_instance_data: pass some instance positions in");
+            }
+            if (position.size() > this->max_instances) {
+                throw std::runtime_error ("set_instance_data: Haven't reserved enough space for that");
+            }
+            if (!this->insert_instance_data) {
+                throw std::runtime_error ("set_instance_data: Function insert_instance_data is not bound");
+            }
+            if (!this->insert_instparam_data) {
+                throw std::runtime_error ("set_instance_data: Function insert_instparam_data is not bound");
+            }
+            if (colour.size() != scale.size() || colour.size() != alpha.size()) {
+                throw std::runtime_error ("set_instance_data: params vvecs should all have same size (colour, rotn, scale)");
+            }
+
+            for (size_t i = 0; i < position.size(); ++i) {
+                // Get access to the SSBO in VisualResources and add the 3 floats in position[i] at
+                // the location defined by this->instance_start + i
+                this->insert_instance_data (this->instance_start + i, position[i]);
+            }
+            this->instance_count = position.size();
+
+            for (size_t i = 0; i < colour.size(); ++i) {
+                this->insert_instparam_data (this->instance_start + i, colour[i], alpha[i], scale[i]);
+            }
+            this->instparam_count = colour.size();
+
+            this->instanced_needs_update (this->parentVis);
         }
 
         //! Common code to call after the vertices have been set up. GL has to have been initialised.
@@ -104,6 +157,15 @@ namespace mplot
             // Unbind only the vertex array (not the buffers, that causes GL_INVALID_ENUM errors)
             _glfn->BindVertexArray(0); // carefully unbind and rebind
             mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
+
+            if (this->flags.test (vm_bools::instanced) && this->init_instance_data) {
+                // Here, we cause the SSBOs to be intialized if they haven't already, and we reserve
+                // some space in the SSBOs for *this model*
+                this->instance_start = this->init_instance_data (this->parentVis, this->max_instances);
+                if (this->instance_start == std::numeric_limits<unsigned int>::max()) {
+                    throw std::runtime_error ("Failed to reserve space in SSBO");
+                }
+            }
 
             /*
              * Now do the same for the bounding box
@@ -245,7 +307,19 @@ namespace mplot
                 }
 
                 // Draw the triangles
-                _glfn->DrawElements (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0);
+                GLint loc_is = _glfn->GetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("instance_start"));
+                GLint loc_ic = _glfn->GetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("instance_count"));
+                GLint loc_ipc = _glfn->GetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("instparam_count"));
+                if (this->flags.test (vm_bools::instanced)) {
+                    if (loc_is != -1) { _glfn->Uniform1i (loc_is, this->instance_start); }
+                    if (loc_ic != -1) { _glfn->Uniform1i (loc_ic, this->instance_count); }
+                    if (loc_ipc != -1) { _glfn->Uniform1i (loc_ipc, this->instparam_count); }
+                    _glfn->DrawElementsInstanced (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0, this->instance_count);
+                } else {
+                    if (loc_is != -1) { _glfn->Uniform1i (loc_is, -1); }
+                    if (loc_ic != -1) { _glfn->Uniform1i (loc_ic, -1); }
+                    _glfn->DrawElements (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0);
+                }
 
                 // Unbind the VAO
                 _glfn->BindVertexArray(0);

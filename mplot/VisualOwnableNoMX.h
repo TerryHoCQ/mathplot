@@ -253,6 +253,11 @@ namespace mplot
                 this->userFrame->render();
             }
 
+            if (this->haveInstanced() && this->instancedNeedsUpdate()) {
+                this->copy_instance_data_to_gpu();
+                this->instancedNeedsUpdate (false);
+            }
+
             auto vmi = this->vm.begin();
             while (vmi != this->vm.end()) {
                 if ((*vmi)->twodimensional() == true) {
@@ -343,6 +348,28 @@ namespace mplot
             this->texts.push_back (std::move(tmup));
             this->releaseContext();
             return tm->getTextGeometry();
+        }
+
+        static unsigned int init_instance_data ([[maybe_unused]]mplot::VisualBase<glver>* _v, const unsigned int n_to_reserve)
+        {
+            unsigned int reservation = mplot::VisualResourcesNoMX<glver>::i().init_instance_ssbo (n_to_reserve);
+            return reservation;
+        }
+
+        static void insert_instance_data (const unsigned int instance_idx, const sm::vec<float, 3>& coord)
+        {
+            mplot::VisualResourcesNoMX<glver>::i().insert_instance_data (instance_idx, coord);
+        }
+
+        static void insert_instparam_data (const unsigned int instance_idx,
+                                           const std::array<float, 3>& colour, const float& alpha, const float& scale)
+        {
+            mplot::VisualResourcesNoMX<glver>::i().insert_instparam_data (instance_idx, colour, alpha, scale);
+        }
+
+        static void copy_instance_data_to_gpu()
+        {
+            mplot::VisualResourcesNoMX<glver>::i().copy_instance_ssbo_to_gpu();
         }
 
     protected:

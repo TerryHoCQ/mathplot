@@ -61,7 +61,11 @@ namespace mplot
         //! When true, cursor movements induce translation of scene
         translateMode,
         //! We are scrolling (and so we will need to zero scenetrans_delta after enacting the change)
-        scrolling
+        scrolling,
+        //! True means that at least one of our VisualModels is an instanced rendering model
+        haveInstanced,
+        //! When true, the instanced data SSBO needs to be copied to the GPU
+        instancedNeedsUpdate
     };
 
     //! Boolean options - similar to state, but more likely to be modified by client code
@@ -238,6 +242,7 @@ namespace mplot
             model->get_shaderprogs = &mplot::VisualBase<glver>::get_shaderprogs;
             model->get_gprog = &mplot::VisualBase<glver>::get_gprog;
             model->get_tprog = &mplot::VisualBase<glver>::get_tprog;
+            model->instanced_needs_update = &mplot::VisualBase<glver>::instanced_needs_update;
         }
 
         /*!
@@ -248,6 +253,7 @@ namespace mplot
         unsigned int addVisualModelId (std::unique_ptr<T>& model)
         {
             std::unique_ptr<mplot::VisualModel<glver>> vmp = std::move(model);
+            if (vmp->instanced()) { this->state.set (visual_state::haveInstanced, true); }
             this->vm.push_back (std::move(vmp));
             unsigned int rtn = (this->vm.size()-1);
             return rtn;
@@ -260,6 +266,7 @@ namespace mplot
         T* addVisualModel (std::unique_ptr<T>& model)
         {
             std::unique_ptr<mplot::VisualModel<glver>> vmp = std::move(model);
+            if (vmp->instanced()) { this->state.set (visual_state::haveInstanced, true); }
             this->vm.push_back (std::move(vmp));
             return static_cast<T*>(this->vm.back().get());
         }
@@ -372,6 +379,8 @@ namespace mplot
         static GLuint get_gprog (mplot::VisualBase<glver>* _v) { return _v->shaders.gprog; };
         static GLuint get_tprog (mplot::VisualBase<glver>* _v) { return _v->shaders.tprog; };
 
+        static void instanced_needs_update (mplot::VisualBase<glver>* _v) { _v->instancedNeedsUpdate (true); }
+
         //! The colour of ambient and diffuse light sources
         sm::vec<float, 3> light_colour = { 1.0f, 1.0f, 1.0f };
         //! Strength of the ambient light
@@ -460,6 +469,13 @@ namespace mplot
 
         //! Returns true if we are in the paused state
         bool paused() const { return this->state.test (visual_state::paused); }
+
+        //! True if one of our added VisualModels is an instanced model
+        bool haveInstanced() const { return this->state.test (visual_state::haveInstanced); }
+
+        //! Does our instanced data need to be pushed over to the GPU during render()?
+        bool instancedNeedsUpdate() const { return this->state.test (visual_state::instancedNeedsUpdate); }
+        void instancedNeedsUpdate (const bool val) { this->state.set (visual_state::instancedNeedsUpdate, val); }
 
         /*
          * User-settable projection values for the near clipping distance, the far clipping distance
@@ -1015,6 +1031,7 @@ namespace mplot
                           << "Ctrl-u: Reduce zNear cutoff plane\n"
                           << "Ctrl-i: Increase zNear cutoff plane\n"
                           << "Ctrl-j: Toggle bounding boxes\n"
+                          << "Ctrl-Shift-s: Output shaders to stdout\n"
                           << "F1-F10: Select model index (with shift: toggle hide)\n"
                           << "Shift-Left: Decrease opacity of selected model\n"
                           << "Shift-Right: Increase opacity of selected model\n"
@@ -1037,14 +1054,33 @@ namespace mplot
                 } // else no-op
             }
 
-            if (_key == key::s && (mods & keymod::control) && action == keyaction::press) {
-                std::string fname (this->title);
-                mplot::tools::stripFileSuffix (fname);
-                fname += ".png";
-                // Make fname 'filename safe'
-                mplot::tools::conditionAsFilename (fname);
-                this->saveImage (fname);
-                std::cout << "Saved image to '" << fname << "'\n";
+            if (_key == key::s && (mods & (keymod::control | keymod::shift)) && action == keyaction::press) {
+
+                if ((mods & (keymod::control | keymod::shift)) == (keymod::control | keymod::shift)) {
+                    // Ctrl-Shift-s gives you the default shaders
+                    std::cout << "The built-in shader programs are:\n";
+                    std::cout << "\nVisual.vert.glsl\n"
+                              << "----------------\n"
+                              << mplot::getDefaultVtxShader(glver) << std::endl;
+                    std::cout << "\nVisual.frag.glsl\n"
+                              << "----------------\n"
+                              << mplot::getDefaultFragShader(glver) << std::endl;
+                    std::cout << "\nVisText.vert.glsl\n"
+                              << "----------------\n"
+                              << mplot::getDefaultTextVtxShader(glver) << std::endl;
+                    std::cout << "\nVisText.frag.glsl\n"
+                              << "----------------\n"
+                              << mplot::getDefaultTextFragShader(glver) << std::endl;
+                } else if (mods & keymod::control) {
+                    // Ctrl-s saves a PNG
+                    std::string fname (this->title);
+                    mplot::tools::stripFileSuffix (fname);
+                    fname += ".png";
+                    // Make fname 'filename safe'
+                    mplot::tools::conditionAsFilename (fname);
+                    this->saveImage (fname);
+                    std::cout << "Saved image to '" << fname << "'\n";
+                }
             }
 
             // Save gltf 3D file

@@ -64,7 +64,8 @@ namespace mplot
         postVertexInitRequired,
         twodimensional,         // If true, then this VisualModel should always be viewed in a plane - it's a 2D model
         hide,                   // If true, then calls to VisualModel::render should return
-        wireframe,              // If true, draw in GL's polygon mode
+        wireframe,              // If true, draw in GL's polygon GL_LINES mode (instead of GL_FILL)
+        instanced,              // If true, draw this VisualModel with 'instancing' 1 or more times
         show_bb,                // If true, draw vertices/indices for the bounding box frame
         compute_bb              // For some models, it's not useful to compute the bounding box (e.g. coordinate arrows)
     };
@@ -718,6 +719,21 @@ namespace mplot
         GLuint idx_bb = 0u;
 
         /*!
+         * This is the upper limit for instance_count. We reserve max_isntances of space in the SSBO.
+         *
+         * Max number of instances in a model. Each *model* has to reserve space in the SSBOs which
+         * are managed by VisualResources. VisualResources<glver>::max_instances must be larger than this.
+         */
+        unsigned int max_instances = 16 * 1024;
+        //! The offset into the SSBOs for the instance data for this VisualModel
+        unsigned int instance_start = 0;
+        //! If drawing with instancing, how many instances? <= this->max_instances
+        unsigned int instance_count = 0;
+        //! If drawing with instancing, how many params will be used (these will be cycled through
+        //! per-instance and there may be fewer than instance_count parameters)
+        unsigned int instparam_count = 0;
+
+        /*!
          * A function that will be runtime defined to get_shaderprogs from a pointer to
          * Visual (saving a boilerplate argument and avoiding that killer circular
          * dependency at the cost of one line of boilerplate in client programs)
@@ -733,6 +749,34 @@ namespace mplot
         //! Release OpenGL context. Should call parentVis->releaseContext().
         std::function<void(mplot::VisualBase<glver>*)> releaseContext;
 
+        //! Init the SSBOs for instanced rendering
+        std::function<unsigned int(mplot::VisualBase<glver>*, const unsigned int)> init_instance_data;
+        std::function<void(const unsigned int, const sm::vec<float, 3>&)> insert_instance_data;
+        std::function<void(const unsigned int, const std::array<float, 3>&, const float, const float)> insert_instparam_data;
+        std::function<void(mplot::VisualBase<glver>*)> instanced_needs_update;
+
+        //! Set up the instance positions (with default params for colour, rotn, scale)
+        virtual void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position) = 0;
+
+        //! Set instance positions, with a single colour, alpha and scale to apply to all points
+        virtual void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position,
+                                        const std::array<float, 3>& colour,
+                                        const float alpha,
+                                        const float scale) = 0;
+
+        //! Set instance positions, with an array containing colour, alpha and scale values to apply
+        //! to the instances. The size of colour, alpha and scale must match, but it may be of a
+        //! different size to position.
+        virtual void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position,
+                                        const sm::vvec<std::array<float, 3>>& colour,
+                                        const sm::vvec<float>& alpha,
+                                        const sm::vvec<float>& scale) = 0;
+
+#if 0
+        //! Update the instance positions and params (colour, rotn, scale) in a range
+        virtual void update_instance_data (const sm::vvec<sm::vec<float, 3>>& points, const sm::vvec<float>& data,
+                                           std::size_t i_s, std::size_t i_e) = 0;
+#endif
         //! Setter for the parent pointer, parentVis
         void set_parent (mplot::VisualBase<glver>* _vis)
         {
@@ -769,6 +813,9 @@ namespace mplot
 
         void wireframe (const bool val) { this->flags.set (vm_bools::wireframe, val); }
         bool wireframe() const { return this->flags.test (vm_bools::wireframe); }
+
+        void instanced (const bool val) { this->flags.set (vm_bools::instanced, val); }
+        bool instanced() const { return this->flags.test (vm_bools::instanced); }
 
         //! Getter for vertex positions (for mplot::NormalsVisual)
         std::vector<float> getVertexPositions() { return this->vertexPositions; }
@@ -900,7 +947,10 @@ namespace mplot
         /**
          * START vertex/index computation code
          *
-         * ALL methods below this point are for computing vertices
+         * ALL methods below this point are for computing vertices.
+         *
+         * The metheds compute vertexPositions/Normals/Colors along with indices in a form suitable
+         * for use with GL's DrawElements (or DrawElementsInstanced) drawing call.
          */
 
         /*!
