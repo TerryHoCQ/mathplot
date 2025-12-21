@@ -8,9 +8,9 @@ nav_order: 4
 # Finding your way
 This is an introduction to the mathplot repository; what's in each directory and why they are there.
 
-First off, the library is header-only, which means that you don't need to compile it to include it in your programs. You just `#include` the relevant headers in your own `.cpp` files. All the header files that you need to include are in **mathplot/morph**.
+First off, the library is header-only, which means that you don't need to compile it to include it in your programs. You just `#include` the relevant headers in your own `.cpp` files. All the header files that you need to include are in **mathplot/mplot**.
 
-However, there are many **test** and **example** programs that can be built, and some **standalone_examples** to help you to write CMake configurations that will build your program with mathplot.
+However, there are many **test** and **example** programs that can be built, and some external repositories containing **standalone_examples** to help you to write CMake configurations that will build your program with mathplot.
 
 At the time of writing, if you clone mathplot, change directory into its root and type `ls`, then you'll see something like this:
 
@@ -21,7 +21,7 @@ ci_scripts      include      README.build.mac.md       RRID.md
 CMakeLists.txt  LICENSE.txt  README.build.windows.md   shaders
 docs            maths        README.cmake.md           tests
 doxygen         mplot        README.contributing.md    vcpkg
-]
+](https://github.com/sebsjames/mathplot/blob/main/docs/images/mathplot_root.png?raw=true)
 
 The files in the root directory include some markdown/readme files (*.md), some cmake configuration files (CMakeLists.txt, cmake_cmd_windows.txt, CMakeSettings.seb.json), the license file, a valgrind suppression file for debugging and a number of glsl files that probably belong elsewhere.
 
@@ -39,7 +39,8 @@ The sub-directories are:
 
 ## mplot/
 
-Most of mathplot is in the base namespace `mplot` and their files are at the base of **mplot/**. This is regardless of whether they are code for drawing visualizations or core maths code. Most classes are in a single `.h` header file with the same name as the class, although there are a few exceptions (such as **Random.h**, which contains several classes including ``morph::RandUniform`` and ``morph::RandNormal``).
+Most of mathplot is in the base namespace `mplot` and their files are at the base of **mplot/**.
+Most classes are in a single `.h` header file with the same name as the class.
 
 Files called `XxxVisual.h` are classes that derive from `mplot::VisualModel`. This means that they are models that you can incorporate into your `mplot::Visual` scene. For example, `TriaxesVisual.h` is for drawing a 3D axis into which you can place a 3D scatter or quiver plot. `ColourbarVisual.h` helps you to draw a colour bar legend to display alongside one of your graphs.
 
@@ -49,6 +50,6 @@ Sub-directories in **mplot/** are:
 * **mplot/gl/** Mathplot GL code (`mplot::gl`), including code for running GL compute shaders
 * **mplot/glad/** The GLAD GL headers
 * **mplot/healpix/** Third party healpix code, slightly modified to work within our mathematical framework, for HEALPix visualization
-* **mplot/jcvoronoi/** Third party healpix code, slightly modified to work within our mathematical framework for Voronoi grids
+* **mplot/jcvoronoi/** Third party Voronoi code, modified to work within our mathematical framework for Voronoi grids
 * **mplot/qt/** Some classes to make it possible to incorporate mathplot OpenGL graphics in Qt programs (`mplot::qt`)
 * **mplot/wx/** Classes to incorporate mathplot OpenGL graphics in wxWidgets and wxWindows programs (`mplot::wx`)
