@@ -1,5 +1,5 @@
 ---
-title: morph::VisualModel
+title: mplot::VisualModel
 parent: Visualization API
 grand_parent: Reference
 permalink: /ref/visual/visualmodel
@@ -10,7 +10,7 @@ nav_order: 2
 {: .no_toc}
 
 ```c++
-#include <morph/VisualModel.h>
+#include <mplot/VisualModel.h>
 ```
 **Table of Contents**
 
@@ -19,12 +19,12 @@ nav_order: 2
 
 # Overview
 
-`morph::VisualModel` is the base class for graphical objects in your
-`morph::Visual` scene. This page describes the base class and then
-there is a [section](/morphologica/ref/visualmodels) dedicated to
-documenting the derived classes that morphologica provides.
+`mplot::VisualModel` is the base class for graphical objects in your
+`mplot::Visual` scene. This page describes the base class and then
+there is a [section](/mathplot/ref/visualmodels) dedicated to
+documenting the derived classes that mathplot provides.
 
-![Four VisualModels in a Visual scene. Each model is a geodesic polynomial](https://github.com/ABRG-Models/morphologica/blob/main/docs/images/geodesics.png?raw=true)
+![Four VisualModels in a Visual scene. Each model is a geodesic polynomial](https://github.com/sebsjames/mathplot/blob/main/docs/images/geodesics.png?raw=true)
 
 A `VisualModel` holds all the coordinates that define a set of
 triangles that make up a 'graphical model' (in OpenGL we draw almost
@@ -35,14 +35,14 @@ which bitmap 'texture' images of character glyphs are applied. The image above s
 
 # Creating an instance
 
-Taking a derived class called `GraphVisual` as an example, we create an instance of a `VisualModel`-derived class by using `std::make_unique`. This allows us to pass ownership of the VisualModel's memory into a `morph::Visual`. Our example first needs a `morph::Visual` instance:
+Taking a derived class called `GraphVisual` as an example, we create an instance of a `VisualModel`-derived class by using `std::make_unique`. This allows us to pass ownership of the VisualModel's memory into a `mplot::Visual`. Our example first needs a `mplot::Visual` instance:
 
 ```c++
-morph::Visual v(1024, 768, "Example");
+mplot::Visual v(1024, 768, "Example");
 ```
 The new VisualModel (a GraphVisual) must be created with `std::make_unique`
 ```c++
-auto gv = std::make_unique<morph::GraphVisual<float>> (morph::vec<float>({0,0,0}));
+auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({0,0,0}));
 ```
 Once we have the `unique_ptr`, we have to call the essential bindmodel function to wire up the callbacks:
 ```c++
@@ -63,23 +63,23 @@ gv->finalize();
 ```
 Lastly, we transfer memory ownership to the parent Visual with `Visual::addVisualModel()`.
 ```c++
-morph::GraphVisual<float>* gv_ptr = v.addVisualModel (gv);
+mplot::GraphVisual<float>* gv_ptr = v.addVisualModel (gv);
 ```
 In the example, `Visual::bindmodel` is used to set up these callback functions in VisualModel:
 
 ```c++
-template <int glver = morph::gl::version_4_1>
+template <int glver = mplot::gl::version_4_1>
 class VisualModel
 {
     ...
     //! Get all shader progs
-    std::function<morph::visgl::visual_shaderprogs(morph::Visual<glver>*)> get_shaderprogs;
+    std::function<mplot::visgl::visual_shaderprogs(mplot::Visual<glver>*)> get_shaderprogs;
     //! Get the graphics shader prog id
-    std::function<GLuint(morph::Visual<glver>*)> get_gprog;
+    std::function<GLuint(mplot::Visual<glver>*)> get_gprog;
     //! Get the text shader prog id
-    std::function<GLuint(morph::Visual<glver>*)> get_tprog;
+    std::function<GLuint(mplot::Visual<glver>*)> get_tprog;
     //! Set OpenGL context. Should call parentVis->setContext()
-    std::function<void(morph::Visual<glver>*)> setContext;
+    std::function<void(mplot::Visual<glver>*)> setContext;
     ...
 };
 ```
@@ -140,7 +140,7 @@ void initializeVertices()
     this->vertex_push (v3, this->vertexPositions);
     // Push corresponding colours/normals
     for (size_t i = 0; i < 3; ++i) {
-        this->vertex_push (morph::colour::crimson, this->vertexColors);
+        this->vertex_push (mplot::colour::crimson, this->vertexColors);
         this->vertex_push (face_normal, this->vertexNormals);
     }
     // Push indices
@@ -194,71 +194,71 @@ The VisualModel base class provides `addLabel` methods to add texts to
 your models.
 
 ```c++
-visualModel_ptr->addLabel ("Label text", {0, -1, 0}, morph::TextFeatures(0.06f));
+visualModel_ptr->addLabel ("Label text", {0, -1, 0}, mplot::TextFeatures(0.06f));
 ```
 
-Here, the first argument is simply a `const std::string&` of the text you want to display. The second argument is a coordinate in the model frame which defines where the text should appear and the third argument is a [`TextFeatures`](/morphologica/ref/visual/textfeatures) object that defines font size, face, resolution and colour. Usually, you construct `TextFeatures` in the `addLabel` arguments.
+Here, the first argument is simply a `const std::string&` of the text you want to display. The second argument is a coordinate in the model frame which defines where the text should appear and the third argument is a [`TextFeatures`](/mathplot/ref/visual/textfeatures) object that defines font size, face, resolution and colour. Usually, you construct `TextFeatures` in the `addLabel` arguments.
 
 With the simplest TextFeatures constructor, you set only the font size to 0.06 (`vm_ptr` is a `VisualModel*` pointer):
 ```c++
-vm_ptr->addLabel ("Label text", {0, -1, 0}, morph::TextFeatures(0.06f));
+vm_ptr->addLabel ("Label text", {0, -1, 0}, mplot::TextFeatures(0.06f));
 ```
-You can set the text colour with a second argument in a two-argument constructor. Colours can be chosen from the [`morph::colour`](/morphologica/ref/visual/colour) namespace.
+You can set the text colour with a second argument in a two-argument constructor. Colours can be chosen from the [`mplot::colour`](/mathplot/ref/visual/colour) namespace.
 ```c++
-vm_ptr->addLabel ("Large text", {0, -1, 0}, morph::TextFeatures(0.12f, morph::colour::crimson));
+vm_ptr->addLabel ("Large text", {0, -1, 0}, mplot::TextFeatures(0.12f, mplot::colour::crimson));
 ```
 Another two-argument constructor allows you to set the font size and the resolution:
 ```c++
-vm_ptr->addLabel ("High-res text", {0, -1, 0}, morph::TextFeatures(0.3f, 128));
+vm_ptr->addLabel ("High-res text", {0, -1, 0}, mplot::TextFeatures(0.3f, 128));
 ```
 
 There is a three argument constructor to set font size, font resolution and font colour. The font resolution here is the resolution of the bitmap image for the font glyph. You have to adjust this based on the size of the font; it it is too high or too low, your fonts will not look very good on screen.
 
 ```c++
-vm_ptr->addLabel ("Small text", {0, -1, 0}, morph::TextFeatures(0.03f, 48, morph::colour::red));
+vm_ptr->addLabel ("Small text", {0, -1, 0}, mplot::TextFeatures(0.03f, 48, mplot::colour::red));
 ```
 
-The font face can be chosen like this with the 5 argument constructor. Available font faces are found in the enum class `morph::VisualFont` in [`VisualFace.h`](/morphologica/ref/visualint/visualface#available-font-faces)
+The font face can be chosen like this with the 5 argument constructor. Available font faces are found in the enum class `mplot::VisualFont` in [`VisualFace.h`](/mathplot/ref/visualint/visualface#available-font-faces)
 ```c++
 bool no_centering = false;
-vm_ptr->addLabel ("Small text", {0, -1, 0}, morph::TextFeatures(0.03f, 48, no_centering,
-                                                                morph::colour::blue1,
-                                                                morph::VisualFont::DVSansItalic));
+vm_ptr->addLabel ("Small text", {0, -1, 0}, mplot::TextFeatures(0.03f, 48, no_centering,
+                                                                mplot::colour::blue1,
+                                                                mplot::VisualFont::DVSansItalic));
 ```
 When you add a text to a VisualModel is is created as a `VisualTextModel` and added to a member attribute which is a `vector` of texts. This is a vector of unique pointers, indicating that the `VisualModel` owns the memory associated with the texts.
 
 ```c++
-template <int glver = morph::gl::version_4_1>
+template <int glver = mplot::gl::version_4_1>
 class VisualModel
 {
     ...
     //! A vector of pointers to text models that should be rendered.
-    std::vector<std::unique_ptr<morph::VisualTextModel<glver>>> texts;
+    std::vector<std::unique_ptr<mplot::VisualTextModel<glver>>> texts;
     ...
 };
 ```
-By default, the text will have its vertical axis aligned with the model coordinate frame's 'y' axis and the horizontal axis is aligned with the 'x' axis. It is possible to change this by rotating the text models (see [`morph::GraphVisual::drawAxisLabels`](/morphologica/ref/visualmodels/graphvisual) for example code; the coordinate axis labels in [CoordArrows](/morphologica/ref/visualmodels/coordarrows) also rotate).
+By default, the text will have its vertical axis aligned with the model coordinate frame's 'y' axis and the horizontal axis is aligned with the 'x' axis. It is possible to change this by rotating the text models (see [`mplot::GraphVisual::drawAxisLabels`](/mathplot/ref/visualmodels/graphvisual) for example code; the coordinate axis labels in [CoordArrows](/mathplot/ref/visualmodels/coordarrows) also rotate).
 
 ## Adding text with symbols
 
 You can incorporate a variety of symbols in your text, including Greek
 characters and mathematical symbols. This is achieved with the help of
-[`morph::unicode`](/morphologica/ref/visual/unicode) and the
-[`VisualFont::DejaVu`](/morphologica/ref/visualint/visualface) that
+[`mplot::unicode`](/mathplot/ref/visual/unicode) and the
+[`VisualFont::DejaVu`](/mathplot/ref/visualint/visualface) that
 provides a wide range of non-Latin Glyphs.
 
 ```c++
 std::string spc(", ");
 std::string greek = "Greek ABC: "
-                    + morph::unicode::toUtf8 (morph::unicode::alpha)
-                    + spc + morph::unicode::toUtf8 (morph::unicode::beta)
-                    + spc + morph::unicode::toUtf8 (morph::unicode::gamma);
+                    + mplot::unicode::toUtf8 (mplot::unicode::alpha)
+                    + spc + mplot::unicode::toUtf8 (mplot::unicode::beta)
+                    + spc + mplot::unicode::toUtf8 (mplot::unicode::gamma);
 vm_ptr->addLabel (greek, {0,0,0});
 ```
 
-`morph::unicode::alpha` is a `constexpr char32_t` containing the
+`mplot::unicode::alpha` is a `constexpr char32_t` containing the
 unicode value for the alpha character which is
-0x03b1. `morph::unicode::toUtf8` is a static function that converts
+0x03b1. `mplot::unicode::toUtf8` is a static function that converts
 this 32 bit character code into a sequence of 8 bit wide UTF-8
 codes. These UTF-8 codes can be appended to your `std::string` and
 passed straight into `VisualModel::addLabel`. You can output the UTF-8
@@ -315,11 +315,11 @@ void computeTube (vec<float> start, vec<float> end,
 
 Here we specify start and end coordinates for the tube, along with start and end colours, a tube radius and the number of segments to draw the tube. With segments set to 4, you will get a square section tube.
 
-![Screenshot of rods/tubes](https://github.com/ABRG-Models/morphologica/blob/main/docs/images/rods.png?raw=true)
+![Screenshot of rods/tubes](https://github.com/sebsjames/mathplot/blob/main/docs/images/rods.png?raw=true)
 
-Example code to generate the image above is in [examples/rod.cpp](https://github.com/ABRG-Models/morphologica/blob/main/examples/rod.cpp).
+Example code to generate the image above is in [examples/rod.cpp](https://github.com/sebsjames/mathplot/blob/main/examples/rod.cpp).
 
-Arrows are tube-like ([`VectorVisual`](https://github.com/ABRG-Models/morphologica/blob/main/morph/VectorVisual.h) makes use of this, see [examples/vectorvis.cpp](https://github.com/ABRG-Models/morphologica/blob/main/examples/vectorvis.cpp)):
+Arrows are tube-like ([`VectorVisual`](https://github.com/sebsjames/mathplot/blob/main/mplot/VectorVisual.h) makes use of this, see [examples/vectorvis.cpp](https://github.com/sebsjames/mathplot/blob/main/examples/vectorvis.cpp)):
 ```c++
 void computeArrow (const vec<float>& start, const vec<float>& end,
                    const std::array<float, 3> clr,
@@ -330,7 +330,7 @@ void computeArrow (const vec<float>& start, const vec<float>& end,
 ```
 There is also a flared tube:
 ```c++
-void computeFlaredTube (morph::vec<float> start, morph::vec<float> end,
+void computeFlaredTube (sm::vec<float> start, sm::vec<float> end,
                         std::array<float, 3> colStart, std::array<float, 3> colEnd,
                         float r = 1.0f, int segments = 12, float flare = 0.0f)
 ```
@@ -348,31 +348,31 @@ void computeCone (vec<float> centre, vec<float> tip,
                   float ringoffset, std::array<float, 3> col, float r = 1.0f, int segments = 12)
 ```
 
-![Screenshot of the computeCone example](https://github.com/ABRG-Models/morphologica/blob/main/docs/images/A_simple_cone.png?raw=true)
+![Screenshot of the computeCone example](https://github.com/sebsjames/mathplot/blob/main/docs/images/A_simple_cone.png?raw=true)
 
-Example computeCone code: [examples/cone.cpp](https://github.com/ABRG-Models/morphologica/blob/main/examples/cone.cpp)
+Example computeCone code: [examples/cone.cpp](https://github.com/sebsjames/mathplot/blob/main/examples/cone.cpp)
 
 ## Spheres
 
 There are a couple of different sphere primitives. `computeSphere` draws a fan of triangles at each end, then fills in the space with rings of triangles. The image below shows also `computeSphereGeo` which computes an icosahedral geodesic to pattern the triangles.
 ```c++
 float x = 1.2f;
-this->computeSphere (morph::vec<float>{-x, 0.0f, 0.0f }, morph::colour::royalblue, 1.0f, 12, 12);
+this->computeSphere (sm::vec<float>{-x, 0.0f, 0.0f }, mplot::colour::royalblue, 1.0f, 12, 12);
 // These compute the sphere from a geodesic icosahedron. First with 2 triangulation iterations
-this->computeSphereGeo (morph::vec<float>{ x, 0.0f, 0.0f }, morph::colour::maroon, 1.0f, 2);
-float y = x * std::tan (morph::mathconst<float>::pi_over_3);
+this->computeSphereGeo (sm::vec<float>{ x, 0.0f, 0.0f }, mplot::colour::maroon, 1.0f, 2);
+float y = x * std::tan (sm::mathconst<float>::pi_over_3);
 // This one with 3 iterations (meaning more triangles and a smoother sphere) and compile-time geodesic computation
-this->computeSphereGeoFast (morph::vec<float>{ 0.0f, y, 0.0f }, morph::colour::cyan3, 1.0f, 3);
+this->computeSphereGeoFast (sm::vec<float>{ 0.0f, y, 0.0f }, mplot::colour::cyan3, 1.0f, 3);
 ```
-![Screenshot of spheres](https://github.com/ABRG-Models/morphologica/blob/main/docs/images/Sphere_primitives.png?raw=true)
+![Screenshot of spheres](https://github.com/sebsjames/mathplot/blob/main/docs/images/Sphere_primitives.png?raw=true)
 
-[examples/sphere.cpp](https://github.com/ABRG-Models/morphologica/blob/main/examples/sphere.cpp) generated the image above.
+[examples/sphere.cpp](https://github.com/sebsjames/mathplot/blob/main/examples/sphere.cpp) generated the image above.
 
 ## Rings
 
-`computeRing` draws a ring made of flat quads. Example is [examples/ring.cpp](https://github.com/ABRG-Models/morphologica/blob/main/examples/ring.cpp).
+`computeRing` draws a ring made of flat quads. Example is [examples/ring.cpp](https://github.com/sebsjames/mathplot/blob/main/examples/ring.cpp).
 
-![Screenshot of rings](https://github.com/ABRG-Models/morphologica/blob/main/docs/images/rings.png?raw=true)
+![Screenshot of rings](https://github.com/sebsjames/mathplot/blob/main/docs/images/rings.png?raw=true)
 
 ## Discs
 

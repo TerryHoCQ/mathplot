@@ -1,5 +1,5 @@
 ---
-title: morph::TextGeometry
+title: mplot::TextGeometry
 parent: Visualization API
 grand_parent: Reference
 permalink: /ref/visual/textgeometry
@@ -7,7 +7,7 @@ layout: page
 nav_order: 12
 ---
 ```c++
-#include <morph/TextGeometry.h>
+#include <mplot/TextGeometry.h>
 ```
 
 # How long is that string?
@@ -42,17 +42,17 @@ struct TextGeometry
 };
 ```
 
-An example of its use can be found in [`ConfigVisual.h`](https://github.com/ABRG-Models/morphologica/blob/main/morph/ConfigVisual.h), where text
+An example of its use can be found in [`ConfigVisual.h`](https://github.com/sebsjames/mathplot/blob/main/mplot/ConfigVisual.h), where text
 information is shown line by line:
 
 ```c++
 for (auto key : this->keys) {
-    // For each key obtain the value from a morph::Config object called conf:
+    // For each key obtain the value from a sm::config object called conf:
     float value = conf->get<float>(key, 0.0f);
     // Create the label:
     std::string lbl = key + std::string(": ") + std::to_string(value);
     // Add the label to this VisualModel
-    morph::TextGeometry geom = this->addLabel (lbl, toffset, this->tfeatures);
+    mplot::TextGeometry geom = this->addLabel (lbl, toffset, this->tfeatures);
     // Move toffset in the y direction, to 'print the next line'
     toffset[1] -= line_spacing * geom.height();
 }

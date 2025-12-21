@@ -1,5 +1,5 @@
 ---
-title: morph::colour
+title: mplot::colour
 parent: Visualization API
 grand_parent: Reference
 permalink: /ref/visual/colour
@@ -7,13 +7,13 @@ layout: page
 nav_order: 7
 ---
 ```c++
-#include <morph/colour.h>
+#include <mplot/colour.h>
 ```
 # Colour naming
 
-`morph::colour` is a namespace full of (static constexpr) named colour
+`mplot::colour` is a namespace full of (static constexpr) named colour
 definitions. Colours are specified as 3 element arrays representing
-red, green and blue channels. morph::colour provides a list of
+red, green and blue channels. mplot::colour provides a list of
 pre-defined colours with a naming scheme that follows this web page:
 
 [http://www.cloford.com/resources/colours/500col.htm](http://www.cloford.com/resources/colours/500col.htm)
@@ -25,21 +25,21 @@ primitive) you can pass the named colour like this (using
 
 ```c++
 // Compute vertices for a mint green sphere
-this->computeSphere (sphere_location, morph::colour::mint);
+this->computeSphere (sphere_location, mplot::colour::mint);
 ```
 
-I use the webpage to find a colour I want to use, and the names can be used directly as above. The entry corresponding to `morph::colour::mint` is:
+I use the webpage to find a colour I want to use, and the names can be used directly as above. The entry corresponding to `mplot::colour::mint` is:
 
-![Image of the entry for the colour mint on the cloford.com colour web page](https://github.com/ABRG-Models/morphologica/blob/main/docs/images/mint.png?raw=true)
+![Image of the entry for the colour mint on the cloford.com colour web page](https://github.com/sebsjames/mathplot/blob/main/docs/images/mint.png?raw=true)
 
 Here's a selection of colours in a constexpr array defining a sequence for use in 6 graphs:
 ```c++
 constexpr std::array<std::array<float, 3>, 6> clrs = {
-    morph::colour::crimson,
-    morph::colour::hotpink1,
-    morph::colour::maroon2,
-    morph::colour::orchid3,
-    morph::colour::darkorchid3,
-    morph::colour::purple2
+    mplot::colour::crimson,
+    mplot::colour::hotpink1,
+    mplot::colour::maroon2,
+    mplot::colour::orchid3,
+    mplot::colour::darkorchid3,
+    mplot::colour::purple2
 };
 ```
