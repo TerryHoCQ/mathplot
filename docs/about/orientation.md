@@ -23,19 +23,23 @@ docs            maths        README.cmake.md           tests
 doxygen         mplot        README.contributing.md    vcpkg
 ](https://github.com/sebsjames/mathplot/blob/main/docs/images/mathplot_root.png?raw=true)
 
-The files in the root directory include some markdown/readme files (*.md), some cmake configuration files (CMakeLists.txt, cmake_cmd_windows.txt, CMakeSettings.seb.json), the license file, a valgrind suppression file for debugging and a number of glsl files that probably belong elsewhere.
+The files in the root directory include some markdown/readme files (*.md), the cmake configuration file (CMakeLists.txt) and the license file.
 
 The sub-directories are:
 
 * **build/** The build directory. This won't exist if you just cloned, but you'll probably create it
 * **buildtools/** Holds a tool called incbin which can be used when working on MS Windows
+* **ci_scripts/** Scripts to perform continuous integration actions on Github
 * **docs/** This documentation/reference website is in here and is automatically published on github pages
+* **doxygen/** Some doxygen documentation config
 * **examples/** All the example programs that demonstrate the use of the headers in `mplot/`
 * **fonts/** Holds a copy of the dejavu and ttf-bitstream-vera font files that mathplot builds into your binaries
 * **include/** Any third party header code lives in here
 * **maths/** This is a git-submodule. You should have recursively cloned, in which case it will contain [Seb's maths](https://github.com/sebsjames/maths)
 * **mplot/** All the library headers are in here
+* **shaders/** Text versions of the shaders for shader development
 * **tests/** This contains test programs that can be run with `ctest` or `make test`
+* **vcpkg/** Files to aid packaging of mathplot as a vcpkg
 
 ## mplot/
 
