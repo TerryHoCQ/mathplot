@@ -12,7 +12,7 @@ mathplot, a library of header-only C++ code for data visualization  ([source cod
 
 ## Reference
 
-Jump over to the [**mathplot reference section**](/ref)
+Jump over to the [**mathplot reference section**](/mathplot/ref)
 
 ## Gallery
 
