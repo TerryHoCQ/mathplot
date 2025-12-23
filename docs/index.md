@@ -10,17 +10,15 @@ nav_order: 1
 This is a documentation and reference website for
 mathplot, a library of header-only C++ code for data visualization  ([source code on Github](https://github.com/sebsjames/mathplot)).
 
-You'll find tutorial content and class reference material for the library on these pages.
+## Reference
 
-## Quick link to Reference
+Jump over to the [**mathplot reference section**](/ref)
 
-* [Visualization reference](/mathplot/ref/visual)
+## Gallery
 
-## Example screenshots
+These are screenshots from the many [mathplot examples](https://github.com/sebsjames/mathplot/tree/main/examples)
 
-These are screenshots from the many [mathplot examples]
-
-| ![graph_logist2](/examples/screenshots/graph_logist2.png?raw=true) graph_logist2|  ![CurvyTelly](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/CurvyTelly.png?raw=true) CurvyTelly|  ![Linregr](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/Linregr.png?raw=true) Linregr|
+| ![graph_logist2](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/graph_logist2.png?raw=true) graph_logist2|  ![CurvyTelly](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/CurvyTelly.png?raw=true) CurvyTelly|  ![Linregr](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/Linregr.png?raw=true) Linregr|
 | ![colourmaps_cet](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/colourmaps_cet.png?raw=true) colourmaps_cet|  ![vvec_convolve](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/vvec_convolve.png?raw=true) vvec_convolve|  ![Voronoi_Fixed_XZ](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/Voronoi_Fixed_XZ.png?raw=true) Voronoi_Fixed_XZ|
 | ![graph6](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/graph6.png?raw=true) graph6|  ![Hello_Version](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/Hello_Version.png?raw=true) Hello_Version|  ![CurvyTelly_StripeyPipe](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/CurvyTelly_StripeyPipe.png?raw=true) CurvyTelly_StripeyPipe|
 | ![Colourmaps_Other](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/Colourmaps_Other.png?raw=true) Colourmaps_Other|  ![rod](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/rod.png?raw=true) rod|  ![Ring](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/Ring.png?raw=true) Ring|
