@@ -14,3 +14,5 @@ if(NOT WIN32)
     set_property(TARGET process_colourtables PROPERTY CXX_STANDARD 20)
   endif()
 endif()
+
+add_executable(screenshots_to_markdown screenshots_to_markdown.cpp)
