@@ -13,7 +13,7 @@ mathplot provides **data visualization** for simulations of dynamical systems, a
 It helps with:
 
 * **OpenGL visualizations of your program while it runs**. A modern OpenGL visualization
-  scheme called **[mplot::Visual](/mathplot/visual/)**
+  scheme called **[mplot::Visual](/mathplot/ref/visual/)**
   provides the ability to visualise 2D and 3D graphs
   of surfaces, lines, bars, scatter plots and quiver plots with minimal
   processing overhead.
