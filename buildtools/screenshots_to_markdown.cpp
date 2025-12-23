@@ -5,25 +5,44 @@
 int main (int argc, char** argv)
 {
     if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " path/to/screenshots\n";
+        std::cerr << "Usage: " << argv[0] << " path/to/examples\n";
         return -1;
     }
 
     std::string path (argv[1]);
 
-    std::vector<std::string> pngs;
-    mplot::tools::readDirectoryTree (pngs, path);
+    std::vector<std::string> cpps;
+    mplot::tools::readDirectoryTree (cpps, path);
 
     int count = 0;
-    for (auto& png : pngs) {
-        if (count % 3 == 0) { std::cout << "\n|"; }
+    for (auto& cpp : cpps) {
 
-// Each entry: ![Simulated annealing](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/Anneal_ASA.png?raw=true)  Simulated annealing and hexgrids |
-        mplot::tools::stripUnixPath (png) ;
-        std::string base = png;
-        mplot::tools::stripFileSuffix (base);
-        std::cout << " ![" << base << "](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/" << png << "?raw=true) " << base << "| ";
-        ++count;
+        if (cpp.find (".cpp") == std::string::npos) { continue; }
+
+        std::string basepath (cpp);
+        mplot::tools::stripUnixFile (basepath);
+
+        basepath += "/screenshots/";
+
+        std::string basename = cpp;
+        mplot::tools::stripUnixPath (basename);
+        mplot::tools::stripFileSuffix (basename);
+
+        std::string basecpp = cpp;
+        mplot::tools::stripUnixPath (basecpp);
+
+        std::string png = basepath + basename + ".png";
+
+        if (mplot::tools::fileExists (png)) {
+            if (count % 3 == 0) { std::cout << "\n|"; }
+            std::cout << " ![" << basename
+                      << "](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/"
+                      << basename << ".png?raw=true) [" << basename
+                      << "](https://github.com/sebsjames/mathplot/blob/main/examples/" << basecpp << ")| ";
+            ++count;
+        } else {
+            std::cerr << "No PNG file for " << cpp << std::endl;
+        }
     }
     std::cout << std::endl;
 
