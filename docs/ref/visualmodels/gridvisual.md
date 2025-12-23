@@ -1,5 +1,5 @@
 ---
-title: morph::GridVisual
+title: mplot::GridVisual
 parent: VisualModel classes
 grand_parent: Reference
 permalink: /ref/visualmodels/gridvisual
@@ -7,9 +7,9 @@ layout: page
 nav_order: 12
 ---
 ```c++
-#include <morph/GridVisual.h>
+#include <mplot/GridVisual.h>
 ```
 
-# Visualizing a `morph::Grid`
+# Visualizing an `sm::grid`
 
-`morph::GridVisual` is a class that draws a grid of rectangular elements.
+`mplot::GridVisual` is a class that draws a grid of rectangular elements. It is related to the class [`sm::grid` from the maths library](https://sebsjames.github.io/maths/ref/grid/).

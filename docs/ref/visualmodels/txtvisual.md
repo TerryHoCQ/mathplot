@@ -1,5 +1,5 @@
 ---
-title: morph::TxtVisual
+title: mplot::TxtVisual
 parent: VisualModel classes
 grand_parent: Reference
 permalink: /ref/visualmodels/txtvisual
@@ -7,9 +7,9 @@ layout: page
 nav_order: 18
 ---
 ```c++
-#include <morph/TxtVisual.h>
+#include <mplot/TxtVisual.h>
 ```
 
 # A `VisualModel` for text
 
-`morph::TxtVisual` is a class for displaying only text.
+`mplot::TxtVisual` is a class for displaying only text.

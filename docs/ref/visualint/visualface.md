@@ -7,12 +7,12 @@ layout: page
 nav_order: 4
 ---
 ```c++
-#include <morph/VisualFace.h>
+#include <mplot/VisualFace.h>
 ```
-# Font faces in morphologica
+# Font faces in mathplot
 
-`morph::visgl::VisualFace` contains code that makes TrueType fonts
-available for use in morphologica as OpenGL textures (hence the
+`mplot::visgl::VisualFace` contains code that makes TrueType fonts
+available for use in mathplot as OpenGL textures (hence the
 additional `visgl` namespace).
 
 It contains the following data member attributes:
@@ -21,17 +21,17 @@ It contains the following data member attributes:
 //! The FT_Face that we're managingb
 FT_Face face;
 //! The OpenGL character info stuff
-std::map<char32_t, morph::visgl::CharInfo> glchars;
+std::map<char32_t, mplot::visgl::CharInfo> glchars;
 ```
 
 It holds a Freetype `face` which specifies the font family and it
 populates `glchars` which maps a char, specified in unicode format
-(for which the `char32_t` is required) to a `morph::visgl::CharInfo`
+(for which the `char32_t` is required) to a `mplot::visgl::CharInfo`
 object, which holds information about that specific glyph (a textureID
 which maps to a bitmap of the character glyph and some dimensional
 information; 'size', 'bearing' and 'advance').
 
-VisualFace is constructed with a passed in `morph::VisualFont` which
+VisualFace is constructed with a passed in `mplot::VisualFont` which
 specifies a supported font such as `VisualFont::DVSans` or
 `VisualFont::VeraItalic` along with a texture resolution and a
 reference to the Freetype library instance.
@@ -48,7 +48,7 @@ The available fonts are specified in the enum class `VisualFont` (also
 currently in VisualFace.h):
 
 ```c++
-//! The fonts supported (i.e. compiled in) to morph::Visual
+//! The fonts supported (i.e. compiled in) to mplot::Visual
 enum class VisualFont {
     DVSans,             // fonts/dejavu/DejaVuSans.ttf
     DVSansItalic,       // fonts/dejavu/DejaVuSans-Oblique.ttf
@@ -67,8 +67,8 @@ enum class VisualFont {
 };
 ```
 
-These fonts are compiled in to each morphologica binary. This makes
-morphologica programs more portable, because it is not necessary for
+These fonts are compiled in to each mathplot binary. This makes
+mathplot programs more portable, because it is not necessary for
 the program to locate a TrueType font at runtime. Instead, the program
 *writes out* the TrueType font into a temporary directory, then
 directs FreeType to use the temporary font file.
@@ -77,5 +77,5 @@ The most useful fonts are the `DVSans` family, as these provide many
 unicode characters, including the Greek alphabet.
 
 Although `VisualFace` is not part of the user-facing API, the possible
-values of `VisualFont` are used in `morph::TextFeatures` allowing you
+values of `VisualFont` are used in `mplot::TextFeatures` allowing you
 to select a font family for your text labels.

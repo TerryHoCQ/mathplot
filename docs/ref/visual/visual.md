@@ -508,7 +508,7 @@ If you need to work with libraries that expect GL functions to be aliased in the
 
 You can create more than one `mplot::Visual` in your program. Each `Visual` will be related to a separate OpenGL context. mathplot will handle the switching of the context automatically (by calling `Visual::setContext()` as needed, for example if you call `Visual::render()`).
 
-![Screenshot of two computer windows each backed by a mplot::Visual](https://github.com/sebsjames/mathplot/blob/main/docs/images/morph_two_visuals.png?raw=true)
+![Screenshot of two computer windows each backed by a mplot::Visual](https://github.com/sebsjames/mathplot/blob/main/docs/images/mplot_two_visuals.png?raw=true)
 
 *This is the [twowindows.cpp](https://github.com/sebsjames/mathplot/blob/main/examples/twowindows.cpp) example program, which displays two windows with two `mplot::Visual` instances. The `GraphVisual` on window 2 shows what the preceding code example would generate. Window 1 shows another kind of `mplot::VisualModel` (a `QuiverVisual`)*
 

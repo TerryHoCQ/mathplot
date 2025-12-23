@@ -1,5 +1,5 @@
 ---
-title: morph::VisualOwnable
+title: mplot::VisualOwnable
 parent: Internal classes
 grand_parent: Reference
 permalink: /ref/visualint/visualownable
@@ -11,8 +11,8 @@ nav_order: 9
 functionality that requires OpenGL function calls, but without adding
 any windowing system specific functionality.
 
-This class is a morphologica-internal class and there is typically no
-access of its methods in morphologica client code.
+This class is a mathplot-internal class and there is typically no
+access of its methods in mathplot client code.
 
-However, if you want to incorporate morphologica graphics into another
-windowing system, this class provides the drawing functionality. For examples, see [morph/qt/viswidget.h](https://github.com/ABRG-Models/morphologica/blob/main/morph/qt/viswidget.h) and [morph/qt/viswidget_mx.h](https://github.com/ABRG-Models/morphologica/blob/main/morph/qt/viswidget_mx.h) for Qt and [morph/wx/viswx.h](https://github.com/ABRG-Models/morphologica/blob/main/morph/wx/viswx.h) for wxWidgets.
+However, if you want to incorporate mathplot graphics into another
+windowing system, this class provides the drawing functionality. For examples, see [mplot/qt/viswidget.h](https://github.com/sebsjames/mathplot/blob/main/mplot/qt/viswidget.h) and [mplot/qt/viswidget_mx.h](https://github.com/sebsjames/mathplot/blob/main/mplot/qt/viswidget_mx.h) for Qt and [mplot/wx/viswx.h](https://github.com/sebsjames/mathplot/blob/main/mplot/wx/viswx.h) for wxWidgets.

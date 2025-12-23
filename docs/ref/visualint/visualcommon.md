@@ -7,9 +7,9 @@ layout: page
 nav_order: 3
 ---
 ```c++
-#include <morph/VisualCommon.h>
+#include <mplot/VisualCommon.h>
 ```
-This header contains a couple of structs used across the `Visual` and `VisualModel` classes. These are enclosed within a `morph::visgl` namespace to indicate that they are related to OpenGL graphics and related to `morph::Visual`.
+This header contains a couple of structs used across the `Visual` and `VisualModel` classes. These are enclosed within a `mplot::visgl` namespace to indicate that they are related to OpenGL graphics and related to `mplot::Visual`.
 
 ## Shader program struct: `visgl::visual_shaderprogs`
 
@@ -24,11 +24,11 @@ struct visual_shaderprogs
 ```
 
 This is a tiny struct that contains the 32 bit unsigned integers that are used
-in OpenGL to identify your shader programs. Currently, `morph::Visual`
+in OpenGL to identify your shader programs. Currently, `mplot::Visual`
 needs to retain two shader programs; one for shading your
 `VisualModels` and one for shading your text.
 
-`morph::Visual` has a member of type `visual_shaderprogs` and this
+`mplot::Visual` has a member of type `visual_shaderprogs` and this
 must be made available to each `VisualModel` before it can execute its
 `render()` method.
 
@@ -44,15 +44,15 @@ enum class graphics_shader_type
 };
 ```
 
-An enumerated class to refer to different shader types. This is actually used only in `morph::Visual` to distinguish between orthographic/projection shaders (which can use a common shader) and cylindrical or other shaders, which likely require a different GLSL shader program.
+An enumerated class to refer to different shader types. This is actually used only in `mplot::Visual` to distinguish between orthographic/projection shaders (which can use a common shader) and cylindrical or other shaders, which likely require a different GLSL shader program.
 
 ## Enum: `visgl::AttribLocn`
 ```c++
 //! The locations for the position, normal and colour vertex attributes in the
-//! morph::Visual GLSL programs
+//! mplot::Visual GLSL programs
 enum AttribLocn { posnLoc = 0, normLoc = 1, colLoc = 2, textureLoc = 3 };
 ```
-An enumerated type used in the set up of OpenGL vertex buffer objects. Used in `morph::VisualTextModel` and `morph::VisualModel`.
+An enumerated type used in the set up of OpenGL vertex buffer objects. Used in `mplot::VisualTextModel` and `mplot::VisualModel`.
 
 ## Glyph information struct: `visgl::CharInfo`
 
@@ -62,11 +62,11 @@ struct CharInfo
     //! ID handle of the glyph texture
     unsigned int textureID;
     //! Size of glyph
-    morph::vec<int,2>  size;
+    sm::vec<int,2>  size;
     //! Offset from baseline to left/top of glyph
-    morph::vec<int,2>  bearing;
+    sm::vec<int,2>  bearing;
     //! Offset to advance to next glyph
     unsigned int advance;
 };
 ```
-A struct that contains font glyph properties which are loaded with the Freetype library (in `morph::VisualFace`). The properties are then accessed when text is to be rendered in `morph::VisualTextModel`.
+A struct that contains font glyph properties which are loaded with the Freetype library (in `mplot::VisualFace`). The properties are then accessed when text is to be rendered in `mplot::VisualTextModel`.

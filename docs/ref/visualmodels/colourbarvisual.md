@@ -1,5 +1,5 @@
 ---
-title: morph::ColourBarVisual
+title: mplot::ColourBarVisual
 parent: VisualModel classes
 grand_parent: Reference
 permalink: /ref/visualmodels/colourbarvisual
@@ -7,9 +7,9 @@ layout: page
 nav_order: 12
 ---
 ```c++
-#include <morph/ColourBarVisual.h>
+#include <mplot/ColourBarVisual.h>
 ```
 
 # Colour bars
 
-`morph::ColourBarVisual` is a class that draws scale bars, to indicate the values of colours in a visualization.
+`mplot::ColourBarVisual` is a class that draws scale bars, to indicate the values of colours in a visualization.
