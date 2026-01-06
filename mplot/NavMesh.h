@@ -353,7 +353,7 @@ namespace mplot
             if (isect_p[0] == fmax) {
                 // Found no triangle intersection; check vertices, in case vdir points perfectly at a vertex
                 for (uint32_t ti = 0; ti < this->vertex.size(); ++ti) {
-                    sm::vec<float> vertex_n = find_vertex_normal (ti); // also loops
+                    sm::vec<float> vertex_n = this->find_vertex_normal (ti); // also loops
                     vertex_n.renormalize();
                     vstart = coord_mf + (vertex_n / 2.0f);
                     if (sm::geometry::ray_point_intersection (this->vertex[ti], vstart, -vertex_n)) {
@@ -361,7 +361,7 @@ namespace mplot
                         if (d < isect_d && d < vdir.sos()) {
                             std::cout << "Register vertex triangle_crossing\n";
                             isect_p = this->vertex[ti];
-                            auto [_ti, _tn] = first_triangle_containing (ti);
+                            auto [_ti, _tn] = this->first_triangle_containing (ti);
                             isect_ti = _ti;
                             isect_tn = _tn;
                             isect_d = d;
@@ -786,6 +786,62 @@ namespace mplot
 
         /*!
          * Find the model location, starting from the location of a camera specified in
+         * camspace. Cast a ray in the direction \a vdir, starting from the camera location in the
+         * model frame \a camloc_mf, and figure out which triangle in the navmesh the ray passes
+         * through.
+         *
+         * \param model_to_scene The model to scene transformation for the parent of the navmesh
+         *
+         * \param camloc_mf The camera location in the model frame. This gives us the start location
+         * for the ray.
+         *
+         * \param vdir The direction of the ray.
+         *
+         * \param search_dist_mult a multiplier on the search distance. The length of vdir in this
+         * function should cross the landscape model. By default it's the vector from the camera
+         * location in the model frame of reference to the middle of the bounding box. If the vector
+         * is too long when finding the surface of a convex hull, such as a model of a rock, it is
+         * possible to mis-identify the back side of the model. However, for finding a location on a
+         * large, flat, one-sided landscape, we want to make vdir long. search_dist_mult is applied
+         * to vdir.
+         *
+         * \return tuple containing: the hit point in scene coordinates; the triangle normal of the
+         * triangle we hit; and the indices of the triangle we hit.
+         */
+        std::tuple<sm::vec<float>, sm::vec<float>, std::array<uint32_t, 4>>
+        find_triangle_hit (const sm::mat44<float>& model_to_scene,
+                           const sm::vec<float>& camloc_mf, const sm::vec<float>& vdir)
+        {
+            this->ti0 = {};
+            this->tn0 = {};
+            sm::vec<float> hit = {};
+            std::tie (hit, this->ti0, this->tn0) = this->find_triangle_crossing (camloc_mf, vdir);
+
+            if (this->ti0[0] == std::numeric_limits<uint32_t>::max()) { std::cout << __func__ << ": No hit\n"; }
+
+            sm::vec<float> hp_scene = (model_to_scene * hit).less_one_dim();
+
+            constexpr bool debug = false;
+            if constexpr (debug) {
+                std::cout << "found hit at " << hit << " (model); " << hp_scene << " (scene) in direction " << vdir << "\n";
+                // Check we'll get a hit when we compute_mesh_movement:
+                sm::vec<sm::vec<float>, 3> tv_mf = this->triangle_vertices (this->ti0);
+                std::cout << "tn0: " << this->tn0 << ", length " << this->tn0.length() << std::endl;
+                std::cout << "TEST ray_tri_intersection (hit,-tn0): " << (hit + (this->tn0 / 2.0f)) << "," << -this->tn0 << std::endl;
+                auto [isect, hov_mf] = sm::geometry::ray_tri_intersection<float> (tv_mf[0], tv_mf[1], tv_mf[2], hit + (this->tn0 / 2.0f), -this->tn0);
+                if (isect) {
+                    std::cout << "ray_tri_intersection confirms we would hit at " << hov_mf << "\n";
+                } else {
+                    std::cout << "ray_tri_intersection DOES NOT get a hit\n";
+                    //throw std::runtime_error ("ray_tri_intersection DOES NOT get a hit!");
+                }
+            }
+
+            return { hp_scene, this->tn0, this->ti0 };
+        }
+
+        /*!
+         * Find the model location, starting from the location of a camera specified in
          * camspace. Cast a ray towards the centroid of this navmesh and figure out which triangle
          * in the navmesh the ray passes through.
          *
@@ -812,34 +868,33 @@ namespace mplot
             sm::mat44<float> scene_to_model = model_to_scene.inverse();
             // use camera location in gltf to start from, then find model surface.
             sm::vec<float> camloc_mf = (scene_to_model * camspace * sm::vec<float>{}).less_one_dim();
-            this->ti0 = {};
-            this->tn0 = {};
-            sm::vec<float> hit = {};
             sm::vec<float> vdir = this->bb.mid() - camloc_mf;
             vdir *= search_dist_mult;
-            std::tie (hit, this->ti0, this->tn0) = this->find_triangle_crossing (camloc_mf, vdir);
 
-            if (this->ti0[0] == std::numeric_limits<uint32_t>::max()) { std::cout << __func__ << ": No hit\n"; }
+            return this->find_triangle_hit (model_to_scene, camloc_mf, vdir);
+        }
 
-            sm::vec<float> hp_scene = (model_to_scene * hit).less_one_dim();
+        /*!
+         * Position the camera hoverheight above the location hp_scene, with its forward direction
+         * _z and its 'x' axis in direction _x.
+         */
+        sm::mat44<float> position_camera (const sm::vec<float>& hp_scene, const sm::mat44<float>& model_to_scene,
+                                          const sm::vec<float>& _x, const sm::vec<float>& _z,
+                                          const float hoverheight)
+        {
+            // I think this positions correctly now (which is all it has to do). It ignores scaling
+            // in model_to_scene. Can be reduced to use fewer mat44s.
+            sm::mat44<float> cam_mv_y;
+            cam_mv_y.translate (sm::vec<float>{0, hoverheight, 0});
+            // The basis _x, tn0, _z, where these are vectors in the model frame that define a camera frame
+            sm::mat44<float> cam_to_model_rotn = sm::mat44<float>::frombasis (_x, this->tn0, _z);
+            // Get the rotation from scene frame to model
+            sm::mat44<float> m_to_sc_rotn = model_to_scene.rotation_mat44();
+            sm::mat44<float> hp_m;
+            hp_m.translate (hp_scene);
+            sm::mat44<float> coord_rotn = hp_m * m_to_sc_rotn * cam_to_model_rotn * cam_mv_y;
 
-            constexpr bool debug = true;
-            if constexpr (debug) {
-                std::cout << "found hit at " << hit << " (model); " << hp_scene << " (scene) in direction " << vdir << "\n";
-                // Check we'll get a hit when we compute_mesh_movement:
-                sm::vec<sm::vec<float>, 3> tv_mf = this->triangle_vertices (this->ti0);
-                std::cout << "tn0: " << this->tn0 << ", length " << this->tn0.length() << std::endl;
-                std::cout << "TEST ray_tri_intersection (hit,-tn0): " << (hit + (this->tn0 / 2.0f)) << "," << -this->tn0 << std::endl;
-                auto [isect, hov_mf] = sm::geometry::ray_tri_intersection<float> (tv_mf[0], tv_mf[1], tv_mf[2], hit + (this->tn0 / 2.0f), -this->tn0);
-                if (isect) {
-                    std::cout << "ray_tri_intersection confirms we would hit at " << hov_mf << "\n";
-                } else {
-                    std::cout << "ray_tri_intersection DOES NOT get a hit\n";
-                    //throw std::runtime_error ("ray_tri_intersection DOES NOT get a hit!");
-                }
-            }
-
-            return { hp_scene, this->tn0, this->ti0 };
+            return coord_rotn;
         }
 
         /*!
@@ -868,19 +923,29 @@ namespace mplot
             _x.renormalize();
             sm::vec<float> _z = _x.cross (this->tn0);
 
-            // I think this positions correctly now (which is all it has to do). It ignores scaling
-            // in model_to_scene. Can be reduced to use fewer mat44s.
-            sm::mat44<float> cam_mv_y;
-            cam_mv_y.translate (sm::vec<float>{0, hoverheight, 0});
-            // The basis _x, tn0, _z, where these are vectors in the model frame that define a camera frame
-            sm::mat44<float> cam_to_model_rotn = sm::mat44<float>::frombasis (_x, this->tn0, _z);
-            // Get the rotation from scene frame to model
-            sm::mat44<float> m_to_sc_rotn = model_to_scene.rotation_mat44();
-            sm::mat44<float> hp_m;
-            hp_m.translate (hp_scene);
-            sm::mat44<float> coord_rotn = hp_m * m_to_sc_rotn * cam_to_model_rotn * cam_mv_y;
+            return this->position_camera (hp_scene, model_to_scene, _x, _z, hoverheight);
+        }
 
-            return coord_rotn;
+        /*!
+         * A version of position camera that aligns the camera direction (i.e. where it is looking - its 'forwards')
+         * as closely as possible with the passed-in vector
+         */
+        sm::mat44<float> position_camera (const sm::vec<float>& hp_scene, const sm::mat44<float>& model_to_scene,
+                                          const float hoverheight, const sm::vec<float>& fwds)
+        {
+            // Let's 'draw' the camera towards the model and then arrange its normal upwards wrt to the normal of the model.
+            if (this->tn0[0] == std::numeric_limits<float>::max()) {
+                std::cout << __func__ << ": No hit/triangle normal\n";
+                return sm::mat44<float>{};
+            }
+
+            // Project fwds onto the plane tn0
+            sm::vec<float> _z = sm::geometry::vector_plane_projection (tn0, fwds);
+            _z.renormalize();
+            sm::vec<float> _x = -_z.cross (this->tn0);
+            _x.renormalize();
+
+            return this->position_camera (hp_scene, model_to_scene, _x, _z, hoverheight);
         }
 
         /*!
