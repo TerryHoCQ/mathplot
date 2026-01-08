@@ -65,6 +65,13 @@ if(ARMADILLO_FOUND)
     target_link_libraries(fps OpenGL::GL glfw Freetype::Freetype)
   endif()
 
+  add_executable(fps_with_profiler fps_with_profiler.cpp)
+  if(OpenMP_CXX_FOUND)
+    target_link_libraries(fps_with_profiler OpenMP::OpenMP_CXX OpenGL::GL glfw Freetype::Freetype)
+  else()
+    target_link_libraries(fps_with_profiler OpenGL::GL glfw Freetype::Freetype)
+  endif()
+
   add_executable(cartgrid cartgrid.cpp)
   target_link_libraries(cartgrid OpenGL::GL glfw Freetype::Freetype)
 
