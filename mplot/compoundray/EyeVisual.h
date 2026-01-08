@@ -372,7 +372,7 @@ namespace mplot::compoundray
                         if (sph_coord[0][0] != std::numeric_limits<float>::max()) {
                             // sph_coord[0] is the coordinate for the ommatidia pixel on the sphere
                             sm::vec<float, 3> rot_coord = (coord_rotn * sph_coord[0]).less_one_dim();
-                            sm::vec<float, 2> ll = sm::geometry::spherical_projection::xyz_to_latlong (rot_coord, this->projections[pri].proj_radius);
+                            sm::vec<float, 2> ll = sm::geometry::spherical_projection::xyz_to_latlong (rot_coord);
                             sm::vec<float, 2> xy = this->spherical_projection (ll, this->projections[pri].proj_type, this->projections[pri].proj_radius);
                             // Add xy as one of the points that we'll make a Voronoi diagram from.
                             this->omm2d.push_back (xy.plus_one_dim().as<double>());

@@ -26,7 +26,7 @@ namespace mplot
         {
             // Apply this->rotation to lat-long coordinates, ll
             sm::vec<T, 3> llv = sm::geometry::spherical_projection::latlong_to_xyz (ll, T{1});
-            ll = sm::geometry::spherical_projection::xyz_to_latlong (this->rotation * llv, T{1});
+            ll = sm::geometry::spherical_projection::xyz_to_latlong (this->rotation * llv);
             if (ll.has_nan()) { throw std::runtime_error ("nan in ll"); }
             if (this->proj_type == sm::geometry::spherical_projection::type::equirectangular) {
                 return sm::geometry::spherical_projection::equirectangular (ll, radius, this->lambda0, this->phi0, this->phi1);
