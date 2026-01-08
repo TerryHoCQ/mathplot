@@ -74,7 +74,7 @@ int main()
         all_dur += sc::now() - t00;
         t00 = sc::now();
 
-        v.waitevents (0.00001);
+        v.poll();
         if (k > 8.0f) { k = 1.0f; }
 
         t0 = sc::now();
@@ -109,6 +109,7 @@ int main()
             update_dur = sc::duration{0};
             all_dur = sc::duration{0};
             fcount = 0;
+            v.waitevents (0.00001);
         }
 
         v.render();
