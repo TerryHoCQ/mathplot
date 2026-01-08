@@ -22,8 +22,12 @@ namespace mplot
 
         sm::geometry::spherical_projection::type proj_type = sm::geometry::spherical_projection::type::mercator;
 
-        sm::vec<T, 2> project (const sm::vec<T, 2>& ll, const T radius)
+        sm::vec<T, 2> project (sm::vec<T, 2> ll, const T radius)
         {
+            // Apply this->rotation to lat-long coordinates, ll
+            sm::vec<T, 3> llv = sm::geometry::spherical_projection::latlong_to_xyz (ll, T{1});
+            ll = sm::geometry::spherical_projection::xyz_to_latlong (this->rotation * llv, T{1});
+            if (ll.has_nan()) { throw std::runtime_error ("nan in ll"); }
             if (this->proj_type == sm::geometry::spherical_projection::type::equirectangular) {
                 return sm::geometry::spherical_projection::equirectangular (ll, radius, this->lambda0, this->phi0, this->phi1);
             } else if (this->proj_type == sm::geometry::spherical_projection::type::cassini) {
@@ -114,7 +118,7 @@ namespace mplot
             }
         }
 
-        // latlong, supplied by user
+        // latlong, supplied by user in radians
         sm::vvec<sm::vec<T, 2>> latlong;
         // Colour, supplied by user
         sm::vvec<std::array<float, 3>> colour;
@@ -134,5 +138,16 @@ namespace mplot
         static constexpr bool show_centres = false;
         static constexpr std::array<float, 3> centre_col = mplot::colour::black;
         static constexpr T centre_rad = T{0.005};
+
+        void set_rotation (const sm::quaternion<T>& r)
+        {
+            this->rotation = r;
+            this->rotation.renormalize();
+        }
+        sm::quaternion<T> get_rotation () const { return this->rotation; }
+
+    private:
+        // A rotation to apply to each latitude-longitude before feeding it to the projection.
+        sm::quaternion<T> rotation;
     };
 }
