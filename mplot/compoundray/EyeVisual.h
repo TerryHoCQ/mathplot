@@ -211,7 +211,8 @@ namespace mplot::compoundray
         std::vector<projection_data> projections;
 
         void add_spherical_projection (projection_type t, const sm::mat44<float>& _twod_transform,
-                                       const sm::vec<float>& centre, const float radius, const sm::quaternion<float> rotn,
+                                       const sm::vec<float>& centre, const float radius,
+                                       const sm::quaternion<float> rotn = sm::quaternion<float>(),
                                        const uint32_t _start_i = 0,
                                        const uint32_t _end_i = std::numeric_limits<uint32_t>::max())
         {
@@ -228,7 +229,8 @@ namespace mplot::compoundray
         }
 
         void add_spherical_projection (projection_type t, const sm::vec<float, 3>& _twod_offset,
-                                       const sm::vec<float>& centre, const float radius, const sm::quaternion<float> rotn,
+                                       const sm::vec<float>& centre, const float radius,
+                                       const sm::quaternion<float> rotn = sm::quaternion<float>(),
                                        const uint32_t _start_i = 0,
                                        const uint32_t _end_i = std::numeric_limits<uint32_t>::max())
         {
