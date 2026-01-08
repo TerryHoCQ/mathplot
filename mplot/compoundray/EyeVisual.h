@@ -161,6 +161,9 @@ namespace mplot::compoundray
         // Project latitude/longitude ll with projection type t and given radius
         sm::vec<float, 2> spherical_projection (const sm::vec<float, 2>& ll, projection_type t, const float radius)
         {
+            // Bound ll to be in the correct range of values
+            // ll[0] is latitude
+            // ll[1] is longitude
             sm::vec<float, 2> xy = {};
             if (t == projection_type::equirectangular) {
                 //sm::mathconst<float>::pi_over_2
@@ -191,6 +194,8 @@ namespace mplot::compoundray
             sm::vec<float> proj_centre = {};
             // The height of a projection cylinder
             sm::vec<float> proj_height = {};
+            // A rotation to apply before projecting
+            sm::quaternion<float> proj_rotation;
             // Which spherical to 2D projection to use?
             projection_type proj_type = projection_type::mercator;
             // Have to record the number of triangles in each cell in the 2D map in order to update the colours
@@ -209,7 +214,7 @@ namespace mplot::compoundray
         std::vector<projection_data> projections;
 
         void add_spherical_projection (projection_type t, const sm::mat44<float>& _twod_transform,
-                                       const sm::vec<float>& centre, const float radius,
+                                       const sm::vec<float>& centre, const float radius, const sm::quaternion<float> rotn,
                                        const uint32_t _start_i = 0,
                                        const uint32_t _end_i = std::numeric_limits<uint32_t>::max())
         {
@@ -218,19 +223,21 @@ namespace mplot::compoundray
             d.twod_transform = _twod_transform;
             d.proj_centre = centre;
             d.proj_radius = radius;
+            d.proj_rotation = rotn;
+            d.proj_rotation.renormalize();
             d.start_i = _start_i;
             d.end_i = _end_i;
             this->projections.push_back (d);
         }
 
         void add_spherical_projection (projection_type t, const sm::vec<float, 3>& _twod_offset,
-                                       const sm::vec<float>& centre, const float radius,
+                                       const sm::vec<float>& centre, const float radius, const sm::quaternion<float> rotn,
                                        const uint32_t _start_i = 0,
                                        const uint32_t _end_i = std::numeric_limits<uint32_t>::max())
         {
             sm::mat44<float> tr;
             tr.translate (_twod_offset);
-            this->add_spherical_projection (t, tr, centre, radius, _start_i, _end_i);
+            this->add_spherical_projection (t, tr, centre, radius, rotn, _start_i, _end_i);
         }
 
         void add_cylindrical_projection (const sm::mat44<float>& _twod_transform, const sm::vec<float>& centre,
@@ -370,9 +377,14 @@ namespace mplot::compoundray
                                                                                                  (*ommatidia)[i].relativePosition,
                                                                                                  -(*ommatidia)[i].relativeDirection);
                         if (sph_coord[0][0] != std::numeric_limits<float>::max()) {
+                            sph_coord[0] -= this->projections[pri].proj_centre; // offset by centre before rotation
                             // sph_coord[0] is the coordinate for the ommatidia pixel on the sphere
                             sm::vec<float, 3> rot_coord = (coord_rotn * sph_coord[0]).less_one_dim();
+                            // Now apply our projection rotation quaternion
+                            rot_coord = this->projections[pri].proj_rotation * rot_coord;
+                            if (rot_coord.has_nan()) { throw std::runtime_error ("rot_coord has NaN"); }
                             sm::vec<float, 2> ll = sm::geometry::spherical_projection::xyz_to_latlong (rot_coord);
+                            if (ll.has_nan()) { throw std::runtime_error ("latlong has NaN"); }
                             sm::vec<float, 2> xy = this->spherical_projection (ll, this->projections[pri].proj_type, this->projections[pri].proj_radius);
                             // Add xy as one of the points that we'll make a Voronoi diagram from.
                             this->omm2d.push_back (xy.plus_one_dim().as<double>());
