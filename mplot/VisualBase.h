@@ -65,7 +65,11 @@ namespace mplot
         //! True means that at least one of our VisualModels is an instanced rendering model
         haveInstanced,
         //! When true, the instanced data SSBO needs to be copied to the GPU
-        instancedNeedsUpdate
+        instancedNeedsUpdate,
+        //! Left mouse button is down
+        mouseButtonLeftPressed,
+        //! Right mouse button is down
+        mouseButtonRightPressed
     };
 
     //! Boolean options - similar to state, but more likely to be modified by client code
@@ -612,6 +616,11 @@ namespace mplot
             this->rotation_default = _rotn;
             this->sceneview.rotate (_rotn);
         }
+
+        // What is the scene view's current rotation quaternion?
+        sm::quaternion<float> getSceneRotation() const { return this->sceneview.rotation(); }
+        // What is the scene view's current translation?
+        sm::vec<float> getSceneTranslation() const { return this->sceneview.translation(); }
 
         void lightingEffects (const bool effects_on = true)
         {
@@ -1525,10 +1534,20 @@ namespace mplot
             this->find_rotation_centre();
 
             if (button == mplot::mousebutton::left) { // Primary button means rotate
+                if (action == keyaction::press) {
+                    this->state.set (visual_state::mouseButtonLeftPressed);
+                } else if (action == keyaction::release) {
+                    this->state.set (visual_state::mouseButtonLeftPressed, false);
+                }
                 this->state.set (visual_state::rotateModMode, ((mods & keymod::control) ? true : false));
                 this->state.set (visual_state::rotateMode, (action == keyaction::press));
                 this->state.set (visual_state::translateMode, false);
             } else if (button == mplot::mousebutton::right) { // Secondary button means translate
+                if (action == keyaction::press) {
+                    this->state.set (visual_state::mouseButtonRightPressed);
+                } else if (action == keyaction::release) {
+                    this->state.set (visual_state::mouseButtonRightPressed, false);
+                }
                 this->state.set (visual_state::rotateMode, false);
                 this->state.set (visual_state::translateMode, (action == keyaction::press));
             }
