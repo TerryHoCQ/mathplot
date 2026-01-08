@@ -161,9 +161,6 @@ namespace mplot::compoundray
         // Project latitude/longitude ll with projection type t and given radius
         sm::vec<float, 2> spherical_projection (const sm::vec<float, 2>& ll, projection_type t, const float radius)
         {
-            // Bound ll to be in the correct range of values
-            // ll[0] is latitude
-            // ll[1] is longitude
             sm::vec<float, 2> xy = {};
             if (t == projection_type::equirectangular) {
                 //sm::mathconst<float>::pi_over_2
