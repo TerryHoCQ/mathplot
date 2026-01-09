@@ -93,26 +93,41 @@ namespace mplot
             jcv::manager<float> vorman;
             vorman.border_width = this->border_width;
 
-            // Use mplot::range to find the extents of dataCoords. Helps to define boundary for test
-            // code.
-            sm::range<float> rx, ry;
-            rx.search_init();
-            ry.search_init();
-            for (unsigned int i = 0; i < ncoords; ++i) {
-                rx.update ((*this->dcoords_ptr)[i][0]);
-                ry.update ((*this->dcoords_ptr)[i][1]);
+            if (this->rectangular_domain == false) {
+                // Use mplot::range to find the extents of dataCoords. Helps to define boundary for
+                // test code.
+                sm::range<float> rx, ry;
+                rx.search_init();
+                ry.search_init();
+                for (unsigned int i = 0; i < ncoords; ++i) {
+                    rx.update ((*this->dcoords_ptr)[i][0]);
+                    ry.update ((*this->dcoords_ptr)[i][1]);
+                }
+                // Test triangle boundary
+                this->boundary.resize (3);
+                sm::vec<> ofs = { 0.0f, 0.4f };
+                // Points MUST be in anti-clockwise order!!!!!
+                std::cout << "rx: " << rx << " and ry: " << ry << std::endl;
+                this->boundary[0] = { 2 * rx.max, 2 * ry.min };
+                this->boundary[1] = { (rx.min + rx.max) / 2.0f, 2 * ry.max };
+                this->boundary[2] = { 2 * rx.min, 2 * ry.min };
+                for (auto& b : boundary) { b += ofs; }
+                std::cout << "Boundary: " << boundary[0] << "; "   << boundary[1] << "; " << boundary[2] << "\n";
             }
-            // Test triangle boundary
-            this->boundary.resize (3);
-            this->boundary[0] = { 2 * rx.min, 2 * ry.min };
-            this->boundary[1] = { rx.max - rx.min, 2 * ry.max };
-            this->boundary[2] = { 2 * rx.max, 2 * ry.min };
 
             if (this->boundary.size() > 0) {
                 vorman.diagram_generate (*(dcoords_ptr), this->boundary);
             } else {
                 // default rectangular box boundary
                 vorman.diagram_generate (*(dcoords_ptr));
+            }
+
+            if (static_cast<unsigned int>(vorman.diagram_numsites()) == 0) {
+                if (this->boundary.empty()) {
+                    throw std::runtime_error ("numsites == 0.");
+                } else {
+                    throw std::runtime_error ("numsites == 0. Make sure your boundary points appear in anti-clockwise order");
+                }
             }
 
             // We obtain access to the Voronoi cell sites:
@@ -485,6 +500,10 @@ namespace mplot
         //! Record the data index for each Voronoi cell index
         sm::vvec<unsigned int> site_indices;
         unsigned int triangle_count_sum = 0;
+        // Create a rectangular domain or use a smoother boundary?
+        bool rectangular_domain = true;
+        // When making the boundary, how many points? Or use some f (dcoords.size())?
+        unsigned int num_boundary_points = 100;
         // Polygon domain coordinates
         std::vector<sm::vec<float>> boundary;
         //! Internally owned version of dataCoords after rotation
