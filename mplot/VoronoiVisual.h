@@ -94,25 +94,29 @@ namespace mplot
             vorman.border_width = this->border_width;
 
             if (this->rectangular_domain == false) {
-                // Use mplot::range to find the extents of dataCoords. Helps to define boundary for
-                // test code.
-                sm::range<float> rx, ry;
-                rx.search_init();
-                ry.search_init();
-                for (unsigned int i = 0; i < ncoords; ++i) {
-                    rx.update ((*this->dcoords_ptr)[i][0]);
-                    ry.update ((*this->dcoords_ptr)[i][1]);
+                // Then we make up a perimeter to be our boundary
+                sm::vvec<float> max_lengths;
+                max_lengths.resize (this->num_boundary_points, 0.0f);
+                for (unsigned int i = 0; i < this->dcoords_ptr->size(); ++i) {
+                    sm::vec<float, 2> c = (*this->dcoords_ptr)[i].less_one_dim();
+                    float a = c.angle();
+                    sm::algo::zero_to_twopi (a);
+                    a *= (this->num_boundary_points / sm::mathconst<float>::two_pi);
+                    int ai = std::floor (a);
+                    if (static_cast<unsigned int>(ai) == this->num_boundary_points) { ai = 0; }
+                    max_lengths[ai] = c.length() > max_lengths[ai] ? c.length() : max_lengths[ai];
                 }
-                // Test triangle boundary
-                this->boundary.resize (3);
-                sm::vec<> ofs = { 0.0f, 0.4f };
+
                 // Points MUST be in anti-clockwise order!!!!!
-                std::cout << "rx: " << rx << " and ry: " << ry << std::endl;
-                this->boundary[0] = { 2 * rx.max, 2 * ry.min };
-                this->boundary[1] = { (rx.min + rx.max) / 2.0f, 2 * ry.max };
-                this->boundary[2] = { 2 * rx.min, 2 * ry.min };
-                for (auto& b : boundary) { b += ofs; }
-                std::cout << "Boundary: " << boundary[0] << "; "   << boundary[1] << "; " << boundary[2] << "\n";
+                this->boundary.resize (this->num_boundary_points);
+                for (unsigned int i = 0; i < this->num_boundary_points; ++i) {
+                    float l = max_lengths[i] + this->border_width;
+                    float ang = i * sm::mathconst<float>::two_pi / this->num_boundary_points;
+                    this->boundary[i] = { l * std::cos (ang), l * std::sin (ang) };
+                }
+            }
+            for (auto b : this->boundary) {
+                std::cout << "Boundary point: " << b << std::endl;
             }
 
             if (this->boundary.size() > 0) {
@@ -501,9 +505,9 @@ namespace mplot
         sm::vvec<unsigned int> site_indices;
         unsigned int triangle_count_sum = 0;
         // Create a rectangular domain or use a smoother boundary?
-        bool rectangular_domain = true;
+        bool rectangular_domain = false;
         // When making the boundary, how many points? Or use some f (dcoords.size())?
-        unsigned int num_boundary_points = 100;
+        unsigned int num_boundary_points = 12;
         // Polygon domain coordinates
         std::vector<sm::vec<float>> boundary;
         //! Internally owned version of dataCoords after rotation

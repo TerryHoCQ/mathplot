@@ -237,6 +237,23 @@ namespace jcv
             return pt->x() == min->x() || pt->y() == min->y() || pt->x() == max->x() || pt->y() == max->y();
         }
 
+        static point<T> mix (point<T> a, point<T> b, T t)
+        {
+            point<T> r = {};
+            r[0] = a[0] + (b[0] - a[0]) * t;
+            r[1] = a[1] + (b[1] - a[1]) * t;
+            return r;
+        }
+
+        // if it returns [0.0, 1.0] it's on the line segment
+        static T point_to_line_segment_t (point<T> p, point<T> p0, point<T> p1)
+        {
+            point<T> vpoint = p - p0;
+            point<T> vsegment = p1 - p0;
+            return vsegment.dot (vpoint) / vsegment.dot (vsegment);
+        }
+
+
         // edges and corners
         static const int EDGE_LEFT    = 1;
         static const int EDGE_RIGHT   = 2;
@@ -1448,38 +1465,6 @@ namespace jcv
 
         int diagram_numsites() const { return this->diagram.numsites; }
 
-        /**
-         * Boundary clipping code (was in jc_voronoi_clip.h)
-         *
-         * Usage:
-         *
-         *    std::vector<jcv::point<T>> polygon;
-         *    // Triangle
-         *    polygon.resize(3);
-         *    polygon.points[0] = { width/2, height/5 };
-         *    polygon.points[1] = { width - width/5, height - height/5 };
-         *    polygon.points[2] = { width/5, height - height/5 };
-         *
-         *    jcv::manager<float> vorman;
-         *    vorman.diagram_generate (*(dcoords_ptr), polygon);
-         */
-
-        static point<T> mix (point<T> a, point<T> b, T t)
-        {
-            point<T> r = {};
-            r[0] = a[0] + (b[0] - a[0]) * t;
-            r[1] = a[1] + (b[1] - a[1]) * t;
-            return r;
-        }
-
-        // if it returns [0.0, 1.0] it's on the line segment
-        static T point_to_line_segment_t (point<T> p, point<T> p0, point<T> p1)
-        {
-            point<T> vpoint = p - p0;
-            point<T> vsegment = p1 - p0;
-            return vsegment.dot (vpoint) / vsegment.dot (vsegment);
-        }
-
         static int clip_polygon_test_point (const clipper<T>* clipper, const point<T> p)
         {
             auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
@@ -1558,8 +1543,8 @@ namespace jcv
             point<T> p0 = e->pos[0];
             point<T> p1 = e->pos[1];
 
-            T t0;
-            T t1;
+            T t0 = T{0};
+            T t1 = T{0};
             result = ray_intersect_polygon (clipper, p0, p1, &t0, &t1);
 
             if (!result) {
@@ -1579,8 +1564,7 @@ namespace jcv
             int min_edge = -1;
             T min_dist = std::numeric_limits<T>::max();
             int num_points = polygon->size();
-            for (int i = 0; i < num_points; ++i)
-            {
+            for (int i = 0; i < num_points; ++i) {
                 point<T> p0 = (*polygon)[i];
                 if (p == p0) { return i; }
 
@@ -1600,6 +1584,7 @@ namespace jcv
                     min_edge = i;
                 }
             }
+
             assert (min_edge >= 0);
             return min_edge;
         }
@@ -1642,7 +1627,7 @@ namespace jcv
                 gap->neighbor   = 0;
                 gap->angle      = calc_sort_metric (site, gap);
                 gap->next       = 0;
-                gap->edge_      = create_gap_edge(allocator, site, gap);
+                gap->edge_      = create_gap_edge (allocator, site, gap);
 
                 gap->next = current->next;
                 current->next = gap;
@@ -1653,7 +1638,9 @@ namespace jcv
             while (current && next) {
 
                 if (!(current->pos[1] == next->pos[0])) {
+
                     int polygon_edge1 = find_polygon_edge (clipper, current->pos[1]);
+                    //std::cout << "3 fpe for p = next->pos[0] = " << next->pos[0] << std::endl;
                     int polygon_edge2 = find_polygon_edge (clipper, next->pos[0]);
 
                     graphedge<T>* gap = alloc_graphedge (allocator);
