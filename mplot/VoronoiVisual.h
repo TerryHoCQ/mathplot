@@ -507,7 +507,7 @@ namespace mplot
         // Create a rectangular domain or use a smoother boundary?
         bool rectangular_domain = false;
         // When making the boundary, how many points? Or use some f (dcoords.size())?
-        unsigned int num_boundary_points = 12;
+        unsigned int num_boundary_points = 11;
         // Polygon domain coordinates
         std::vector<sm::vec<float>> boundary;
         //! Internally owned version of dataCoords after rotation

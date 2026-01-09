@@ -1014,7 +1014,7 @@ namespace jcv
             return edge;
         }
 
-        static void boxshape_fillgaps (const clipper<T>* clipper, context_internal<T>* allocator, site<T>* site)
+        static void boxshape_fill (const clipper<T>* clipper, context_internal<T>* allocator, site<T>* site)
         {
             // They're sorted CCW, so if the current->pos[1] != next->pos[0], then we have a gap
             graphedge<T>* current = site->edges;
@@ -1025,11 +1025,11 @@ namespace jcv
                 graphedge<T>* gap = alloc_graphedge (allocator);
                 gap->neighbor   = 0;
                 gap->pos[0]     = clipper->min;
-                gap->pos[1][0]   = clipper->max[0];
-                gap->pos[1][1]   = clipper->min[1];
+                gap->pos[1][0]  = clipper->max[0];
+                gap->pos[1][1]  = clipper->min[1];
                 gap->angle      = calc_sort_metric(site, gap);
                 gap->next       = 0;
-                gap->edge_       = create_gap_edge (allocator, site, gap);
+                gap->edge_      = create_gap_edge (allocator, site, gap);
 
                 current = gap;
                 site->edges = gap;
@@ -1343,7 +1343,7 @@ namespace jcv
                 // model->get_shaderprogs = &mplot::VisualBase<glver>::get_shaderprogs;
                 box_clipper.test_fn = &jcv::manager<T>::boxshape_test;
                 box_clipper.clip_fn = &jcv::manager<T>::boxshape_clip;
-                box_clipper.fill_fn = &jcv::manager<T>::boxshape_fillgaps;
+                box_clipper.fill_fn = &jcv::manager<T>::boxshape_fill;
                 _clipper = &box_clipper;
             }
             internal->clipper_ = *_clipper;
@@ -1455,9 +1455,9 @@ namespace jcv
             std::memset (&this->diagram, 0, sizeof(jcv::diagram<T>));
 
             jcv::clipper<T> polygonclipper;
-            polygonclipper.test_fn = &jcv::manager<T>::clip_polygon_test_point;
-            polygonclipper.clip_fn = &jcv::manager<T>::clip_polygon_clip_edge;
-            polygonclipper.fill_fn = &jcv::manager<T>::clip_polygon_fill_gaps;
+            polygonclipper.test_fn = &jcv::manager<T>::polygon_test;
+            polygonclipper.clip_fn = &jcv::manager<T>::polygon_clip;
+            polygonclipper.fill_fn = &jcv::manager<T>::polygon_fill;
             polygonclipper.ctx = &polygon;
 
             jcv::manager<T>::diagram_generate (ncoords, centres.data(), &polygonclipper, &this->diagram);
@@ -1465,7 +1465,7 @@ namespace jcv
 
         int diagram_numsites() const { return this->diagram.numsites; }
 
-        static int clip_polygon_test_point (const clipper<T>* clipper, const point<T> p)
+        static int polygon_test (const clipper<T>* clipper, const point<T> p)
         {
             auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
             int num_points = polygon->size();
@@ -1534,7 +1534,7 @@ namespace jcv
             return 1;
         }
 
-        static int clip_polygon_clip_edge (const clipper<T>* clipper, edge<T>* e)
+        static int polygon_clip (const clipper<T>* clipper, edge<T>* e)
         {
             // Using the box clipper to get a finite line segment
             int result = manager<T>::boxshape_clip (clipper, e);
@@ -1589,8 +1589,8 @@ namespace jcv
             return min_edge;
         }
 
-        static void clip_polygon_fill_gaps (const clipper<T>* clipper,
-                                            context_internal<T>* allocator, site<T>* site)
+        static void polygon_fill (const clipper<T>* clipper,
+                                  context_internal<T>* allocator, site<T>* site)
         {
             // They're sorted CCW, so if the current->pos[1] != next->pos[0], then we have a gap
             auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
