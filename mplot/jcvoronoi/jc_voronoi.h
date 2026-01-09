@@ -1086,8 +1086,8 @@ namespace jcv
                     if (!next) { next = site->edges; }
                 }
                 ++loopcount;
-                if (loopcount > 1000) {
-                    std::cout << "Too many loops. Thi can be caused by numerical precision errors when using T==float on some sets of points\n";
+                if (loopcount >= loopcount_thresh) {
+                    std::cout << "Too many loops. This can be caused by numerical precision errors when using T==float on some sets of points\n";
                 }
             }
         }
