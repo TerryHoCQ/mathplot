@@ -411,6 +411,9 @@ target_link_libraries(triangle_intersect OpenGL::GL glfw Freetype::Freetype)
 add_executable(voronoi_random voronoi_random.cpp)
 target_link_libraries(voronoi_random OpenGL::GL glfw Freetype::Freetype)
 
+add_executable(voronoi_boundary voronoi_boundary.cpp)
+target_link_libraries(voronoi_boundary OpenGL::GL glfw Freetype::Freetype)
+
 add_executable(voronoi_rectangular voronoi_rectangular.cpp)
 target_link_libraries(voronoi_rectangular OpenGL::GL glfw Freetype::Freetype)
 
