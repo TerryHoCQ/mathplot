@@ -546,10 +546,11 @@ namespace jcv
                 if (y2 < pymin) { y2 = pymin; }
                 x2 = (e->c) - (e->b) * y2;
                 // Never occurs according to lcov
-                // if (((x1 > pxmax) & (x2 > pxmax)) | ((x1 < pxmin) & (x2 < pxmin)))
-                // {
-                //     return 0;
-                // }
+                if (((x1 > pxmax) & (x2 > pxmax)) | ((x1 < pxmin) & (x2 < pxmin)))
+                {
+                    std::cout << "Yes it fucking does" << std::endl;
+                    return 0;
+                }
                 if (x1 > pxmax) {
                     x1 = pxmax;
                     y1 = (e->c - x1) / e->b;
@@ -576,7 +577,10 @@ namespace jcv
                 if (x2 < pxmin) { x2 = pxmin; }
                 y2 = e->c - e->a * x2;
                 // Never occurs according to lcov
-                // if (((y1 > pymax) & (y2 > pymax)) | ((y1 < pymin) & (y2 < pymin))) { return 0; }
+                if (((y1 > pymax) & (y2 > pymax)) | ((y1 < pymin) & (y2 < pymin))) {
+                    std::cout << "Yes it fucking does" << std::endl;
+                    return 0;
+                }
                 if (y1 > pymax) {
                     y1 = pymax;
                     x1 = (e->c - y1) / e->a;
@@ -606,6 +610,7 @@ namespace jcv
         // see edge_create
         static int edge_clipline (context_internal<T>* internal, edge<T>* e)
         {
+            std::cout << "edge_clipline calling clip_fn...\n";
             return internal->clipper_.clip_fn (&internal->clipper_, e);
         }
 
@@ -954,6 +959,12 @@ namespace jcv
 
         static void finishline (context_internal<T>* internal, edge<T>* e)
         {
+#if 1 // Here's something that needs to be dealt with:
+            if (e->pos[1][0] == std::numeric_limits<T>::lowest()) {
+                std::cout << "finishline Returning now, special case\n";
+                return;
+            }
+#endif
             if (!edge_clipline (internal, e)) { return; }
 
             // Make sure the graph edges are CCW
@@ -1493,7 +1504,7 @@ namespace jcv
         }
 
         static int ray_intersect_polygon (const clipper<T>* clipper,
-                                          point<T> p0, point<T> p1,
+                                          const point<T> p0, const point<T> p1,
                                           T* out_t0, T* out_t1)
         {
             auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
@@ -1536,6 +1547,8 @@ namespace jcv
 
         static int polygon_clip (const clipper<T>* clipper, edge<T>* e)
         {
+            std::cout << __func__ << " called for edge e from " << e->pos[0] << " to " << e->pos[1] << std::endl;
+
             // Using the box clipper to get a finite line segment
             int result = manager<T>::boxshape_clip (clipper, e);
             if (!result) { return 0; }
@@ -1554,10 +1567,14 @@ namespace jcv
 
             e->pos[0] = mix (p0, p1, t0);
             e->pos[1] = mix (p0, p1, t1);
+            if (e->pos[1][1] == 11) {
+                std::cout << "Yikes e->pos[1] = " << e->pos[1] << "\n";
+                std::cout << "mix (" << p0 << ", " << p1 << "," << t1 << ") was the culprit\n";
+            }
             return 1;
         }
 
-        // Find the edge which the point sits on
+        // Find the edge which the point p sits on
         static int find_polygon_edge (const clipper<T>* clipper, point<T> p)
         {
             auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
@@ -1601,8 +1618,9 @@ namespace jcv
                 graphedge<T>* gap = alloc_graphedge (allocator);
                 gap->neighbor = 0;
                 // Pick the first edge of the polygon (which is also CCW)
-                gap->pos[0] = (*polygon)[0];
+                gap->pos[0] = (*polygon)[0]; // ????
                 gap->pos[1] = (*polygon)[1];
+                if (gap->pos[1][1] == 11) { std::cout << " bleurgh 0\n"; }
                 gap->angle  = calc_sort_metric (site, gap);
                 gap->next   = 0;
                 gap->edge_  = create_gap_edge (allocator, site, gap);
@@ -1616,12 +1634,14 @@ namespace jcv
                 graphedge<T>* gap = alloc_graphedge (allocator);
 
                 int polygon_edge = find_polygon_edge (clipper, current->pos[1]);
-                if (!(current->pos[1] == (*polygon)[(polygon_edge+1)%num_points])) {
+                if (!(current->pos[1] == (*polygon)[(polygon_edge + 1) % num_points])) {
                     gap->pos[0] = current->pos[1];
-                    gap->pos[1] = (*polygon)[(polygon_edge+1)%num_points];
+                    gap->pos[1] = (*polygon)[(polygon_edge + 1) % num_points];
+                    if (gap->pos[1][1] == 11) { std::cout << " bleurgh 1\n"; }
                 } else {
-                    gap->pos[0] = (*polygon)[(polygon_edge+1)%num_points];
-                    gap->pos[1] = (*polygon)[(polygon_edge+2)%num_points];
+                    gap->pos[0] = (*polygon)[(polygon_edge + 1) % num_points];
+                    gap->pos[1] = (*polygon)[(polygon_edge + 2) % num_points];
+                    if (gap->pos[1][1] == 11) { std::cout << " bleurgh 2\n"; }
                 }
 
                 gap->neighbor   = 0;
@@ -1645,11 +1665,14 @@ namespace jcv
 
                     graphedge<T>* gap = alloc_graphedge (allocator);
                     gap->pos[0] = current->pos[1];
+                    if (gap->pos[1][1] == 11) { std::cout << " bleurgh 3\n"; }
 
                     if (polygon_edge1 != polygon_edge2) {
                         gap->pos[1] = (*polygon)[(polygon_edge1 + 1) % num_points];
+                        if (gap->pos[1][1] == 11) { std::cout << " bleurgh 4\n"; }
                     } else {
                         gap->pos[1] = next->pos[0];
+                        if (gap->pos[1][1] == 11) { std::cout << " bleurgh 5\n"; }
                     }
 
                     gap->neighbor   = 0;
