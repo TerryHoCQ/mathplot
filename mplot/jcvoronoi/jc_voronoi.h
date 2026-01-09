@@ -183,6 +183,14 @@ namespace jcv
         point<T>             max;
     };
 
+    // Used for boundary clipping
+    template<typename T>
+    struct clipping_polygon
+    {
+        jcv::point<T>* points;
+        int num_points;
+    };
+
 #pragma pack(pop)
 
     // The mananger class. Type T is what is called real in the original code
@@ -1420,6 +1428,231 @@ namespace jcv
 
         int diagram_numsites() const { return this->diagram.numsites; }
 
+        /**
+         * Boundary clipping code (was in jc_voronoi_clip.h)
+         */
+
+        static point<T> mix (point<T> a, point<T> b, T t)
+        {
+            point<T> r;
+            r.x = a.x + (b.x - a.x) * t;
+            r.y = a.y + (b.y - a.y) * t;
+            return r;
+        }
+
+        // if it returns [0.0, 1.0] it's on the line segment
+        static T point_to_line_segment_t (point<T> p, point<T> p0, point<T> p1)
+        {
+            point<T> vpoint = p - p0;
+            point<T> vsegment = p1 - p0;
+            return vsegment.dot (vpoint) / vsegment.dot (vsegment);
+        }
+
+        int clip_polygon_test_point (const clipper<T>* clipper, const point<T> p)
+        {
+            clipping_polygon<T>* polygon = (clipping_polygon<T>*)clipper->ctx; // reinterpret? why?
+            int num_points = polygon->num_points;
+
+            // convex polygon
+            // winding CCW
+            // all polygon normals point outward
+            // if the point is in front of the plane, it is outside
+
+            int result = 1;
+            for (int i = 0; i < num_points; ++i) {
+                point<T> p0 = polygon->points[i];
+                point<T> p1 = polygon->points[(i + 1) % num_points];
+                point<T> n = {};
+                n.x = p1.y() - p0.y();
+                n.y = p0.x() - p1.x();
+                point<T> diff = p - p0;
+
+                if (n.dot (diff) > 0) {
+                    result = 0;
+                    break;
+                }
+            }
+            return result;
+        }
+
+        static int ray_intersect_polygon (const clipper<T>* clipper,
+                                          point<T> p0, point<T> p1,
+                                          T* out_t0, T* out_t1)
+        {
+            clipping_polygon<T>* polygon = (clipping_polygon<T>*)clipper->ctx;
+            int num_points = polygon->num_points;
+
+            T t0 = T{0};
+            T t1 = T{1};
+            point<T> dir = p1 - p0;
+
+            for (int i = 0; i < num_points; ++i) {
+                point<T> v0 = polygon->points[i];
+                point<T> v1 = polygon->points[(i+1)%num_points];
+                point<T> n;
+                n.x = v1.y - v0.y;
+                n.y = -(v1.x - v0.x);
+
+                point<T> v0p0 = p0 - v0;
+
+                T N = -v0p0.dot (n);
+                T D = dir.dot (n);
+                if (std::abs(D) < T{0.0001}) { // parallel to the line
+                    if (N < T{0}) { return 0; }
+                    continue;
+                }
+
+                T t = N / D;
+                if (D < T{0}) { // -> entering
+                    t0 = t > t0 ? t : t0;
+                    if (t0 > t1) { return 0; }
+                } else { // D > 0 -> exiting
+                    t1 = t < t1 ? t : t1;
+                    if (t1 < t0) { return 0; }
+                }
+            }
+
+            *out_t0 = t0;
+            *out_t1 = t1;
+            return 1;
+        }
+
+        int clip_polygon_clip_edge (const clipper<T>* clipper, edge<T>* e)
+        {
+            // Using the box clipper to get a finite line segment
+            int result = manager<T>::boxshape_clip(clipper, e);
+            if (!result) { return 0; }
+
+            point<T> p0 = e->pos[0];
+            point<T> p1 = e->pos[1];
+
+            T t0;
+            T t1;
+            result = ray_intersect_polygon (clipper, p0, p1, &t0, &t1);
+
+            if (!result) {
+                e->pos[0] = e->pos[1];
+                return 0;
+            }
+
+            e->pos[0] = mix<T> (p0, p1, t0);
+            e->pos[1] = mix<T> (p0, p1, t1);
+            return 1;
+        }
+
+        // Find the edge which the point sits on
+        static int find_polygon_edge (const clipper<T>* clipper, point<T> p)
+        {
+            clipping_polygon<T>* polygon = (clipping_polygon<T>*)clipper->ctx;
+
+            int min_edge = -1;
+            T min_dist = std::numeric_limits<T>::max();
+            int num_points = polygon->num_points;
+            for (int i = 0; i < num_points; ++i)
+            {
+                point<T> p0 = polygon->points[i];
+                if (p == p0) { return i; }
+
+                point<T> p1 = polygon->points[(i+1)%num_points];
+                point<T> vsegment = p1 - p0;
+                point<T> vpoint = p - p0;
+
+                T t = vsegment.dot (vpoint) / vsegment.dot (vsegment);
+
+                if (t < T{0} || t > T{1}) { continue; }
+
+                point<T> projected = p0 + vsegment * t;
+                T distsq = (p - projected).length_sq();
+
+                if (distsq < min_dist) {
+                    min_dist = distsq;
+                    min_edge = i;
+                }
+            }
+            assert (min_edge >= 0);
+            return min_edge;
+        }
+
+        void clip_polygon_fill_gaps (const clipper<T>* clipper,
+                                     context_internal<T>* allocator, site<T>* site)
+        {
+            // They're sorted CCW, so if the current->pos[1] != next->pos[0], then we have a gap
+            clipping_polygon<T>* polygon = (clipping_polygon<T>*)clipper->ctx;
+            int num_points = polygon->num_points;
+
+            graphedge<T>* current = site->edges;
+            if (!current) {
+                graphedge<T>* gap = alloc_graphedge (allocator);
+                gap->neighbor = 0;
+                // Pick the first edge of the polygon (which is also CCW)
+                gap->pos[0] = polygon->points[0];
+                gap->pos[1] = polygon->points[1];
+                gap->angle  = calc_sort_metric<T>(site, gap);
+                gap->next   = 0;
+                gap->edge   = create_gap_edge (allocator, site, gap);
+
+                current = gap;
+                site->edges = gap;
+            }
+
+            graphedge<T>* next = current->next;
+            if (!next) {
+                graphedge<T>* gap = alloc_graphedge (allocator);
+
+                int polygon_edge = find_polygon_edge<T> (clipper, current->pos[1]);
+                if (!(current->pos[1] == polygon->points[(polygon_edge+1)%num_points])) {
+                    gap->pos[0] = current->pos[1];
+                    gap->pos[1] = polygon->points[(polygon_edge+1)%num_points];
+                } else {
+                    gap->pos[0] = polygon->points[(polygon_edge+1)%num_points];
+                    gap->pos[1] = polygon->points[(polygon_edge+2)%num_points];
+                }
+
+                gap->neighbor   = 0;
+                gap->angle      = calc_sort_metric<T>(site, gap);
+                gap->next       = 0;
+                gap->edge       = create_gap_edge(allocator, site, gap);
+
+                gap->next = current->next;
+                current->next = gap;
+                current = gap;
+                next = site->edges;
+            }
+
+            while (current && next) {
+
+                if (!(current->pos[1] == next->pos[0])) {
+                    int polygon_edge1 = find_polygon_edge (clipper, current->pos[1]);
+                    int polygon_edge2 = find_polygon_edge (clipper, next->pos[0]);
+
+                    graphedge<T>* gap = alloc_graphedge (allocator);
+                    gap->pos[0] = current->pos[1];
+
+                    if (polygon_edge1 != polygon_edge2) {
+                        gap->pos[1] = polygon->points[(polygon_edge1 + 1) % num_points];
+                    } else {
+                        gap->pos[1] = next->pos[0];
+                    }
+
+                    gap->neighbor   = 0;
+                    gap->angle      = calc_sort_metric (site, gap);
+                    gap->edge       = create_gap_edge (allocator, site, gap);
+                    gap->next       = current->next;
+                    current->next   = gap;
+                }
+
+                current = current->next;
+                if (current) {
+                    next = current->next;
+                    if (!next) { next = site->edges; }
+                }
+            }
+        }
+
+        /**
+         * End of boundary clipping code
+         */
+
         // User-configurable border width
         T border_width = std::numeric_limits<T>::epsilon();
 
@@ -1428,7 +1661,7 @@ namespace jcv
         jcv::diagram<T> diagram;
         // A domain for the diagram.
         jcv::rect<T> domain = {};
-    }; // end struct jcv
+    }; // end struct jcv::manager
 
 } // namespace
 
