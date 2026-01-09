@@ -111,7 +111,7 @@ namespace jcv
 
         point<T>     min;        // The bounding rect min
         point<T>     max;        // The bounding rect max
-        void*        ctx;        // User defined context
+        void*        ctx;        // User defined context function
     };
 
     // Second batch of structs
@@ -187,8 +187,7 @@ namespace jcv
     template<typename T>
     struct clipping_polygon
     {
-        jcv::point<T>* points;
-        int num_points;
+        std::vector<jcv::point<T>> points;
     };
 
 #pragma pack(pop)
@@ -1323,7 +1322,7 @@ namespace jcv
             qsort (sites, (size_t)num_points, sizeof(site<T>), point_cmp);
 
             clipper<T> box_clipper;
-            if (_clipper == 0) {
+            if (_clipper == nullptr) {
                 // model->get_shaderprogs = &mplot::VisualBase<glver>::get_shaderprogs;
                 box_clipper.test_fn = &jcv::manager<T>::boxshape_test;
                 box_clipper.clip_fn = &jcv::manager<T>::boxshape_clip;
@@ -1404,7 +1403,12 @@ namespace jcv
          */
         static void diagram_generate (int num_points, const point<T>* points, const rect<T>* rect, const clipper<T>* clipper, diagram<T>* d)
         {
-            diagram_generate_useralloc(num_points, points, rect, clipper, 0, alloc_fn, free_fn, d);
+            diagram_generate_useralloc (num_points, points, rect, clipper, 0, alloc_fn, free_fn, d);
+        }
+
+        static void diagram_generate (int num_points, const point<T>* points, const clipper<T>* clipper, diagram<T>* d)
+        {
+            diagram_generate_useralloc (num_points, points, 0,    clipper, 0, alloc_fn, free_fn, d);
         }
 
         // User API
@@ -1426,17 +1430,45 @@ namespace jcv
             jcv::manager<T>::diagram_generate (ncoords, centres.data(), &this->domain, 0, &this->diagram);
         }
 
+        // User API to generate with a polygon boundary
+        void diagram_generate (const std::vector<point<T>>& centres, std::vector<point<T>>& polygon)
+        {
+            int ncoords = static_cast<int>(centres.size());
+
+            std::memset (&this->diagram, 0, sizeof(jcv::diagram<T>));
+
+            jcv::clipper<T> polygonclipper;
+            polygonclipper.test_fn = &jcv::manager<T>::clip_polygon_test_point;
+            polygonclipper.clip_fn = &jcv::manager<T>::clip_polygon_clip_edge;
+            polygonclipper.fill_fn = &jcv::manager<T>::clip_polygon_fill_gaps;
+            polygonclipper.ctx = &polygon;
+
+            jcv::manager<T>::diagram_generate (ncoords, centres.data(), &polygonclipper, &this->diagram);
+        }
+
         int diagram_numsites() const { return this->diagram.numsites; }
 
         /**
          * Boundary clipping code (was in jc_voronoi_clip.h)
+         *
+         * Usage:
+         *
+         *    std::vector<jcv::point<T>> polygon;
+         *    // Triangle
+         *    polygon.resize(3);
+         *    polygon.points[0] = { width/2, height/5 };
+         *    polygon.points[1] = { width - width/5, height - height/5 };
+         *    polygon.points[2] = { width/5, height - height/5 };
+         *
+         *    jcv::manager<float> vorman;
+         *    vorman.diagram_generate (*(dcoords_ptr), polygon);
          */
 
         static point<T> mix (point<T> a, point<T> b, T t)
         {
-            point<T> r;
-            r.x = a.x + (b.x - a.x) * t;
-            r.y = a.y + (b.y - a.y) * t;
+            point<T> r = {};
+            r[0] = a[0] + (b[0] - a[0]) * t;
+            r[1] = a[1] + (b[1] - a[1]) * t;
             return r;
         }
 
@@ -1448,10 +1480,10 @@ namespace jcv
             return vsegment.dot (vpoint) / vsegment.dot (vsegment);
         }
 
-        int clip_polygon_test_point (const clipper<T>* clipper, const point<T> p)
+        static int clip_polygon_test_point (const clipper<T>* clipper, const point<T> p)
         {
-            clipping_polygon<T>* polygon = (clipping_polygon<T>*)clipper->ctx; // reinterpret? why?
-            int num_points = polygon->num_points;
+            auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
+            int num_points = polygon->size();
 
             // convex polygon
             // winding CCW
@@ -1460,11 +1492,11 @@ namespace jcv
 
             int result = 1;
             for (int i = 0; i < num_points; ++i) {
-                point<T> p0 = polygon->points[i];
-                point<T> p1 = polygon->points[(i + 1) % num_points];
+                point<T> p0 = (*polygon)[i];
+                point<T> p1 = (*polygon)[(i + 1) % num_points];
                 point<T> n = {};
-                n.x = p1.y() - p0.y();
-                n.y = p0.x() - p1.x();
+                n[0] = p1.y() - p0.y();
+                n[1] = p0.x() - p1.x();
                 point<T> diff = p - p0;
 
                 if (n.dot (diff) > 0) {
@@ -1479,19 +1511,19 @@ namespace jcv
                                           point<T> p0, point<T> p1,
                                           T* out_t0, T* out_t1)
         {
-            clipping_polygon<T>* polygon = (clipping_polygon<T>*)clipper->ctx;
-            int num_points = polygon->num_points;
+            auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
+            int num_points = polygon->size();
 
             T t0 = T{0};
             T t1 = T{1};
             point<T> dir = p1 - p0;
 
             for (int i = 0; i < num_points; ++i) {
-                point<T> v0 = polygon->points[i];
-                point<T> v1 = polygon->points[(i+1)%num_points];
-                point<T> n;
-                n.x = v1.y - v0.y;
-                n.y = -(v1.x - v0.x);
+                point<T> v0 = (*polygon)[i];
+                point<T> v1 = (*polygon)[(i+1)%num_points];
+                point<T> n = {};
+                n[0] = v1.y() - v0.y();
+                n[1] = -(v1.x() - v0.x());
 
                 point<T> v0p0 = p0 - v0;
 
@@ -1517,10 +1549,10 @@ namespace jcv
             return 1;
         }
 
-        int clip_polygon_clip_edge (const clipper<T>* clipper, edge<T>* e)
+        static int clip_polygon_clip_edge (const clipper<T>* clipper, edge<T>* e)
         {
             // Using the box clipper to get a finite line segment
-            int result = manager<T>::boxshape_clip(clipper, e);
+            int result = manager<T>::boxshape_clip (clipper, e);
             if (!result) { return 0; }
 
             point<T> p0 = e->pos[0];
@@ -1535,25 +1567,24 @@ namespace jcv
                 return 0;
             }
 
-            e->pos[0] = mix<T> (p0, p1, t0);
-            e->pos[1] = mix<T> (p0, p1, t1);
+            e->pos[0] = mix (p0, p1, t0);
+            e->pos[1] = mix (p0, p1, t1);
             return 1;
         }
 
         // Find the edge which the point sits on
         static int find_polygon_edge (const clipper<T>* clipper, point<T> p)
         {
-            clipping_polygon<T>* polygon = (clipping_polygon<T>*)clipper->ctx;
-
+            auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
             int min_edge = -1;
             T min_dist = std::numeric_limits<T>::max();
-            int num_points = polygon->num_points;
+            int num_points = polygon->size();
             for (int i = 0; i < num_points; ++i)
             {
-                point<T> p0 = polygon->points[i];
+                point<T> p0 = (*polygon)[i];
                 if (p == p0) { return i; }
 
-                point<T> p1 = polygon->points[(i+1)%num_points];
+                point<T> p1 = (*polygon)[(i+1)%num_points];
                 point<T> vsegment = p1 - p0;
                 point<T> vpoint = p - p0;
 
@@ -1573,23 +1604,23 @@ namespace jcv
             return min_edge;
         }
 
-        void clip_polygon_fill_gaps (const clipper<T>* clipper,
-                                     context_internal<T>* allocator, site<T>* site)
+        static void clip_polygon_fill_gaps (const clipper<T>* clipper,
+                                            context_internal<T>* allocator, site<T>* site)
         {
             // They're sorted CCW, so if the current->pos[1] != next->pos[0], then we have a gap
-            clipping_polygon<T>* polygon = (clipping_polygon<T>*)clipper->ctx;
-            int num_points = polygon->num_points;
+            auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
+            int num_points = polygon->size();
 
             graphedge<T>* current = site->edges;
             if (!current) {
                 graphedge<T>* gap = alloc_graphedge (allocator);
                 gap->neighbor = 0;
                 // Pick the first edge of the polygon (which is also CCW)
-                gap->pos[0] = polygon->points[0];
-                gap->pos[1] = polygon->points[1];
-                gap->angle  = calc_sort_metric<T>(site, gap);
+                gap->pos[0] = (*polygon)[0];
+                gap->pos[1] = (*polygon)[1];
+                gap->angle  = calc_sort_metric (site, gap);
                 gap->next   = 0;
-                gap->edge   = create_gap_edge (allocator, site, gap);
+                gap->edge_  = create_gap_edge (allocator, site, gap);
 
                 current = gap;
                 site->edges = gap;
@@ -1599,19 +1630,19 @@ namespace jcv
             if (!next) {
                 graphedge<T>* gap = alloc_graphedge (allocator);
 
-                int polygon_edge = find_polygon_edge<T> (clipper, current->pos[1]);
-                if (!(current->pos[1] == polygon->points[(polygon_edge+1)%num_points])) {
+                int polygon_edge = find_polygon_edge (clipper, current->pos[1]);
+                if (!(current->pos[1] == (*polygon)[(polygon_edge+1)%num_points])) {
                     gap->pos[0] = current->pos[1];
-                    gap->pos[1] = polygon->points[(polygon_edge+1)%num_points];
+                    gap->pos[1] = (*polygon)[(polygon_edge+1)%num_points];
                 } else {
-                    gap->pos[0] = polygon->points[(polygon_edge+1)%num_points];
-                    gap->pos[1] = polygon->points[(polygon_edge+2)%num_points];
+                    gap->pos[0] = (*polygon)[(polygon_edge+1)%num_points];
+                    gap->pos[1] = (*polygon)[(polygon_edge+2)%num_points];
                 }
 
                 gap->neighbor   = 0;
-                gap->angle      = calc_sort_metric<T>(site, gap);
+                gap->angle      = calc_sort_metric (site, gap);
                 gap->next       = 0;
-                gap->edge       = create_gap_edge(allocator, site, gap);
+                gap->edge_      = create_gap_edge(allocator, site, gap);
 
                 gap->next = current->next;
                 current->next = gap;
@@ -1629,14 +1660,14 @@ namespace jcv
                     gap->pos[0] = current->pos[1];
 
                     if (polygon_edge1 != polygon_edge2) {
-                        gap->pos[1] = polygon->points[(polygon_edge1 + 1) % num_points];
+                        gap->pos[1] = (*polygon)[(polygon_edge1 + 1) % num_points];
                     } else {
                         gap->pos[1] = next->pos[0];
                     }
 
                     gap->neighbor   = 0;
                     gap->angle      = calc_sort_metric (site, gap);
-                    gap->edge       = create_gap_edge (allocator, site, gap);
+                    gap->edge_      = create_gap_edge (allocator, site, gap);
                     gap->next       = current->next;
                     current->next   = gap;
                 }

@@ -89,8 +89,12 @@ namespace mplot
                 this->dcoords_ptr = this->dataCoords;
             }
 
-            // Use mplot::range to find the extents of dataCoords. From these create a
-            // rectangle to pass to diagram_generate.
+            // Generate the 2D Voronoi diagram
+            jcv::manager<float> vorman;
+            vorman.border_width = this->border_width;
+
+            // Use mplot::range to find the extents of dataCoords. Helps to define boundary for test
+            // code.
             sm::range<float> rx, ry;
             rx.search_init();
             ry.search_init();
@@ -98,11 +102,18 @@ namespace mplot
                 rx.update ((*this->dcoords_ptr)[i][0]);
                 ry.update ((*this->dcoords_ptr)[i][1]);
             }
+            // Test triangle boundary
+            this->boundary.resize (3);
+            this->boundary[0] = { 2 * rx.min, 2 * ry.min };
+            this->boundary[1] = { rx.max - rx.min, 2 * ry.max };
+            this->boundary[2] = { 2 * rx.max, 2 * ry.min };
 
-            // Generate the 2D Voronoi diagram
-            jcv::manager<float> vorman;
-            vorman.border_width = this->border_width;
-            vorman.diagram_generate (*(dcoords_ptr));
+            if (this->boundary.size() > 0) {
+                vorman.diagram_generate (*(dcoords_ptr), this->boundary);
+            } else {
+                // default rectangular box boundary
+                vorman.diagram_generate (*(dcoords_ptr));
+            }
 
             // We obtain access to the Voronoi cell sites:
             const jcv::site<float>* sites = vorman.diagram_get_sites();
@@ -258,7 +269,8 @@ namespace mplot
                 }
             }
             if (static_cast<unsigned int>(vorman.diagram_numsites()) != ncoords) {
-                std::cout << "WARNING: numsites != ncoords ?!?!\n";
+                std::cout << "WARNING: numsites (" << vorman.diagram_numsites()
+                          << ") != ncoords (" << ncoords << ")?!?!\n";
             }
 
             // Draw optional objects
@@ -473,7 +485,8 @@ namespace mplot
         //! Record the data index for each Voronoi cell index
         sm::vvec<unsigned int> site_indices;
         unsigned int triangle_count_sum = 0;
-
+        // Polygon domain coordinates
+        std::vector<sm::vec<float>> boundary;
         //! Internally owned version of dataCoords after rotation
         std::vector<sm::vec<float>> dcoords;
         //! A pointer either to dcoords or this->dataCoords
