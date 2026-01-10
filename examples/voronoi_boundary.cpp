@@ -41,7 +41,8 @@ int main()
     v.bindmodel (vorv);
     vorv->show_voronoi2d = true; // true to show the 2D voronoi edges
     vorv->debug_dataCoords = true; // true to show coordinate spheres
-    float length_scale = 4.0f / std::sqrt (n_points);
+    //float length_scale = 4.0f / std::sqrt (n_points);
+    float length_scale = 0.2f;
     std::cout << "Setting border_width to length scale " << length_scale << std::endl;
     vorv->border_width = length_scale;
     vorv->cm.setType (cmap_t);
