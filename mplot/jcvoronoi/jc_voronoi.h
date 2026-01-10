@@ -46,6 +46,17 @@ namespace jcv
         point<T>      p;
         int           index;  // Index into the original list of points
         graphedge<T>* edges;  // The half edges owned by the cell
+#if 1
+        void cout_edges()
+        {
+            std::cout << "site " << index << " @ " << p << " has edges:\n";
+            graphedge<T>* e = edges;
+            while (e) {
+                std::cout << " " << e->str() << std::endl;
+                e = e->next;
+            }
+        }
+#endif
     };
 
     // The coefficients a, b and c are from the general line equation: ax * by + c = 0
@@ -68,6 +79,14 @@ namespace jcv
         struct site<T>*      neighbor;
         point<T>             pos[2];
         T                    angle;
+#if 1
+        std::string str()
+        {
+            std::stringstream ss;
+            ss << "graphedge with edge: " << edge_->pos[0] << "--" << edge_->pos[1];
+            return ss.str();
+        }
+#endif
     };
 
     template<typename T>
@@ -909,12 +928,14 @@ namespace jcv
                 edge2->y        = p[1] + point_dist (&_site->p, &p);
                 pq_push (internal->eventqueue, edge2);
             }
+
+            _site->cout_edges();
         }
 
         // https://cp-algorithms.com/geometry/oriented-triangle-area.html
         static T determinant (const point<T>* a, const point<T>* b, const point<T>* c)
         {
-            return (b->x() - a->x())*(c->y() - a->y()) - (b->y() - a->y())*(c->x() - a->x());
+            return (b->x() - a->x()) * (c->y() - a->y()) - (b->y() - a->y())*(c->x() - a->x());
         }
 
         static T calc_sort_metric (const site<T>* _site, const graphedge<T>* _edge)
@@ -1384,6 +1405,7 @@ namespace jcv
                     // In the case of all sites being all on a horizontal or vertical line, the
                     // rect area will be zero, and the diagram generation will most likely fail
                     rect_round(&tmp_rect);
+                    //throw std::runtime_error ("rect_inflate creates the 11 (10+1)");
                     rect_inflate(&tmp_rect, 10);
 
                     internal->clipper_.min = tmp_rect.min;
@@ -1412,6 +1434,7 @@ namespace jcv
                     lowest_pq_point[0] = he->vertex[0];
                     lowest_pq_point[1] = he->y;
                 }
+                std::cout << "lowest_pq_point = " << lowest_pq_point << std::endl;
 
                 if (site != 0 && (pq_empty(pq) || lessthan (&site->p, &lowest_pq_point))) {
                     site_event (internal, site);
@@ -1598,6 +1621,9 @@ namespace jcv
 
                 T t = vsegment.dot (vpoint) / vsegment.dot (vsegment);
 
+                // Comment this line out to see that it's not so much the fill function that's at
+                // fault, but the construction of the edges (with one edge going out to the
+                // rectangle boundary limit)
                 if (t < T{0} || t > T{1}) { continue; }
 
                 point<T> projected = p0 + vsegment * t;
@@ -1609,7 +1635,11 @@ namespace jcv
                 }
             }
 
+#if 1
+            if (min_edge == -1) { min_edge = 0; } // hack
+#else
             assert (min_edge >= 0);
+#endif
             return min_edge;
         }
 
@@ -1620,29 +1650,30 @@ namespace jcv
             auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
             int num_points = polygon->size();
 
-            graphedge<T>* current = site->edges;
-            if (!current) {
+            graphedge<T>* curr_graphedge = site->edges;
+            if (!curr_graphedge) {
+                std::cout << "Entered if (!curr_graphedge) block\n";
                 graphedge<T>* gap = alloc_graphedge (allocator);
                 gap->neighbor = 0;
                 // Pick the first edge of the polygon (which is also CCW)
-                gap->pos[0] = (*polygon)[0]; // ????
+                gap->pos[0] = (*polygon)[0];
                 gap->pos[1] = (*polygon)[1];
                 if (gap->pos[1][1] == 11) { std::cout << " bleurgh 0\n"; }
                 gap->angle  = calc_sort_metric (site, gap);
                 gap->next   = 0;
                 gap->edge_  = create_gap_edge (allocator, site, gap);
 
-                current = gap;
+                curr_graphedge = gap;
                 site->edges = gap;
             }
 
-            graphedge<T>* next = current->next;
+            graphedge<T>* next = curr_graphedge->next;
             if (!next) {
                 graphedge<T>* gap = alloc_graphedge (allocator);
 
-                int polygon_edge = find_polygon_edge (clipper, current->pos[1]);
-                if (!(current->pos[1] == (*polygon)[(polygon_edge + 1) % num_points])) {
-                    gap->pos[0] = current->pos[1];
+                int polygon_edge = find_polygon_edge (clipper, curr_graphedge->pos[1]);
+                if (!(curr_graphedge->pos[1] == (*polygon)[(polygon_edge + 1) % num_points])) {
+                    gap->pos[0] = curr_graphedge->pos[1];
                     gap->pos[1] = (*polygon)[(polygon_edge + 1) % num_points];
                     if (gap->pos[1][1] == 11) { std::cout << " bleurgh 1\n"; }
                 } else {
@@ -1656,22 +1687,22 @@ namespace jcv
                 gap->next       = 0;
                 gap->edge_      = create_gap_edge (allocator, site, gap);
 
-                gap->next = current->next;
-                current->next = gap;
-                current = gap;
+                gap->next = curr_graphedge->next;
+                curr_graphedge->next = gap;
+                curr_graphedge = gap;
                 next = site->edges;
             }
 
-            while (current && next) {
+            while (curr_graphedge && next) {
 
-                if (!(current->pos[1] == next->pos[0])) {
+                if (!(curr_graphedge->pos[1] == next->pos[0])) {
 
-                    int polygon_edge1 = find_polygon_edge (clipper, current->pos[1]);
+                    int polygon_edge1 = find_polygon_edge (clipper, curr_graphedge->pos[1]);
                     //std::cout << "3 fpe for p = next->pos[0] = " << next->pos[0] << std::endl;
                     int polygon_edge2 = find_polygon_edge (clipper, next->pos[0]);
 
                     graphedge<T>* gap = alloc_graphedge (allocator);
-                    gap->pos[0] = current->pos[1];
+                    gap->pos[0] = curr_graphedge->pos[1];
                     if (gap->pos[1][1] == 11) { std::cout << " bleurgh 3\n"; }
 
                     if (polygon_edge1 != polygon_edge2) {
@@ -1685,13 +1716,13 @@ namespace jcv
                     gap->neighbor   = 0;
                     gap->angle      = calc_sort_metric (site, gap);
                     gap->edge_      = create_gap_edge (allocator, site, gap);
-                    gap->next       = current->next;
-                    current->next   = gap;
+                    gap->next       = curr_graphedge->next;
+                    curr_graphedge->next   = gap;
                 }
 
-                current = current->next;
-                if (current) {
-                    next = current->next;
+                curr_graphedge = curr_graphedge->next;
+                if (curr_graphedge) {
+                    next = curr_graphedge->next;
                     if (!next) { next = site->edges; }
                 }
             }
