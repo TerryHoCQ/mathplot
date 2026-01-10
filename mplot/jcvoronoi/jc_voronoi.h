@@ -960,12 +960,19 @@ namespace jcv
         static void finishline (context_internal<T>* internal, edge<T>* e)
         {
 #if 1 // Here's something that needs to be dealt with:
-            if (e->pos[1][0] == std::numeric_limits<T>::lowest()) {
-                std::cout << "finishline Returning now, special case\n";
-                return;
+            // These just mean 'edge goes to infinity'
+            if (e->pos[1][0] == std::numeric_limits<T>::lowest()
+//                || e->pos[1][1] == std::numeric_limits<T>::lowest()
+//                || e->pos[0][0] == std::numeric_limits<T>::lowest()
+//                || e->pos[0][1] == std::numeric_limits<T>::lowest()
+                ) {
+                std::cout << "edge to infinity case\n";
             }
 #endif
-            if (!edge_clipline (internal, e)) { return; }
+            if (!edge_clipline (internal, e)) {
+                std::cout << "edge_clipline returned false. Returning now\n";
+                return;
+            }
 
             // Make sure the graph edges are CCW
             int flip = determinant (&e->sites[0]->p, &e->pos[0], &e->pos[1]) > T{0} ? 0 : 1;
