@@ -22,6 +22,7 @@
 #include <functional>
 #include <sm/mathconst>
 #include <sm/vec>
+#include <sm/vvec>
 #include <sm/geometry>
 #include <sm/winder>
 
@@ -120,19 +121,21 @@ namespace jcv
     struct clipper
     {
         // Tests if a point is inside the final shape
-        std::function<int(const clipper<T>* _clipper, const point<T> p)> test_fn;
+        std::function<int(/*const*/ clipper<T>* _clipper, const point<T> p)> test_fn;
         // Given an edge, and the clipper, calculates the e->pos[0] and e->pos[1]
         // Returns 0 if not successful
-        std::function<int(const clipper<T>* _clipper, edge<T>* e)>       clip_fn;
+        std::function<int(/*const*/ clipper<T>* _clipper, edge<T>* e)>       clip_fn;
         // Given the clipper, the site and the last edge,
         // closes any gaps in the polygon by adding new edges that follow the bounding shape
         // The internal context is use when allocating new edges.
-        std::function<void(const clipper<T>* _clipper,
+        std::function<void(/*const*/ clipper<T>* _clipper,
                            context_internal<T>* allocator, site<T>* s)>  fill_fn;
 
         point<T>     min;        // The bounding rect min
         point<T>     max;        // The bounding rect max
         void*        ctx;        // User defined context function
+
+        sm::vvec<jcv::point<T>>* danglers = nullptr;
     };
 
     // Second batch of structs
@@ -530,7 +533,7 @@ namespace jcv
         }
 
         // CLIPPING
-        static int boxshape_test (const clipper<T>* clipper, const point<T> p)
+        static int boxshape_test (/*const*/ clipper<T>* clipper, const point<T> p)
         {
             return p[0] >= clipper->min[0] && p[0] <= clipper->max[0]
             && p[1] >= clipper->min[1] && p[1] <= clipper->max[1];
@@ -538,7 +541,7 @@ namespace jcv
 
         // The line equation: ax + by + c = 0
         // see edge_create
-        static int boxshape_clip (const clipper<T>* clipper, edge<T>* e)
+        static int boxshape_clip (/*const*/ clipper<T>* clipper, edge<T>* e)
         {
             //std::cout << "boxshape clip edge " << e->pos[0] << "--" << e->pos[1]
             //          << " f = " << e->a << "x + " << e->b << "y + " << e->c << "..." << std::endl;
@@ -1058,7 +1061,7 @@ namespace jcv
             return edge;
         }
 
-        static void boxshape_fill (const clipper<T>* clipper, context_internal<T>* allocator, site<T>* site)
+        static void boxshape_fill (/*const*/ clipper<T>* clipper, context_internal<T>* allocator, site<T>* site)
         {
             // They're sorted CCW, so if the current->pos[1] != next->pos[0], then we have a gap
             graphedge<T>* current = site->edges;
@@ -1353,7 +1356,7 @@ namespace jcv
 
         // This version of diagram_generate allows the client to use a custom allocator
         static void diagram_generate_useralloc (int num_points, const point<T>* points,
-                                                const rect<T>* _rect, const clipper<T>* _clipper,
+                                                const rect<T>* _rect, /*const*/ clipper<T>* _clipper,
                                                 void* userallocctx, FJCVAllocFn allocfn, FJCVFreeFn freefn, diagram<T>* d)
         {
             if (d->internal) { diagram_free (d); }
@@ -1473,12 +1476,12 @@ namespace jcv
          * If rect is null, an automatic bounding box is calculated, with an extra padding of 10 units
          * All points will be culled against the bounding rect, and all edges will be clipped against it.
          */
-        static void diagram_generate (int num_points, const point<T>* points, const rect<T>* rect, const clipper<T>* clipper, diagram<T>* d)
+        static void diagram_generate (int num_points, const point<T>* points, const rect<T>* rect, /*const*/ clipper<T>* clipper, diagram<T>* d)
         {
             diagram_generate_useralloc (num_points, points, rect, clipper, 0, alloc_fn, free_fn, d);
         }
 
-        static void diagram_generate (int num_points, const point<T>* points, const clipper<T>* clipper, diagram<T>* d)
+        static void diagram_generate (int num_points, const point<T>* points, /*const*/ clipper<T>* clipper, diagram<T>* d)
         {
             diagram_generate_useralloc (num_points, points, 0,    clipper, 0, alloc_fn, free_fn, d);
         }
@@ -1514,13 +1517,17 @@ namespace jcv
             polygonclipper.clip_fn = &jcv::manager<T>::polygon_clip;
             polygonclipper.fill_fn = &jcv::manager<T>::polygon_fill;
             polygonclipper.ctx = &polygon;
+            polygonclipper.danglers = &this->danglers;
 
             jcv::manager<T>::diagram_generate (ncoords, centres.data(), &polygonclipper, &this->diagram);
+            std::cout << "After diagram_generate, polygon danglers; " << polygonclipper.danglers->size() << std::endl;
+            //this->danglers = polygonclipper.danglers;
         }
+        sm::vvec<jcv::point<T>> danglers = {}; // debug
 
         int diagram_numsites() const { return this->diagram.numsites; }
 
-        static int polygon_test (const clipper<T>* clipper, const point<T> p)
+        static int polygon_test (/*const*/ clipper<T>* clipper, const point<T> p)
         {
             auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
             int num_points = polygon->size();
@@ -1547,7 +1554,7 @@ namespace jcv
             return result;
         }
 
-        static int ray_intersect_polygon (const clipper<T>* clipper, point<T>& p0, point<T>& p1)
+        static int ray_intersect_polygon (/*const*/ clipper<T>* clipper, point<T>& p0, point<T>& p1)
         {
             auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
             int num_points = polygon->size();
@@ -1620,7 +1627,7 @@ namespace jcv
             return 1;
         }
 
-        static int polygon_clip (const clipper<T>* clipper, edge<T>* e)
+        static int polygon_clip (/*const*/ clipper<T>* clipper, edge<T>* e)
         {
             // std::cout << std::endl << __func__ << " called for edge e from " << e->pos[0] << " to " << e->pos[1] << std::endl;
 
@@ -1666,12 +1673,12 @@ namespace jcv
         }
 
         // Find the edge which the point p sits on
-        static int find_polygon_edge (const clipper<T>* clipper, point<T> p)
+        static int find_polygon_edge (/*const*/ clipper<T>* clipper, point<T> p)
         {
-            std::cout << __func__ << ": called for point "  << p << std::endl;
+            // std::cout << __func__ << ": called for point "  << p << std::endl;
             if (std::isnan(p[2])) {
                 // Replace nan. Whence nan?
-                std::cout << "Replacing a nan which can cause this function to fail\n";
+                // std::cout << "Replacing a nan which can cause this function to fail\n";
                 p[2] = T{0};
             }
 
@@ -1684,7 +1691,7 @@ namespace jcv
                 point<T> p0 = (*polygon)[i];
                 if (p == p0) { return i; }
 
-                point<T> p1 = (*polygon)[(i+1)%num_points];
+                point<T> p1 = (*polygon)[(i + 1) % num_points];
                 point<T> vsegment = p1 - p0;
                 point<T> vpoint = p - p0;
 
@@ -1705,10 +1712,10 @@ namespace jcv
             return min_edge;
         }
 
-        static void polygon_fill (const clipper<T>* clipper,
+        static void polygon_fill (/*const*/ clipper<T>* clipper,
                                   context_internal<T>* allocator, site<T>* site)
         {
-            std::cout << __func__ << " called for site " << site->index << "@" << site->p << std::endl;
+            //std::cout << __func__ << " called for site " << site->index << "@" << site->p << std::endl;
 
             // They're sorted CCW, so if the current->pos[1] != next->pos[0], then we have a gap
             auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
@@ -1758,18 +1765,25 @@ namespace jcv
             int loopcount = 0;
             while (curr_graphedge && next) {
 
+                clipper->danglers->push_back (curr_graphedge->pos[0]);
                 if (!(
                         curr_graphedge->pos[1][0] == next->pos[0][0])
                         && curr_graphedge->pos[1][1] == next->pos[0][1]
                     ) {
 
-                    //std::cout << curr_graphedge->pos[1] << " != " << next->pos[0] << ", apparently\n";
+                    std::cout << curr_graphedge->pos[0].str_comma_separated() << ";" << std::endl;
+                    // Add to memory so that I can debug!
+                    //clipper->danglers->push_back (curr_graphedge->pos[0]);
 
-                    //std::cout << "1 find_polygon_edge for p = curr_graphedge->pos[1] = " << curr_graphedge->pos[1] << std::endl;
                     int polygon_edge1 = find_polygon_edge (clipper, curr_graphedge->pos[1]);
-                    //std::cout << "2 find_polygon_edge for p = next->pos[0] = " << next->pos[0] << std::endl;
                     int polygon_edge2 = find_polygon_edge (clipper, next->pos[0]);
 
+                    if (polygon_edge1 != polygon_edge2) {
+                        std::cout << "1 find_polygon_edge for p = curr_graphedge->pos[1] = " << curr_graphedge->pos[1] << " got edge " << polygon_edge1 << std::endl;
+                        std::cout << "2 find_polygon_edge for p = next->pos[0] = " << next->pos[0] << " got edge " << polygon_edge2 << std::endl;
+                    }
+
+                    // Creating a new edge...
                     graphedge<T>* gap = alloc_graphedge (allocator);
                     gap->pos[0] = curr_graphedge->pos[1];
 
@@ -1785,18 +1799,16 @@ namespace jcv
                     gap->angle      = calc_sort_metric (site, gap);
                     gap->edge_      = create_gap_edge (allocator, site, gap);
                     gap->next       = curr_graphedge->next;
-                    std::cout << "Added a gap\n";
                     curr_graphedge->next   = gap;
                 }
 
                 curr_graphedge = curr_graphedge->next;
                 if (curr_graphedge) {
                     next = curr_graphedge->next;
-                    if (!next) {
-                        next = site->edges;
-                    }
+                    if (!next) { next = site->edges; }
                 }
-                if (++loopcount >= loopcount_thresh) { throw std::runtime_error ("Kaboom (too many loops)"); }
+                ++loopcount;
+                if (loopcount >= loopcount_thresh) { throw std::runtime_error ("Kaboom (too many loops)"); }
 
             }
         }

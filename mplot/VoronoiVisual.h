@@ -370,6 +370,13 @@ namespace mplot
                         this->computeSphere (b * this->zoom, mplot::colour::dodgerblue2, 3.0f * this->dataCoord_sphere_size);
                     }
                 }
+                for (auto dngl : vorman.danglers) {
+                    this->computeSphere (dngl * this->zoom, mplot::colour::springgreen2, 4.0f * this->dataCoord_sphere_size);
+                    // label?
+                    // Draw an index label...
+                    this->addLabel (dngl.str(), dngl * this->zoom + labelOffset, mplot::TextFeatures(labelSize) );
+
+                }
             }
         }
 
