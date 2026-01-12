@@ -8,6 +8,7 @@
 #include <sm/vec>
 #include <sm/vvec>
 #include <sm/scale>
+#include <sm/centroid>
 #include <mplot/VisualModel.h>
 #include <mplot/ColourMap.h>
 
@@ -140,6 +141,8 @@ namespace mplot
             this->vectorData = _vectors;
             this->reinit();
         }
+
+        sm::vec<float> coordsCentroid() const { return sm::algo::centroid (*this->dataCoords); }
 
         //! An overridable function to set the colour of rect ri
         std::array<float, 3> setColour (uint64_t ri)

@@ -22,6 +22,7 @@
 #include <functional>
 #include <sm/mathconst>
 #include <sm/vec>
+#include <sm/geometry>
 
 #ifndef JCV_EDGE_INTERSECT_THRESHOLD
     // Fix for Issue #40
@@ -538,6 +539,7 @@ namespace jcv
         // see edge_create
         static int boxshape_clip (const clipper<T>* clipper, edge<T>* e)
         {
+            std::cout << "boxshape clip edge " << e->pos[0] << "--" << e->pos[1] << "..." << std::endl;
             T pxmin = clipper->min[0];
             T pxmax = clipper->max[0];
             T pymin = clipper->min[1];
@@ -565,11 +567,11 @@ namespace jcv
                 if (y2 < pymin) { y2 = pymin; }
                 x2 = (e->c) - (e->b) * y2;
                 // Never occurs according to lcov
-                if (((x1 > pxmax) & (x2 > pxmax)) | ((x1 < pxmin) & (x2 < pxmin)))
-                {
-                    std::cout << "Yes it fucking does" << std::endl;
-                    return 0;
-                }
+                //if (((x1 > pxmax) & (x2 > pxmax)) | ((x1 < pxmin) & (x2 < pxmin)))
+                //{
+                //    std::cout << "Yes it does" << std::endl;
+                //    return 0;
+                //}
                 if (x1 > pxmax) {
                     x1 = pxmax;
                     y1 = (e->c - x1) / e->b;
@@ -596,10 +598,10 @@ namespace jcv
                 if (x2 < pxmin) { x2 = pxmin; }
                 y2 = e->c - e->a * x2;
                 // Never occurs according to lcov
-                if (((y1 > pymax) & (y2 > pymax)) | ((y1 < pymin) & (y2 < pymin))) {
-                    std::cout << "Yes it fucking does" << std::endl;
-                    return 0;
-                }
+                //if (((y1 > pymax) & (y2 > pymax)) | ((y1 < pymin) & (y2 < pymin))) {
+                //    std::cout << "Yes it does" << std::endl;
+                //    return 0;
+                //}
                 if (y1 > pymax) {
                     y1 = pymax;
                     x1 = (e->c - y1) / e->a;
@@ -621,6 +623,8 @@ namespace jcv
             e->pos[1][0] = x2;
             e->pos[1][1] = y2;
 
+            std::cout << "After boxshape_clip, e is " << e->pos[0] << "--" << e->pos[1] << std::endl;
+
             // If the two points are equal, the result is invalid
             return (x1 == x2 && y1 == y2) ? 0 : 1;
         }
@@ -629,7 +633,6 @@ namespace jcv
         // see edge_create
         static int edge_clipline (context_internal<T>* internal, edge<T>* e)
         {
-            std::cout << "edge_clipline calling clip_fn...\n";
             return internal->clipper_.clip_fn (&internal->clipper_, e);
         }
 
@@ -929,7 +932,7 @@ namespace jcv
                 pq_push (internal->eventqueue, edge2);
             }
 
-            _site->cout_edges();
+            // _site->cout_edges(); // seems to output no edges?
         }
 
         // https://cp-algorithms.com/geometry/oriented-triangle-area.html
@@ -980,20 +983,20 @@ namespace jcv
 
         static void finishline (context_internal<T>* internal, edge<T>* e)
         {
-#if 1 // Here's something that needs to be dealt with:
+#if 0 // Here's something that needs to be dealt with:
+            std::cout << "finishline for edge " << e->pos[0] << "--" << e->pos[1] << std::endl;
+            bool etoi = false;
             // These just mean 'edge goes to infinity'
             if (e->pos[1][0] == std::numeric_limits<T>::lowest()
-//                || e->pos[1][1] == std::numeric_limits<T>::lowest()
-//                || e->pos[0][0] == std::numeric_limits<T>::lowest()
-//                || e->pos[0][1] == std::numeric_limits<T>::lowest()
+                || e->pos[1][1] == std::numeric_limits<T>::lowest()
+                || e->pos[0][0] == std::numeric_limits<T>::lowest()
+                || e->pos[0][1] == std::numeric_limits<T>::lowest()
                 ) {
                 std::cout << "edge to infinity case\n";
+                etoi = true;
             }
 #endif
-            if (!edge_clipline (internal, e)) {
-                std::cout << "edge_clipline returned false. Returning now\n";
-                return;
-            }
+            if (!edge_clipline (internal, e)) { return; }
 
             // Make sure the graph edges are CCW
             int flip = determinant (&e->sites[0]->p, &e->pos[0], &e->pos[1]) > T{0} ? 0 : 1;
@@ -1006,6 +1009,7 @@ namespace jcv
                 ge->pos[flip] = e->pos[i];
                 ge->pos[1-flip] = e->pos[1-i];
                 ge->angle = calc_sort_metric(e->sites[i], ge);
+
                 sortedges_insert (e->sites[i], ge);
             }
         }
@@ -1535,7 +1539,12 @@ namespace jcv
 
         static int ray_intersect_polygon (const clipper<T>* clipper,
                                           const point<T> p0, const point<T> p1,
-                                          T* out_t0, T* out_t1)
+#if 0
+                                          T* out_t0, T* out_t1
+#else
+                                          point<T>* out
+#endif
+            )
         {
             auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
             int num_points = polygon->size();
@@ -1544,9 +1553,32 @@ namespace jcv
             T t1 = T{1};
             point<T> dir = p1 - p0;
 
+#if 1
+            // First wind to find out if p0 or p1 is inside clipper's boundary?
+
             for (int i = 0; i < num_points; ++i) {
                 point<T> v0 = (*polygon)[i];
-                point<T> v1 = (*polygon)[(i+1)%num_points];
+                point<T> v1 = (*polygon)[(i + 1) % num_points];
+
+                // find crossing point of v0,v1 and p0,p1
+                std::bitset<2> isect = sm::geometry::segments_intersect (v0, v1, p0, p1);
+                if (isect.test(0) == true) {
+                    // lines intersect. Find intersection point
+                    sm::vec<T, 2> cp = sm::geometry::crossing_point (v0, v1, p0, p1);
+                    *out = { cp[0], cp[1], T{0} };
+                } else {
+                    if (isect.test(1) == true) {
+                        // lines co-linear
+                    }
+                }
+            }
+#else
+            // Need to re-write this loop, I reckon.
+            for (int i = 0; i < num_points; ++i) {
+                point<T> v0 = (*polygon)[i];
+                point<T> v1 = (*polygon)[(i + 1) % num_points];
+                //old code
+                std::cout << "  v = [" << v0.str_comma_separated() << "; " << v1.str_comma_separated() << "]; plot (v(:,1),v(:,2), 'o-r');" << std::endl;
                 point<T> n = {};
                 n[0] = v1.y() - v0.y();
                 n[1] = -(v1.x() - v0.x());
@@ -1570,36 +1602,45 @@ namespace jcv
                 }
             }
 
+            std::cout << "returning t0 = " << t0 << ", t1 = " << t1 << std::endl;
             *out_t0 = t0;
             *out_t1 = t1;
+#endif
             return 1;
         }
 
         static int polygon_clip (const clipper<T>* clipper, edge<T>* e)
         {
-            std::cout << __func__ << " called for edge e from " << e->pos[0] << " to " << e->pos[1] << std::endl;
+            std::cout << std::endl << __func__ << " called for edge e from " << e->pos[0] << " to " << e->pos[1] << std::endl;
 
             // Using the box clipper to get a finite line segment
             int result = manager<T>::boxshape_clip (clipper, e);
             if (!result) { return 0; }
 
+            // The rest of this function isn't doing the additional clipping necessary
             point<T> p0 = e->pos[0];
             point<T> p1 = e->pos[1];
 
             T t0 = T{0};
             T t1 = T{0};
-            result = ray_intersect_polygon (clipper, p0, p1, &t0, &t1);
+            point<T> out = {};
+            std::cout << __func__ << ": ray_intersect_polygon for " << p0 << " to " << p1 << std::endl;
+            result = ray_intersect_polygon (clipper, p0, p1, &out); // &t0, &t1);
+            std::cout << __func__ << ": ray_intersect_polygon returned " << result << std::endl;
 
             if (!result) {
                 e->pos[0] = e->pos[1];
                 return 0;
             }
 
+            std::cout << "set e->pos[0] to mix with t0 = " << t0 << std::endl;
             e->pos[0] = mix (p0, p1, t0);
+            std::cout << "set e->pos[1] to mix with t1 = " << t1 << std::endl;
             e->pos[1] = mix (p0, p1, t1);
+            std::cout << "e->pos[0] = " << e->pos[0] << ", " <<  "e->pos[1] = " << e->pos[1] << "\n";
             if (e->pos[1][1] == 11) {
                 std::cout << "Yikes e->pos[1] = " << e->pos[1] << "\n";
-                std::cout << "mix (" << p0 << ", " << p1 << "," << t1 << ") was the culprit\n";
+                //std::cout << "mix (" << p0 << ", " << p1 << "," << t1 << ") was the culprit\n";
             }
             return 1;
         }
@@ -1636,7 +1677,7 @@ namespace jcv
             }
 
 #if 1
-            if (min_edge == -1) { min_edge = 0; } // hack
+            if (min_edge == -1) { min_edge = 0; } // hack, to avoid crash in polygon_fill
 #else
             assert (min_edge >= 0);
 #endif

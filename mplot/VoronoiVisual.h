@@ -73,6 +73,8 @@ namespace mplot
 
             this->setupScaling();
 
+            std::cout << "Data coords centroid is " << this->coordsCentroid() << std::endl;;
+
             sm::quaternion<float> rq;
             if (this->data_z_direction != sm::vec<>::uz()) {
                 // Find the rotation between data_z_direction and uz
@@ -94,6 +96,23 @@ namespace mplot
             vorman.border_width = this->border_width;
 
             if (this->rectangular_domain == false) {
+#if 1
+                sm::vec<> cent = this->coordsCentroid();
+                sm::vec<float, 2> cent2 = {cent[0], cent[1]};
+                sm::vvec<float> lengths (this->dcoords_ptr->size(), 0.0f);
+                for (unsigned int i = 0; i < this->dcoords_ptr->size(); ++i) {
+                    sm::vec<float, 2> c = (*this->dcoords_ptr)[i].less_one_dim() - cent2;
+                    lengths[i] = c.length();
+                }
+                float max_len = lengths.max();
+                // Points MUST be in anti-clockwise order!!!!!
+                this->boundary.resize (this->num_boundary_points, cent2.plus_one_dim());
+                float l = max_len + this->border_width;
+                for (unsigned int i = 0; i < this->num_boundary_points; ++i) {
+                    float ang = i * sm::mathconst<float>::two_pi / this->num_boundary_points;
+                    this->boundary[i] += { l * std::cos (ang), l * std::sin (ang) };
+                }
+#else
                 // Then we make up a perimeter to be our boundary
                 sm::vvec<float> max_lengths;
                 max_lengths.resize (this->num_boundary_points, 0.0f);
@@ -114,6 +133,7 @@ namespace mplot
                     float ang = i * sm::mathconst<float>::two_pi / this->num_boundary_points;
                     this->boundary[i] = { l * std::cos (ang), l * std::sin (ang) };
                 }
+#endif
             }
             for (auto b : this->boundary) {
                 std::cout << "Boundary point: " << b << std::endl;
@@ -363,6 +383,16 @@ namespace mplot
                 for (unsigned int i = 0; i < ncoords; ++i) {
                     this->computeSphere ((*this->dataCoords)[i] * this->zoom, mplot::colour::black, this->dataCoord_sphere_size);
                 }
+                bool first = true;
+                for (auto b : this->boundary) {
+                    std::cout << "Debug boundary point at " << b << std::endl;
+                    if (first) {
+                        this->computeSphere (b * this->zoom, mplot::colour::crimson, 4.0f * this->dataCoord_sphere_size);
+                        first = false;
+                    } else {
+                        this->computeSphere (b * this->zoom, mplot::colour::dodgerblue2, 3.0f * this->dataCoord_sphere_size);
+                    }
+                }
             }
         }
 
@@ -457,8 +487,6 @@ namespace mplot
         bool debug_dataCoords = false;
         //! The size of the black spheres are dataCoord locations
         float dataCoord_sphere_size = 0.008f;
-
-
         //! What direction should be considered 'z' when converting the data into a voronoi diagram?
         //! The data values will be rotated before the Voronoi pass, then rotated back.
         sm::vec<float> data_z_direction = sm::vec<>::uz();
@@ -467,6 +495,10 @@ namespace mplot
         //! datacoordinate ranges. This defaults to epsilon to give the best possible
         //! surface with a rectangular grid.
         float border_width = std::numeric_limits<float>::epsilon();
+        // Create a rectangular domain or use a smoother boundary?
+        bool rectangular_domain = false;
+        // When making the boundary, how many points? Or use some f (dcoords.size())?
+        unsigned int num_boundary_points = 12;
 
         // Do we add index labels?
         bool labelIndices = false;
@@ -504,10 +536,6 @@ namespace mplot
         //! Record the data index for each Voronoi cell index
         sm::vvec<unsigned int> site_indices;
         unsigned int triangle_count_sum = 0;
-        // Create a rectangular domain or use a smoother boundary?
-        bool rectangular_domain = false;
-        // When making the boundary, how many points? Or use some f (dcoords.size())?
-        unsigned int num_boundary_points = 12;
         // Polygon domain coordinates
         std::vector<sm::vec<float>> boundary;
         //! Internally owned version of dataCoords after rotation

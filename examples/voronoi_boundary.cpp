@@ -14,7 +14,7 @@
 #include <mplot/Visual.h>
 #include <mplot/VoronoiVisual.h>
 
-static constexpr int n_points = 60;
+static constexpr int n_points = 13;
 
 int main()
 {
@@ -42,9 +42,18 @@ int main()
     vorv->show_voronoi2d = true; // true to show the 2D voronoi edges
     vorv->debug_dataCoords = true; // true to show coordinate spheres
     //float length_scale = 4.0f / std::sqrt (n_points);
-    float length_scale = 0.1f;
+#if 0
+    // rectangular
+    float length_scale = 12.0f;
+    vorv->rectangular_domain = true;
+#else
+    // polygonal
+    float length_scale = 1.0f;
+    vorv->rectangular_domain = false;
+#endif
     std::cout << "Setting border_width to length scale " << length_scale << std::endl;
     vorv->border_width = length_scale;
+
     vorv->cm.setType (cmap_t);
     vorv->setDataCoords (&points);
     vorv->setScalarData (&data);
