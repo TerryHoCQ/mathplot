@@ -1778,10 +1778,10 @@ namespace jcv
                     int polygon_edge1 = find_polygon_edge (clipper, curr_graphedge->pos[1]);
                     int polygon_edge2 = find_polygon_edge (clipper, next->pos[0]);
 
-                    if (polygon_edge1 != polygon_edge2) {
-                        std::cout << "1 find_polygon_edge for p = curr_graphedge->pos[1] = " << curr_graphedge->pos[1] << " got edge " << polygon_edge1 << std::endl;
-                        std::cout << "2 find_polygon_edge for p = next->pos[0] = " << next->pos[0] << " got edge " << polygon_edge2 << std::endl;
-                    }
+                    //if (polygon_edge1 != polygon_edge2) {
+                    std::cout << "1 find_polygon_edge for p = curr_graphedge->pos[1] = " << curr_graphedge->pos[1] << " got edge " << polygon_edge1 << std::endl;
+                    std::cout << "2 find_polygon_edge for p = next->pos[0] = " << next->pos[0] << " got edge " << polygon_edge2 << std::endl;
+                    //}
 
                     // Creating a new edge...
                     graphedge<T>* gap = alloc_graphedge (allocator);
@@ -1792,8 +1792,10 @@ namespace jcv
                         gap->pos[1] = (*polygon)[(polygon_edge1 + 1) % num_points];
                     } else {
                         std::cout << "gap->pos[1] is next->pos[0]\n";
-                        gap->pos[1] = next->pos[0];
+                        gap->pos[1] = next->pos[0]; // always this
                     }
+
+                    std::cout << "New gap from " << gap->pos[0] << "--" << gap->pos[1] << std::endl;
 
                     gap->neighbor   = 0;
                     gap->angle      = calc_sort_metric (site, gap);
