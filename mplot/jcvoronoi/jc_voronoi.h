@@ -1716,13 +1716,11 @@ namespace jcv
 
             graphedge<T>* curr_graphedge = site->edges;
             if (!curr_graphedge) {
-                std::cout << "Entered if (!curr_graphedge) block\n";
                 graphedge<T>* gap = alloc_graphedge (allocator);
                 gap->neighbor = 0;
                 // Pick the first edge of the polygon (which is also CCW)
                 gap->pos[0] = (*polygon)[0];
                 gap->pos[1] = (*polygon)[1];
-                if (gap->pos[1][1] == 11) { std::cout << " bleurgh 0\n"; }
                 gap->angle  = calc_sort_metric (site, gap);
                 gap->next   = 0;
                 gap->edge_  = create_gap_edge (allocator, site, gap);
@@ -1733,17 +1731,16 @@ namespace jcv
 
             graphedge<T>* next = curr_graphedge->next;
             if (!next) {
+                std::cout << "ENTERED\n";
                 graphedge<T>* gap = alloc_graphedge (allocator);
 
                 int polygon_edge = find_polygon_edge (clipper, curr_graphedge->pos[1]);
                 if (!(curr_graphedge->pos[1] == (*polygon)[(polygon_edge + 1) % num_points])) {
                     gap->pos[0] = curr_graphedge->pos[1];
                     gap->pos[1] = (*polygon)[(polygon_edge + 1) % num_points];
-                    if (gap->pos[1][1] == 11) { std::cout << " bleurgh 1\n"; }
                 } else {
                     gap->pos[0] = (*polygon)[(polygon_edge + 1) % num_points];
                     gap->pos[1] = (*polygon)[(polygon_edge + 2) % num_points];
-                    if (gap->pos[1][1] == 11) { std::cout << " bleurgh 2\n"; }
                 }
 
                 gap->neighbor   = 0;
@@ -1766,19 +1763,21 @@ namespace jcv
                         && curr_graphedge->pos[1][1] == next->pos[0][1]
                     ) {
 
-                    std::cout << curr_graphedge->pos[1] << " != " << next->pos[0] << ", apparently\n";
+                    //std::cout << curr_graphedge->pos[1] << " != " << next->pos[0] << ", apparently\n";
 
-                    std::cout << "1 find_polygon_edge for p = curr_graphedge->pos[1] = " << curr_graphedge->pos[1] << std::endl;
+                    //std::cout << "1 find_polygon_edge for p = curr_graphedge->pos[1] = " << curr_graphedge->pos[1] << std::endl;
                     int polygon_edge1 = find_polygon_edge (clipper, curr_graphedge->pos[1]);
-                    std::cout << "2 find_polygon_edge for p = next->pos[0] = " << next->pos[0] << std::endl;
+                    //std::cout << "2 find_polygon_edge for p = next->pos[0] = " << next->pos[0] << std::endl;
                     int polygon_edge2 = find_polygon_edge (clipper, next->pos[0]);
 
                     graphedge<T>* gap = alloc_graphedge (allocator);
                     gap->pos[0] = curr_graphedge->pos[1];
 
                     if (polygon_edge1 != polygon_edge2) {
+                        std::cout << "gap->pos[1] is from the polygon (polygon_edge1 != polygon_edge2)\n";
                         gap->pos[1] = (*polygon)[(polygon_edge1 + 1) % num_points];
                     } else {
+                        std::cout << "gap->pos[1] is next->pos[0]\n";
                         gap->pos[1] = next->pos[0];
                     }
 
@@ -1786,6 +1785,7 @@ namespace jcv
                     gap->angle      = calc_sort_metric (site, gap);
                     gap->edge_      = create_gap_edge (allocator, site, gap);
                     gap->next       = curr_graphedge->next;
+                    std::cout << "Added a gap\n";
                     curr_graphedge->next   = gap;
                 }
 
