@@ -540,8 +540,8 @@ namespace jcv
         // see edge_create
         static int boxshape_clip (const clipper<T>* clipper, edge<T>* e)
         {
-            std::cout << "boxshape clip edge " << e->pos[0] << "--" << e->pos[1]
-                      << " f = " << e->a << "x + " << e->b << "y + " << e->c << "..." << std::endl;
+            //std::cout << "boxshape clip edge " << e->pos[0] << "--" << e->pos[1]
+            //          << " f = " << e->a << "x + " << e->b << "y + " << e->c << "..." << std::endl;
             T pxmin = clipper->min[0];
             T pxmax = clipper->max[0];
             T pymin = clipper->min[1];
@@ -625,7 +625,7 @@ namespace jcv
             e->pos[1][0] = x2;
             e->pos[1][1] = y2;
 
-            std::cout << "After boxshape_clip, e is " << e->pos[0] << "--" << e->pos[1] << std::endl;
+            //std::cout << "After boxshape_clip, e is " << e->pos[0] << "--" << e->pos[1] << std::endl;
 
             // If the two points are equal, the result is invalid
             return (x1 == x2 && y1 == y2) ? 0 : 1;
@@ -991,7 +991,7 @@ namespace jcv
             } else if (er == 2) {
                 // remove e
                 std::cout << "finishline: Remove that edge\n";
-                return 1; // 1 means remove
+                return 2; // 2 means remove
             }
 
 
@@ -1018,8 +1018,8 @@ namespace jcv
         {
             e->pos[direction] = *p;
             if (!is_valid(&e->pos[1 - direction])) { return; }
-            if (finishline (internal, e)) {
-                std::cout << __func__ << ": finishline returned 1; remove e?" << std::endl;
+            if (finishline (internal, e) == 2) {
+                std::cout << __func__ << ": finishline returned 2; remove e?" << std::endl;
             }
         }
 
@@ -1441,7 +1441,6 @@ namespace jcv
                     lowest_pq_point[0] = he->vertex[0];
                     lowest_pq_point[1] = he->y;
                 }
-                std::cout << "lowest_pq_point = " << lowest_pq_point << std::endl;
 
                 if (site != 0 && (pq_empty(pq) || lessthan (&site->p, &lowest_pq_point))) {
                     site_event (internal, site);
@@ -1454,18 +1453,18 @@ namespace jcv
             }
 
             for (halfedge<T>* he = internal->beachline_start->right; he != internal->beachline_end; he = he->right) {
-                if (finishline (internal, he->edge_) == 1) {
-                    std::cout << __func__ << ": finishline returned 1; remove he" << std::endl;
+                if (finishline (internal, he->edge_) == 2) {
+                    std::cout << __func__ << ": finishline returned 2; remove he?" << std::endl;
 #if 0
                     he->left->right = he->right;
                     he->right->left = he->left;
                     he = he->left; // to go right again
 #endif
-                }
+                } // else, presumably it worked
             }
 
-            std::cout << "\n\n\n\nFILLGAPS\n\n";
-            fillgaps (d);
+            //std::cout << "\n\n\n\nFILLGAPS\n\n";
+            //fillgaps (d);
         }
 
         /**
@@ -1548,20 +1547,11 @@ namespace jcv
             return result;
         }
 
-#define NEWRAY 1
-        static int ray_intersect_polygon (const clipper<T>* clipper,
-#ifdef NEWRAY
-                                          point<T>& p0, point<T>& p1
-#else
-                                          const point<T> p0, const point<T> p1,
-                                          T* out_t0, T* out_t1
-#endif
-            )
+        static int ray_intersect_polygon (const clipper<T>* clipper, point<T>& p0, point<T>& p1)
         {
             auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
             int num_points = polygon->size();
 
-#ifdef NEWRAY
             // First wind to find out if p0 or p1 is inside clipper's boundary?
             std::vector<sm::vec<T, 2>> poly2d (num_points);
             for (int i = 0; i < num_points; ++i) {
@@ -1572,8 +1562,8 @@ namespace jcv
             sm::winder w (poly2d);
             int w_p0 = w.wind (p0.less_one_dim());
             int w_p1 = w.wind (p1.less_one_dim());
-            std::cout << "p0 winding number is " << w_p0 << std::endl;
-            std::cout << "p1 winding number is " << w_p1 << std::endl;
+            //std::cout << "p0 winding number is " << w_p0 << std::endl;
+            //std::cout << "p1 winding number is " << w_p1 << std::endl;
 
             if (w_p0 == 0 && w_p1 == 0) {
                 // Both outside means remove this edge.
@@ -1603,19 +1593,19 @@ namespace jcv
                     sm::vec<T, 2> cp = sm::geometry::crossing_point (v0, v1, p0.less_one_dim(), p1.less_one_dim());
 
                     if (w_p0 != 0) { // p0 inside, p1 outside
-                        std::cout << "Updating p1 from " << p1 << " ";
+                        //std::cout << "Updating p1 from " << p1 << " ";
                         p1[0] = cp[0];
                         p1[1] = cp[1];
-                        std::cout << " to " << p1 << std::endl;
+                        //std::cout << " to " << p1 << std::endl;
                         changed_p = true;
                     } else if (w_p1 != 0) {
-                        std::cout << "Updating p0 from " << p0 << " ";
+                        //std::cout << "Updating p0 from " << p0 << " ";
                         p0[0] = cp[0];
                         p0[1] = cp[1];
-                        std::cout << " to " << p0 << std::endl;
+                        //std::cout << " to " << p0 << std::endl;
                         changed_p = true;
                     } else {
-                        std::cout << "Neither p0 nor p1 were inside the polygon?\n";
+                        //std::cout << "Neither p0 nor p1 were inside the polygon?\n";
                         return 0;
                     }
                 } else {
@@ -1628,49 +1618,11 @@ namespace jcv
             }
             // return changed_p == true ? 1 : 0;
             return 1;
-#else
-            T t0 = T{0};
-            T t1 = T{1};
-            point<T> dir = p1 - p0;
-            // Need to re-write this loop, I reckon.
-            for (int i = 0; i < num_points; ++i) {
-                point<T> v0 = (*polygon)[i];
-                point<T> v1 = (*polygon)[(i + 1) % num_points];
-                //old code
-                std::cout << "  v = [" << v0.str_comma_separated() << "; " << v1.str_comma_separated() << "]; plot (v(:,1),v(:,2), 'o-r');" << std::endl;
-                point<T> n = {};
-                n[0] = v1.y() - v0.y();
-                n[1] = -(v1.x() - v0.x());
-
-                point<T> v0p0 = p0 - v0;
-
-                T N = -v0p0.dot (n);
-                T D = dir.dot (n);
-                if (std::abs(D) < T{0.0001}) { // parallel to the line
-                    if (N < T{0}) { return 0; }
-                    continue;
-                }
-
-                T t = N / D;
-                if (D < T{0}) { // -> entering
-                    t0 = t > t0 ? t : t0;
-                    if (t0 > t1) { return 0; }
-                } else { // D > 0 -> exiting
-                    t1 = t < t1 ? t : t1;
-                    if (t1 < t0) { return 0; }
-                }
-            }
-
-            std::cout << "returning t0 = " << t0 << ", t1 = " << t1 << std::endl;
-            *out_t0 = t0;
-            *out_t1 = t1;
-            return 1;
-#endif
         }
 
         static int polygon_clip (const clipper<T>* clipper, edge<T>* e)
         {
-            std::cout << std::endl << __func__ << " called for edge e from " << e->pos[0] << " to " << e->pos[1] << std::endl;
+            // std::cout << std::endl << __func__ << " called for edge e from " << e->pos[0] << " to " << e->pos[1] << std::endl;
 
             // Using the box clipper to get a finite line segment
             int result = manager<T>::boxshape_clip (clipper, e);
@@ -1679,8 +1631,8 @@ namespace jcv
                 return 0;
             }
 
-            // Return here for sanity check
-            //return 1;
+            // Return here for sanity check on the polygon clipping
+            // return 1;
 
             if (result == 2) {
                 std::cout << "Remove edge " << e->pos[0] << "--" << e->pos[1] << std::endl;
@@ -1693,36 +1645,23 @@ namespace jcv
 
             [[maybe_unused]] T t0 = T{0};
             [[maybe_unused]] T t1 = T{0};
-            std::cout << __func__ << ": ray_intersect_polygon for " << p0 << " to " << p1 << std::endl;
-#ifdef NEWRAY
-            result = ray_intersect_polygon (clipper, p0, p1); // or p0, p1 could be the output?
-#else
-            result = ray_intersect_polygon (clipper, p0, p1, &t0, &t1);
-#endif
-            std::cout << __func__ << ": ray_intersect_polygon returned " << result << std::endl;
+            //std::cout << __func__ << ": ray_intersect_polygon for " << p0 << " to " << p1 << std::endl;
+            result = ray_intersect_polygon (clipper, p0, p1);
 
-#ifdef NEWRAY
             if (result == 2) {
                 // Remove edge e?
                 return result;
             }
-#endif
+
             if (!result) {
                 e->pos[0] = e->pos[1];
                 return 0;
             }
 
-#ifdef NEWRAY
             e->pos[0] = p0;
             e->pos[1] = p1;
-#else
-            std::cout << "set e->pos[0] to mix with t0 = " << t0 << std::endl;
-            e->pos[0] = mix (p0, p1, t0);
-            std::cout << "set e->pos[1] to mix with t1 = " << t1 << std::endl;
-            e->pos[1] = mix (p0, p1, t1);
-#endif
 
-            std::cout << "e->pos[0] = " << e->pos[0] << ", " <<  "e->pos[1] = " << e->pos[1] << "\n";
+            //std::cout << "e->pos[0] = " << e->pos[0] << ", " <<  "e->pos[1] = " << e->pos[1] << "\n";
             return 1;
         }
 
@@ -1732,6 +1671,7 @@ namespace jcv
             std::cout << __func__ << ": called for point "  << p << std::endl;
             if (std::isnan(p[2])) {
                 // Replace nan. Whence nan?
+                std::cout << "Replacing a nan which can cause this function to fail\n";
                 p[2] = T{0};
             }
 
@@ -1739,16 +1679,6 @@ namespace jcv
             int min_edge = -1;
             T min_dist = std::numeric_limits<T>::max();
             int num_points = polygon->size();
-
-            // First wind to find out if p0 or p1 is inside clipper's boundary?
-            std::vector<sm::vec<T, 2>> poly2d (num_points);
-            for (int i = 0; i < num_points; ++i) {
-                poly2d[i][0] = (*polygon)[i][0];
-                poly2d[i][1] = (*polygon)[i][1];
-            }
-            sm::winder w (poly2d);
-            int w_p = w.wind (p.less_one_dim());
-            std::cout << "p winding number is " << w_p << std::endl;
 
             for (int i = 0; i < num_points; ++i) {
                 point<T> p0 = (*polygon)[i];
@@ -1760,9 +1690,6 @@ namespace jcv
 
                 T t = vsegment.dot (vpoint) / vsegment.dot (vsegment);
 
-                // Comment this line out to see that it's not so much the fill function that's at
-                // fault, but the construction of the edges (with one edge going out to the
-                // rectangle boundary limit)
                 if (t < T{0} || t > T{1}) { continue; }
 
                 point<T> projected = p0 + vsegment * t;
@@ -1774,12 +1701,7 @@ namespace jcv
                 }
             }
 
-#if 0
-            if (min_edge == -1) { min_edge = 0; } // hack, to avoid crash in polygon_fill
-#else
             assert (min_edge >= 0);
-#endif
-            std::cout << "Edge " << min_edge << std::endl;
             return min_edge;
         }
 

@@ -116,9 +116,6 @@ namespace mplot
                     this->boundary[i] += { l * std::cos (ang), l * std::sin (ang) };
                 }
             }
-            for (auto b : this->boundary) {
-                std::cout << "Boundary point: " << b << std::endl;
-            }
 
             if (this->boundary.size() > 0) {
                 vorman.diagram_generate (*(dcoords_ptr), this->boundary);
@@ -366,7 +363,6 @@ namespace mplot
                 }
                 bool first = true;
                 for (auto b : this->boundary) {
-                    std::cout << "Debug boundary point at " << b << std::endl;
                     if (first) {
                         this->computeSphere (b * this->zoom, mplot::colour::crimson, 4.0f * this->dataCoord_sphere_size);
                         first = false;
