@@ -75,29 +75,32 @@ namespace mplot
 
             std::cout << "Data coords centroid is " << this->coordsCentroid() << std::endl;;
 
-            sm::quaternion<float> rq;
+            sm::quaternion<F> rq;
             if (this->data_z_direction != sm::vec<>::uz()) {
                 // Find the rotation between data_z_direction and uz
                 this->dcoords.resize (ncoords);
-                sm::vec<float> r_axis = this->data_z_direction.cross (sm::vec<>::uz());
+                sm::vec<F> r_axis = this->data_z_direction.cross (sm::vec<>::uz()).template as<F>();
                 r_axis.renormalize();
-                float r_angle = this->data_z_direction.angle (sm::vec<>::uz(), r_axis);
+                F r_angle = static_cast<F>(this->data_z_direction.angle (sm::vec<>::uz(), r_axis));
                 rq.rotate(r_axis, r_angle);
                 for (size_t i = 0; i < ncoords; ++i) {
-                    this->dcoords[i] = rq * (*this->dataCoords)[i];
+                    this->dcoords[i] = rq * (*this->dataCoords)[i].template as<F>();
                 }
                 this->dcoords_ptr = &this->dcoords;
             } else {
-                this->dcoords_ptr = this->dataCoords;
+                this->dcoords.resize (ncoords);
+                for (size_t i = 0; i < ncoords; ++i) {
+                    this->dcoords[i] = (*this->dataCoords)[i].template as<F>();
+                }
+                this->dcoords_ptr = &this->dcoords;
             }
 
             // Generate the 2D Voronoi diagram
-            jcv::manager<float> vorman;
+            jcv::manager<F> vorman;
             vorman.border_width = this->border_width;
 
             if (this->rectangular_domain == false) {
-#if 1
-                sm::vec<> cent = this->coordsCentroid();
+                sm::vec<float> cent = this->coordsCentroid();
                 sm::vec<float, 2> cent2 = {cent[0], cent[1]};
                 sm::vvec<float> lengths (this->dcoords_ptr->size(), 0.0f);
                 for (unsigned int i = 0; i < this->dcoords_ptr->size(); ++i) {
@@ -112,28 +115,6 @@ namespace mplot
                     float ang = i * sm::mathconst<float>::two_pi / this->num_boundary_points;
                     this->boundary[i] += { l * std::cos (ang), l * std::sin (ang) };
                 }
-#else
-                // Then we make up a perimeter to be our boundary
-                sm::vvec<float> max_lengths;
-                max_lengths.resize (this->num_boundary_points, 0.0f);
-                for (unsigned int i = 0; i < this->dcoords_ptr->size(); ++i) {
-                    sm::vec<float, 2> c = (*this->dcoords_ptr)[i].less_one_dim();
-                    float a = c.angle();
-                    sm::algo::zero_to_twopi (a);
-                    a *= (this->num_boundary_points / sm::mathconst<float>::two_pi);
-                    int ai = std::floor (a);
-                    if (static_cast<unsigned int>(ai) == this->num_boundary_points) { ai = 0; }
-                    max_lengths[ai] = c.length() > max_lengths[ai] ? c.length() : max_lengths[ai];
-                }
-
-                // Points MUST be in anti-clockwise order!!!!!
-                this->boundary.resize (this->num_boundary_points);
-                for (unsigned int i = 0; i < this->num_boundary_points; ++i) {
-                    float l = max_lengths[i] + this->border_width;
-                    float ang = i * sm::mathconst<float>::two_pi / this->num_boundary_points;
-                    this->boundary[i] = { l * std::cos (ang), l * std::sin (ang) };
-                }
-#endif
             }
             for (auto b : this->boundary) {
                 std::cout << "Boundary point: " << b << std::endl;
@@ -538,10 +519,10 @@ namespace mplot
         unsigned int triangle_count_sum = 0;
         // Polygon domain coordinates
         std::vector<sm::vec<float>> boundary;
-        //! Internally owned version of dataCoords after rotation
-        std::vector<sm::vec<float>> dcoords;
-        //! A pointer either to dcoords or this->dataCoords
-        const std::vector<sm::vec<float>>* dcoords_ptr;
+        //! Internally owned version of dataCoords after rotation and in F precision
+        std::vector<sm::vec<F>> dcoords;
+        //! A pointer to dcoords
+        const std::vector<sm::vec<F>>* dcoords_ptr;
     };
 
 } // namespace mplot

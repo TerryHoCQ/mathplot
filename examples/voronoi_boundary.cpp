@@ -48,7 +48,7 @@ int main()
     vorv->rectangular_domain = true;
 #else
     // polygonal
-    float length_scale = 1.0f;
+    float length_scale = 0.5f;
     vorv->rectangular_domain = false;
 #endif
     std::cout << "Setting border_width to length scale " << length_scale << std::endl;
