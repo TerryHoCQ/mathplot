@@ -1463,8 +1463,8 @@ namespace jcv
                 } // else, presumably it worked
             }
 
-            //std::cout << "\n\n\n\nFILLGAPS\n\n";
-            //fillgaps (d);
+            std::cout << "\n\n\nFILLGAPS\n\n";
+            fillgaps (d);
         }
 
         /**
@@ -1761,10 +1761,16 @@ namespace jcv
             int loopcount = 0;
             while (curr_graphedge && next) {
 
-                if (!(curr_graphedge->pos[1] == next->pos[0])) {
+                if (!(
+                        curr_graphedge->pos[1][0] == next->pos[0][0])
+                        && curr_graphedge->pos[1][1] == next->pos[0][1]
+                    ) {
 
+                    std::cout << curr_graphedge->pos[1] << " != " << next->pos[0] << ", apparently\n";
+
+                    std::cout << "1 find_polygon_edge for p = curr_graphedge->pos[1] = " << curr_graphedge->pos[1] << std::endl;
                     int polygon_edge1 = find_polygon_edge (clipper, curr_graphedge->pos[1]);
-                    //std::cout << "3 fpe for p = next->pos[0] = " << next->pos[0] << std::endl;
+                    std::cout << "2 find_polygon_edge for p = next->pos[0] = " << next->pos[0] << std::endl;
                     int polygon_edge2 = find_polygon_edge (clipper, next->pos[0]);
 
                     graphedge<T>* gap = alloc_graphedge (allocator);
@@ -1790,11 +1796,7 @@ namespace jcv
                         next = site->edges;
                     }
                 }
-                ++loopcount;
-                if (loopcount >= loopcount_thresh) {
-                    std::cout << "Too many loops. This can be caused by numerical precision errors when using T==float on some sets of points\n";
-                    throw std::runtime_error ("Kaboom");
-                }
+                if (++loopcount >= loopcount_thresh) { throw std::runtime_error ("Kaboom (too many loops)"); }
 
             }
         }
