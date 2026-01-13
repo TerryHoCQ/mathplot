@@ -1459,17 +1459,9 @@ namespace jcv
             }
 
             for (halfedge<T>* he = internal->beachline_start->right; he != internal->beachline_end; he = he->right) {
-                if (finishline (internal, he->edge_) == 2) {
-                    std::cout << __func__ << ": finishline returned 2; remove he?" << std::endl;
-#if 0
-                    he->left->right = he->right;
-                    he->right->left = he->left;
-                    he = he->left; // to go right again
-#endif
-                } // else, presumably it worked
+                finishline (internal, he->edge_);
             }
 
-            std::cout << "\n\n\nFILLGAPS\n\n";
             fillgaps (d);
         }
 
