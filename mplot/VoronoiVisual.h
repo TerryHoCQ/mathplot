@@ -73,8 +73,6 @@ namespace mplot
 
             this->setupScaling();
 
-            std::cout << "Data coords centroid is " << this->coordsCentroid() << std::endl;;
-
             sm::quaternion<F> rq;
             if (this->data_z_direction != sm::vec<>::uz()) {
                 // Find the rotation between data_z_direction and uz

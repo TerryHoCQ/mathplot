@@ -1542,16 +1542,10 @@ namespace jcv
             auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
             int num_points = polygon->size();
 
-            // First wind to find out if p0 or p1 is inside clipper's boundary?
-            std::vector<sm::vec<T, 2>> poly2d (num_points);
-            for (int i = 0; i < num_points; ++i) {
-                poly2d[i][0] = (*polygon)[i][0];
-                poly2d[i][1] = (*polygon)[i][1];
-                //std::cout << "Boundary point " << poly2d[i] << std::endl;
-            }
-            sm::winder w (poly2d); // May well work with 3d points
-            int w_p0 = w.wind (p0.less_one_dim());
-            int w_p1 = w.wind (p1.less_one_dim());
+            // First wind to find out if p0 or p1 is inside clipper's boundary
+            sm::winder w (*polygon); // winder ignores z
+            int w_p0 = w.wind (p0);
+            int w_p1 = w.wind (p1);
 
             if (w_p0 == 0 && w_p1 == 0) {
                 return 2; // Both outside means remove this edge.
@@ -1559,7 +1553,6 @@ namespace jcv
                 return 1; // Both inside
             }
 
-            [[maybe_unused]] bool changed_p = false;
             for (int i = 0; i < num_points; ++i) {
                 sm::vec<T, 2> v0 = (*polygon)[i].less_one_dim();
                 sm::vec<T, 2> v1 = (*polygon)[(i + 1) % num_points].less_one_dim();
@@ -1569,7 +1562,6 @@ namespace jcv
                 if (isect.test(0) == true) {
                     if (isect.test(1) == true) {
                         // lines co-linear. This is always an error?
-                        std::cout << "Return 0 as isect.test(0)==isect.test(1) == true\n";
                         return 0;
                     }
                     // lines intersect. Find intersection point
@@ -1578,11 +1570,9 @@ namespace jcv
                     if (w_p0 != 0) { // p0 inside, p1 outside
                         p1[0] = cp[0];
                         p1[1] = cp[1];
-                        changed_p = true;
                     } else if (w_p1 != 0) {
                         p0[0] = cp[0];
                         p0[1] = cp[1];
-                        changed_p = true;
                     } else {
                         // Neither p0 nor p1 were inside the polygon
                         return 0;
@@ -1600,19 +1590,13 @@ namespace jcv
 
         static int polygon_clip (const clipper<T>* clipper, edge<T>* e)
         {
-            // std::cout << std::endl << __func__ << " called for edge e from " << e->pos[0] << " to " << e->pos[1] << std::endl;
-
             // Using the box clipper to get a finite line segment
             int result = manager<T>::boxshape_clip (clipper, e);
-            if (!result) {
-                std::cout << "Return 0 as boxshape_clip returned 0\n"; // doesn't happen in my code
-                return 0;
-            }
+            if (!result) { return 0; }
 
-            // Return here for sanity check on the polygon clipping
+            // Return here for a sanity check on the polygon clipping
             // return 1;
 
-            // The rest of this function isn't doing the additional clipping necessary
             point<T> p0 = e->pos[0];
             point<T> p1 = e->pos[1];
 
@@ -1634,6 +1618,7 @@ namespace jcv
             return 1;
         }
 
+        // Get the polygon vertex with index vtx_idx from the clipper
         static point<T> get_polygon_vertex (const clipper<T>* clipper, int vtx_idx)
         {
             point<T> p = {};
@@ -1643,6 +1628,8 @@ namespace jcv
             return p;
         }
 
+        // Find which edge (or vertex) of the polygon in the clipper a point _p lies on
+        //
         // In field 0, return: 0: p NOT on polygon; 1: p on polygon edge section; 2: p on polygon vertex
         // In field 1, return the index of the edge or vertex referred to in field 0.
         static sm::vec<int, 2> find_polygon_edge (const clipper<T>* clipper, const point<T>& _p)
@@ -1694,8 +1681,6 @@ namespace jcv
         static void polygon_fill (const clipper<T>* clipper,
                                   context_internal<T>* allocator, site<T>* site)
         {
-            //std::cout << __func__ << " called for site " << site->index << "@" << site->p << std::endl;
-
             // They're sorted CCW, so if the current->pos[1] != next->pos[0], then we have a gap
             auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
             int num_points = polygon->size();
@@ -1717,7 +1702,6 @@ namespace jcv
 
             graphedge<T>* next = curr_graphedge->next;
             if (!next) {
-                std::cout << "Entered !next block\n";
                 graphedge<T>* gap = alloc_graphedge (allocator);
 
                 sm::vec<int, 2> polygon_info = find_polygon_edge (clipper, curr_graphedge->pos[1]);
@@ -1741,7 +1725,7 @@ namespace jcv
                 next = site->edges;
             }
 
-            constexpr int loopcount_thresh = 20;
+            constexpr int loopcount_thresh = 1024;
             int loopcount = 0;
             while (curr_graphedge && next) {
 
