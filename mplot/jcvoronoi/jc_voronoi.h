@@ -1010,6 +1010,7 @@ namespace jcv
                 ge->pos[1-flip] = e->pos[1-i];
                 ge->angle = calc_sort_metric(e->sites[i], ge);
 
+                // std::cout << "finishline: Insert graphedge " << ge->pos[0] << "--" << ge->pos[1] << std::endl;
                 sortedges_insert (e->sites[i], ge);
             }
 
@@ -1064,8 +1065,8 @@ namespace jcv
         static void boxshape_fill (/*const*/ clipper<T>* clipper, context_internal<T>* allocator, site<T>* site)
         {
             // They're sorted CCW, so if the current->pos[1] != next->pos[0], then we have a gap
-            graphedge<T>* current = site->edges;
-            if (!current) {
+            graphedge<T>* curr_graphedge = site->edges;
+            if (!curr_graphedge) {
                 // No edges, then it should be a single cell
                 assert (allocator->numsites == 1);
 
@@ -1078,19 +1079,19 @@ namespace jcv
                 gap->next       = 0;
                 gap->edge_      = create_gap_edge (allocator, site, gap);
 
-                current = gap;
+                curr_graphedge = gap;
                 site->edges = gap;
             }
 
-            graphedge<T>* next = current->next;
+            graphedge<T>* next = curr_graphedge->next;
             if (!next) {
                 graphedge<T>* gap = alloc_graphedge (allocator);
-                create_corner_edge(allocator, site, current, gap);
+                create_corner_edge(allocator, site, curr_graphedge, gap);
                 gap->edge_ = create_gap_edge (allocator, site, gap);
 
-                gap->next = current->next;
-                current->next = gap;
-                current = gap;
+                gap->next = curr_graphedge->next;
+                curr_graphedge->next = gap;
+                curr_graphedge = gap;
                 next = site->edges;
             }
 
@@ -1100,10 +1101,11 @@ namespace jcv
             constexpr int loopcount_thresh = 1024;
             int loopcount = 0;
 
-            while (current && next && loopcount < loopcount_thresh) {
+            while (curr_graphedge && next && loopcount < loopcount_thresh) {
 
-                int current_edge_flags = get_edge_flags(&current->pos[1], &clipper->min, &clipper->max);
-                if (current_edge_flags && !equal(&current->pos[1], &next->pos[0])) {
+                int current_edge_flags = get_edge_flags(&curr_graphedge->pos[1], &clipper->min, &clipper->max);
+
+                if (current_edge_flags && !equal(&curr_graphedge->pos[1], &next->pos[0])) {
                     // Cases:
                     //  Current and Next on the same border
                     //  Current on one border, and Next on another border
@@ -1115,13 +1117,13 @@ namespace jcv
                         // Current and Next on the same border
                         graphedge<T>* gap = alloc_graphedge (allocator);
                         gap->neighbor   = 0;
-                        gap->pos[0]     = current->pos[1];
+                        gap->pos[0]     = curr_graphedge->pos[1];
                         gap->pos[1]     = next->pos[0];
                         gap->angle      = calc_sort_metric (site, gap);
                         gap->edge_      = create_gap_edge (allocator, site, gap);
 
-                        gap->next = current->next;
-                        current->next = gap;
+                        gap->next = curr_graphedge->next;
+                        curr_graphedge->next = gap;
                     } else {
                         // Current and Next on different borders
                         int corner_flag = edge_flags_to_corner (current_edge_flags);
@@ -1141,19 +1143,19 @@ namespace jcv
 
                         graphedge<T>* gap = alloc_graphedge (allocator);
                         gap->neighbor   = 0;
-                        gap->pos[0]     = current->pos[1];
+                        gap->pos[0]     = curr_graphedge->pos[1];
                         gap->pos[1]     = corner;
                         gap->angle      = calc_sort_metric(site, gap);
                         gap->edge_      = create_gap_edge (allocator, site, gap);
 
-                        gap->next = current->next;
-                        current->next = gap;
+                        gap->next = curr_graphedge->next;
+                        curr_graphedge->next = gap;
                     }
-                }
+                } // else inside border
 
-                current = current->next;
-                if (current) {
-                    next = current->next;
+                curr_graphedge = curr_graphedge->next;
+                if (curr_graphedge) {
+                    next = curr_graphedge->next;
                     if (!next) { next = site->edges; }
                 }
                 ++loopcount;
@@ -1173,6 +1175,7 @@ namespace jcv
 
             for (int i = 0; i < internal->numsites; ++i) {
                 site<T>* site = &internal->sites[i];
+                // Call fill fn for each site
                 internal->clipper_.fill_fn (&internal->clipper_, internal, site);
             }
         }
@@ -1672,44 +1675,61 @@ namespace jcv
             return 1;
         }
 
-        // Find the edge which the point p sits on
-        static int find_polygon_edge (/*const*/ clipper<T>* clipper, point<T> p)
+        static point<T> get_polygon_vertex (/*const*/ clipper<T>* clipper, int vtx_idx)
         {
-            // std::cout << __func__ << ": called for point "  << p << std::endl;
-            if (std::isnan(p[2])) {
-                // Replace nan. Whence nan?
-                // std::cout << "Replacing a nan which can cause this function to fail\n";
-                p[2] = T{0};
-            }
+            point<T> p = {};
+            auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
+            int num_points = polygon->size();
+            if (vtx_idx < num_points) { p = (*polygon)[vtx_idx]; }
+            return p;
+        }
+
+        // In field 0, return: 0: p NOT on polygon; 1: p on polygon edge section; 2: p on polygon vertex
+        // In field 1, return the index of the edge or vertex referred to in field 0.
+        static sm::vec<int, 2> find_polygon_edge (/*const*/ clipper<T>* clipper, const point<T>& _p)
+        {
+            point<T> p = _p;
+            sm::vec<int, 2> info = {};
+            if (std::isnan(p[2])) { p[2] = T{0}; }
 
             auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
-            int min_edge = -1;
             T min_dist = std::numeric_limits<T>::max();
             int num_points = polygon->size();
 
             for (int i = 0; i < num_points; ++i) {
+
                 point<T> p0 = (*polygon)[i];
-                if (p == p0) { return i; }
+                if (p == p0) {
+                    // ON vertex p0
+                    info[0] = 2;
+                    info[1] = i;
+                    break;
+                }
 
                 point<T> p1 = (*polygon)[(i + 1) % num_points];
+                if (p == p1) {
+                    // ON vertex p1
+                    info[0] = 2;
+                    info[1] = (i + 1) % num_points;
+                    break;
+                }
+
+                // Now is p on the edge?
                 point<T> vsegment = p1 - p0;
                 point<T> vpoint = p - p0;
-
                 T t = vsegment.dot (vpoint) / vsegment.dot (vsegment);
-
                 if (t < T{0} || t > T{1}) { continue; }
-
-                point<T> projected = p0 + vsegment * t;
+                point<T> projected = p0 + vsegment * t; // projection of vpoint onto vsegment
                 T distsq = (p - projected).length_sq();
 
                 if (distsq < min_dist) {
                     min_dist = distsq;
-                    min_edge = i;
+                    info[0] = 1;
+                    info[1] = i;
                 }
             }
 
-            assert (min_edge >= 0);
-            return min_edge;
+            return info;
         }
 
         static void polygon_fill (/*const*/ clipper<T>* clipper,
@@ -1738,10 +1758,11 @@ namespace jcv
 
             graphedge<T>* next = curr_graphedge->next;
             if (!next) {
-                std::cout << "ENTERED\n";
+                std::cout << "Entered !next block\n";
                 graphedge<T>* gap = alloc_graphedge (allocator);
 
-                int polygon_edge = find_polygon_edge (clipper, curr_graphedge->pos[1]);
+                sm::vec<int, 2> polygon_info = find_polygon_edge (clipper, curr_graphedge->pos[1]);
+                int polygon_edge = polygon_info[1];
                 if (!(curr_graphedge->pos[1] == (*polygon)[(polygon_edge + 1) % num_points])) {
                     gap->pos[0] = curr_graphedge->pos[1];
                     gap->pos[1] = (*polygon)[(polygon_edge + 1) % num_points];
@@ -1766,43 +1787,98 @@ namespace jcv
             while (curr_graphedge && next) {
 
                 clipper->danglers->push_back (curr_graphedge->pos[0]);
-                if (!(
-                        curr_graphedge->pos[1][0] == next->pos[0][0])
-                        && curr_graphedge->pos[1][1] == next->pos[0][1]
-                    ) {
 
-                    std::cout << curr_graphedge->pos[0].str_comma_separated() << ";" << std::endl;
-                    // Add to memory so that I can debug!
-                    //clipper->danglers->push_back (curr_graphedge->pos[0]);
+                // Which edge of the polygon, if any, are we on? current_edge[0] indicates whether
+                // the point is "not edge/vertex" (value 0); "on an edge" (value 1) or "is a vertex"
+                // (value 2). current_edge[1] indicates the index of the edge.
+                sm::vec<int, 2> current_edge = find_polygon_edge (clipper, curr_graphedge->pos[1]);
 
-                    int polygon_edge1 = find_polygon_edge (clipper, curr_graphedge->pos[1]);
-                    int polygon_edge2 = find_polygon_edge (clipper, next->pos[0]);
+                if (current_edge[0] > 0 && !equal (&curr_graphedge->pos[1], &next->pos[0])) {
 
-                    //if (polygon_edge1 != polygon_edge2) {
-                    std::cout << "1 find_polygon_edge for p = curr_graphedge->pos[1] = " << curr_graphedge->pos[1] << " got edge " << polygon_edge1 << std::endl;
-                    std::cout << "2 find_polygon_edge for p = next->pos[0] = " << next->pos[0] << " got edge " << polygon_edge2 << std::endl;
-                    //}
+                    sm::vec<int, 2> next_edge = find_polygon_edge (clipper, next->pos[0]);
 
-                    // Creating a new edge...
-                    graphedge<T>* gap = alloc_graphedge (allocator);
-                    gap->pos[0] = curr_graphedge->pos[1];
+                    if (current_edge[0] == 1 && next_edge[0] == 1 && current_edge[1] == next_edge[1]) {
 
-                    if (polygon_edge1 != polygon_edge2) {
-                        std::cout << "gap->pos[1] is from the polygon (polygon_edge1 != polygon_edge2)\n";
-                        gap->pos[1] = (*polygon)[(polygon_edge1 + 1) % num_points];
+                        // Case: Current and Next on the same border
+
+                        graphedge<T>* gap = alloc_graphedge (allocator);
+                        gap->neighbor   = 0;
+                        gap->pos[0]     = curr_graphedge->pos[1];
+                        gap->pos[1]     = next->pos[0];
+                        gap->angle      = calc_sort_metric (site, gap);
+                        gap->edge_      = create_gap_edge (allocator, site, gap);
+
+                        gap->next = curr_graphedge->next;
+                        curr_graphedge->next = gap;
+
+                    } else if (current_edge[0] == 1 && next_edge[0] == 1 && next_edge[1] != current_edge[1]) {
+
+                        // Case: Current and Next on different borders, so we need to find the
+                        // adjacent vertex, following the borders CCW
+
+                        int next_vertex = (current_edge[1] + 1) % num_points;
+                        point<T> vtx = get_polygon_vertex (clipper, next_vertex);
+
+                        graphedge<T>* gap = alloc_graphedge (allocator);
+                        gap->neighbor   = 0;
+                        gap->pos[0]     = curr_graphedge->pos[1];
+                        gap->pos[1]     = vtx;
+                        gap->angle      = calc_sort_metric (site, gap);
+                        gap->edge_      = create_gap_edge (allocator, site, gap);
+
+                        gap->next = curr_graphedge->next;
+                        curr_graphedge->next = gap;
+
+                    } else if (current_edge[0] == 1 && next_edge[0] == 2) {
+
+                        // Case: Current on border, next on a vertex
+                        point<T> vtx = get_polygon_vertex (clipper, next_edge[1]);
+
+                        graphedge<T>* gap = alloc_graphedge (allocator);
+                        gap->neighbor   = 0;
+                        gap->pos[0]     = curr_graphedge->pos[1];
+                        gap->pos[1]     = vtx;
+                        gap->angle      = calc_sort_metric (site, gap);
+                        gap->edge_      = create_gap_edge (allocator, site, gap);
+
+                        gap->next = curr_graphedge->next;
+                        curr_graphedge->next = gap;
+
+                    } else if (current_edge[0] == 2 && next_edge[0] == 1 && next_edge[1] == current_edge[1]) {
+
+                        // Case: Current on vertex, next on *same* border
+                        graphedge<T>* gap = alloc_graphedge (allocator);
+                        gap->neighbor   = 0;
+                        gap->pos[0]     = curr_graphedge->pos[1];
+                        gap->pos[1]     = next->pos[0];
+                        gap->angle      = calc_sort_metric (site, gap);
+                        gap->edge_      = create_gap_edge (allocator, site, gap);
+
+                        gap->next = curr_graphedge->next;
+                        curr_graphedge->next = gap;
+
+                    } else if (current_edge[0] == 2 && next_edge[0] == 1 && next_edge[1] != current_edge[1]) {
+
+                        // Case: Current on vertex, next on another border, so we need to find the adjacent
+                        // vertex, following the borders CCW
+                        int next_vertex = (current_edge[1] + 1) % num_points;
+                        point<T> vtx = get_polygon_vertex (clipper, next_vertex);
+
+                        graphedge<T>* gap = alloc_graphedge (allocator);
+                        gap->neighbor   = 0;
+                        gap->pos[0]     = curr_graphedge->pos[1];
+                        gap->pos[1]     = vtx;
+                        gap->angle      = calc_sort_metric (site, gap);
+                        gap->edge_      = create_gap_edge (allocator, site, gap);
+
+                        gap->next = curr_graphedge->next;
+                        curr_graphedge->next = gap;
+
                     } else {
-                        std::cout << "gap->pos[1] is next->pos[0]\n";
-                        gap->pos[1] = next->pos[0]; // always this
+                        // next not on polygon?
+                        std::cout << "Whoop whoop, unhandled case\n";
                     }
-
-                    std::cout << "New gap from " << gap->pos[0] << "--" << gap->pos[1] << std::endl;
-
-                    gap->neighbor   = 0;
-                    gap->angle      = calc_sort_metric (site, gap);
-                    gap->edge_      = create_gap_edge (allocator, site, gap);
-                    gap->next       = curr_graphedge->next;
-                    curr_graphedge->next   = gap;
-                }
+                } // else current_edge->pos[1] is not on the polygonal boundary
 
                 curr_graphedge = curr_graphedge->next;
                 if (curr_graphedge) {

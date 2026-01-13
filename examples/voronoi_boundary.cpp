@@ -44,7 +44,7 @@ int main()
     //float length_scale = 4.0f / std::sqrt (n_points);
 #if 0
     // rectangular
-    float length_scale = 12.0f;
+    float length_scale = 5.0f;
     vorv->rectangular_domain = true;
 #else
     // polygonal
