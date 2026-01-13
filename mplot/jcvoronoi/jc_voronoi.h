@@ -984,17 +984,15 @@ namespace jcv
             }
         }
 
-        static int finishline (context_internal<T>* internal, edge<T>* e)
+        static void finishline (context_internal<T>* internal, edge<T>* e)
         {
             int er = 0;
             if (!(er = edge_clipline (internal, e))) {
-                return 0;
+                return;
             } else if (er == 2) {
-                // remove e
-                std::cout << "finishline: Remove that edge\n";
-                return 2; // 2 means remove
+                // 2 means the edge 'was removed/not added'
+                return;
             }
-
 
             // Make sure the graph edges are CCW
             int flip = determinant (&e->sites[0]->p, &e->pos[0], &e->pos[1]) > T{0} ? 0 : 1;
@@ -1011,8 +1009,6 @@ namespace jcv
                 // std::cout << "finishline: Insert graphedge " << ge->pos[0] << "--" << ge->pos[1] << std::endl;
                 sortedges_insert (e->sites[i], ge);
             }
-
-            return 0;
         }
 
 
@@ -1020,9 +1016,7 @@ namespace jcv
         {
             e->pos[direction] = *p;
             if (!is_valid(&e->pos[1 - direction])) { return; }
-            if (finishline (internal, e) == 2) {
-                std::cout << __func__ << ": finishline returned 2; remove e?" << std::endl;
-            }
+            finishline (internal, e);
         }
 
         static void create_corner_edge (context_internal<T>* internal, const site<T>* site, graphedge<T>* current, graphedge<T>* gap)
@@ -1555,21 +1549,14 @@ namespace jcv
                 poly2d[i][1] = (*polygon)[i][1];
                 //std::cout << "Boundary point " << poly2d[i] << std::endl;
             }
-            sm::winder w (poly2d);
+            sm::winder w (poly2d); // May well work with 3d points
             int w_p0 = w.wind (p0.less_one_dim());
             int w_p1 = w.wind (p1.less_one_dim());
-            //std::cout << "p0 winding number is " << w_p0 << std::endl;
-            //std::cout << "p1 winding number is " << w_p1 << std::endl;
 
             if (w_p0 == 0 && w_p1 == 0) {
-                // Both outside means remove this edge.
-                //std::cout << "Both outside, so probably want to remove this edge?" << std::endl;
-                return 2;
-
+                return 2; // Both outside means remove this edge.
             } else if (w_p0 != 0 && w_p1 != 0) {
-                // Both inside
-                //std::cout << "Both edge points are inside boundary, no changes needed" << std::endl;
-                return 1;
+                return 1; // Both inside
             }
 
             [[maybe_unused]] bool changed_p = false;
@@ -1589,30 +1576,25 @@ namespace jcv
                     sm::vec<T, 2> cp = sm::geometry::crossing_point (v0, v1, p0.less_one_dim(), p1.less_one_dim());
 
                     if (w_p0 != 0) { // p0 inside, p1 outside
-                        //std::cout << "Updating p1 from " << p1 << " ";
                         p1[0] = cp[0];
                         p1[1] = cp[1];
-                        //std::cout << " to " << p1 << std::endl;
                         changed_p = true;
                     } else if (w_p1 != 0) {
-                        //std::cout << "Updating p0 from " << p0 << " ";
                         p0[0] = cp[0];
                         p0[1] = cp[1];
-                        //std::cout << " to " << p0 << std::endl;
                         changed_p = true;
                     } else {
-                        //std::cout << "Neither p0 nor p1 were inside the polygon?\n";
+                        // Neither p0 nor p1 were inside the polygon
                         return 0;
                     }
+
                 } else {
                     if (isect.test(1) == true) {
                         // lines co-linear. This is always an error?
-                        std::cout << "Return 0 as isect.test(1) == true\n";
                         return 0;
                     } // else no crossing point with this section.
                 }
             }
-            // return changed_p == true ? 1 : 0;
             return 1;
         }
 
@@ -1630,22 +1612,14 @@ namespace jcv
             // Return here for sanity check on the polygon clipping
             // return 1;
 
-            if (result == 2) {
-                std::cout << "Remove edge " << e->pos[0] << "--" << e->pos[1] << std::endl;
-                return result;
-            }
-
             // The rest of this function isn't doing the additional clipping necessary
             point<T> p0 = e->pos[0];
             point<T> p1 = e->pos[1];
 
-            [[maybe_unused]] T t0 = T{0};
-            [[maybe_unused]] T t1 = T{0};
-            //std::cout << __func__ << ": ray_intersect_polygon for " << p0 << " to " << p1 << std::endl;
             result = ray_intersect_polygon (clipper, p0, p1);
 
             if (result == 2) {
-                // Remove edge e?
+                // Here, we omit to set e->pos[] from p0, p1 and just return 2.
                 return result;
             }
 
@@ -1657,7 +1631,6 @@ namespace jcv
             e->pos[0] = p0;
             e->pos[1] = p1;
 
-            //std::cout << "e->pos[0] = " << e->pos[0] << ", " <<  "e->pos[1] = " << e->pos[1] << "\n";
             return 1;
         }
 
