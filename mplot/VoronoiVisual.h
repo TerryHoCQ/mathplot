@@ -45,6 +45,15 @@ namespace mplot
         };
 
     public:
+
+        // The shape of the domain to draw around the points in the Voronoi diagram
+        enum class domain_shape : uint32_t
+        {
+            rectangular,
+            ellipsoid,
+            circular
+        };
+
         VoronoiVisual (const sm::vec<float> _offset)
         {
             this->viewmatrix.translate (_offset);
@@ -73,31 +82,30 @@ namespace mplot
 
             this->setupScaling();
 
-            sm::quaternion<F> rq;
+            sm::quaternion<float> rq;
             if (this->data_z_direction != sm::vec<>::uz()) {
                 // Find the rotation between data_z_direction and uz
                 this->dcoords.resize (ncoords);
-                sm::vec<F> r_axis = this->data_z_direction.cross (sm::vec<>::uz()).template as<F>();
+                sm::vec<float> r_axis = this->data_z_direction.cross (sm::vec<>::uz());
                 r_axis.renormalize();
-                F r_angle = static_cast<F>(this->data_z_direction.angle (sm::vec<>::uz(), r_axis));
+                float r_angle = this->data_z_direction.angle (sm::vec<>::uz(), r_axis);
                 rq.rotate(r_axis, r_angle);
                 for (size_t i = 0; i < ncoords; ++i) {
-                    this->dcoords[i] = rq * (*this->dataCoords)[i].template as<F>();
+                    this->dcoords[i] = rq * (*this->dataCoords)[i];
                 }
                 this->dcoords_ptr = &this->dcoords;
             } else {
-                this->dcoords.resize (ncoords);
-                for (size_t i = 0; i < ncoords; ++i) {
-                    this->dcoords[i] = (*this->dataCoords)[i].template as<F>();
-                }
-                this->dcoords_ptr = &this->dcoords;
+                this->dcoords_ptr = this->dataCoords;
             }
 
             // Generate the 2D Voronoi diagram
-            jcv::manager<F> vorman;
+            jcv::manager<float> vorman;
+            if (this->border_width == -1) { this->border_width = 4.0f / std::sqrt (ncoords); }
             vorman.border_width = this->border_width;
 
-            if (this->rectangular_domain == false) {
+            if (this->dom_shape == domain_shape::ellipsoid) {
+                throw std::runtime_error ("ellipsoid shape unimplemented");
+            } else if (this->dom_shape == domain_shape::circular) {
                 sm::vec<float> cent = this->coordsCentroid();
                 sm::vec<float, 2> cent2 = {cent[0], cent[1]};
                 sm::vvec<float> lengths (this->dcoords_ptr->size(), 0.0f);
@@ -107,13 +115,14 @@ namespace mplot
                 }
                 float max_len = lengths.max();
                 // Points MUST be in anti-clockwise order!!!!!
+                this->boundary.clear();
                 this->boundary.resize (this->num_boundary_points, cent2.plus_one_dim());
                 float l = max_len + this->border_width;
                 for (unsigned int i = 0; i < this->num_boundary_points; ++i) {
                     float ang = i * sm::mathconst<float>::two_pi / this->num_boundary_points;
                     this->boundary[i] += { l * std::cos (ang), l * std::sin (ang) };
                 }
-            }
+            } // else rectangular default does not populate this->boundary
 
             if (this->boundary.size() > 0) {
                 vorman.diagram_generate (*(dcoords_ptr), this->boundary);
@@ -359,14 +368,9 @@ namespace mplot
                 for (unsigned int i = 0; i < ncoords; ++i) {
                     this->computeSphere ((*this->dataCoords)[i] * this->zoom, mplot::colour::black, this->dataCoord_sphere_size);
                 }
-                bool first = true;
+                // Polygonal boundary (if used)
                 for (auto b : this->boundary) {
-                    if (first) {
-                        this->computeSphere (b * this->zoom, mplot::colour::crimson, 4.0f * this->dataCoord_sphere_size);
-                        first = false;
-                    } else {
-                        this->computeSphere (b * this->zoom, mplot::colour::dodgerblue2, 3.0f * this->dataCoord_sphere_size);
-                    }
+                    this->computeSphere (b * this->zoom, mplot::colour::dodgerblue2, 3.0f * this->dataCoord_sphere_size);
                 }
             }
         }
@@ -469,11 +473,11 @@ namespace mplot
         //! You can add a little extra to the rectangle that is auto-detected from the
         //! datacoordinate ranges. This defaults to epsilon to give the best possible
         //! surface with a rectangular grid.
-        float border_width = std::numeric_limits<float>::epsilon();
-        // Create a rectangular domain or use a smoother boundary?
-        bool rectangular_domain = true;
+        float border_width = -1;
+        // Create a rectangular domain or use a smoother (circular) boundary?
+        domain_shape dom_shape = domain_shape::rectangular;
         // When making the boundary, how many points? Or use some f (dcoords.size())?
-        unsigned int num_boundary_points = 12;
+        unsigned int num_boundary_points = 30;
 
         // Do we add index labels?
         bool labelIndices = false;
@@ -513,10 +517,10 @@ namespace mplot
         unsigned int triangle_count_sum = 0;
         // Polygon domain coordinates
         std::vector<sm::vec<float>> boundary;
-        //! Internally owned version of dataCoords after rotation and in F precision
-        std::vector<sm::vec<F>> dcoords;
+        //! Internally owned version of dataCoords after rotation
+        std::vector<sm::vec<float>> dcoords;
         //! A pointer to dcoords
-        const std::vector<sm::vec<F>>* dcoords_ptr;
+        const std::vector<sm::vec<float>>* dcoords_ptr;
     };
 
 } // namespace mplot

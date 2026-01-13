@@ -1397,8 +1397,7 @@ namespace jcv
                     // In the case of all sites being all on a horizontal or vertical line, the
                     // rect area will be zero, and the diagram generation will most likely fail
                     rect_round(&tmp_rect);
-                    //throw std::runtime_error ("rect_inflate creates the 11 (10+1)");
-                    rect_inflate(&tmp_rect, 10);
+                    rect_inflate(&tmp_rect, 100);
 
                     internal->clipper_.min = tmp_rect.min;
                     internal->clipper_.max = tmp_rect.max;
@@ -1802,9 +1801,24 @@ namespace jcv
                         gap->next = curr_graphedge->next;
                         curr_graphedge->next = gap;
 
+                    } else if (next_edge[0] == 0) {
+
+                        // Case: Current on vertex or border, but next not on polygon boundary
+                        std::cout << "Current on vertex or border, but next not on polygon boundary\n";
+                        graphedge<T>* gap = alloc_graphedge (allocator);
+                        gap->neighbor   = 0;
+                        gap->pos[0]     = curr_graphedge->pos[1];
+                        gap->pos[1]     = next->pos[0];
+                        gap->angle      = calc_sort_metric (site, gap);
+                        gap->edge_      = create_gap_edge (allocator, site, gap);
+
+                        gap->next = curr_graphedge->next;
+                        curr_graphedge->next = gap;
+
                     } else {
                         // next not on polygon?
-                        std::cout << "Whoop whoop, unhandled case\n";
+                        std::cout << "Whoop whoop, unhandled case: current_edge = "
+                                  << current_edge << " and next_edge = " << next_edge << "\n";
                     }
                 } // else current_edge->pos[1] is not on the polygonal boundary
 
