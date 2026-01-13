@@ -18,6 +18,8 @@
 #include <map>
 #include <set>
 
+#include <armadillo>
+
 #include <sm/vec>
 #include <sm/range>
 #include <sm/quaternion>
@@ -46,7 +48,9 @@ namespace mplot
 
     public:
 
-        // The shape of the domain to draw around the points in the Voronoi diagram
+        // The shape of the domain to draw around the points in the Voronoi diagram Each kind of
+        // boundary shape is auto-fit to the data points, although the user can set an additional
+        // border_width.
         enum class domain_shape : uint32_t
         {
             rectangular,
@@ -103,9 +107,8 @@ namespace mplot
             if (this->border_width == -1) { this->border_width = 4.0f / std::sqrt (ncoords); }
             vorman.border_width = this->border_width;
 
-            if (this->dom_shape == domain_shape::ellipsoid) {
-                throw std::runtime_error ("ellipsoid shape unimplemented");
-            } else if (this->dom_shape == domain_shape::circular) {
+            if (this->dom_shape == domain_shape::ellipsoid || this->dom_shape == domain_shape::circular) {
+
                 sm::vec<float> cent = this->coordsCentroid();
                 sm::vec<float, 2> cent2 = {cent[0], cent[1]};
                 sm::vvec<float> lengths (this->dcoords_ptr->size(), 0.0f);
@@ -117,10 +120,27 @@ namespace mplot
                 // Points MUST be in anti-clockwise order!!!!!
                 this->boundary.clear();
                 this->boundary.resize (this->num_boundary_points, cent2.plus_one_dim());
-                float l = max_len + this->border_width;
-                for (unsigned int i = 0; i < this->num_boundary_points; ++i) {
-                    float ang = i * sm::mathconst<float>::two_pi / this->num_boundary_points;
-                    this->boundary[i] += { l * std::cos (ang), l * std::sin (ang) };
+
+                if (this->dom_shape == domain_shape::ellipsoid) {
+                    throw std::runtime_error ("implement me");
+#if 0
+                    // Extra setup
+                    arma::mat x (dcoords_ptr->size(), 2);
+                    for (unsigned int i = 0; i < dcoords_ptr->size(); ++i) {
+                        x(i, 0) = (*this->dcoords_ptr)[i][0];
+                        x(i, 1) = (*this->dcoords_ptr)[i][1];
+                    }
+                    std::cout << "x: " << x << std::endl;
+                    arma::mat coeff = arma::princomp (x);
+                    std::cout << "princ coeff: " << coeff << std::endl;
+                    // From PCA determine ellipsoid axes
+#endif
+                } else {
+                    float l = max_len + this->border_width;
+                    for (unsigned int i = 0; i < this->num_boundary_points; ++i) {
+                        float ang = i * sm::mathconst<float>::two_pi / this->num_boundary_points;
+                        this->boundary[i] += { l * std::cos (ang), l * std::sin (ang) };
+                    }
                 }
             } // else rectangular default does not populate this->boundary
 
