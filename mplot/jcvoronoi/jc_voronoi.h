@@ -49,17 +49,6 @@ namespace jcv
         point<T>      p;
         int           index;  // Index into the original list of points
         graphedge<T>* edges;  // The half edges owned by the cell
-#if 1
-        void cout_edges()
-        {
-            std::cout << "site " << index << " @ " << p << " has edges:\n";
-            graphedge<T>* e = edges;
-            while (e) {
-                std::cout << " " << e->str() << std::endl;
-                e = e->next;
-            }
-        }
-#endif
     };
 
     // The coefficients a, b and c are from the general line equation: ax * by + c = 0
@@ -82,7 +71,7 @@ namespace jcv
         struct site<T>*      neighbor;
         point<T>             pos[2];
         T                    angle;
-#if 1
+#if 0
         std::string str()
         {
             std::stringstream ss;
@@ -934,8 +923,6 @@ namespace jcv
                 edge2->y        = p[1] + point_dist (&_site->p, &p);
                 pq_push (internal->eventqueue, edge2);
             }
-
-            // _site->cout_edges(); // seems to output no edges?
         }
 
         // https://cp-algorithms.com/geometry/oriented-triangle-area.html

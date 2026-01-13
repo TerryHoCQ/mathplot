@@ -471,7 +471,7 @@ namespace mplot
         //! surface with a rectangular grid.
         float border_width = std::numeric_limits<float>::epsilon();
         // Create a rectangular domain or use a smoother boundary?
-        bool rectangular_domain = false;
+        bool rectangular_domain = true;
         // When making the boundary, how many points? Or use some f (dcoords.size())?
         unsigned int num_boundary_points = 12;
 
