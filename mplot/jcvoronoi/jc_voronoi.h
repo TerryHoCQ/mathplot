@@ -121,21 +121,19 @@ namespace jcv
     struct clipper
     {
         // Tests if a point is inside the final shape
-        std::function<int(/*const*/ clipper<T>* _clipper, const point<T> p)> test_fn;
+        std::function<int(const clipper<T>* _clipper, const point<T> p)> test_fn;
         // Given an edge, and the clipper, calculates the e->pos[0] and e->pos[1]
         // Returns 0 if not successful
-        std::function<int(/*const*/ clipper<T>* _clipper, edge<T>* e)>       clip_fn;
+        std::function<int(const clipper<T>* _clipper, edge<T>* e)>       clip_fn;
         // Given the clipper, the site and the last edge,
         // closes any gaps in the polygon by adding new edges that follow the bounding shape
         // The internal context is use when allocating new edges.
-        std::function<void(/*const*/ clipper<T>* _clipper,
+        std::function<void(const clipper<T>* _clipper,
                            context_internal<T>* allocator, site<T>* s)>  fill_fn;
 
         point<T>     min;        // The bounding rect min
         point<T>     max;        // The bounding rect max
         void*        ctx;        // User defined context function
-
-        sm::vvec<jcv::point<T>>* danglers = nullptr;
     };
 
     // Second batch of structs
@@ -533,7 +531,7 @@ namespace jcv
         }
 
         // CLIPPING
-        static int boxshape_test (/*const*/ clipper<T>* clipper, const point<T> p)
+        static int boxshape_test (const clipper<T>* clipper, const point<T> p)
         {
             return p[0] >= clipper->min[0] && p[0] <= clipper->max[0]
             && p[1] >= clipper->min[1] && p[1] <= clipper->max[1];
@@ -541,7 +539,7 @@ namespace jcv
 
         // The line equation: ax + by + c = 0
         // see edge_create
-        static int boxshape_clip (/*const*/ clipper<T>* clipper, edge<T>* e)
+        static int boxshape_clip (const clipper<T>* clipper, edge<T>* e)
         {
             //std::cout << "boxshape clip edge " << e->pos[0] << "--" << e->pos[1]
             //          << " f = " << e->a << "x + " << e->b << "y + " << e->c << "..." << std::endl;
@@ -1062,7 +1060,7 @@ namespace jcv
             return edge;
         }
 
-        static void boxshape_fill (/*const*/ clipper<T>* clipper, context_internal<T>* allocator, site<T>* site)
+        static void boxshape_fill (const clipper<T>* clipper, context_internal<T>* allocator, site<T>* site)
         {
             // They're sorted CCW, so if the current->pos[1] != next->pos[0], then we have a gap
             graphedge<T>* curr_graphedge = site->edges;
@@ -1359,7 +1357,7 @@ namespace jcv
 
         // This version of diagram_generate allows the client to use a custom allocator
         static void diagram_generate_useralloc (int num_points, const point<T>* points,
-                                                const rect<T>* _rect, /*const*/ clipper<T>* _clipper,
+                                                const rect<T>* _rect, const clipper<T>* _clipper,
                                                 void* userallocctx, FJCVAllocFn allocfn, FJCVFreeFn freefn, diagram<T>* d)
         {
             if (d->internal) { diagram_free (d); }
@@ -1471,12 +1469,12 @@ namespace jcv
          * If rect is null, an automatic bounding box is calculated, with an extra padding of 10 units
          * All points will be culled against the bounding rect, and all edges will be clipped against it.
          */
-        static void diagram_generate (int num_points, const point<T>* points, const rect<T>* rect, /*const*/ clipper<T>* clipper, diagram<T>* d)
+        static void diagram_generate (int num_points, const point<T>* points, const rect<T>* rect, const clipper<T>* clipper, diagram<T>* d)
         {
             diagram_generate_useralloc (num_points, points, rect, clipper, 0, alloc_fn, free_fn, d);
         }
 
-        static void diagram_generate (int num_points, const point<T>* points, /*const*/ clipper<T>* clipper, diagram<T>* d)
+        static void diagram_generate (int num_points, const point<T>* points, const clipper<T>* clipper, diagram<T>* d)
         {
             diagram_generate_useralloc (num_points, points, 0,    clipper, 0, alloc_fn, free_fn, d);
         }
@@ -1512,17 +1510,13 @@ namespace jcv
             polygonclipper.clip_fn = &jcv::manager<T>::polygon_clip;
             polygonclipper.fill_fn = &jcv::manager<T>::polygon_fill;
             polygonclipper.ctx = &polygon;
-            polygonclipper.danglers = &this->danglers;
 
             jcv::manager<T>::diagram_generate (ncoords, centres.data(), &polygonclipper, &this->diagram);
-            std::cout << "After diagram_generate, polygon danglers; " << polygonclipper.danglers->size() << std::endl;
-            //this->danglers = polygonclipper.danglers;
         }
-        sm::vvec<jcv::point<T>> danglers = {}; // debug
 
         int diagram_numsites() const { return this->diagram.numsites; }
 
-        static int polygon_test (/*const*/ clipper<T>* clipper, const point<T> p)
+        static int polygon_test (const clipper<T>* clipper, const point<T> p)
         {
             auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
             int num_points = polygon->size();
@@ -1549,7 +1543,7 @@ namespace jcv
             return result;
         }
 
-        static int ray_intersect_polygon (/*const*/ clipper<T>* clipper, point<T>& p0, point<T>& p1)
+        static int ray_intersect_polygon (const clipper<T>* clipper, point<T>& p0, point<T>& p1)
         {
             auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
             int num_points = polygon->size();
@@ -1622,7 +1616,7 @@ namespace jcv
             return 1;
         }
 
-        static int polygon_clip (/*const*/ clipper<T>* clipper, edge<T>* e)
+        static int polygon_clip (const clipper<T>* clipper, edge<T>* e)
         {
             // std::cout << std::endl << __func__ << " called for edge e from " << e->pos[0] << " to " << e->pos[1] << std::endl;
 
@@ -1667,7 +1661,7 @@ namespace jcv
             return 1;
         }
 
-        static point<T> get_polygon_vertex (/*const*/ clipper<T>* clipper, int vtx_idx)
+        static point<T> get_polygon_vertex (const clipper<T>* clipper, int vtx_idx)
         {
             point<T> p = {};
             auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
@@ -1678,7 +1672,7 @@ namespace jcv
 
         // In field 0, return: 0: p NOT on polygon; 1: p on polygon edge section; 2: p on polygon vertex
         // In field 1, return the index of the edge or vertex referred to in field 0.
-        static sm::vec<int, 2> find_polygon_edge (/*const*/ clipper<T>* clipper, const point<T>& _p)
+        static sm::vec<int, 2> find_polygon_edge (const clipper<T>* clipper, const point<T>& _p)
         {
             point<T> p = _p;
             sm::vec<int, 2> info = {};
@@ -1724,7 +1718,7 @@ namespace jcv
             return info;
         }
 
-        static void polygon_fill (/*const*/ clipper<T>* clipper,
+        static void polygon_fill (const clipper<T>* clipper,
                                   context_internal<T>* allocator, site<T>* site)
         {
             //std::cout << __func__ << " called for site " << site->index << "@" << site->p << std::endl;
@@ -1777,8 +1771,6 @@ namespace jcv
             constexpr int loopcount_thresh = 20;
             int loopcount = 0;
             while (curr_graphedge && next) {
-
-                clipper->danglers->push_back (curr_graphedge->pos[0]);
 
                 // Which edge of the polygon, if any, are we on? current_edge[0] indicates whether
                 // the point is "not edge/vertex" (value 0); "on an edge" (value 1) or "is a vertex"
