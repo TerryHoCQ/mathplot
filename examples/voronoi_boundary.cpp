@@ -41,14 +41,16 @@ int main()
     v.bindmodel (vorv);
     vorv->show_voronoi2d = true; // true to show the 2D voronoi edges
     vorv->debug_dataCoords = true; // true to show coordinate spheres
-    vorv->border_width = 0.5f;
 #if 0
     // Use a rectangular domain boundary
     // vorv->rectangular_domain = true; // this is default
+    // vorv->border_width = 0.5f;
 #else
     // polygonal
-    vorv->dom_shape = mplot::VoronoiVisual<float>::domain_shape::circular;
+    //vorv->dom_shape = mplot::VoronoiVisual<float>::domain_shape::circular;
+    vorv->dom_shape = mplot::VoronoiVisual<float>::domain_shape::ellipsoid;
     vorv->num_boundary_points = 30;   // default 30
+    vorv->border_width = 0.01f;
 #endif
     vorv->cm.setType (cmap_t);
     vorv->setDataCoords (&points);

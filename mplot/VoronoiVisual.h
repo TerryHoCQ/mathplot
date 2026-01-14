@@ -23,6 +23,10 @@
 #include <sm/vec>
 #include <sm/range>
 #include <sm/quaternion>
+#include <sm/mat22>
+#ifdef ADAPTIVE_SIGMA
+# include <sm/winder>
+#endif
 
 #include <mplot/tools.h>
 #include <mplot/VisualDataModel.h>
@@ -122,24 +126,35 @@ namespace mplot
                 this->boundary.resize (this->num_boundary_points, cent2.plus_one_dim());
 
                 if (this->dom_shape == domain_shape::ellipsoid) {
-                    throw std::runtime_error ("implement me");
-#if 0
-                    // Extra setup
-                    arma::mat x (dcoords_ptr->size(), 2);
+                    // Find ellipse parameters for the data. First place data in an arma::mat, offsetting by the centroid
+                    arma::Mat<float> x (dcoords_ptr->size(), 2);
                     for (unsigned int i = 0; i < dcoords_ptr->size(); ++i) {
-                        x(i, 0) = (*this->dcoords_ptr)[i][0];
-                        x(i, 1) = (*this->dcoords_ptr)[i][1];
+                        x(i, 0) = (*this->dcoords_ptr)[i][0] - cent2[0];
+                        x(i, 1) = (*this->dcoords_ptr)[i][1] - cent2[1];
                     }
-                    std::cout << "x: " << x << std::endl;
-                    arma::mat coeff = arma::princomp (x);
-                    std::cout << "princ coeff: " << coeff << std::endl;
-                    // From PCA determine ellipsoid axes
-#endif
-                } else {
+                    // From PCA determine ellipsoid axes. Angle of coefficient vector and length of
+                    // eigen values gives the ellipse parameters
+                    arma::Mat<float> co, sc;
+                    arma::Col<float> lat, tsq;
+                    arma::princomp (co, sc, lat, tsq, x);
+                    // Mat access is (r, c)
+                    sm::vec<float, 2> pc1vec = { co(0, 0), co(1, 0) };
+                    sm::mat22<float> el_rotn;
+                    el_rotn.rotate (pc1vec.angle());
+                    float a = this->n_sigma * std::sqrt (lat(0));
+                    float b = this->n_sigma * std::sqrt (lat(1));
+                    // Create the elliptic boundary
+                    for (unsigned int i = 0; i < this->num_boundary_points; ++i) {
+                        float phi = i * sm::mathconst<float>::two_pi / this->num_boundary_points;
+                        sm::vec<float, 2> bp = el_rotn * sm::vec<float, 2>{ a * std::cos (phi), b * std::sin (phi) }  + cent2;
+                        this->boundary[i] = bp.plus_one_dim();
+                    }
+
+                } else { // circular boundary
                     float l = max_len + this->border_width;
                     for (unsigned int i = 0; i < this->num_boundary_points; ++i) {
-                        float ang = i * sm::mathconst<float>::two_pi / this->num_boundary_points;
-                        this->boundary[i] += { l * std::cos (ang), l * std::sin (ang) };
+                        float phi = i * sm::mathconst<float>::two_pi / this->num_boundary_points;
+                        this->boundary[i] += { l * std::cos (phi), l * std::sin (phi) };
                     }
                 }
             } // else rectangular default does not populate this->boundary
@@ -498,6 +513,8 @@ namespace mplot
         domain_shape dom_shape = domain_shape::rectangular;
         // When making the boundary, how many points? Or use some f (dcoords.size())?
         unsigned int num_boundary_points = 30;
+        // When finding ellipsoid shape from PCA, how many sigmas to multiply the principle axes length by?
+        float n_sigma = 3.0f;
 
         // Do we add index labels?
         bool labelIndices = false;

@@ -408,33 +408,6 @@ target_link_libraries(draw_triangles_intersections OpenGL::GL glfw Freetype::Fre
 add_executable(triangle_intersect triangle_intersect.cpp)
 target_link_libraries(triangle_intersect OpenGL::GL glfw Freetype::Freetype)
 
-add_executable(voronoi_random voronoi_random.cpp)
-target_link_libraries(voronoi_random OpenGL::GL glfw Freetype::Freetype)
-
-add_executable(voronoi_boundary voronoi_boundary.cpp)
-target_link_libraries(voronoi_boundary OpenGL::GL glfw Freetype::Freetype)
-
-add_executable(voronoi_rectangular voronoi_rectangular.cpp)
-target_link_libraries(voronoi_rectangular OpenGL::GL glfw Freetype::Freetype)
-
-add_executable(voronoi_vectordata voronoi_vectordata.cpp)
-target_link_libraries(voronoi_vectordata OpenGL::GL glfw Freetype::Freetype)
-
-add_executable(voronoi_function voronoi_function.cpp)
-target_link_libraries(voronoi_function OpenGL::GL glfw Freetype::Freetype)
-
-add_executable(voronoi_function_flat voronoi_function_flat.cpp)
-target_link_libraries(voronoi_function_flat OpenGL::GL glfw Freetype::Freetype)
-
-add_executable(voronoi_fixed voronoi_fixed.cpp)
-target_link_libraries(voronoi_fixed OpenGL::GL glfw Freetype::Freetype)
-
-add_executable(voronoi_fixed_xz voronoi_fixed_xz.cpp)
-target_link_libraries(voronoi_fixed_xz OpenGL::GL glfw Freetype::Freetype)
-
-add_executable(voronoi_fixed_nearlyz voronoi_fixed_nearlyz.cpp)
-target_link_libraries(voronoi_fixed_nearlyz OpenGL::GL glfw Freetype::Freetype)
-
 add_executable(rectangle rectangle.cpp)
 target_link_libraries(rectangle OpenGL::GL glfw Freetype::Freetype)
 
@@ -561,3 +534,38 @@ target_link_libraries(show_boundingboxes OpenGL::GL glfw Freetype::Freetype)
 # if have compound-ray header
 add_executable(cray_eye cray_eye.cpp)
 target_link_libraries(cray_eye OpenGL::GL glfw Freetype::Freetype)
+
+if(ARMADILLO_FOUND)
+  # use of principle component analysis from arma in this example
+  add_executable(ellipse_pca ellipse_pca.cpp)
+  target_link_libraries(ellipse_pca ${ARMADILLO_LIBRARY} ${ARMADILLO_LIBRARIES} OpenGL::GL glfw Freetype::Freetype)
+
+  # Voronoi code now also uses arma
+  add_executable(voronoi_random voronoi_random.cpp)
+  target_link_libraries(voronoi_random ${ARMADILLO_LIBRARY} ${ARMADILLO_LIBRARIES} OpenGL::GL glfw Freetype::Freetype)
+
+  add_executable(voronoi_boundary voronoi_boundary.cpp)
+  target_link_libraries(voronoi_boundary ${ARMADILLO_LIBRARY} ${ARMADILLO_LIBRARIES} OpenGL::GL glfw Freetype::Freetype)
+
+  add_executable(voronoi_rectangular voronoi_rectangular.cpp)
+  target_link_libraries(voronoi_rectangular ${ARMADILLO_LIBRARY} ${ARMADILLO_LIBRARIES} OpenGL::GL glfw Freetype::Freetype)
+
+  add_executable(voronoi_vectordata voronoi_vectordata.cpp)
+  target_link_libraries(voronoi_vectordata ${ARMADILLO_LIBRARY} ${ARMADILLO_LIBRARIES} OpenGL::GL glfw Freetype::Freetype)
+
+  add_executable(voronoi_function voronoi_function.cpp)
+  target_link_libraries(voronoi_function ${ARMADILLO_LIBRARY} ${ARMADILLO_LIBRARIES} OpenGL::GL glfw Freetype::Freetype)
+
+  add_executable(voronoi_function_flat voronoi_function_flat.cpp)
+  target_link_libraries(voronoi_function_flat ${ARMADILLO_LIBRARY} ${ARMADILLO_LIBRARIES} OpenGL::GL glfw Freetype::Freetype)
+
+  add_executable(voronoi_fixed voronoi_fixed.cpp)
+  target_link_libraries(voronoi_fixed ${ARMADILLO_LIBRARY} ${ARMADILLO_LIBRARIES} OpenGL::GL glfw Freetype::Freetype)
+
+  add_executable(voronoi_fixed_xz voronoi_fixed_xz.cpp)
+  target_link_libraries(voronoi_fixed_xz ${ARMADILLO_LIBRARY} ${ARMADILLO_LIBRARIES} OpenGL::GL glfw Freetype::Freetype)
+
+  add_executable(voronoi_fixed_nearlyz voronoi_fixed_nearlyz.cpp)
+  target_link_libraries(voronoi_fixed_nearlyz ${ARMADILLO_LIBRARY} ${ARMADILLO_LIBRARIES} OpenGL::GL glfw Freetype::Freetype)
+
+endif(ARMADILLO_FOUND)
