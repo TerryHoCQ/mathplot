@@ -24,9 +24,6 @@
 #include <sm/range>
 #include <sm/quaternion>
 #include <sm/mat22>
-#ifdef ADAPTIVE_SIGMA
-# include <sm/winder>
-#endif
 
 #include <mplot/tools.h>
 #include <mplot/VisualDataModel.h>
