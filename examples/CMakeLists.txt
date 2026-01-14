@@ -569,3 +569,6 @@ if(ARMADILLO_FOUND)
   target_link_libraries(voronoi_fixed_nearlyz ${ARMADILLO_LIBRARY} ${ARMADILLO_LIBRARIES} OpenGL::GL glfw Freetype::Freetype)
 
 endif(ARMADILLO_FOUND)
+
+add_executable(trace_boundary trace_boundary.cpp)
+target_link_libraries(trace_boundary OpenGL::GL glfw Freetype::Freetype)

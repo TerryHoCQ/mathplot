@@ -6,13 +6,18 @@
 
 #include <array>
 #include <vector>
+
+#include <armadillo>
+
 #include <sm/mathconst>
 #include <sm/vec>
 #include <sm/range>
 #include <sm/geometry>
+#include <sm/mat22>
+#include <sm/centroid>
+
 #include <mplot/VisualModel.h>
 #include <mplot/gl/version.h>
-
 #include <mplot/jcvoronoi/jc_voronoi.h>
 
 namespace mplot::compoundray
@@ -435,7 +440,38 @@ namespace mplot::compoundray
 
             jcv::manager<double> vorman; // we need double precision for projections, float may run into trouble
             vorman.border_width = this->border_width;
-            vorman.diagram_generate (this->omm2d);
+
+            sm::vec<double, 3> cent = sm::algo::centroid (omm2d);
+            sm::vec<double, 2> cent2 = cent.less_one_dim();
+            constexpr unsigned int num_boundary_points = 30;
+            std::vector<sm::vec<double, 3>> boundary (num_boundary_points, cent);
+
+            // Find ellipse parameters for the data. First place data in an arma::mat, offsetting by the centroid
+            arma::Mat<double> x (omm2d.size(), 2);
+            for (unsigned int i = 0; i < omm2d.size(); ++i) {
+                x(i, 0) = omm2d[i][0] - cent2[0];
+                x(i, 1) = omm2d[i][1] - cent2[1];
+            }
+            // From PCA determine ellipsoid axes. Angle of coefficient vector and length of
+            // eigen values gives the ellipse parameters
+            arma::Mat<double> co, sc;
+            arma::Col<double> lat, tsq;
+            arma::princomp (co, sc, lat, tsq, x);
+            // Mat access is (r, c)
+            sm::vec<double, 2> pc1vec = { co(0, 0), co(1, 0) };
+            sm::mat22<double> el_rotn;
+            el_rotn.rotate (pc1vec.angle());
+            constexpr double n_sigma = 3.0;
+            double a = n_sigma * std::sqrt (lat(0));
+            double b = n_sigma * std::sqrt (lat(1));
+            // Create the elliptic boundary
+            for (unsigned int i = 0; i < num_boundary_points; ++i) {
+                double phi = i * sm::mathconst<double>::two_pi / num_boundary_points;
+                sm::vec<double, 2> bp = el_rotn * sm::vec<double, 2>{ a * std::cos (phi), b * std::sin (phi) }  + cent2;
+                boundary[i] = bp.plus_one_dim();
+            }
+
+            vorman.diagram_generate (this->omm2d, boundary);
 
             int diag_nsites = vorman.diagram_numsites();
             if (diag_nsites != ncoords) {

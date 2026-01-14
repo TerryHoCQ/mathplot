@@ -56,7 +56,8 @@ namespace mplot
         {
             rectangular,
             ellipsoid,
-            circular
+            circular,
+            traced      // trace around the points - arbitrary polygon
         };
 
         VoronoiVisual (const sm::vec<float> _offset)
@@ -154,6 +155,42 @@ namespace mplot
                         this->boundary[i] += { l * std::cos (phi), l * std::sin (phi) };
                     }
                 }
+            } else if (this->dom_shape == domain_shape::traced) {
+                std::cout << "Trace round the points\n";
+                sm::vec<float> cent = this->coordsCentroid();
+                sm::vec<float, 2> cent2 = {cent[0], cent[1]};
+                this->boundary.resize (this->num_boundary_points, cent2.plus_one_dim());
+
+                // For tracing, make an angle-sorted set of the coordinates,, based on the angle
+                // from the first two dimensions, sorted between angle 0 and 2pi
+                std::vector<sm::vec<float>> dcoords_srt (*this->dcoords_ptr);
+                std::cout << "dcoords_srt.size() " << dcoords_srt.size() << std::endl;
+                // Offset by centroid
+                for (auto& dc : dcoords_srt) { dc -= cent; }
+                // Sort by angle
+                std::sort (dcoords_srt.begin(), dcoords_srt.end(), [](sm::vec<float> a, sm::vec<float> b){
+                    float aa = a.less_one_dim().angle();
+                    sm::algo::zero_to_twopi (aa);
+                    float ab = b.less_one_dim().angle();
+                    sm::algo::zero_to_twopi (ab);
+                    return aa < ab;
+                });
+                std::cout << "dcoords_srt.size() " << dcoords_srt.size() << std::endl;
+                // Can now iterate through dcoords_srt, slice by slice
+                unsigned int step = dcoords_srt.size() / this->num_boundary_points;
+                for (unsigned int i = 0; i < dcoords_srt.size(); i += step) {
+                    // This is a pie slice.
+                    std::cout << "Pie slice starting at i = " << i << std::endl;
+                    float l = 0.0f;
+                    for (unsigned int j = i; j < dcoords_srt.size() && j < (i + step); ++j) {
+                        float ll = dcoords_srt[j].less_one_dim().length();
+                        l = ll > l ? ll : l;
+                    }
+                    std::cout << "for boundary[" << (i / step) << "], max length is " << l << std::endl;
+                    float phi = (i / step) * sm::mathconst<float>::two_pi / this->num_boundary_points;
+                    this->boundary[i / step] += sm::vec<float>{ l * std::cos (phi), l * std::sin (phi), 1.0f }; // 1 is hack
+                }
+
             } // else rectangular default does not populate this->boundary
 
             if (this->boundary.size() > 0) {

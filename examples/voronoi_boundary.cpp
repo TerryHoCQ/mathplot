@@ -48,7 +48,8 @@ int main()
 #else
     // polygonal
     //vorv->dom_shape = mplot::VoronoiVisual<float>::domain_shape::circular;
-    vorv->dom_shape = mplot::VoronoiVisual<float>::domain_shape::ellipsoid;
+    //vorv->dom_shape = mplot::VoronoiVisual<float>::domain_shape::ellipsoid;
+    vorv->dom_shape = mplot::VoronoiVisual<float>::domain_shape::traced;
     vorv->num_boundary_points = 30;   // default 30
     vorv->border_width = 0.01f;
 #endif
