@@ -24,6 +24,8 @@
 #include <sm/range>
 #include <sm/quaternion>
 #include <sm/mat22>
+#include <sm/geometry>
+#include <sm/centroid>
 
 #include <mplot/tools.h>
 #include <mplot/VisualDataModel.h>
@@ -156,41 +158,24 @@ namespace mplot
                     }
                 }
             } else if (this->dom_shape == domain_shape::traced) {
-                std::cout << "Trace round the points\n";
-                sm::vec<float> cent = this->coordsCentroid();
-                sm::vec<float, 2> cent2 = {cent[0], cent[1]};
-                this->boundary.resize (this->num_boundary_points, cent2.plus_one_dim());
-
-                // For tracing, make an angle-sorted set of the coordinates,, based on the angle
-                // from the first two dimensions, sorted between angle 0 and 2pi
-                std::vector<sm::vec<float>> dcoords_srt (*this->dcoords_ptr);
-                std::cout << "dcoords_srt.size() " << dcoords_srt.size() << std::endl;
-                // Offset by centroid
-                for (auto& dc : dcoords_srt) { dc -= cent; }
-                // Sort by angle
-                std::sort (dcoords_srt.begin(), dcoords_srt.end(), [](sm::vec<float> a, sm::vec<float> b){
-                    float aa = a.less_one_dim().angle();
-                    sm::algo::zero_to_twopi (aa);
-                    float ab = b.less_one_dim().angle();
-                    sm::algo::zero_to_twopi (ab);
-                    return aa < ab;
-                });
-                std::cout << "dcoords_srt.size() " << dcoords_srt.size() << std::endl;
-                // Can now iterate through dcoords_srt, slice by slice
-                unsigned int step = dcoords_srt.size() / this->num_boundary_points;
-                for (unsigned int i = 0; i < dcoords_srt.size(); i += step) {
-                    // This is a pie slice.
-                    std::cout << "Pie slice starting at i = " << i << std::endl;
-                    float l = 0.0f;
-                    for (unsigned int j = i; j < dcoords_srt.size() && j < (i + step); ++j) {
-                        float ll = dcoords_srt[j].less_one_dim().length();
-                        l = ll > l ? ll : l;
-                    }
-                    std::cout << "for boundary[" << (i / step) << "], max length is " << l << std::endl;
-                    float phi = (i / step) * sm::mathconst<float>::two_pi / this->num_boundary_points;
-                    this->boundary[i / step] += sm::vec<float>{ l * std::cos (phi), l * std::sin (phi), 1.0f }; // 1 is hack
+                // Copy 3D points to 2D
+                sm::vvec<sm::vec<float, 2>> coords2 (dcoords_ptr->size());
+                for (unsigned int i = 0; i < dcoords_ptr->size(); ++i) {
+                    coords2[i] = (*dcoords_ptr)[i].less_one_dim();
                 }
-
+                auto bnd2centr = sm::algo::centroid (coords2);
+                // Find convex hull
+                sm::vvec<sm::vec<float, 2>> bnd2 = sm::geometry::graham_scan (coords2);
+                this->boundary.resize (bnd2.size());
+                // Copy 2D to 3D boundary
+                for (unsigned int i = 0; i < bnd2.size(); ++i) {
+                    this->boundary[i] = bnd2[i].plus_one_dim();
+                    // Add border
+                    sm::vec<float, 2> brd = bnd2[i] - bnd2centr; // border vector from centroid to point
+                    brd.renormalize();
+                    brd *= this->border_width;
+                    this->boundary[i] += brd.plus_one_dim();
+                }
             } // else rectangular default does not populate this->boundary
 
             if (this->boundary.size() > 0) {
