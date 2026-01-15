@@ -16,9 +16,12 @@
 
 static constexpr int n_points = 80;
 
-int main()
+int main (int argc, char** argv)
 {
     int rtn = -1;
+
+    int domshape = 0; // 0 for rectangular, 1 for circ, 2 for ellipse, 3 for traced
+    if (argc > 1) { domshape = std::stoi (argv[1]); }
 
     mplot::Visual v(1024, 768, "VoronoiVisual");
 
@@ -41,18 +44,22 @@ int main()
     v.bindmodel (vorv);
     vorv->show_voronoi2d = true; // true to show the 2D voronoi edges
     vorv->debug_dataCoords = true; // true to show coordinate spheres
-#if 0
-    // Use a rectangular domain boundary
-    // vorv->rectangular_domain = true; // this is default
-    // vorv->border_width = 0.5f;
-#else
-    // polygonal
-    //vorv->dom_shape = mplot::VoronoiVisual<float>::domain_shape::circular;
-    //vorv->dom_shape = mplot::VoronoiVisual<float>::domain_shape::ellipsoid;
-    vorv->dom_shape = mplot::VoronoiVisual<float>::domain_shape::traced;
-    vorv->num_boundary_points = 30;   // default 30, ignored for traced
+
+    // traced, circular, ellipsoid, rectangular:
+    if (domshape == 1) {
+        vorv->dom_shape = mplot::VoronoiVisual<float>::domain_shape::circular;
+    } else if (domshape == 2) {
+        vorv->dom_shape = mplot::VoronoiVisual<float>::domain_shape::ellipsoid;
+    } else if (domshape == 3) {
+        vorv->dom_shape = mplot::VoronoiVisual<float>::domain_shape::traced;
+    } else {
+        vorv->dom_shape = mplot::VoronoiVisual<float>::domain_shape::rectangular;
+    }
+    // A border to add to our domain boundary
     vorv->border_width = 0.2f;
-#endif
+    // Some domain shapes need to know a number of points:
+    vorv->num_boundary_points = 30;
+
     vorv->cm.setType (cmap_t);
     vorv->setDataCoords (&points);
     vorv->setScalarData (&data);
