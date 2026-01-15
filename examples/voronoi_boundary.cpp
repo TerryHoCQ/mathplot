@@ -14,14 +14,17 @@
 #include <mplot/Visual.h>
 #include <mplot/VoronoiVisual.h>
 
-static constexpr int n_points = 80;
-
 int main (int argc, char** argv)
 {
     int rtn = -1;
 
+    float border_width = 0.2f;
+    unsigned int n_points = 80;
     int domshape = 0; // 0 for rectangular, 1 for circ, 2 for ellipse, 3 for traced
+
     if (argc > 1) { domshape = std::stoi (argv[1]); }
+    if (argc > 2) { border_width = std::stof (argv[2]); }
+    if (argc > 3) { n_points = std::stoi (argv[3]); }
 
     mplot::Visual v(1024, 768, "VoronoiVisual");
 
@@ -56,7 +59,7 @@ int main (int argc, char** argv)
         vorv->dom_shape = mplot::VoronoiVisual<float>::domain_shape::rectangular;
     }
     // A border to add to our domain boundary
-    vorv->border_width = 0.2f;
+    vorv->border_width = border_width;
     // Some domain shapes need to know a number of points:
     vorv->num_boundary_points = 30;
 
