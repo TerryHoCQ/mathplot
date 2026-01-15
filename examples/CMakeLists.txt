@@ -531,11 +531,11 @@ endif()
 add_executable(show_boundingboxes show_boundingboxes.cpp)
 target_link_libraries(show_boundingboxes OpenGL::GL glfw Freetype::Freetype)
 
-# if have compound-ray header
-add_executable(cray_eye cray_eye.cpp)
-target_link_libraries(cray_eye OpenGL::GL glfw Freetype::Freetype)
-
 if(ARMADILLO_FOUND)
+  # if have compound-ray header
+  add_executable(cray_eye cray_eye.cpp)
+  target_link_libraries(cray_eye OpenGL::GL glfw Freetype::Freetype)
+
   # use of principle component analysis from arma in this example
   add_executable(ellipse_pca ellipse_pca.cpp)
   target_link_libraries(ellipse_pca ${ARMADILLO_LIBRARY} ${ARMADILLO_LIBRARIES} OpenGL::GL glfw Freetype::Freetype)
