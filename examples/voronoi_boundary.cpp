@@ -61,7 +61,7 @@ int main (int argc, char** argv)
     // A border to add to our domain boundary
     vorv->border_width = border_width;
     // Some domain shapes need to know a number of points:
-    vorv->num_boundary_points = 30;
+    vorv->num_boundary_points = 12;
 
     vorv->cm.setType (cmap_t);
     vorv->setDataCoords (&points);
