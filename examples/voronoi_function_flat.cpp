@@ -43,7 +43,10 @@ int main()
     vorv->show_voronoi2d = true; // true to show the 2D voronoi edges
     vorv->debug_dataCoords = false; // true to show coordinate spheres
     float length_scale = 4.0f / std::sqrt (n_points);
-    vorv->border_width  = length_scale;
+    vorv->border_width = length_scale;
+    //vorv->dom_shape = mplot::VoronoiVisual<float>::domain_shape::traced;
+    //vorv->dom_shape = mplot::VoronoiVisual<float>::domain_shape::circular;
+    //vorv->dom_shape = mplot::VoronoiVisual<float>::domain_shape::rectangular; // default
     vorv->cm.setType (cmap_t);
     vorv->setDataCoords (&points);
     vorv->setScalarData (&data);
@@ -61,7 +64,7 @@ int main()
         if (fcount++% 600 == 0) {
             vorvp->cm.setType (++cmap_t);
         }
-        vorvp->reinitColours(); // Not quite working when I change the colourmap
+        vorvp->reinitColours();
         v.waitevents(0.018);
         v.render();
         k += 0.01f;

@@ -1432,7 +1432,7 @@ namespace jcv
                 finishline (internal, he->edge_);
             }
 
-            //fillgaps (d);
+            fillgaps (d);
         }
 
         /**
@@ -1517,6 +1517,7 @@ namespace jcv
 
         static int ray_intersect_polygon (const clipper<T>* clipper, point<T>& p0, point<T>& p1)
         {
+            constexpr bool debug_ray_intersect = false;
             auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
             int num_points = polygon->size();
 
@@ -1526,27 +1527,32 @@ namespace jcv
             int w_p1 = w.wind (p1);
 
             if (w_p0 == 0 && w_p1 == 0) {
-                std::cout << "Both points outside boundary\n";
+                if constexpr (debug_ray_intersect) { std::cout << "Both points outside boundary\n"; }
                 return 2; // Both outside means remove this edge.
             } else if (w_p0 != 0 && w_p1 != 0) {
-                std::cout << "Both points INSIDE boundary, return 1\n";
+                if constexpr (debug_ray_intersect) { std::cout << "Both points INSIDE boundary, return 1\n"; }
                 return 1; // Both inside
             }
 
-            std::cout << "p0 is " << (w_p0 == 0 ? "outside" : "inside") << " and p1 is " <<  (w_p1 == 0 ? "outside" : "inside") << std::endl;
-
-            std::cout << "p0 = " << p0.str_mat() << std::endl;
-            std::cout << "bnd = [";
+            if constexpr (debug_ray_intersect) {
+                std::cout << "p0 is " << (w_p0 == 0 ? "outside" : "inside") << " and p1 is "
+                          <<  (w_p1 == 0 ? "outside" : "inside") << std::endl;
+            }
             for (int i = 0; i < num_points; ++i) {
                 sm::vec<T, 2> v0 = (*polygon)[i].less_one_dim();
                 sm::vec<T, 2> v1 = (*polygon)[(i + 1) % num_points].less_one_dim();
-                std::cout << v0.str_comma_separated() << ";\n";
-                //std::cout << "Test segments intersect for v0/v1: " << v0 << ", " << v1 << ", p0/p1: "
-                //          << p0.less_one_dim() << ", " << p1.less_one_dim() << std::endl;
+
+                if constexpr (debug_ray_intersect) {
+                    std::cout << "Test segments intersect for v0/v1: " << v0 << ", " << v1 << ", p0/p1: "
+                              << p0.less_one_dim() << ", " << p1.less_one_dim() << std::endl;
+                }
 
                 // find crossing point of v0,v1 and p0,p1
                 std::bitset<2> isect = sm::geometry::segments_intersect (v0, v1, p0.less_one_dim(), p1.less_one_dim());
-                //std::cout << "Intersect? " << (isect.test(0) ? "yes" : "no") << " colinear? " << (isect.test(1) ? "yes" : "no") << std::endl;
+                if constexpr (debug_ray_intersect) {
+                    std::cout << "Intersect? " << (isect.test(0) ? "yes" : "no")
+                              << " colinear? " << (isect.test(1) ? "yes" : "no") << std::endl;
+                }
                 if (isect.test(0) == true) {
                     if (isect.test(1) == true) {
                         // lines co-linear. This is always an error?
@@ -1573,12 +1579,14 @@ namespace jcv
                     } // else no crossing point with this section.
                 }
             }
-            std::cout << "]\n";
+
             return 1;
         }
 
         static int polygon_clip (const clipper<T>* clipper, edge<T>* e)
         {
+            constexpr bool debug_polyclip = false;
+
             // Using the box clipper to get a finite line segment
             int result = manager<T>::boxshape_clip (clipper, e);
             if (!result) { return 0; }
@@ -1589,7 +1597,9 @@ namespace jcv
             point<T> p0 = e->pos[0];
             point<T> p1 = e->pos[1];
 
-            std::cout << "**Clip for: " << p0 << " to " << p1 << std::endl;
+            if constexpr (debug_polyclip) {
+                std::cout << "**Clip for: " << p0 << " to " << p1 << std::endl;
+            }
 
             result = ray_intersect_polygon (clipper, p0, p1);
 
@@ -1604,7 +1614,9 @@ namespace jcv
             e->pos[0] = p0;
             e->pos[1] = p1;
 
-            std::cout << "Clipped to: " << p0 << " to " << p1 << std::endl;
+            if constexpr (debug_polyclip) {
+                std::cout << "Clipped to: " << p0 << " to " << p1 << std::endl;
+            }
 
             return 1;
         }
@@ -1672,6 +1684,8 @@ namespace jcv
         static void polygon_fill (const clipper<T>* clipper,
                                   context_internal<T>* allocator, site<T>* site)
         {
+            constexpr bool debug_polyfill = false;
+
             // They're sorted CCW, so if the current->pos[1] != next->pos[0], then we have a gap
             auto polygon = reinterpret_cast<std::vector<jcv::point<T>>*>(clipper->ctx);
             int num_points = polygon->size();
@@ -1732,7 +1746,7 @@ namespace jcv
                     if (current_edge[0] == 1 && next_edge[0] == 1 && current_edge[1] == next_edge[1]) {
 
                         // Case: Current and Next on the same border
-                        std::cout << "Current and next on same border\n";
+                        if constexpr (debug_polyfill) { std::cout << "Current and next on same border\n"; }
 
                         graphedge<T>* gap = alloc_graphedge (allocator);
                         gap->neighbor   = 0;
@@ -1748,11 +1762,11 @@ namespace jcv
 
                         // Case: Current and Next on different borders, so we need to find the
                         // adjacent vertex, following the borders CCW
-                        std::cout << "Current and next on different borders\n";
+                        if constexpr (debug_polyfill) { std::cout << "Current and next on different borders\n"; }
 
                         int next_vertex = (current_edge[1] + 1) % num_points;
                         point<T> vtx = get_polygon_vertex (clipper, next_vertex);
-                        std::cout << "vtx = " << vtx << std::endl;
+                        if constexpr (debug_polyfill) { std::cout << "vtx = " << vtx << std::endl; }
 
                         graphedge<T>* gap = alloc_graphedge (allocator);
                         gap->neighbor   = 0;
@@ -1767,7 +1781,7 @@ namespace jcv
                     } else if (current_edge[0] == 1 && next_edge[0] == 2) {
 
                         // Case: Current on border, next on a vertex
-                        std::cout << "Current on border next on vertex\n";
+                        if constexpr (debug_polyfill) { std::cout << "Current on border next on vertex\n"; }
                         point<T> vtx = get_polygon_vertex (clipper, next_edge[1]);
 
                         graphedge<T>* gap = alloc_graphedge (allocator);
@@ -1782,7 +1796,7 @@ namespace jcv
 
                     } else if (current_edge[0] == 2 && next_edge[0] == 1 && next_edge[1] == current_edge[1]) {
 
-                        std::cout << "Current on vertex next on same border\n";
+                        if constexpr (debug_polyfill) { std::cout << "Current on vertex next on same border\n"; }
                         // Case: Current on vertex, next on *same* border
                         graphedge<T>* gap = alloc_graphedge (allocator);
                         gap->neighbor   = 0;
@@ -1796,7 +1810,7 @@ namespace jcv
 
                     } else if (current_edge[0] == 2 && next_edge[0] == 1 && next_edge[1] != current_edge[1]) {
 
-                        std::cout << "Current on vertex next on another border\n";
+                        if constexpr (debug_polyfill) { std::cout << "Current on vertex next on another border\n"; }
                         // Case: Current on vertex, next on another border, so we need to find the adjacent
                         // vertex, following the borders CCW
                         int next_vertex = (current_edge[1] + 1) % num_points;
@@ -1815,7 +1829,7 @@ namespace jcv
                     } else if (next_edge[0] == 0) {
 
                         // Case: Current on vertex or border, but next not on polygon boundary
-                        std::cout << "Current on vertex or border, but next not on polygon boundary\n";
+                        if constexpr (debug_polyfill) { std::cout << "Current on vertex or border, but next not on polygon boundary\n"; }
                         graphedge<T>* gap = alloc_graphedge (allocator);
                         gap->neighbor   = 0;
                         gap->pos[0]     = curr_graphedge->pos[1];
@@ -1833,8 +1847,10 @@ namespace jcv
                     }
                 } // else current_edge->pos[1] is not on the polygonal boundary
 
-                if ((curr_graphedge->pos[0] - curr_graphedge->pos[1]).length_sq() > 25) {
-                    std::cout << "added a long edge from " << curr_graphedge->pos[0] << " to " << curr_graphedge->pos[1] << std::endl;
+                if constexpr (debug_polyfill) {
+                    if ((curr_graphedge->pos[0] - curr_graphedge->pos[1]).length_sq() > 25) {
+                        std::cout << "added a long edge from " << curr_graphedge->pos[0] << " to " << curr_graphedge->pos[1] << std::endl;
+                    }
                 }
 
                 curr_graphedge = curr_graphedge->next;

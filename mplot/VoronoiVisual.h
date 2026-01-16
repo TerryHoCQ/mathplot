@@ -411,7 +411,9 @@ namespace mplot
                             this->computeTube ({ e->pos[0].x() * this->zoom, e->pos[0].y() * this->zoom, 0.0f },
                                                { e->pos[1].x() * this->zoom, e->pos[1].y() * this->zoom, 0.0f },
                                                mplot::colour::black, mplot::colour::black, this->voronoi_grid_thickness, 6);
-                            this->addLabel (e->pos[0].str(), e->pos[0].less_one_dim().plus_one_dim() * this->zoom + labelOffset, mplot::TextFeatures(labelSize) );
+                            //this->addLabel (e->pos[0].str(),
+                            //                e->pos[0].less_one_dim().plus_one_dim() * this->zoom + labelOffset,
+                            //                mplot::TextFeatures(labelSize) );
                             e = e->next;
                         }
                     }
@@ -426,8 +428,8 @@ namespace mplot
                 // Polygonal boundary (if used)
                 for (auto b : this->boundary) {
                     this->computeSphere (b * this->zoom, mplot::colour::dodgerblue2, 3.0f * this->dataCoord_sphere_size);
-                    // addlabel
-                    this->addLabel (b.str(), b * this->zoom + labelOffset, mplot::TextFeatures(labelSize) );
+                    // Show text of boundary vertex position like this
+                    // this->addLabel (b.str(), b * this->zoom + labelOffset, mplot::TextFeatures(labelSize) );
                 }
             }
         }
