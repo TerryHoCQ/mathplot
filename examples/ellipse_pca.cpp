@@ -6,6 +6,8 @@
 #include <sm/mathconst>
 #include <sm/random>
 #include <sm/mat22>
+#include <sm/pca>
+
 #include <armadillo>
 
 #include <mplot/Visual.h>
@@ -20,7 +22,7 @@ int main()
     sm::rand_normal<float> rn2 (0.0f, 0.5f);
     sm::vvec<sm::vec<float, 2>> _x (n_samp, {0});
     sm::mat22<float> rotn;
-    rotn.rotate (sm::mathconst<float>::pi_over_4);
+    rotn.rotate (sm::mathconst<float>::pi_over_8);
     for (unsigned int i = 0; i < n_samp; ++i) {
         _x[i] = rotn * sm::vec<float, 2>{ rn1.get(), rn2.get() };
     }
@@ -35,6 +37,11 @@ int main()
     gv->setlimits (-5, 5, -5, 5);
     gv->setdata (_x, ds);
 
+    // sm::pca
+    std::cout << "\nsm::pca gives:\n";
+    [[maybe_unused]] sm::pca::result<float, 2> pca_res = sm::pca::compute<float, 2> (_x);
+
+    std::cout << "\narma gives:\n";
     // Place data in arma::Mat
     arma::Mat<float> x(_x.size(), 2);
     for (unsigned int i = 0; i < _x.size(); ++i) {
@@ -48,6 +55,7 @@ int main()
     arma::princomp (co, sc, lat, tsq, x);
 
     std::cout << "coeff: " << co << std::endl;
+    //std::cout << "scores: " << sc << std::endl;
     std::cout << "latent: " << lat << std::endl;
 
     // Mat access is (r, c)
