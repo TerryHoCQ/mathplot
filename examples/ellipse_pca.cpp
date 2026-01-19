@@ -6,7 +6,6 @@
 #include <sm/mathconst>
 #include <sm/random>
 #include <sm/mat22>
-#include <sm/pca>
 
 #include <armadillo>
 
@@ -36,10 +35,6 @@ int main()
     v.bindmodel (gv);
     gv->setlimits (-5, 5, -5, 5);
     gv->setdata (_x, ds);
-
-    // sm::pca
-    std::cout << "\nsm::pca gives:\n";
-    [[maybe_unused]] sm::pca::result<float, 2> pca_res = sm::pca::compute<float, 2> (_x);
 
     std::cout << "\narma gives:\n";
     // Place data in arma::Mat
