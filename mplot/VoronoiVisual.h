@@ -21,7 +21,6 @@
 #include <sm/vec>
 #include <sm/range>
 #include <sm/quaternion>
-#include <sm/mat22>
 #include <sm/geometry>
 #include <sm/centroid>
 
