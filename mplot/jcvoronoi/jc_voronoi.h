@@ -22,7 +22,6 @@
 #include <functional>
 #include <sm/mathconst>
 #include <sm/vec>
-#include <sm/vvec>
 #include <sm/geometry>
 #include <sm/winder>
 
@@ -522,8 +521,6 @@ namespace jcv
         // see edge_create
         static int boxshape_clip (const clipper<T>* clipper, edge<T>* e)
         {
-            //std::cout << "boxshape clip edge " << e->pos[0] << "--" << e->pos[1]
-            //          << " f = " << e->a << "x + " << e->b << "y + " << e->c << "..." << std::endl;
             T pxmin = clipper->min[0];
             T pxmax = clipper->max[0];
             T pymin = clipper->min[1];
@@ -551,11 +548,10 @@ namespace jcv
                 if (y2 < pymin) { y2 = pymin; }
                 x2 = (e->c) - (e->b) * y2;
                 // Never occurs according to lcov
-                //if (((x1 > pxmax) & (x2 > pxmax)) | ((x1 < pxmin) & (x2 < pxmin)))
-                //{
-                //    std::cout << "Yes it does" << std::endl;
-                //    return 0;
-                //}
+                // if (((x1 > pxmax) & (x2 > pxmax)) | ((x1 < pxmin) & (x2 < pxmin)))
+                // {
+                //     return 0;
+                // }
                 if (x1 > pxmax) {
                     x1 = pxmax;
                     y1 = (e->c - x1) / e->b;
@@ -582,10 +578,9 @@ namespace jcv
                 if (x2 < pxmin) { x2 = pxmin; }
                 y2 = e->c - e->a * x2;
                 // Never occurs according to lcov
-                //if (((y1 > pymax) & (y2 > pymax)) | ((y1 < pymin) & (y2 < pymin))) {
-                //    std::cout << "Yes it does" << std::endl;
-                //    return 0;
-                //}
+                // if (((y1 > pymax) & (y2 > pymax)) | ((y1 < pymin) & (y2 < pymin))) {
+                //     return 0;
+                // }
                 if (y1 > pymax) {
                     y1 = pymax;
                     x1 = (e->c - y1) / e->a;
@@ -606,8 +601,6 @@ namespace jcv
             e->pos[0][1] = y1;
             e->pos[1][0] = x2;
             e->pos[1][1] = y2;
-
-            //std::cout << "After boxshape_clip, e is " << e->pos[0] << "--" << e->pos[1] << std::endl;
 
             // If the two points are equal, the result is invalid
             return (x1 == x2 && y1 == y2) ? 0 : 1;
@@ -984,8 +977,6 @@ namespace jcv
                 ge->pos[flip] = e->pos[i];
                 ge->pos[1-flip] = e->pos[1-i];
                 ge->angle = calc_sort_metric(e->sites[i], ge);
-
-                // std::cout << "finishline: Insert graphedge " << ge->pos[0] << "--" << ge->pos[1] << std::endl;
                 sortedges_insert (e->sites[i], ge);
             }
         }
@@ -1141,9 +1132,7 @@ namespace jcv
         static void fillgaps (diagram<T>* diagram)
         {
             context_internal<T>* internal = diagram->internal;
-
             if (!internal->clipper_.fill_fn) { return; }
-
             for (int i = 0; i < internal->numsites; ++i) {
                 site<T>* site = &internal->sites[i];
                 // Call fill fn for each site

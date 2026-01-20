@@ -6,14 +6,11 @@
 
 #include <array>
 #include <vector>
-
 #include <sm/mathconst>
 #include <sm/vec>
 #include <sm/range>
 #include <sm/geometry>
-#include <sm/mat22>
 #include <sm/centroid>
-
 #include <mplot/VisualModel.h>
 #include <mplot/gl/version.h>
 #include <mplot/jcvoronoi/jc_voronoi.h>
