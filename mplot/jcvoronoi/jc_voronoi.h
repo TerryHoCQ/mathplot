@@ -233,29 +233,6 @@ namespace jcv
             return (pt1->y() == pt2->y()) ? (pt1->x() < pt2->x()) : pt1->y() < pt2->y();
         }
 
-        [[maybe_unused]]
-        static int point_on_box_edge (const point<T>* pt, const point<T>* min, const point<T>* max)
-        {
-            return pt->x() == min->x() || pt->y() == min->y() || pt->x() == max->x() || pt->y() == max->y();
-        }
-
-        static point<T> mix (point<T> a, point<T> b, T t)
-        {
-            point<T> r = {};
-            r[0] = a[0] + (b[0] - a[0]) * t;
-            r[1] = a[1] + (b[1] - a[1]) * t;
-            return r;
-        }
-
-        // if it returns [0.0, 1.0] it's on the line segment
-        static T point_to_line_segment_t (point<T> p, point<T> p0, point<T> p1)
-        {
-            point<T> vpoint = p - p0;
-            point<T> vsegment = p1 - p0;
-            return vsegment.dot (vpoint) / vsegment.dot (vsegment);
-        }
-
-
         // edges and corners
         static const int EDGE_LEFT    = 1;
         static const int EDGE_RIGHT   = 2;
