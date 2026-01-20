@@ -18,8 +18,6 @@
 #include <map>
 #include <set>
 
-#include <armadillo>
-
 #include <sm/vec>
 #include <sm/range>
 #include <sm/quaternion>
@@ -126,6 +124,13 @@ namespace mplot
                 this->boundary.resize (this->num_boundary_points, cent2.plus_one_dim());
 
                 if (this->dom_shape == domain_shape::ellipsoid) {
+                    throw std::runtime_error ("Elliptic domain shapes not supported");
+                    /*
+                     * Here is an approach using arma::princomp, but I don't want the arma
+                     * dependency, as elliptic boundaries are not as useful to me as traced
+                     * boundaries. This code awaits sm::pca::compute().
+                     */
+#if 0
                     // Find ellipse parameters for the data. First place data in an arma::mat, offsetting by the centroid
                     arma::Mat<float> x (dcoords_ptr->size(), 2);
                     for (unsigned int i = 0; i < dcoords_ptr->size(); ++i) {
@@ -149,7 +154,7 @@ namespace mplot
                         sm::vec<float, 2> bp = el_rotn * sm::vec<float, 2>{ a * std::cos (phi), b * std::sin (phi) }  + cent2;
                         this->boundary[i] = bp.plus_one_dim();
                     }
-
+#endif
                 } else { // circular boundary
                     float l = max_len + this->border_width;
                     for (unsigned int i = 0; i < this->num_boundary_points; ++i) {

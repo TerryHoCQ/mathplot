@@ -7,8 +7,6 @@
 #include <array>
 #include <vector>
 
-#include <armadillo>
-
 #include <sm/mathconst>
 #include <sm/vec>
 #include <sm/range>
