@@ -13,7 +13,6 @@
 #include <mplot/Visual.h>
 #include <mplot/GraphVisual.h>
 
-
 int main()
 {
     // Get ready to graph the data

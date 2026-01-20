@@ -27,13 +27,13 @@ int main()
     }
 
     // Graph the data
-    mplot::Visual v(1024, 768, "Principle component analysis");
+    mplot::Visual v(1024, 768, "Principle component analysis with armadillo");
     // Create a GraphVisual object (obtaining a unique_ptr to the object) with a spatial offset within the scene of 0,0,0
     auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>{-0.5f,-0.5f,0.0f});
     mplot::DatasetStyle ds (mplot::stylepolicy::markers);
     ds.datalabel = std::string("data");
     v.bindmodel (gv);
-    gv->setlimits (-5, 5, -5, 5);
+    gv->setlimits (-8, 8, -8, 8);
     gv->setdata (_x, ds);
 
     std::cout << "\narma gives:\n";
