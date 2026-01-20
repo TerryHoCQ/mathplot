@@ -411,6 +411,9 @@ target_link_libraries(triangle_intersect OpenGL::GL glfw Freetype::Freetype)
 add_executable(voronoi_random voronoi_random.cpp)
 target_link_libraries(voronoi_random OpenGL::GL glfw Freetype::Freetype)
 
+add_executable(voronoi_boundary voronoi_boundary.cpp)
+target_link_libraries(voronoi_boundary OpenGL::GL glfw Freetype::Freetype)
+
 add_executable(voronoi_rectangular voronoi_rectangular.cpp)
 target_link_libraries(voronoi_rectangular OpenGL::GL glfw Freetype::Freetype)
 
@@ -558,3 +561,12 @@ target_link_libraries(show_boundingboxes OpenGL::GL glfw Freetype::Freetype)
 # if have compound-ray header
 add_executable(cray_eye cray_eye.cpp)
 target_link_libraries(cray_eye OpenGL::GL glfw Freetype::Freetype)
+
+if(ARMADILLO_FOUND)
+  # Make use of principle component analysis from arma in this example
+  add_executable(ellipse_pca ellipse_pca.cpp)
+  target_link_libraries(ellipse_pca ${ARMADILLO_LIBRARY} ${ARMADILLO_LIBRARIES} OpenGL::GL glfw Freetype::Freetype)
+endif()
+
+add_executable(trace_boundary trace_boundary.cpp)
+target_link_libraries(trace_boundary OpenGL::GL glfw Freetype::Freetype)

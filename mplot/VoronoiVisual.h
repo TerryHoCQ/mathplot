@@ -21,6 +21,8 @@
 #include <sm/vec>
 #include <sm/range>
 #include <sm/quaternion>
+#include <sm/geometry>
+#include <sm/centroid>
 
 #include <mplot/tools.h>
 #include <mplot/VisualDataModel.h>
@@ -45,6 +47,18 @@ namespace mplot
         };
 
     public:
+
+        // The shape of the domain to draw around the points in the Voronoi diagram Each kind of
+        // boundary shape is auto-fit to the data points, although the user can set an additional
+        // border_width.
+        enum class domain_shape : uint32_t
+        {
+            rectangular,
+            ellipsoid,
+            circular,
+            traced      // trace around the points - arbitrary polygon
+        };
+
         VoronoiVisual (const sm::vec<float> _offset)
         {
             this->viewmatrix.translate (_offset);
@@ -89,20 +103,99 @@ namespace mplot
                 this->dcoords_ptr = this->dataCoords;
             }
 
-            // Use mplot::range to find the extents of dataCoords. From these create a
-            // rectangle to pass to diagram_generate.
-            sm::range<float> rx, ry;
-            rx.search_init();
-            ry.search_init();
-            for (unsigned int i = 0; i < ncoords; ++i) {
-                rx.update ((*this->dcoords_ptr)[i][0]);
-                ry.update ((*this->dcoords_ptr)[i][1]);
-            }
-
             // Generate the 2D Voronoi diagram
             jcv::manager<float> vorman;
+            if (this->border_width == -1) { this->border_width = 4.0f / std::sqrt (ncoords); }
             vorman.border_width = this->border_width;
-            vorman.diagram_generate (*(dcoords_ptr));
+
+            if (this->dom_shape == domain_shape::ellipsoid || this->dom_shape == domain_shape::circular) {
+
+                sm::vec<float> cent = this->coordsCentroid();
+                sm::vec<float, 2> cent2 = {cent[0], cent[1]};
+                sm::vvec<float> lengths (this->dcoords_ptr->size(), 0.0f);
+                for (unsigned int i = 0; i < this->dcoords_ptr->size(); ++i) {
+                    sm::vec<float, 2> c = (*this->dcoords_ptr)[i].less_one_dim() - cent2;
+                    lengths[i] = c.length();
+                }
+                float max_len = lengths.max();
+                // Points MUST be in anti-clockwise order!!!!!
+                this->boundary.clear();
+                this->boundary.resize (this->num_boundary_points, cent2.plus_one_dim());
+
+                if (this->dom_shape == domain_shape::ellipsoid) {
+                    throw std::runtime_error ("Elliptic domain shapes not supported");
+                    /*
+                     * Here is an approach using arma::princomp, but I don't want the arma
+                     * dependency, as elliptic boundaries are not as useful to me as traced
+                     * boundaries. This code awaits sm::pca::compute().
+                     */
+#if 0
+                    // Find ellipse parameters for the data. First place data in an arma::mat, offsetting by the centroid
+                    arma::Mat<float> x (dcoords_ptr->size(), 2);
+                    for (unsigned int i = 0; i < dcoords_ptr->size(); ++i) {
+                        x(i, 0) = (*this->dcoords_ptr)[i][0] - cent2[0];
+                        x(i, 1) = (*this->dcoords_ptr)[i][1] - cent2[1];
+                    }
+                    // From PCA determine ellipsoid axes. Angle of coefficient vector and length of
+                    // eigen values gives the ellipse parameters
+                    arma::Mat<float> co, sc;
+                    arma::Col<float> lat, tsq;
+                    arma::princomp (co, sc, lat, tsq, x);
+                    // Mat access is (r, c)
+                    sm::vec<float, 2> pc1vec = { co(0, 0), co(1, 0) };
+                    sm::mat22<float> el_rotn;
+                    el_rotn.rotate (pc1vec.angle());
+                    float a = this->n_sigma * std::sqrt (lat(0));
+                    float b = this->n_sigma * std::sqrt (lat(1));
+                    // Create the elliptic boundary
+                    for (unsigned int i = 0; i < this->num_boundary_points; ++i) {
+                        float phi = i * sm::mathconst<float>::two_pi / this->num_boundary_points;
+                        sm::vec<float, 2> bp = el_rotn * sm::vec<float, 2>{ a * std::cos (phi), b * std::sin (phi) }  + cent2;
+                        this->boundary[i] = bp.plus_one_dim();
+                    }
+#endif
+                } else { // circular boundary
+                    float l = max_len + this->border_width;
+                    for (unsigned int i = 0; i < this->num_boundary_points; ++i) {
+                        float phi = i * sm::mathconst<float>::two_pi / this->num_boundary_points;
+                        this->boundary[i] += { l * std::cos (phi), l * std::sin (phi) };
+                    }
+                }
+            } else if (this->dom_shape == domain_shape::traced) {
+                // Copy 3D points to 2D
+                sm::vvec<sm::vec<float, 2>> coords2 (dcoords_ptr->size());
+                for (unsigned int i = 0; i < dcoords_ptr->size(); ++i) {
+                    coords2[i] = (*dcoords_ptr)[i].less_one_dim();
+                }
+                auto bnd2centr = sm::algo::centroid (coords2);
+                // Find convex hull
+                sm::vvec<sm::vec<float, 2>> bnd2 = sm::geometry::graham_scan (coords2);
+                this->boundary.resize (bnd2.size());
+                // Copy 2D to 3D boundary
+                for (unsigned int i = 0; i < bnd2.size(); ++i) {
+                    this->boundary[i] = bnd2[i].plus_one_dim();
+                    // Add border
+                    sm::vec<float, 2> brd = bnd2[i] - bnd2centr; // border vector from centroid to point
+                    brd.renormalize();
+                    brd *= this->border_width;
+                    this->boundary[i] += brd.plus_one_dim();
+                }
+            } // else rectangular default does not populate this->boundary
+
+            if (this->boundary.size() > 0) {
+                vorman.diagram_generate (*(dcoords_ptr), this->boundary);
+            } else {
+                // default rectangular box boundary
+                vorman.diagram_generate (*(dcoords_ptr));
+            }
+
+            if (static_cast<unsigned int>(vorman.diagram_numsites()) == 0) {
+                if (this->boundary.empty()) {
+                    throw std::runtime_error ("numsites == 0.");
+                } else {
+                    throw std::runtime_error ("numsites == 0. Make sure your boundary points appear in anti-clockwise order");
+                }
+            }
 
             // We obtain access to the Voronoi cell sites:
             const jcv::site<float>* sites = vorman.diagram_get_sites();
@@ -258,7 +351,8 @@ namespace mplot
                 }
             }
             if (static_cast<unsigned int>(vorman.diagram_numsites()) != ncoords) {
-                std::cout << "WARNING: numsites != ncoords ?!?!\n";
+                std::cout << "WARNING: numsites (" << vorman.diagram_numsites()
+                          << ") != ncoords (" << ncoords << ")?!?!\n";
             }
 
             // Draw optional objects
@@ -321,6 +415,9 @@ namespace mplot
                             this->computeTube ({ e->pos[0].x() * this->zoom, e->pos[0].y() * this->zoom, 0.0f },
                                                { e->pos[1].x() * this->zoom, e->pos[1].y() * this->zoom, 0.0f },
                                                mplot::colour::black, mplot::colour::black, this->voronoi_grid_thickness, 6);
+                            //this->addLabel (e->pos[0].str(),
+                            //                e->pos[0].less_one_dim().plus_one_dim() * this->zoom + labelOffset,
+                            //                mplot::TextFeatures(labelSize) );
                             e = e->next;
                         }
                     }
@@ -331,6 +428,12 @@ namespace mplot
                 // Add some spheres at the original data points for debugging
                 for (unsigned int i = 0; i < ncoords; ++i) {
                     this->computeSphere ((*this->dataCoords)[i] * this->zoom, mplot::colour::black, this->dataCoord_sphere_size);
+                }
+                // Polygonal boundary (if used)
+                for (auto b : this->boundary) {
+                    this->computeSphere (b * this->zoom, mplot::colour::dodgerblue2, 3.0f * this->dataCoord_sphere_size);
+                    // Show text of boundary vertex position like this
+                    // this->addLabel (b.str(), b * this->zoom + labelOffset, mplot::TextFeatures(labelSize) );
                 }
             }
         }
@@ -426,8 +529,6 @@ namespace mplot
         bool debug_dataCoords = false;
         //! The size of the black spheres are dataCoord locations
         float dataCoord_sphere_size = 0.008f;
-
-
         //! What direction should be considered 'z' when converting the data into a voronoi diagram?
         //! The data values will be rotated before the Voronoi pass, then rotated back.
         sm::vec<float> data_z_direction = sm::vec<>::uz();
@@ -435,7 +536,13 @@ namespace mplot
         //! You can add a little extra to the rectangle that is auto-detected from the
         //! datacoordinate ranges. This defaults to epsilon to give the best possible
         //! surface with a rectangular grid.
-        float border_width = std::numeric_limits<float>::epsilon();
+        float border_width = -1;
+        // Create a rectangular domain or use a smoother (circular) boundary?
+        domain_shape dom_shape = domain_shape::rectangular;
+        // When making the boundary, how many points? Or use some f (dcoords.size())?
+        unsigned int num_boundary_points = 30;
+        // When finding ellipsoid shape from PCA, how many sigmas to multiply the principle axes length by?
+        float n_sigma = 3.0f;
 
         // Do we add index labels?
         bool labelIndices = false;
@@ -473,10 +580,11 @@ namespace mplot
         //! Record the data index for each Voronoi cell index
         sm::vvec<unsigned int> site_indices;
         unsigned int triangle_count_sum = 0;
-
+        // Polygon domain coordinates
+        std::vector<sm::vec<float>> boundary;
         //! Internally owned version of dataCoords after rotation
         std::vector<sm::vec<float>> dcoords;
-        //! A pointer either to dcoords or this->dataCoords
+        //! A pointer to dcoords
         const std::vector<sm::vec<float>>* dcoords_ptr;
     };
 

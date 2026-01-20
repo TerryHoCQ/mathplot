@@ -10,9 +10,9 @@
 #include <sm/vec>
 #include <sm/range>
 #include <sm/geometry>
+#include <sm/centroid>
 #include <mplot/VisualModel.h>
 #include <mplot/gl/version.h>
-
 #include <mplot/jcvoronoi/jc_voronoi.h>
 
 namespace mplot::compoundray
@@ -435,7 +435,29 @@ namespace mplot::compoundray
 
             jcv::manager<double> vorman; // we need double precision for projections, float may run into trouble
             vorman.border_width = this->border_width;
-            vorman.diagram_generate (this->omm2d);
+
+            std::vector<sm::vec<double, 3>> boundary;
+
+            // Copy 3D points to 2D
+            sm::vvec<sm::vec<double, 2>> coords2 (omm2d.size());
+            for (unsigned int i = 0; i < omm2d.size(); ++i) {
+                coords2[i] = omm2d[i].less_one_dim();
+            }
+            auto bnd2centr = sm::algo::centroid (coords2);
+            // Find convex hull
+            sm::vvec<sm::vec<double, 2>> bnd2 = sm::geometry::graham_scan (coords2);
+            boundary.resize (bnd2.size());
+            // Copy 2D to 3D boundary
+            for (unsigned int i = 0; i < bnd2.size(); ++i) {
+                boundary[i] = bnd2[i].plus_one_dim();
+                // Add border
+                sm::vec<double, 2> brd = bnd2[i] - bnd2centr; // border vector from centroid to point
+                brd.renormalize();
+                brd *= this->border_width;
+                boundary[i] += brd.plus_one_dim();
+            }
+
+            vorman.diagram_generate (this->omm2d, boundary);
 
             int diag_nsites = vorman.diagram_numsites();
             if (diag_nsites != ncoords) {
