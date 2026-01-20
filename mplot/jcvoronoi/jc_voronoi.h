@@ -555,9 +555,7 @@ namespace jcv
                 if (x2 < pxmin) { x2 = pxmin; }
                 y2 = e->c - e->a * x2;
                 // Never occurs according to lcov
-                // if (((y1 > pymax) & (y2 > pymax)) | ((y1 < pymin) & (y2 < pymin))) {
-                //     return 0;
-                // }
+                // if (((y1 > pymax) & (y2 > pymax)) | ((y1 < pymin) & (y2 < pymin))) { return 0; }
                 if (y1 > pymax) {
                     y1 = pymax;
                     x1 = (e->c - y1) / e->a;
