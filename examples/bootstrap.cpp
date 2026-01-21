@@ -36,7 +36,7 @@ int main()
 
     // Invoke the bootstrap to compute the standard error of the mean
     unsigned int num_resamples = conf.get<unsigned int>("num_resamples", 1024);
-    double eom = sm::bootstrap<double>::error_of_mean (dist, num_resamples);
+    double eom = sm::bootstrap::error_of_mean<double> (dist, num_resamples);
     std::cout << "The bootstrapped, standard error of the mean is " << eom << std::endl;
 
     // Graph the distribution, with labels
@@ -74,10 +74,10 @@ int main()
     sm::rand_normal<double, std::mt19937_64> rnorm2 (dist2_mean, dist2_sigma);
     sm::vvec<double> dist2;
     dist2.set_from (rnorm2.get(dist2_n));
-    double eom2 = sm::bootstrap<double>::error_of_mean (dist2, num_resamples);
+    double eom2 = sm::bootstrap::error_of_mean<double> (dist2, num_resamples);
     std::cout << "Bootstrapped error of mean of dist2 is " << eom2 << std::endl;
 
-    sm::vec<double,2> asl = sm::bootstrap<double>::ttest_equalityofmeans (dist, dist2, num_resamples);
+    sm::vec<double,2> asl = sm::bootstrap::ttest_equalityofmeans<double> (dist, dist2, num_resamples);
     std::cout << "Achieved significance level: " << asl[0] << " (with minasl: " << asl[1] << ")\n";
 
     sm::histo<double, float> h2(dist2, 100);
