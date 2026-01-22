@@ -159,7 +159,7 @@ namespace mplot
         }
 
         // Compute the triangle normal for the ordered triplet of triangle vertices, tverts
-        sm::vec<float, 3> triangle_normal (const sm::vec<sm::vec<float>, 3>& tverts)
+        sm::vec<float, 3> triangle_normal (const sm::vec<sm::vec<float>, 3>& tverts) const
         {
             sm::vec<float> n = (tverts[1] - tverts[0]).cross (tverts[2] - tverts[0]);
             n.renormalize();
@@ -317,10 +317,14 @@ namespace mplot
          * model. The length of vdir is used to avoid finding the intersection at the 'back' of the
          * model.
          *
+         * \param ti_ml The most likely triangle, if you know what it probably is, to reduce the
+         * search time.
+         *
          * \return a tuple containing crossing location, triangle identity (three indices) and triangle normal vector
          */
         std::tuple<sm::vec<float>, std::array<uint32_t, 4>, sm::vec<float>>
-        find_triangle_crossing (const sm::vec<float>& coord_mf, const sm::vec<float>& vdir) const
+        find_triangle_crossing (const sm::vec<float>& coord_mf, const sm::vec<float>& vdir,
+                                const std::array<uint32_t, 4> ti_ml = {std::numeric_limits<uint32_t>::max()}) const
         {
             constexpr auto umax = std::numeric_limits<uint32_t>::max();
             constexpr auto fmax = std::numeric_limits<float>::max();
@@ -333,6 +337,30 @@ namespace mplot
 
             auto isect_d = std::numeric_limits<float>::max(); // distance to intersect
 
+            const auto vdsos = vdir.sos();
+
+            // Have we been passed a 'most likely triangle' to test first? If so, test it.
+            if (ti_ml[0] != std::numeric_limits<uint32_t>::max()) {
+                sm::vec<float> v0 = this->vertex[ti_ml[0]];
+                sm::vec<float> v1 = this->vertex[ti_ml[1]];
+                sm::vec<float> v2 = this->vertex[ti_ml[2]];
+                auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (v0, v1, v2, vstart, vdir);
+                if (isect) {
+                    float d = (p - vstart).sos();
+                    if (d < vdsos) {
+                        sm::vec<sm::vec<float>, 3> tverts = { v0, v1, v2 };
+                        isect_p = p;
+                        isect_ti = ti_ml;
+                        isect_tn = this->triangle_normal (tverts); // compute tn
+                        isect_d = d;
+                    }
+                }
+            }
+            if (isect_d != std::numeric_limits<float>::max()) {
+                // we found it already!
+                return { isect_p, isect_ti, isect_tn };
+            }
+
             for (auto tri : this->triangles) {
                 auto [ti, tn, tnc, tnd] = tri;
                 auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (this->vertex[ti[0]], this->vertex[ti[1]], this->vertex[ti[2]], vstart, vdir);
@@ -341,7 +369,7 @@ namespace mplot
                 // closest one that isn't.
                 if (isect) {
                     float d = (p - vstart).sos();
-                    if (d < isect_d && d < vdir.sos()) {
+                    if (d < isect_d && d < vdsos) {
                         isect_p = p;
                         isect_ti = ti;
                         isect_tn = tn;
@@ -350,8 +378,9 @@ namespace mplot
                 }
             }
 
-            if (isect_p[0] == fmax) {
-                // Found no triangle intersection; check vertices, in case vdir points perfectly at a vertex
+            if (isect_p[0] == fmax && this->vertex.size() < 10000) {
+                // Found no triangle intersection; check vertices, in case vdir points perfectly at a vertex.
+                // This can be computationally expensive, hence the hacky check, above.
                 for (uint32_t ti = 0; ti < this->vertex.size(); ++ti) {
                     sm::vec<float> vertex_n = this->find_vertex_normal (ti); // also loops
                     vertex_n.renormalize();
@@ -805,17 +834,22 @@ namespace mplot
          * large, flat, one-sided landscape, we want to make vdir long. search_dist_mult is applied
          * to vdir.
          *
+         * \param ti_ml The most likely triangle, if you know what it probably is, to reduce the
+         * search time.
+         *
          * \return tuple containing: the hit point in scene coordinates; the triangle normal of the
          * triangle we hit; and the indices of the triangle we hit.
          */
         std::tuple<sm::vec<float>, sm::vec<float>, std::array<uint32_t, 4>>
         find_triangle_hit (const sm::mat44<float>& model_to_scene,
-                           const sm::vec<float>& camloc_mf, const sm::vec<float>& vdir)
+                           const sm::vec<float>& camloc_mf, const sm::vec<float>& vdir,
+                           const std::array<uint32_t, 4> ti_ml = {std::numeric_limits<uint32_t>::max()})
         {
             this->ti0 = {};
             this->tn0 = {};
             sm::vec<float> hit = {};
-            std::tie (hit, this->ti0, this->tn0) = this->find_triangle_crossing (camloc_mf, vdir);
+            // Want to pass 'best tri' to this
+            std::tie (hit, this->ti0, this->tn0) = this->find_triangle_crossing (camloc_mf, vdir, ti_ml);
 
             if (this->ti0[0] == std::numeric_limits<uint32_t>::max()) { std::cout << __func__ << ": No hit\n"; }
 

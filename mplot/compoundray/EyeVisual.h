@@ -107,7 +107,7 @@ namespace mplot::compoundray
             if (show_3d) {
                 // Replace colours for the 3D part of the model
                 int num_vertices = disc_vertices;
-                if (this->show_cones == true) {
+                if (this->show_cones == true && this->cones_will_show) {
                     num_vertices = cone_vertices + disc_vertices;
                 } // else num_vertices = disc_vertices;
 
@@ -280,19 +280,21 @@ namespace mplot::compoundray
             float ray_radius = ommrng.span().max() / 500.0f;
 
             // Find mean minimum ommatidial distance
-            sm::vvec<float> dist_to_other (n_omm, 0.0f);
-            sm::vvec<float> min_dist_to_other (n_omm, 0.0f);
-            for (size_t i = 0u; i < n_omm; ++i) {
-                for (size_t j = 0u; j < n_omm; ++j) {
-                    if (i == j) {
-                        dist_to_other[j] = 10000.0f;
-                    } else {
-                        dist_to_other[j] = ((*ommatidia)[i].relativePosition - (*ommatidia)[j].relativePosition).length();
+            if (this->min_dist_to_other.empty()) {
+                sm::vvec<float> dist_to_other (n_omm, 0.0f);
+                min_dist_to_other.resize (n_omm, 0.0f);
+                for (size_t i = 0u; i < n_omm; ++i) {
+                    for (size_t j = 0u; j < n_omm; ++j) {
+                        if (i == j) {
+                            dist_to_other[j] = 10000.0f;
+                        } else {
+                            dist_to_other[j] = ((*ommatidia)[i].relativePosition - (*ommatidia)[j].relativePosition).length();
+                        }
                     }
+                    min_dist_to_other[i] = dist_to_other.min();
                 }
-                min_dist_to_other[i] = dist_to_other.min();
             }
-            std::cerr << "Mean ommatidial distance: " << min_dist_to_other.mean() << std::endl;
+            std::cerr << "Mean ommatidial distance: " << this->min_dist_to_other.mean() << std::endl;
 
             // First find out if all focal points are 0
             this->focal_point_sum = 0.0f;
@@ -301,6 +303,7 @@ namespace mplot::compoundray
             }
 
             if (show_3d && this->focal_point_sum > 0.0f) {
+                std::cout << "Stanza 1\n";
                 // We have focal points, so draw with the relativePosition representing the centre
                 // of the ommatidial lens - the base of a cone - which then extends back to the cone
                 // tip, which can be thought of as the location of the ommatidial 'sensor'
@@ -316,7 +319,7 @@ namespace mplot::compoundray
                     sm::vec<float, 3> ommatidial_detector_point = pos - dir * focal_point;
                     // work out a radius from acceptance angle and focal_point
                     // The discs are based on the inter-ommatidial distances in space, which have to have been computed
-                    float dw = min_dist_to_other[i];
+                    float dw = this->min_dist_to_other[i];
                     this->computeTube (pos, pos + (0.05f * dw * dir), colour, colour, dw * 0.5f, tube_faces);
 
                     // This visualizes the optical cones
@@ -324,6 +327,8 @@ namespace mplot::compoundray
                         float optical_radius = focal_point * std::tan (angle / 2.0f);
                         // Colour comes from ommData. ringoffset is 1.0f
                         this->computeCone (pos, ommatidial_detector_point, 0.0f, colour, optical_radius, tube_faces);
+                        this->cones_will_show = true;
+
                     } else if (this->show_fov == true) {
                         // do a cone of angle 'acceptanceAngle' using user-supplied cone_length, starting FROM the disc to show field of view of the eye
                         sm::vec<float, 3> ommatidial_cone_pos = pos + dir * this->cone_length;
@@ -331,7 +336,15 @@ namespace mplot::compoundray
                         this->computeCone (ommatidial_cone_pos, pos, 0.0f, colour, radius, tube_faces);
                     }
                 }
+
+                if ((this->show_cones == true || this->show_fov == true) && n_omm > 0) {
+                    this->cones_will_show = true;
+                } else {
+                    this->cones_will_show = false;
+                }
+
             } else if (show_3d && this->focal_point_sum <= 0.0f) {
+                std::cout << "Stanza 2\n";
                 // All our focal_points are 0. Don't have focal point offset to help define our
                 // cones, only acceptance angle. Use manually specified tube_length (or computed
                 // radius) to figure out the size of a cone, whose tip is the location of the
@@ -344,7 +357,7 @@ namespace mplot::compoundray
                     sm::vec<float, 3> dir = (*ommatidia)[i].relativeDirection;
                     dir.renormalize();
 
-                    float dw = min_dist_to_other[i];
+                    float dw = this->min_dist_to_other[i];
                     this->computeTube (pos, pos + (0.05f * dw * dir), colour, colour, dw * 0.5f, tube_faces);
                     // We don't have a focal length to show cones, but we can still show the acceptance angle
                     if (this->show_fov == true) {
@@ -354,6 +367,15 @@ namespace mplot::compoundray
                         this->computeCone (ommatidial_cone_pos, pos, 0.0f, colour, radius, tube_faces);
                     }
                 }
+
+                if (this->show_fov == true && n_omm > 0) {
+                    this->cones_will_show = true;
+                } else {
+                    this->cones_will_show = false;
+                }
+
+            } else {
+                this->cones_will_show = false;
             }
 
             // 2D projections
@@ -525,10 +547,14 @@ namespace mplot::compoundray
         // If true, show 'field of view' cones. Overrides show_cones. Control size of cones with
         // this->cone_length
         bool show_fov = false;
+        // either show_cones or show_fov are enabled and cones have been drawn
+        bool cones_will_show = false;
         // The colours detected by each ommatidium
         std::vector<std::array<float, 3>>* ommData = nullptr;
         // The position and orientation of each ommatidium
         std::vector<mplot::compoundray::Ommatidium>* ommatidia = nullptr;
+        // Distances to the nearest ommatidia, for choosing disc size. Computed once only
+        sm::vvec<float> min_dist_to_other = {};
         // An optional head mesh
         const mplot::meshgroup* head_mesh = nullptr;
         // If sum is 0, then we have a special case for rendering the eye as we have no focal point
