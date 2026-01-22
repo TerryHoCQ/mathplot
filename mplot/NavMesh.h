@@ -378,8 +378,9 @@ namespace mplot
                 }
             }
 
-            if (isect_p[0] == fmax) {
-                // Found no triangle intersection; check vertices, in case vdir points perfectly at a vertex
+            if (isect_p[0] == fmax && this->vertex.size() < 10000) {
+                // Found no triangle intersection; check vertices, in case vdir points perfectly at a vertex.
+                // This can be computationally expensive, hence the hacky check, above.
                 for (uint32_t ti = 0; ti < this->vertex.size(); ++ti) {
                     sm::vec<float> vertex_n = this->find_vertex_normal (ti); // also loops
                     vertex_n.renormalize();
