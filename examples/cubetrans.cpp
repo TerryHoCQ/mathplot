@@ -120,7 +120,7 @@ int main()
      * the transforms are applied.
      */
 
-    // Apply mat44
+    // Apply sm::mat
     sm::vec<> l2 = (m1 * l1).less_one_dim();
     sm::vec<> d2_s = (m1 * d1_s).less_one_dim();
     sm::vec<> d2_e = (m1 * d1_e).less_one_dim();

@@ -143,7 +143,7 @@ namespace mplot
                     arma::princomp (co, sc, lat, tsq, x);
                     // Mat access is (r, c)
                     sm::vec<float, 2> pc1vec = { co(0, 0), co(1, 0) };
-                    sm::mat22<float> el_rotn;
+                    sm::mat<float, 2> el_rotn;
                     el_rotn.rotate (pc1vec.angle());
                     float a = this->n_sigma * std::sqrt (lat(0));
                     float b = this->n_sigma * std::sqrt (lat(1));

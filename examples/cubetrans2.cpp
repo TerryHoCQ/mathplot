@@ -1,4 +1,4 @@
-// Draw a cube with RhomboVisual and then make up vectors to transform with mat44s
+// Draw a cube with RhomboVisual and then make up vectors to transform with sm::mat<>s
 
 #include <iostream>
 
@@ -46,7 +46,7 @@ int main()
     sm::vec<> d_l1_s = d_l1_s_e - d_l1_s_s;
     auto rotang1 = sm::mathconst<float>::pi / 2;
 
-    // mat44 transformation
+    // matrix transformation
     sm::mat<float, 4> m1t;
     sm::mat<float, 4> m1tor;
     sm::mat<float, 4> m1r;
@@ -61,7 +61,7 @@ int main()
     // Combine by multiplication:
     sm::mat<float, 4> m1 = m1t2 * m1torb * m1r * m1tor * m1t;
 
-    // Apply mat44
+    // Apply matrix
     sm::vec<> l1_e = (m1 * l1_s).less_one_dim();
     sm::vec<> d_l1_e_s = (m1 * d_l1_s_s).less_one_dim();
     sm::vec<> d_l1_e_e = (m1 * d_l1_s_e).less_one_dim();
