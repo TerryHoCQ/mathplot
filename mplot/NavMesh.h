@@ -115,6 +115,11 @@ namespace mplot
         sm::vec<float> tn0 = {};
 
         /*!
+        * Stabilisation flag: if true, no rotation is applied when moving over the navmesh
+        */
+        bool stabilised = false;
+
+        /*!
          * Return index of this->vertex that is closest to scene_coord. Can use vertexidx_to_indices
          * to find the indices into vertexPositions and vertexNormals that this index in the
          * topographic mesh relates to.
@@ -1299,6 +1304,9 @@ namespace mplot
                         // Compute the reorientation due to the requested movement.
                         // Rotate by the angle between the normals. I think this is constrained to be <= pi
                         float rotn_angle = this->tn0.angle (_tn, cd.tri_edge);
+                        if (stabilised){
+                            rotn_angle = 0.0f; // no rotation for a 'stabilised' camera
+                        }
                         // If tn0 and _tn are identical, then rotn_angle will be NaN, but in that case we want no rotation
                         if (std::isnan (rotn_angle)) { rotn_angle = 0.0f; }
                         sm::mat44<float> reorient_model; // reorientation transformation in sf
