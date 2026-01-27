@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include <sm/vec>
-#include <sm/mat44>
+#include <sm/mat>
 #include <mplot/compoundray/Visual.h>
 #include <mplot/RhomboVisual.h>
 #include <mplot/VectorVisual.h>
@@ -47,11 +47,11 @@ int main()
     auto rotang1 = sm::mathconst<float>::pi / 2;
 
     // mat44 transformation
-    sm::mat44<float> m1t;
-    sm::mat44<float> m1tor;
-    sm::mat44<float> m1r;
-    sm::mat44<float> m1torb;
-    sm::mat44<float> m1t2;
+    sm::mat<float, 4> m1t;
+    sm::mat<float, 4> m1tor;
+    sm::mat<float, 4> m1r;
+    sm::mat<float, 4> m1torb;
+    sm::mat<float, 4> m1t2;
     // sequence:
     m1t.translate (mv1);
     m1tor.translate (-(l1_s + mv1));
@@ -59,7 +59,7 @@ int main()
     m1torb.translate (l1_s + mv1);
     m1t2.translate (m1r * mv2);
     // Combine by multiplication:
-    sm::mat44<float> m1 = m1t2 * m1torb * m1r * m1tor * m1t;
+    sm::mat<float, 4> m1 = m1t2 * m1torb * m1r * m1tor * m1t;
 
     // Apply mat44
     sm::vec<> l1_e = (m1 * l1_s).less_one_dim();
@@ -120,11 +120,11 @@ int main()
 
     std::cout << "cam frame 0 viewmatrix:\n" << ptrs[0]->getViewMatrix() << std::endl;
 
-    m1t.setToIdentity();
-    m1tor.setToIdentity();
-    m1r.setToIdentity();
-    m1torb.setToIdentity();
-    m1t2.setToIdentity();
+    m1t.set_identity();
+    m1tor.set_identity();
+    m1r.set_identity();
+    m1torb.set_identity();
+    m1t2.set_identity();
 
     m1t.translate (cshift1);
 

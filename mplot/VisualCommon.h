@@ -14,7 +14,7 @@
 #include <sm/vec>
 #include <sm/range>
 #include <sm/vvec>
-#include <sm/mat44>
+#include <sm/mat>
 #include <mplot/tools.h>
 #include <mplot/colour.h>
 
@@ -24,7 +24,7 @@ namespace mplot
     struct meshgroup
     {
         std::string name;
-        sm::mat44<float> transform;
+        sm::mat<float, 4> transform;
         sm::vvec<uint32_t> indices;
         sm::vvec<sm::vec<float>> positions;
         sm::vvec<sm::vec<float>> normals;

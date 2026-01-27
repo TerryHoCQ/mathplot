@@ -20,7 +20,7 @@
 
 #include <sm/flags>
 #include <sm/quaternion>
-#include <sm/mat44>
+#include <sm/mat>
 #include <sm/vec>
 
 #include <mplot/gl/version.h>
@@ -555,9 +555,9 @@ namespace mplot
         //! Set sceneview and sceneview_tr back to scenetrans_default
         void reset_sceneviews_to_scenetrans_default()
         {
-            this->sceneview.setToIdentity();
+            this->sceneview.set_identity();
             this->sceneview.translate (this->scenetrans_default);
-            this->sceneview_tr.setToIdentity();
+            this->sceneview_tr.set_identity();
             this->sceneview_tr.translate (this->scenetrans_default);
             this->d_to_rotation_centre = -this->scenetrans_default[2];
         }
@@ -793,7 +793,7 @@ namespace mplot
             // Calculate aspect ratio
             float aspect = static_cast<float>(this->window_w) / static_cast<float>(this->window_h ? this->window_h : 1);
             // Set perspective projection
-            this->projection = sm::mat44<float>::perspective (this->fov, aspect, this->zNear, this->zFar);
+            this->projection = sm::mat<float, 4>::perspective (this->fov, aspect, this->zNear, this->zFar);
             // Compute the inverse projection matrix
             this->invproj = this->projection.inverse();
         }
@@ -809,15 +809,15 @@ namespace mplot
          */
         void setOrthographic()
         {
-            this->projection = sm::mat44<float>::orthographic (this->ortho_lb, this->ortho_rt, this->zNear, this->zFar);
+            this->projection = sm::mat<float, 4>::orthographic (this->ortho_lb, this->ortho_rt, this->zNear, this->zFar);
             this->invproj = this->projection.inverse();
         }
 
         // Rotate about the point this->rotation_centre. Subroutine for computeSceneview.
         void computeSceneview_about_rotation_centre()
         {
-            sm::mat44<float> sv_tr;
-            sm::mat44<float> sv_rot;
+            sm::mat<float, 4> sv_tr;
+            sm::mat<float, 4> sv_rot;
             if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
                 sv_tr.translate (this->scenetrans_delta);
                 // A rotation delta in world frame about the 'screen centre'
@@ -872,7 +872,7 @@ namespace mplot
         mplot::VisualModel<glver>* followedVM = nullptr;
 
         //! Holds the viewmatrix of the followedVM the last time we called render
-        sm::mat44<float> followedLastViewMatrix;
+        sm::mat<float, 4> followedLastViewMatrix;
 
         // Initialize OpenGL shaders, set some flags (Alpha, Anti-aliasing), read in any external
         // state from json, and set up the coordinate arrows and any VisualTextModels that will be
@@ -897,10 +897,10 @@ namespace mplot
                 this->rotation_default.y = vconf.contains("scenerotn_y") ? vconf["scenerotn_y"].get<float>() : this->rotation_default.y;
                 this->rotation_default.z = vconf.contains("scenerotn_z") ? vconf["scenerotn_z"].get<float>() : this->rotation_default.z;
 
-                this->sceneview.setToIdentity();
+                this->sceneview.set_identity();
                 this->sceneview.translate (this->scenetrans_default);
                 this->sceneview.rotate (this->rotation_default);
-                this->sceneview_tr.setToIdentity();
+                this->sceneview_tr.set_identity();
                 this->sceneview_tr.translate (this->scenetrans_default);
                 this->scenetrans_delta.zero();
                 this->rotation_delta.reset();
@@ -970,23 +970,23 @@ namespace mplot
         float d_to_rotation_centre = -zDefault;
 
         //! The projection matrix is a member of this class. Value is set during setPerspective() or setOrthographic()
-        sm::mat44<float> projection;
+        sm::mat<float, 4> projection;
 
         //! The inverse of the projection. Value is set during setPerspective() or setOrthographic()
-        sm::mat44<float> invproj;
+        sm::mat<float, 4> invproj;
 
         //! The sceneview matrix, which changes as the user moves the view with mouse
         //! movements. Initialized in VisualOwnable(No)MX constructor.
-        sm::mat44<float> sceneview;
+        sm::mat<float, 4> sceneview;
 
         //! The non-rotating sceneview matrix, updated only from mouse translations (avoiding rotations)
-        sm::mat44<float> sceneview_tr;
+        sm::mat<float, 4> sceneview_tr;
 
         //! Saved sceneview at mouse button down
-        sm::mat44<float> savedSceneview;
+        sm::mat<float, 4> savedSceneview;
 
         //! Saved sceneview_tr
-        sm::mat44<float> savedSceneview_tr;
+        sm::mat<float, 4> savedSceneview_tr;
 
     public:
 
@@ -1208,8 +1208,8 @@ namespace mplot
                 // Reset translation
                 this->cyl_cam_pos = this->cyl_cam_pos_default;
 
-                this->sceneview.setToIdentity();
-                this->sceneview_tr.setToIdentity();
+                this->sceneview.set_identity();
+                this->sceneview_tr.set_identity();
                 this->sceneview.translate (this->scenetrans_default);
                 this->sceneview.rotate (this->rotation_default);
                 this->sceneview_tr.translate (this->scenetrans_default);
@@ -1618,7 +1618,7 @@ namespace mplot
                 this->d_to_rotation_centre -= this->scenetrans_delta[2];
 
                 // Translate scroll_move_y then add it to cyl_cam_pos here
-                sm::mat44<float> sceneview_rotn (this->sceneview.linear());
+                sm::mat<float, 4> sceneview_rotn (this->sceneview.linear());
                 this->cyl_cam_pos += sceneview_rotn * scroll_move_y;
             }
             return true; // needs_render

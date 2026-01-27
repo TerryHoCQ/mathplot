@@ -3,7 +3,7 @@
 #include <array>
 #include <sm/vec>
 #include <sm/mathconst>
-#include <sm/mat22>
+#include <sm/mat>
 #include <mplot/VisualModel.h>
 
 namespace mplot
@@ -47,7 +47,7 @@ namespace mplot
             c4 /= 2.0f;
 
             // Apply rotational transformation
-            sm::mat22<float> rotn;
+            sm::mat<float, 2> rotn;
             rotn.rotate (this->angle * sm::mathconst<float>::deg2rad);
             c1 = rotn * c1;
             c2 = rotn * c2;

@@ -8,6 +8,7 @@
 #include <vector>
 #include <sm/mathconst>
 #include <sm/vec>
+#include <sm/mat>
 #include <sm/range>
 #include <sm/geometry>
 #include <sm/centroid>
@@ -184,7 +185,7 @@ namespace mplot::compoundray
         struct projection_data
         {
             // Use this to position the 2D map wrt the three D model. You can translate, scale and rotate
-            sm::mat44<float> twod_transform;
+            sm::mat<float, 4> twod_transform;
             // The user-provided radius of the projection sphere. Will need to match the size of the compound ray eye
             float proj_radius = 0.0f;
             // The centre of the user-provided projection sphere or cylinder
@@ -210,7 +211,7 @@ namespace mplot::compoundray
         // A compound eye visualization may require several projections to 2D
         std::vector<projection_data> projections;
 
-        void add_spherical_projection (projection_type t, const sm::mat44<float>& _twod_transform,
+        void add_spherical_projection (projection_type t, const sm::mat<float, 4>& _twod_transform,
                                        const sm::vec<float>& centre, const float radius,
                                        const sm::quaternion<float> rotn = sm::quaternion<float>(),
                                        const uint32_t _start_i = 0,
@@ -234,12 +235,12 @@ namespace mplot::compoundray
                                        const uint32_t _start_i = 0,
                                        const uint32_t _end_i = std::numeric_limits<uint32_t>::max())
         {
-            sm::mat44<float> tr;
+            sm::mat<float, 4> tr;
             tr.translate (_twod_offset);
             this->add_spherical_projection (t, tr, centre, radius, rotn, _start_i, _end_i);
         }
 
-        void add_cylindrical_projection (const sm::mat44<float>& _twod_transform, const sm::vec<float>& centre,
+        void add_cylindrical_projection (const sm::mat<float, 4>& _twod_transform, const sm::vec<float>& centre,
                                          const float radius, const float height,
                                          const uint32_t _start_i = 0,
                                          const uint32_t _end_i = std::numeric_limits<uint32_t>::max())
@@ -388,7 +389,7 @@ namespace mplot::compoundray
 
                     // Rotate coordinates as the compound eye looks forwards along z, whereas 2D
                     // projections look forwards along x by convention.
-                    sm::mat44<float> coord_rotn;
+                    sm::mat<float, 4> coord_rotn;
                     coord_rotn.rotate (sm::vec<>::uz(), sm::mathconst<float>::pi_over_2);
                     coord_rotn.rotate (sm::vec<>::ux(), sm::mathconst<float>::pi_over_2);
 

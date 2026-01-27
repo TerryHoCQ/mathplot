@@ -37,7 +37,7 @@
 
 #include <sm/geometry_polyhedra>
 #include <sm/quaternion>
-#include <sm/mat44>
+#include <sm/mat>
 #include <sm/vec>
 #include <sm/vvec>
 #include <sm/range>
@@ -409,19 +409,19 @@ namespace mplot
         virtual void render() = 0;
 
         //! Setter for the viewmatrix
-        void setViewMatrix (const sm::mat44<float>& mv) { this->viewmatrix = mv; }
+        void setViewMatrix (const sm::mat<float, 4>& mv) { this->viewmatrix = mv; }
         //! And a getter
-        sm::mat44<float> getViewMatrix() const { return this->viewmatrix; }
+        sm::mat<float, 4> getViewMatrix() const { return this->viewmatrix; }
         //! Pre or post-multiply
-        void postmultViewMatrix (const sm::mat44<float>& m) { this->viewmatrix = this->viewmatrix * m; }
-        void premultViewMatrix (const sm::mat44<float>& m) { this->viewmatrix = m * this->viewmatrix; }
+        void postmultViewMatrix (const sm::mat<float, 4>& m) { this->viewmatrix = this->viewmatrix * m; }
+        void premultViewMatrix (const sm::mat<float, 4>& m) { this->viewmatrix = m * this->viewmatrix; }
 
         void scaleViewMatrix (const float by) { this->viewmatrix.scale (by); }
 
-        virtual void setSceneMatrixTexts (const sm::mat44<float>& sv) = 0;
+        virtual void setSceneMatrixTexts (const sm::mat<float, 4>& sv) = 0;
 
         //! When setting the scene matrix, also have to set the text's scene matrices.
-        void setSceneMatrix (const sm::mat44<float>& sv)
+        void setSceneMatrix (const sm::mat<float, 4>& sv)
         {
             this->scenematrix = sv;
             this->setSceneMatrixTexts (sv);
@@ -433,7 +433,7 @@ namespace mplot
         template <std::size_t N = 3> requires (N == 3) || (N == 4)
         void setSceneTranslation (const sm::vec<float, N>& v0)
         {
-            this->scenematrix.setToIdentity();
+            this->scenematrix.set_identity();
             this->scenematrix.translate (v0);
             if constexpr (N == 4) {
                 this->setSceneTranslationTexts (v0.less_one_dim());
@@ -449,7 +449,7 @@ namespace mplot
         //! Set a rotation (only) into the scene view matrix
         void setSceneRotation (const sm::quaternion<float>& r)
         {
-            this->scenematrix.setToIdentity();
+            this->scenematrix.set_identity();
             this->scenematrix.rotate (r);
         }
 
@@ -460,7 +460,7 @@ namespace mplot
         template <std::size_t N = 3> requires (N == 3) || (N == 4)
         void setViewTranslation (const sm::vec<float, N>& v0)
         {
-            this->viewmatrix.setToIdentity();
+            this->viewmatrix.set_identity();
             this->viewmatrix.translate (v0);
         }
 
@@ -472,7 +472,7 @@ namespace mplot
         void setViewRotationFixTexts (const sm::quaternion<float>& r)
         {
             sm::vec<> os = this->viewmatrix.translation();
-            this->viewmatrix.setToIdentity();
+            this->viewmatrix.set_identity();
             this->viewmatrix.translate (os);
             this->viewmatrix.rotate (r);
         }
@@ -483,7 +483,7 @@ namespace mplot
         void setViewRotation (const sm::quaternion<float>& r)
         {
             sm::vec<> os = this->viewmatrix.translation();
-            this->viewmatrix.setToIdentity();
+            this->viewmatrix.set_identity();
             this->viewmatrix.translate (os);
             this->viewmatrix.rotate (r);
             this->setViewRotationTexts (r);
@@ -826,14 +826,14 @@ namespace mplot
     protected:
 
         //! The model-specific view matrix. Used to transform the pose of the model in the scene.
-        sm::mat44<float> viewmatrix = {};
+        sm::mat<float, 4> viewmatrix = {};
         /*!
          * The scene view matrix. Each VisualModel has a copy of the scenematrix. It's set in
          * Visual::render. Different VisualModels may have different scenematrices (for example, the
          * CoordArrows has a different scenematrix from other VisualModels, and models marked
          * 'twodimensional' also have a different scenematrix).
          */
-        sm::mat44<float> scenematrix = {};
+        sm::mat<float, 4> scenematrix = {};
 
         //! Contains the positions within the vbo array of the different vertex buffer objects
         enum VBOPos { posnVBO, normVBO, colVBO, idxVBO, numVBO };
@@ -2096,7 +2096,7 @@ namespace mplot
                                std::array<float, 3> sc2,
                                sm::vec<float> abc,
                                int rings = 10, int segments = 12,
-                               sm::mat44<float> tr = sm::mat44<float>{})
+                               sm::mat<float, 4> tr = sm::mat<float, 4>{})
         {
             // We have two angular parameters t and t2. t in range 0-2pi and t2 in range 0-pi. t
             // gives the 'xy' ellipse; t2 gives the change in size of the xy ellipse as the z axis

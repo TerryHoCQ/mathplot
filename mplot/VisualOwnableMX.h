@@ -231,14 +231,14 @@ namespace mplot
             // Switch to text shader program and set the projection matrix
             this->glfn->UseProgram (this->shaders.tprog);
             GLint loc_p = this->glfn->GetUniformLocation (this->shaders.tprog, static_cast<const GLchar*>("p_matrix"));
-            if (loc_p != -1) { this->glfn->UniformMatrix4fv (loc_p, 1, GL_FALSE, this->projection.mat.data()); }
+            if (loc_p != -1) { this->glfn->UniformMatrix4fv (loc_p, 1, GL_FALSE, this->projection.arr.data()); }
 
             // Switch back to the regular shader prog and render the VisualModels.
             this->glfn->UseProgram (this->shaders.gprog);
 
             // Set the projection matrix just once
             loc_p = this->glfn->GetUniformLocation (this->shaders.gprog, static_cast<const GLchar*>("p_matrix"));
-            if (loc_p != -1) { this->glfn->UniformMatrix4fv (loc_p, 1, GL_FALSE, this->projection.mat.data()); }
+            if (loc_p != -1) { this->glfn->UniformMatrix4fv (loc_p, 1, GL_FALSE, this->projection.arr.data()); }
 
             if ((this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective)
                 && this->options.test (visual_options::showCoordArrows)) {

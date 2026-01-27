@@ -10,7 +10,6 @@
 
 #include <sm/vec>
 #include <sm/quaternion>
-#include <sm/mat44>
 
 #include <mplot/Visual.h>
 #include <mplot/ColourMap.h>

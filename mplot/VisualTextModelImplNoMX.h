@@ -65,9 +65,9 @@ namespace mplot
             GLint loc_a = glGetUniformLocation (tshaderprog, static_cast<const GLchar*>("alpha"));
             if (loc_a != -1) { glUniform1f (loc_a, this->alpha); }
             GLint loc_v = glGetUniformLocation (tshaderprog, static_cast<const GLchar*>("v_matrix"));
-            if (loc_v != -1) { glUniformMatrix4fv (loc_v, 1, GL_FALSE, this->scenematrix.mat.data()); }
+            if (loc_v != -1) { glUniformMatrix4fv (loc_v, 1, GL_FALSE, this->scenematrix.arr.data()); }
             GLint loc_m = glGetUniformLocation (tshaderprog, static_cast<const GLchar*>("m_matrix"));
-            if (loc_m != -1) { glUniformMatrix4fv (loc_m, 1, GL_FALSE, this->viewmatrix.mat.data()); }
+            if (loc_m != -1) { glUniformMatrix4fv (loc_m, 1, GL_FALSE, this->viewmatrix.arr.data()); }
 
             glActiveTexture (GL_TEXTURE0);
 

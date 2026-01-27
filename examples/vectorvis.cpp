@@ -8,7 +8,7 @@
 
 #include <sm/vec>
 #include <sm/quaternion>
-#include <sm/mat44>
+#include <sm/mat>
 
 #include <mplot/Visual.h>
 #include <mplot/ColourMap.h>
@@ -37,7 +37,7 @@ int main()
     vvm->thevec = {1,1,1};
     vvm->fixed_colour = true;
     vvm->single_colour = mplot::colour::royalblue;
-    vvm->addLabel ("Rotn by mat44", {-0.8, -0.5, 0}, mplot::TextFeatures(0.1f));
+    vvm->addLabel ("Rotn by 4x4 mat", {-0.8, -0.5, 0}, mplot::TextFeatures(0.1f));
     vvm->finalize();
     auto ptr2 = v.addVisualModel (vvm);
 
@@ -49,7 +49,7 @@ int main()
     // Set up a rotation about the z axis
     sm::quaternion<float> qr (axis, angle_per_frame);
 
-    sm::mat44<float> tf;
+    sm::mat<float, 4, 4> tf;
     tf.rotate (axis, angle_per_frame);
 
     while (!v.readyToFinish()) {

@@ -20,7 +20,7 @@
 #include <mplot/gl/version.h>
 
 #include <sm/quaternion>
-#include <sm/mat44>
+#include <sm/mat>
 #include <sm/vec>
 #include <sm/mathconst>
 
@@ -61,16 +61,16 @@ namespace mplot
         }
 
         //! Setter for VisualTextModel::viewmatrix, the model view
-        void setViewMatrix (const sm::mat44<float>& mv) { this->viewmatrix = mv; }
+        void setViewMatrix (const sm::mat<float, 4>& mv) { this->viewmatrix = mv; }
 
         //! Setter for VisualTextModel::scenematrix, the scene view
-        void setSceneMatrix (const sm::mat44<float>& sv) { this->scenematrix = sv; }
+        void setSceneMatrix (const sm::mat<float, 4>& sv) { this->scenematrix = sv; }
 
         //! Set the translation specified by \a v0 into the scene translation
         template <std::size_t N = 3> requires (N == 3) || (N == 4)
         void setSceneTranslation (const sm::vec<float, N>& v0)
         {
-            this->scenematrix.setToIdentity();
+            this->scenematrix.set_identity();
             this->scenematrix.translate (v0);
         }
 
@@ -82,7 +82,7 @@ namespace mplot
         void setSceneRotation (const sm::quaternion<float>& r)
         {
             auto _offset = this->scenematrix.translation();
-            this->scenematrix.setToIdentity();
+            this->scenematrix.set_identity();
             this->scenematrix.translate (_offset);
             this->scenematrix.rotate (r);
         }
@@ -94,7 +94,7 @@ namespace mplot
         template <std::size_t N = 3> requires (N == 3) || (N == 4)
         void setViewTranslation (const sm::vec<float, N>& v0)
         {
-            this->viewmatrix.setToIdentity();
+            this->viewmatrix.set_identity();
             this->viewmatrix.translate (v0);
         }
 
@@ -105,7 +105,7 @@ namespace mplot
         void setViewRotation (const sm::quaternion<float>& r)
         {
             auto tr = this->viewmatrix.translation();
-            this->viewmatrix.setToIdentity();
+            this->viewmatrix.set_identity();
             this->viewmatrix.translate (tr);
             this->viewmatrix.rotate (r);
         }
@@ -254,12 +254,12 @@ namespace mplot
         sm::quaternion<float> parent_rotation = {};
 
         //! The text-model-specific view matrix and a scene matrix
-        sm::mat44<float> viewmatrix = {};
+        sm::mat<float, 4> viewmatrix = {};
         //! Before, I wrote: We protect the scene matrix as updating it with the parent
         //! model's scene matrix likely involves also adding an additional
         //! translation. Now, I'm still slightly confused as to whether I *need* to have a
         //! copy of the scenematrix *here*.
-        sm::mat44<float> scenematrix = {};
+        sm::mat<float, 4> scenematrix = {};
 
         //! The text string stored for debugging
         std::basic_string<char32_t> txt;
