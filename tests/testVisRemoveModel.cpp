@@ -58,7 +58,7 @@ int main (int argc, char** argv)
 
         offset = { 0.0, 0.1, 0.0 };
         sm::scale<float> scale;
-        scale.setParams (1.0, 0.0);
+        scale.set_params (1.0, 0.0);
 
         std::vector<sm::vec<float, 3>> points;
         points.push_back ({0,0,0});

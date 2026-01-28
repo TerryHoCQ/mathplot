@@ -82,7 +82,7 @@ int main()
             }
         }
         hgv->cm.setType (mplot::ColourMapType::Jet);
-        hgv->zScale.setParams (0,0); // makes the output flat in z direction, but you still get the colours
+        hgv->zScale.null_scaling(); // makes the output flat in z direction, but you still get the colours
         hgv->setScalarData (&colours);
         hgv->hexVisMode = mplot::HexVisMode::HexInterp; // Or mplot::HexVisMode::Triangles for a smoother surface plot
         hgv->finalize();

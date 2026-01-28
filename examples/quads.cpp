@@ -28,7 +28,7 @@ int main()
     try {
         sm::vec<float, 3> offset = { 0.0, 0.0, 0.0 };
         sm::scale<float> scale1;
-        scale1.setParams (1.0, 0.0);
+        scale1.set_params (1.0, 0.0);
 
         std::vector<std::array<float, 12>> surfBoxes;
 

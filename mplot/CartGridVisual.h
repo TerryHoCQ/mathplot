@@ -56,7 +56,7 @@ namespace mplot
             sm::vec<float> pixel_offset = { _cg->getd()/2.0f, _cg->getv()/2.0f, 0.0f };
             this->viewmatrix.translate (_offset + pixel_offset);
             // Defaults for z and colourScale
-            this->zScale.setParams (1, 0);
+            this->zScale.set_params (1, 0);
             this->colourScale.do_autoscale = true;
             this->colourScale2.do_autoscale = true;
             this->colourScale3.do_autoscale = true;
