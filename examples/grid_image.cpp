@@ -45,7 +45,7 @@ int main()
     gv1->gridVisMode = mplot::GridVisMode::Triangles;
     gv1->setScalarData (&image_data_tlbr);
     gv1->cm.setType (mplot::ColourMapType::GreyscaleInv); // inverse greyscale is good for a monochrome image
-    gv1->zScale.setParams (0, 1); // As it's an image, we don't want relief, so set the zScale to have a zero gradient
+    gv1->zScale.set_params (0, 1); // As it's an image, we don't want relief, so set the zScale to have a zero gradient
     gv1->finalize();
     v.addVisualModel (gv1);
 
@@ -54,7 +54,7 @@ int main()
     gv2->gridVisMode = mplot::GridVisMode::Triangles;
     gv2->setScalarData (&image_data_bltr);
     gv2->cm.setType (mplot::ColourMapType::GreyscaleInv);
-    gv2->zScale.setParams (0, 1);
+    gv2->zScale.set_params (0, 1);
     gv2->finalize();
     v.addVisualModel (gv2);
 
@@ -63,7 +63,7 @@ int main()
     gv3->gridVisMode = mplot::GridVisMode::RectInterp;
     gv3->setScalarData (&image_data_tlbr);
     gv3->cm.setType (mplot::ColourMapType::GreyscaleInv);
-    gv3->zScale.setParams (0, 1);
+    gv3->zScale.set_params (0, 1);
     gv3->finalize();
     v.addVisualModel (gv3);
 
@@ -72,7 +72,7 @@ int main()
     gv4->gridVisMode = mplot::GridVisMode::RectInterp;
     gv4->setScalarData (&image_data_bltr);
     gv4->cm.setType (mplot::ColourMapType::GreyscaleInv);
-    gv4->zScale.setParams (0, 1);
+    gv4->zScale.set_params (0, 1);
     gv4->finalize();
     v.addVisualModel (gv4);
 

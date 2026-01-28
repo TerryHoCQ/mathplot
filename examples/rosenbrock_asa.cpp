@@ -59,7 +59,7 @@ int main()
     hgv->hexVisMode = mplot::HexVisMode::Triangles;
     hgv->cm.setType (mplot::ColourMapType::Viridis);
     hgv->setScalarData (&banana_vals);
-    hgv->zScale.setParams (0.001f, 0.0f);
+    hgv->zScale.set_params (0.001f, 0.0f);
     hgv->colourScale.compute_scaling (0.01f, 5.0f);
     hgv->setAlpha (0.4f);
     hgv->finalize();

@@ -24,7 +24,7 @@ int main()
 
     sm::vec<float, 3> offset = { 0.0f, 0.0f, 0.0f };
     sm::scale<float> scale;
-    scale.setParams (1.0f, 0.0f);
+    scale.set_params (1.0f, 0.0f);
 
     // Have a Sphere of radius 1
     constexpr float r_sph = 1.0f;

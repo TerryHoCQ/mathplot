@@ -67,7 +67,7 @@ namespace mplot
         HexGridVisual(const sm::hexgrid* _hg, const sm::vec<float> _offset)
         {
             this->viewmatrix.translate (_offset);
-            this->zScale.setParams (1, 0);
+            this->zScale.set_params (1, 0);
             this->colourScale.do_autoscale = true;
             this->colourScale2.do_autoscale = true;
             this->colourScale3.do_autoscale = true;

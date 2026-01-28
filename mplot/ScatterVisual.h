@@ -25,7 +25,7 @@ namespace mplot
         ScatterVisual(const sm::vec<float> _offset)
         {
             this->viewmatrix.translate (_offset);
-            this->zScale.setParams (1, 0);
+            this->zScale.set_params (1, 0);
             this->colourScale.do_autoscale = true;
         }
 

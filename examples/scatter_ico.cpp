@@ -37,7 +37,7 @@ int main()
     try {
         sm::vec<float, 3> offset = { 0.0, 0.0, 0.0 };
         sm::scale<float, float> scale;
-        scale.setParams (1.0, 0.0);
+        scale.set_params (1.0, 0.0);
 
         sm::vvec<float> data(12, 0.06f);
         sm::vvec<float> data2(20, 0.95f);

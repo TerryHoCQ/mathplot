@@ -186,7 +186,7 @@ int main()
         gv3->interpolate_colour_sides (true);
         gv3->setScalarData (&image_data);
         gv3->cm.setType (mplot::ColourMapType::Plasma);
-        gv3->zScale.setParams (0.1, 0); // Reduce height in 'z'
+        gv3->zScale.set_params (0.1, 0); // Reduce height in 'z'
         gv3->addLabel ("mplot::GridVisual (columns)", sm::vec<float>({0,-0.1,0}), mplot::TextFeatures(0.05));
         gv3->finalize();
         v.addVisualModel (gv3);
