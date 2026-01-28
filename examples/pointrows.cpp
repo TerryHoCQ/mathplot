@@ -32,7 +32,7 @@ int main()
     try {
         sm::vec<float, 3> offset = { 0.0, 0.0, 0.0 };
         sm::scale<float> scale;
-        scale.setParams (1.0, 0.0);
+        scale.set_params (1.0, 0.0);
 
         std::vector<sm::vec<float, 3>> points;
         std::vector<float> data; // copy points[:][2] into data

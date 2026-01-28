@@ -106,10 +106,10 @@ int main()
     auto rgvp = v.addVisualModel (rgv);
 
     // Demonstrate how to divide existing scale by 10:
-    float newGrad = hgvp->zScale.getParams(0) / 10.0f;
+    float newGrad = hgvp->zScale.get_params(0) / 10.0f;
     // Set this in a new zscale object:
     sm::scale<float> zscale;
-    zscale.setParams (newGrad, 0);
+    zscale.set_params (newGrad, 0);
     // Use the un-owned pointer rgvp:
     rgvp->updateZScale (zscale);
 

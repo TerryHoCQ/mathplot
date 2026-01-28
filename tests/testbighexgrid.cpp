@@ -49,7 +49,7 @@ int main()
         v.bindmodel (hgv);
         hgv->hexVisMode = mplot::HexVisMode::Triangles; // Triangles faster to render than the default hexes
         hgv->setScalarData (&data);
-        hgv->zScale.setParams (0.1f, 0.0f);
+        hgv->zScale.set_params (0.1f, 0.0f);
         hgv->finalize();
         v.addVisualModel (hgv);
 

@@ -23,7 +23,7 @@
 #include <sm/vec>
 #include <sm/vvec>
 #include <sm/flags>
-#include <sm/mat44>
+#include <sm/mat>
 #include <sm/geometry>
 
 namespace mplot
@@ -129,7 +129,7 @@ namespace mplot
          * \param scene_coord Supplied coordinate in scene frame of referencea
          * \param viewmatrix The viewmatrix of the model which converts model frame coordinates to the scene frame
          */
-        uint32_t find_vertex_nearest (const sm::vec<float>& scene_coord, const sm::mat44<float>& viewmatrix) const
+        uint32_t find_vertex_nearest (const sm::vec<float>& scene_coord, const sm::mat<float, 4>& viewmatrix) const
         {
             uint32_t i = std::numeric_limits<uint32_t>::max();
             // Brute force it. (But we have a mesh; can this guarantee a faster search? I don't think so)
@@ -156,7 +156,7 @@ namespace mplot
         }
 
         // Return the three vertices for the triangle specified as three indices into NavMesh::vertex transformed by transform
-        sm::vec<sm::vec<float>, 3> triangle_vertices (const std::array<uint32_t, 4>& tri_indices, const sm::mat44<float>& transform) const
+        sm::vec<sm::vec<float>, 3> triangle_vertices (const std::array<uint32_t, 4>& tri_indices, const sm::mat<float, 4>& transform) const
         {
             sm::vec<sm::vec<float>, 3> trivert;
             if (tri_indices[0] < this->vertex.size()) { trivert[0] = (transform * this->vertex[tri_indices[0]]).less_one_dim(); }
@@ -572,8 +572,8 @@ namespace mplot
             }
 
             // Create a matrix to convert from mdl frame movements to the triangle frame of ref.
-            sm::mat44<float> from_triangle_frame = sm::mat44<float>::frombasis (u_x, u_y, u_z);
-            sm::mat44<float> to_triangle_frame = from_triangle_frame.inverse();
+            sm::mat<float, 4> from_triangle_frame = sm::mat<float, 4>::frombasis (u_x, u_y, u_z);
+            sm::mat<float, 4> to_triangle_frame = from_triangle_frame.inverse();
 
             // Use Edge as our 'y' and the orthogonal as our 'x', then express mv_inplane in terms
             // of these two unit vectors. We also have our 'z' which is the triangle normal.
@@ -848,7 +848,7 @@ namespace mplot
          * triangle we hit; and the indices of the triangle we hit.
          */
         std::tuple<sm::vec<float>, sm::vec<float>, std::array<uint32_t, 4>>
-        find_triangle_hit (const sm::mat44<float>& model_to_scene,
+        find_triangle_hit (const sm::mat<float, 4>& model_to_scene,
                            const sm::vec<float>& camloc_mf, const sm::vec<float>& vdir,
                            const std::array<uint32_t, 4> ti_ml = {std::numeric_limits<uint32_t>::max()})
         {
@@ -903,10 +903,10 @@ namespace mplot
          * triangle we hit; and the indices of the triangle we hit.
          */
         std::tuple<sm::vec<float>, sm::vec<float>, std::array<uint32_t, 4>>
-        find_triangle_hit (const sm::mat44<float>& camspace, const sm::mat44<float>& model_to_scene,
+        find_triangle_hit (const sm::mat<float, 4>& camspace, const sm::mat<float, 4>& model_to_scene,
                            const float search_dist_mult = 1.0f)
         {
-            sm::mat44<float> scene_to_model = model_to_scene.inverse();
+            sm::mat<float, 4> scene_to_model = model_to_scene.inverse();
             // use camera location in gltf to start from, then find model surface.
             sm::vec<float> camloc_mf = (scene_to_model * camspace * sm::vec<float>{}).less_one_dim();
             sm::vec<float> vdir = this->bb.mid() - camloc_mf;
@@ -919,21 +919,21 @@ namespace mplot
          * Position the camera hoverheight above the location hp_scene, with its forward direction
          * _z and its 'x' axis in direction _x.
          */
-        sm::mat44<float> position_camera (const sm::vec<float>& hp_scene, const sm::mat44<float>& model_to_scene,
-                                          const sm::vec<float>& _x, const sm::vec<float>& _z,
-                                          const float hoverheight)
+        sm::mat<float, 4> position_camera (const sm::vec<float>& hp_scene, const sm::mat<float, 4>& model_to_scene,
+                                           const sm::vec<float>& _x, const sm::vec<float>& _z,
+                                           const float hoverheight)
         {
             // I think this positions correctly now (which is all it has to do). It ignores scaling
-            // in model_to_scene. Can be reduced to use fewer mat44s.
-            sm::mat44<float> cam_mv_y;
+            // in model_to_scene. Can be reduced to use fewer mat<>s.
+            sm::mat<float, 4> cam_mv_y;
             cam_mv_y.translate (sm::vec<float>{0, hoverheight, 0});
             // The basis _x, tn0, _z, where these are vectors in the model frame that define a camera frame
-            sm::mat44<float> cam_to_model_rotn = sm::mat44<float>::frombasis (_x, this->tn0, _z);
+            sm::mat<float, 4> cam_to_model_rotn = sm::mat<float, 4>::frombasis (_x, this->tn0, _z);
             // Get the rotation from scene frame to model
-            sm::mat44<float> m_to_sc_rotn = model_to_scene.rotation_mat44();
-            sm::mat44<float> hp_m;
+            sm::mat<float, 4> m_to_sc_rotn = model_to_scene.rotation_mat44();
+            sm::mat<float, 4> hp_m;
             hp_m.translate (hp_scene);
-            sm::mat44<float> coord_rotn = hp_m * m_to_sc_rotn * cam_to_model_rotn * cam_mv_y;
+            sm::mat<float, 4> coord_rotn = hp_m * m_to_sc_rotn * cam_to_model_rotn * cam_mv_y;
 
             return coord_rotn;
         }
@@ -946,13 +946,13 @@ namespace mplot
          * with its y-axis in line with the normal of the triangle at the hit point, and with its x
          * and z axes randomly oriented. The frame is set to hover hoverheight 'above' the triangle
          */
-        sm::mat44<float> position_camera (const sm::vec<float>& hp_scene, const sm::mat44<float>& model_to_scene,
-                                          const float hoverheight)
+        sm::mat<float, 4> position_camera (const sm::vec<float>& hp_scene, const sm::mat<float, 4>& model_to_scene,
+                                           const float hoverheight)
         {
             // Let's 'draw' the camera towards the model and then arrange its normal upwards wrt to the normal of the model.
             if (this->tn0[0] == std::numeric_limits<float>::max()) {
                 std::cout << __func__ << ": No hit/triangle normal\n";
-                return sm::mat44<float>{};
+                return sm::mat<float, 4>{};
             }
 
             // Place the camera on the model, and orient it randomly in the 'model plane'
@@ -971,13 +971,13 @@ namespace mplot
          * A version of position camera that aligns the camera direction (i.e. where it is looking - its 'forwards')
          * as closely as possible with the passed-in vector
          */
-        sm::mat44<float> position_camera (const sm::vec<float>& hp_scene, const sm::mat44<float>& model_to_scene,
-                                          const float hoverheight, const sm::vec<float>& fwds)
+        sm::mat<float, 4> position_camera (const sm::vec<float>& hp_scene, const sm::mat<float, 4>& model_to_scene,
+                                           const float hoverheight, const sm::vec<float>& fwds)
         {
             // Let's 'draw' the camera towards the model and then arrange its normal upwards wrt to the normal of the model.
             if (this->tn0[0] == std::numeric_limits<float>::max()) {
                 std::cout << __func__ << ": No hit/triangle normal\n";
-                return sm::mat44<float>{};
+                return sm::mat<float, 4>{};
             }
 
             // Project fwds onto the plane tn0
@@ -1002,10 +1002,10 @@ namespace mplot
          *
          * \return The re-positioned camera transform matrix
          */
-        sm::mat44<float> compute_mesh_movement (const sm::vec<float>& mv_camframe,
-                                                const sm::mat44<float>& cam_to_scene,
-                                                const sm::mat44<float>& model_to_scene,
-                                                const float hoverheight)
+        sm::mat<float, 4> compute_mesh_movement (const sm::vec<float>& mv_camframe,
+                                                 const sm::mat<float, 4>& cam_to_scene,
+                                                 const sm::mat<float, 4>& model_to_scene,
+                                                 const float hoverheight)
         {
             constexpr bool debug_move = false;
             constexpr bool debug_move2 = true;
@@ -1049,7 +1049,7 @@ namespace mplot
             std::tie (isect, hov_sf) = sm::geometry::ray_tri_intersection<float> (tv_sf[0], tv_sf[1], tv_sf[2], camloc_sf + (this->tn0 / 2.0f), -this->tn0);
 
             // Use the detected location, hov_sf to compute the surface location of the camera - its 'hover location'
-            sm::mat44<float> cam_to_surface = cam_to_scene;
+            sm::mat<float, 4> cam_to_surface = cam_to_scene;
             cam_to_surface.pretranslate (hov_sf - camloc_sf); // This is now our init pose; the camera is now at the surface
 
             // Try double precision
@@ -1309,7 +1309,7 @@ namespace mplot
                         if (stabilised == false) { this->tn0.angle (_tn, cd.tri_edge); }
                         // If tn0 and _tn are identical, then rotn_angle will be NaN, but in that case we want no rotation
                         if (std::isnan (rotn_angle)) { rotn_angle = 0.0f; }
-                        sm::mat44<float> reorient_model; // reorientation transformation in sf
+                        sm::mat<float, 4> reorient_model; // reorientation transformation in sf
                         reorient_model.rotate (cd.tri_edge, rotn_angle);
                         sm::vec<float> mv_rest = (reorient_model * (mv_inplane - cd.pm.mv)).less_one_dim();
                         reorient_model.pretranslate (hov_sf + cd.pm.mv + mv_rest);
@@ -1457,7 +1457,7 @@ namespace mplot
                             for (auto onen : onens) {
                                 // Are we in this one?
                                 auto [_ti, _tn] = onen;
-                                 sm::vec<sm::vec<float>, 3> tv_nb = this->triangle_vertices (_ti, model_to_scene);
+                                sm::vec<sm::vec<float>, 3> tv_nb = this->triangle_vertices (_ti, model_to_scene);
                                 _tn = this->triangle_normal (tv_nb);
                                 auto [is, h] = sm::geometry::ray_tri_intersection<float, double> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + (_tn / 2.0f), -_tn);
                                 sm::vec<float> mv_orthog_nb = _tn * (mv_inplane.dot (_tn) / (_tn.dot(_tn)));

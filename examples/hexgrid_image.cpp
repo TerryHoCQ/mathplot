@@ -44,7 +44,7 @@ int main()
     // The inverse greyscale map is appropriate for a monochrome image
     hgv->cm.setType (mplot::ColourMapType::GreyscaleInv);
     // As it's an image, we don't want relief, so set the zScale to have a zero gradient
-    hgv->zScale.setParams (0, 1);
+    hgv->zScale.set_params (0, 1);
 
     hgv->finalize();
     v.addVisualModel (hgv);

@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include <sm/vec>
-#include <sm/mat44>
+#include <sm/mat>
 #include <mplot/compoundray/Visual.h>
 #include <mplot/RhomboVisual.h>
 #include <mplot/VectorVisual.h>
@@ -56,12 +56,12 @@ int main()
     Eigen::Vector3f ed1_s (d1_s[0], d1_s[1], d1_s[2]);
     Eigen::Vector3f ed1_e (d1_e[0], d1_e[1], d1_e[2]);
 
-    // mat44 transformation
-    sm::mat44<float> m1t;
-    sm::mat44<float> m1tor;
-    sm::mat44<float> m1r;
-    sm::mat44<float> m1torb;
-    sm::mat44<float> m1t2;
+    // mat transformation
+    sm::mat<float, 4> m1t;
+    sm::mat<float, 4> m1tor;
+    sm::mat<float, 4> m1r;
+    sm::mat<float, 4> m1torb;
+    sm::mat<float, 4> m1t2;
     // sequence:
     m1t.translate (mv1);
     m1tor.translate (-(l1 + mv1));
@@ -69,7 +69,7 @@ int main()
     m1torb.translate (l1 + mv1);
     m1t2.translate (m1r * mv2);
     // Combine by multiplication:
-    sm::mat44<float> m1 = m1t2 * m1torb * m1r * m1tor * m1t;
+    sm::mat<float, 4> m1 = m1t2 * m1torb * m1r * m1tor * m1t;
 
     // Eigen transformation
     Eigen::Transform<float, 3, Eigen::TransformTraits::Affine> em1t;
@@ -120,7 +120,7 @@ int main()
      * the transforms are applied.
      */
 
-    // Apply mat44
+    // Apply sm::mat
     sm::vec<> l2 = (m1 * l1).less_one_dim();
     sm::vec<> d2_s = (m1 * d1_s).less_one_dim();
     sm::vec<> d2_e = (m1 * d1_e).less_one_dim();

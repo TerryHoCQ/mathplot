@@ -14,7 +14,7 @@
 
 // maths and mathplot includes
 #include <sm/vec>
-#include <sm/mat44>
+#include <sm/mat>
 #include <mplot/Visual.h>
 #include <mplot/VerticesVisual.h>
 
@@ -23,8 +23,8 @@ extern MulticamScene* scene;
 
 namespace mplot::compoundray
 {
-    // Helper to convert sm::mat44<float> to Matrix4x4
-    sutil::Matrix4x4 mat44_to_Matrix4x4 (const sm::mat44<float>& m)
+    // Helper to convert sm::mat<float, 4> to Matrix4x4
+    sutil::Matrix4x4 mat44_to_Matrix4x4 (const sm::mat<float, 4>& m)
     {
         sutil::Matrix4x4 M = {}; // M is row-major, m is col-major
         M[0]  = m[0];  M[1]  = m[4];  M[2] =  m[8];   M[3]  = m[12];
@@ -43,7 +43,7 @@ namespace mplot::compoundray
         constexpr sm::vec<float> ux = { 1.0f, 0.0f, 0.0f };
         constexpr sm::vec<float> uy = { 0.0f, 1.0f, 0.0f };
         constexpr sm::vec<float> uz = { 0.0f, 0.0f, 1.0f };
-        sm::mat44<float> world_transform = sm::mat44<float>::frombasis (ux, uz, -uy);
+        sm::mat<float, 4> world_transform = sm::mat<float, 4>::frombasis (ux, uz, -uy);
         return mplot::compoundray::mat44_to_Matrix4x4 (world_transform);
     }
 
@@ -58,7 +58,7 @@ namespace mplot::compoundray
         std::vector<std::shared_ptr<MulticamScene::MeshGroup>> mymeshes = thescene->getMeshes();
         std::vector<MaterialData::Pbr> mymats = thescene->getMaterials();
         for (unsigned int mi = 0; mi < mymeshes.size(); ++mi) {
-            sm::mat44<float> tfm;
+            sm::mat<float, 4> tfm;
             for (unsigned int tfi = 0; tfi < 16; ++tfi) { tfm[tfi] = mymeshes[mi]->transform[tfi]; }
             tfm.transpose_inplace(); // Need to transpose tfm after copying data
             if constexpr (debug_meshload) {
@@ -149,7 +149,7 @@ namespace mplot::compoundray
     }
 
     // From the camera localspace, we can create a matrix which specifies a camera pose within the world frame
-    sm::mat44<float> getCameraSpace (MulticamScene* thescene)
+    sm::mat<float, 4> getCameraSpace (MulticamScene* thescene)
     {
         // The camera's localspace is a set of three vectors in world coordinates
         float3 camls_x, camls_y, camls_z;
@@ -160,7 +160,7 @@ namespace mplot::compoundray
         sm::vec<float> camls_zv = { camls_z.x, camls_z.y, camls_z.z };
 
         // Start with setting the matrix from the localspace basis vectors
-        sm::mat44<float> camera_space = sm::mat44<float>::frombasis (camls_xv, camls_yv, camls_zv);
+        sm::mat<float, 4> camera_space = sm::mat<float, 4>::frombasis (camls_xv, camls_yv, camls_zv);
 
         // Translate camera_space by the camera position, obtained from compound-ray
         float3 campos = thescene->getCamera()->getPosition();

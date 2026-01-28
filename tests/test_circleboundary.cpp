@@ -49,7 +49,7 @@ int main (int argc, char** argv)
         v.bindmodel (hgv);
         hgv->setScalarData (&data);
         hgv->cm.setType (mplot::ColourMapType::Rainbow);
-        hgv->zScale.setParams(0,0);
+        hgv->zScale.set_params(0,0);
         hgv->finalize();
         v.addVisualModel (hgv);
         v.render();

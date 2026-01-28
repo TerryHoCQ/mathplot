@@ -5,7 +5,7 @@
 
 #include <sm/mathconst>
 #include <sm/random>
-#include <sm/mat22>
+#include <sm/mat>
 
 #include <armadillo>
 
@@ -20,7 +20,7 @@ int main()
     sm::rand_normal<float> rn1 (0.0f, 2.0f);
     sm::rand_normal<float> rn2 (0.0f, 0.5f);
     sm::vvec<sm::vec<float, 2>> _x (n_samp, {0});
-    sm::mat22<float> rotn;
+    sm::mat<float, 2> rotn;
     rotn.rotate (sm::mathconst<float>::pi_over_8);
     for (unsigned int i = 0; i < n_samp; ++i) {
         _x[i] = rotn * sm::vec<float, 2>{ rn1.get(), rn2.get() };

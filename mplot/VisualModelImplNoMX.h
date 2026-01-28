@@ -285,11 +285,11 @@ namespace mplot
 
                 // The scene-view matrix
                 GLint loc_v = glGetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("v_matrix"));
-                if (loc_v != -1) { glUniformMatrix4fv (loc_v, 1, GL_FALSE, this->scenematrix.mat.data()); }
+                if (loc_v != -1) { glUniformMatrix4fv (loc_v, 1, GL_FALSE, this->scenematrix.arr.data()); }
 
                 // the model-view matrix
                 GLint loc_m = glGetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("m_matrix"));
-                if (loc_m != -1) { glUniformMatrix4fv (loc_m, 1, GL_FALSE, this->viewmatrix.mat.data()); }
+                if (loc_m != -1) { glUniformMatrix4fv (loc_m, 1, GL_FALSE, this->viewmatrix.arr.data()); }
 
                 if constexpr (debug_render) {
                     std::cout << "VisualModelImpl::render: scenematrix:\n" << this->scenematrix << std::endl;
@@ -425,7 +425,7 @@ namespace mplot
             return this->texts.back()->getTextGeometry();
         }
 
-        void setSceneMatrixTexts (const sm::mat44<float>& sv) final
+        void setSceneMatrixTexts (const sm::mat<float, 4>& sv) final
         {
             auto ti = this->texts.begin();
             while (ti != this->texts.end()) { (*ti)->setSceneMatrix (sv); ti++; }

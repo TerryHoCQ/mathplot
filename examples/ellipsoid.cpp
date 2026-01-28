@@ -7,6 +7,7 @@
 #include <sstream>
 
 #include <sm/vec>
+#include <sm/mat>
 
 #include <mplot/Visual.h>
 #include <mplot/VisualModel.h>
@@ -22,7 +23,7 @@ public:
 
     void initializeVertices()
     {
-        sm::mat44<float> tr;
+        sm::mat<float, 4> tr;
         tr.rotate (sm::vec<>::uz(), sm::mathconst<float>::pi_over_4);
         this->computeEllipsoid (sm::vec<float>{0},
                                 mplot::colour::royalblue,

@@ -64,7 +64,7 @@ int main()
     try {
         sm::vec<float, 3> offset = { 0.0f, 0.0f, 0.0f };
         sm::scale<float> scale;
-        scale.setParams (1.0f, 0.0f);
+        scale.set_params (1.0f, 0.0f);
 
         sm::vvec<float> data(geo.poly.vertices.size(), 0.06f);
         sm::vvec<float> data2(geo.poly.faces.size(), 0.95f);

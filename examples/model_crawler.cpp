@@ -12,6 +12,8 @@
 #include <string>
 
 #include <sm/vec>
+#include <sm/mat>
+#include <sm/vvec>
 
 #include <mplot/Visual.h>
 #include <mplot/ColourMap.h>
@@ -85,8 +87,8 @@ int main (int argc, char** argv)
     sm::vec<float> mv_ca = sm::vec<float>::uz() * move_step;
 
     // The viewmatrices have to be passed to mplot::NavMesh::compute_mesh_movement
-    sm::mat44<float> ca_view = cap->getViewMatrix();
-    sm::mat44<float> sph_view = gvp->getViewMatrix();
+    sm::mat<float, 4> ca_view = cap->getViewMatrix();
+    sm::mat<float, 4> sph_view = gvp->getViewMatrix();
 
     // Find the triangle that we're initially located above with
     // mplot::NavMesh::find_triangle_hit. This updates internal state in NavMesh. It could be

@@ -427,13 +427,13 @@ namespace mplot
                 auto _dx = g.get_dx();
                 if (ds.axisside == mplot::axisside::left) {
                     this->ord1_scale.transform (g_v_y, sd);
-                    this->quiver_grid_spacing[1] = _dx[1] * this->ord1_scale.getParams(0);
+                    this->quiver_grid_spacing[1] = _dx[1] * this->ord1_scale.get_params(0);
                 } else {
                     this->ord2_scale.transform (g_v_y, sd);
-                    this->quiver_grid_spacing[1] = _dx[1] * this->ord2_scale.getParams(0);
+                    this->quiver_grid_spacing[1] = _dx[1] * this->ord2_scale.get_params(0);
                 }
                 this->abscissa_scale.transform (g_v_x, ad);
-                this->quiver_grid_spacing[0] = _dx[0] * this->abscissa_scale.getParams(0);
+                this->quiver_grid_spacing[0] = _dx[0] * this->abscissa_scale.get_params(0);
 
                 // Now sd and ad can be used to construct dataCoords x/y. They are used to
                 // set the position of each datum into dataCoords

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <iostream>
 #include <vector>
@@ -7,6 +8,8 @@
 #include <stdexcept>
 
 #include <sm/vec>
+#include <sm/vvec>
+#include <sm/mat>
 
 #include <mplot/VisualModel.h>
 
@@ -21,7 +24,7 @@ namespace mplot
     template<int glver = mplot::gl::version_4_1>
     struct VerticesVisual : public VisualModel<glver>
     {
-        VerticesVisual (sm::mat44<float>& _model_transform,
+        VerticesVisual (sm::mat<float, 4>& _model_transform,
                         sm::vvec<uint32_t> _ind,
                         sm::vvec<sm::vec<float>> _posn,
                         sm::vvec<sm::vec<float>> _norm,
