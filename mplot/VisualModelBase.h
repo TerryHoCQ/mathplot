@@ -381,8 +381,7 @@ namespace mplot
             }
             if constexpr (debug_mn) { std::cout << "make_navmesh: Created triangles" << std::endl; }
 
-            //navmesh->mark_edge_triangles();
-            //if constexpr (debug_mn) { std::cout << "make_navmesh: Marked edge triangles and done." << std::endl; }
+            navmesh->compute_neighbour_relations();
         }
 
         /**

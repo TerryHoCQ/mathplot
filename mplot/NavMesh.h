@@ -19,6 +19,7 @@
 #include <map>
 #include <stdexcept>
 #include <string_view>
+#include <unordered_map>
 
 #include <sm/vec>
 #include <sm/vvec>
@@ -95,6 +96,18 @@ namespace mplot
          * this->vertex. populated by VisualModel::make_navmesh()
          */
         sm::vvec<std::tuple<std::array<uint32_t, 4>, sm::vec<float>, sm::vec<float>, sm::vec<float>>> triangles;
+
+        /*!
+         * For triangles[i], one_neighbours[i] should contain the indices of the triangles that are
+         * its one-vertex-shared-neighbours
+         */
+        std::unordered_map<uint32_t, sm::vvec<uint32_t>> one_neighbours;
+
+        /*!
+         * For triangles[i], two_neighbours[i] should contain the indices of the triangles that are
+         * its two-vertices-shared-neighbours. Could be sm::vec<uint32_t, 3> as can never be >3?
+         */
+        std::unordered_map<uint32_t, sm::vvec<uint32_t>> two_neighbours;
 
         /*!
          * Maps index in vertex to the original parent->indices index. populated by
@@ -189,6 +202,8 @@ namespace mplot
             }
             return rtn;
         }
+
+#if 0 // unused functions
 
         // Determine if ti0 is on the edge of the model (with < 3 edge neighbours), If so, place 1
         // in its final element. Also mark as on edge any nighbours sharing one of its vertices
@@ -304,6 +319,63 @@ namespace mplot
                 }
             }
             return rtn;
+        }
+#endif
+        // Find all the neighbours of triangle *vertex* index a.
+        // \return tuple containing triangle vertex indices and triangle normal.
+        std::vector<std::tuple<std::array<uint32_t, 4>, sm::vec<float>>>
+        find_neighbours (const uint32_t a) const
+        {
+            std::vector<std::tuple<std::array<uint32_t, 4>, sm::vec<float>>> rtn = {};
+            for (auto tri : triangles) {
+                auto [ti, tn, tnc, tnd] = tri;
+                if (ti[0] == a || ti[1] == a || ti[2] == a) { rtn.push_back({ti, tn}); }
+            }
+            return rtn;
+        }
+
+        // Find all the one-neighbours of 'of_this'
+        std::vector<std::tuple<std::array<uint32_t, 4>, sm::vec<float>>>
+        find_one_neighbours (const std::array<uint32_t, 4>& of_this) const
+        {
+            std::vector<std::tuple<std::array<uint32_t, 4>, sm::vec<float>>> rtn = {};
+            auto a = of_this[0];
+            auto b = of_this[1];
+            auto c = of_this[2];
+            for (auto tri : triangles) {
+                auto [ti, tn, tnc, tnd] = tri;
+                if ((ti[0] == a && ti[1] != b && ti[1] != c && ti[2] != b && ti[2] != c)
+                    || (ti[1] == a && ti[2] != b && ti[2] != c && ti[0] != b && ti[0] != c)
+                    || (ti[2] == a && ti[0] != b && ti[0] != c && ti[1] != b && ti[1] != c)
+                    ||
+                    (ti[0] == b && ti[1] != c && ti[1] != a && ti[2] != c && ti[2] != a)
+                    || (ti[1] == b && ti[2] != c && ti[2] != a && ti[0] != c && ti[0] != a)
+                    || (ti[2] == b && ti[0] != c && ti[0] != a && ti[1] != c && ti[1] != a)
+                    ||
+                    (ti[0] == c && ti[1] != a && ti[1] != b && ti[2] != a && ti[2] != b)
+                    || (ti[1] == c && ti[2] != a && ti[2] != b && ti[0] != a && ti[0] != b)
+                    || (ti[2] == c && ti[0] != a && ti[0] != b && ti[1] != a && ti[1] != b)) {
+
+                    rtn.push_back ({ti, tn});
+                }
+            }
+            return rtn;
+        }
+
+        /*
+         * Populate containers of neighbour relations between the triangles. That's
+         * this->one_neighbours and this->two_neighbours. Can I do this in a non-n^2 way?
+         * The key is the half-edge data structure.
+         * See: https://jerryyin.info/geometry-processing-algorithms/half-edge/
+         */
+        void compute_neighbour_relations()
+        {
+#if 0
+            for (auto tri : triangles) {
+                auto [ti, tn, tnc, tnd] = tri;
+                find_one_neighbours() // but returning index. This loops through all triangles.
+            }
+#endif
         }
 
         std::tuple<std::array<uint32_t, 4>, sm::vec<float>>
@@ -441,46 +513,6 @@ namespace mplot
                 }
             }
             return {other, other_n};
-        }
-
-        // Find all the one-neighbours of 'of_this'
-        std::vector<std::tuple<std::array<uint32_t, 4>, sm::vec<float>>>
-        find_one_neighbours (const std::array<uint32_t, 4>& of_this) const
-        {
-            std::vector<std::tuple<std::array<uint32_t, 4>, sm::vec<float>>> rtn = {};
-            auto a = of_this[0];
-            auto b = of_this[1];
-            auto c = of_this[2];
-            for (auto tri : triangles) {
-                auto [ti, tn, tnc, tnd] = tri;
-                if ((ti[0] == a && ti[1] != b && ti[1] != c && ti[2] != b && ti[2] != c)
-                    || (ti[1] == a && ti[2] != b && ti[2] != c && ti[0] != b && ti[0] != c)
-                    || (ti[2] == a && ti[0] != b && ti[0] != c && ti[1] != b && ti[1] != c)
-                    ||
-                    (ti[0] == b && ti[1] != c && ti[1] != a && ti[2] != c && ti[2] != a)
-                    || (ti[1] == b && ti[2] != c && ti[2] != a && ti[0] != c && ti[0] != a)
-                    || (ti[2] == b && ti[0] != c && ti[0] != a && ti[1] != c && ti[1] != a)
-                    ||
-                    (ti[0] == c && ti[1] != a && ti[1] != b && ti[2] != a && ti[2] != b)
-                    || (ti[1] == c && ti[2] != a && ti[2] != b && ti[0] != a && ti[0] != b)
-                    || (ti[2] == c && ti[0] != a && ti[0] != b && ti[1] != a && ti[1] != b)) {
-
-                    rtn.push_back ({ti, tn});
-                }
-            }
-            return rtn;
-        }
-
-        // Find all the neighbours of triangle vertex index a
-        std::vector<std::tuple<std::array<uint32_t, 4>, sm::vec<float>>>
-        find_neighbours (const uint32_t a) const
-        {
-            std::vector<std::tuple<std::array<uint32_t, 4>, sm::vec<float>>> rtn = {};
-            for (auto tri : triangles) {
-                auto [ti, tn, tnc, tnd] = tri;
-                if (ti[0] == a || ti[1] == a || ti[2] == a) { rtn.push_back({ti, tn}); }
-            }
-            return rtn;
         }
 
         sm::vec<float> find_vertex_normal (const uint32_t ti) const
