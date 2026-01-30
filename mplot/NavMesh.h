@@ -1306,7 +1306,7 @@ namespace mplot
                         // Compute the reorientation due to the requested movement.
                         float rotn_angle = 0.0f;
                         // Rotate by the angle between the normals (if stabilised is false). I think this is constrained to be <= pi
-                        if (stabilised == false) { this->tn0.angle (_tn, cd.tri_edge); }
+                        if (stabilised == false) { rotn_angle = this->tn0.angle (_tn, cd.tri_edge); }
                         // If tn0 and _tn are identical, then rotn_angle will be NaN, but in that case we want no rotation
                         if (std::isnan (rotn_angle)) { rotn_angle = 0.0f; }
                         sm::mat<float, 4> reorient_model; // reorientation transformation in sf
