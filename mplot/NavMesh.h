@@ -1026,10 +1026,11 @@ namespace mplot
             this->tn0 = this->triangle_normal (tv_sf);
 
             if constexpr (debug_move) {
-                std::cout << "\n# compute_mesh_movement: ti0 " << this->ti0[0] << "," << this->ti0[1] << "," << this->ti0[2]
-                          << " has vertices (sf) at " << tv_sf << " and normal " << this->tn0
-                          << ". upcoming movement (camframe) is " << mv_camframe << std::endl;
-                std::cout << "Initial camera location (camloc_sf): " << camloc_sf << std::endl;
+                std::cout << "\n# compute_mesh_movement:\n"
+                          << "\nti0: " << this->ti0[0] << "," << this->ti0[1] << "," << this->ti0[2]
+                          << "\nti0 (sf): " << tv_sf << "\nnormal " << this->tn0
+                          << "\nmovement (camframe): " << mv_camframe
+                          << "\nInitial camera location (camloc_sf): " << camloc_sf << "\n\n";
             }
 
             // Does camloc_sf in dirn tn0 intersect the tv_sf triangle? This
@@ -1057,11 +1058,9 @@ namespace mplot
                 std::tie (isect, hov_sf) = sm::geometry::ray_tri_intersection<float, double> (tv_sf[0], tv_sf[1], tv_sf[2], camloc_sf + (this->tn0 / 2.0f), -this->tn0);
                 if constexpr (debug_move) {
                     if (isect == false) {
-                        std::cout << "No isect at start with " << this->ti0[0] << "," << this->ti0[1] << "," << this->ti0[2]
-                                  << " using float OR double internally" << std::endl;
+                        std::cout << "No isect at start with ti0 using float OR double internally" << std::endl;
                     } else {
-                        std::cout << "Intersection at start with " << this->ti0[0] << "," << this->ti0[1] << "," << this->ti0[2]
-                                  << " using *double* internally" << std::endl;
+                        std::cout << "Intersection at start with ti0 using *double* internally" << std::endl;
                     }
                 }
             }
@@ -1095,9 +1094,7 @@ namespace mplot
             if (isect == false) {
 
                 if constexpr (debug_move2) {
-                    std::cout << "No intersection (at start) with triangle "
-                              << this->ti0[0] << "," << this->ti0[1] << "," << this->ti0[2]
-                              << ", so correct ti0 and tn0 (if we can)" << std::endl;
+                    std::cout << "No intersection (at start) with triangle ti0, so correct ti0 and tn0 (if we can)" << std::endl;
                 }
 
                 // When very close to the boundary, ray_tri_intersection may fail. This triggers a
@@ -1119,7 +1116,7 @@ namespace mplot
                             std::cout << "Start of move " << (is ? "IS" : "is NOT") << " in " << _ti[0] << "," << _ti[1] << "," << _ti[2] << std::endl;
                         }
                         if (is) {
-                            if constexpr (debug_move) { std::cout << "*** Correcting!\n"; }
+                            if constexpr (debug_move) { std::cout << "CORRECT ti0 to " << _ti[0] << "," << _ti[1] << "," << _ti[2] << std::endl; }
                             // We're in this neighbour, so update ti0/tn0 and mark isect true
                             this->ti0 = _ti;
                             tv_sf = tv_lf;
@@ -1136,8 +1133,7 @@ namespace mplot
 
                 if (isect == false) {
                     if constexpr (debug_move2) {
-                        std::cout << "No intersection (at start) with triangle "
-                                  << this->ti0[0] << "," << this->ti0[1] << "," << this->ti0[2] << " OR neighbours" << std::endl;
+                        std::cout << "DBG No intersection (at start) with triangle ti0 OR neighbours" << std::endl;
                     }
 
                     // Final test to see if we're on boundary?
@@ -1164,9 +1160,7 @@ namespace mplot
 
             } else {
                 if constexpr (debug_move) {
-                    std::cout << "First ray_tri_intersected. Start of move is IN triangle "
-                              << this->ti0[0] << "," << this->ti0[1] << "," << this->ti0[2]
-                              << " from coord " << camloc_sf << " and dirn " << -this->tn0 << std::endl;
+                    std::cout << "First ray_tri_intersected. Start of move is IN triangle ti0\n";
                 }
             }
 
@@ -1234,8 +1228,10 @@ namespace mplot
             while (!flags.test (cmm_fl::done)) {
 
                 if constexpr (debug_move) {
-                    std::cout << "\n* loopstart: Processing mv_inplane: " << hov_sf << "," << mv_inplane << " ti0 = ("
-                              << this->ti0[0] << "," << this->ti0[1] << "," << this->ti0[2] << ") with tn0 = " << this->tn0 << std::endl;
+                    std::cout << "\nWHILE LOOP\n"
+                              << "ti0 = (" << this->ti0[0] << "," << this->ti0[1] << "," << this->ti0[2] << ")\n"
+                              << "mv_inplane: " << hov_sf << "," << mv_inplane << "\n"
+                              << "tn0 = " << this->tn0 << ")\n";
                 }
 
                 if (mv_inplane.length() == 0) {
@@ -1296,8 +1292,8 @@ namespace mplot
                         _tn = this->triangle_normal (newtv_sf);
 
                         if constexpr (debug_move) {
-                            std::cout << "Re-orient to new triangle " << _ti[0] << "," << _ti[1] << "," << _ti[2]
-                                      << "[ " << newtv_sf << " ] with normal " << _tn << "\n";
+                            std::cout << "RE-ORIENT to _ti: " << _ti[0] << "," << _ti[1] << "," << _ti[2]
+                                      << "\n              " << newtv_sf << "\n              normal " << _tn << "\n";
                         }
 
                         // If a vertex crossing, we have to make an edge that is the cross product of the two triangle normals
