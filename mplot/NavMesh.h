@@ -71,6 +71,34 @@ namespace mplot
         std::vector<std::array<uint32_t, 4>> tris;
     };
 
+    /*
+     * Half-edge data structures for ordered meshes
+     */
+    template<typename I = uint32_t> requires std::is_integral_v<I>
+    struct he_edge
+    {
+        static constexpr I max = std::numeric_limits<I>::max();
+        sm::vec<I, 2> i = {max, max}; // two he_vertex indices for start and end of this halfedge
+        I twin = max; // Index of twin half edge
+        I next = max; // Index of next half edge in face (or hole)
+        I prev = max; // Index of prev half edge in face (or hole)
+    };
+
+    template<typename I = uint32_t, typename F=float, I N = 3> requires std::is_integral_v<I>
+    struct he_vertex
+    {
+        static constexpr I max = std::numeric_limits<I>::max();
+        sm::vec<F, N> p = {}; // Coordinate position of vertex
+        I he = max;           // A halfedge emanating from this he_vertex
+    };
+
+    template<typename I = uint32_t, I N = 3> requires std::is_integral_v<I>
+    struct he_face
+    {
+        static constexpr I max = std::numeric_limits<I>::max();
+        sm::vec<I, N> i = {}; // Indices of vertices of a simplex in the mesh in ccw order (dunno what ccw would be for N>3 though)
+    };
+
     /*!
      * Navigation mesh of triangles.
      *
@@ -83,19 +111,27 @@ namespace mplot
          * VisualModel::make_navmesh()
          */
         std::vector<sm::vec<float>> vertex;
+        // to become: std::vector<mplot::he_vertex<>>
+
+        // The vector of half edges in the mesh
+        std::vector<mplot::he_edge<>> halfedges;
 
         /*!
          * The edges that make up the same triangles as are shown with the parent VisualModel's
          * indices & vertexPositions, but in terms of this->vertex.  Each edge must be two indices
          * in *ascending numerical order*. populated by VisualModel::make_navmesh()
          */
-        std::set<std::array<uint32_t, 2>> edges;
+        std::set<std::array<uint32_t, 2>> edges; // This is edges, not half edges
 
         /*!
          * Triangles too. Might be more useful than edges. Triangle given as indices into
          * this->vertex. populated by VisualModel::make_navmesh()
+         *
+         * Tuple contains: triangle vertices (+flags), triangle normal, triangle 'x' edge vector, triangle 'y' edge vector.
          */
         sm::vvec<std::tuple<std::array<uint32_t, 4>, sm::vec<float>, sm::vec<float>, sm::vec<float>>> triangles;
+        // To become:
+        //sm::vvec<std::tuple<he_face<>,               sm::vec<float>, sm::vec<float>, sm::vec<float>>> triangles;
 
         /*!
          * For triangles[i], one_neighbours[i] should contain the indices of the triangles that are
@@ -373,7 +409,8 @@ namespace mplot
 #if 0
             for (auto tri : triangles) {
                 auto [ti, tn, tnc, tnd] = tri;
-                find_one_neighbours() // but returning index. This loops through all triangles.
+                //find_one_neighbours() // but returning index. This loops through all triangles.
+
             }
 #endif
         }

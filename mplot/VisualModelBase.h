@@ -377,7 +377,7 @@ namespace mplot
                     n = -n; // Also reverse n
                 }
 
-                navmesh->triangles.push_back ({t, n, nx, ny}); // n is computed normal
+                navmesh->triangles.push_back ({t, n, nx, ny}); // n is computed normal, nx, ny never used?
             }
             if constexpr (debug_mn) { std::cout << "make_navmesh: Created triangles" << std::endl; }
 
