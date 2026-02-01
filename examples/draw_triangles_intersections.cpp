@@ -332,11 +332,11 @@ int main()
 
     auto start_wr = (vmi * start).less_one_dim(); // wr to tvp
     std::cout << "start_wr = " << start_wr << std::endl;
-    auto [hit, ti, tn] = tvp->navmesh->find_triangle_crossing (start_wr, dirn);
-    if (ti[0] == std::numeric_limits<uint32_t>::max()) {
+    auto [hit, ti] = tvp->navmesh->find_triangle_crossing (start_wr, dirn);
+    if (ti.i[0] == std::numeric_limits<uint32_t>::max()) {
         std::cout << "NO HIT\n";
     } else {
-        std::cout << "Indices: " << ti[0] << "," << ti[1] << "," << ti[2] << std::endl;
+        std::cout << "Indices: " << ti.i << std::endl;
         std::cout << "Contains hit " << hit << std::endl;
 
         sv = std::make_unique<mplot::SphereVisual<>>(hit, 0.07, mplot::colour::springgreen2);
@@ -346,11 +346,11 @@ int main()
     }
 
     auto start_wr_fr2 = (vmi * start_fr2).less_one_dim(); // wr to tvp
-    auto [hit_fr2, ti_fr2, tn_fr2] = tvp->navmesh->find_triangle_crossing (start_wr_fr2, dirn_fr2);
-    if (ti[0] == std::numeric_limits<uint32_t>::max()) {
+    auto [hit_fr2, ti_fr2] = tvp->navmesh->find_triangle_crossing (start_wr_fr2, dirn_fr2);
+    if (ti_fr2.i[0] == std::numeric_limits<uint32_t>::max()) {
         std::cout << "NO HIT\n";
     } else {
-        std::cout << "Indices: " << ti_fr2[0] << "," << ti_fr2[1] << "," << ti_fr2[2] << std::endl;
+        std::cout << "Indices: " << ti_fr2.i << std::endl;
         std::cout << "Contains hit " << hit_fr2 << std::endl;
 
         sv = std::make_unique<mplot::SphereVisual<>>(hit_fr2, 0.07, mplot::colour::springgreen2);
@@ -361,11 +361,11 @@ int main()
 
     auto start_wr_bh = (vmi * start_bh).less_one_dim(); // wr to tvp
     std::cout << "start_wr = " << start_wr << std::endl;
-    auto [hit_bh, ti_bh, tn_bh] = tvp->navmesh->find_triangle_crossing (start_wr_bh, dirn_bh);
-    if (ti_bh[0] == std::numeric_limits<uint32_t>::max()) {
+    auto [hit_bh, ti_bh] = tvp->navmesh->find_triangle_crossing (start_wr_bh, dirn_bh);
+    if (ti_bh.i[0] == std::numeric_limits<uint32_t>::max()) {
         std::cout << "NO HIT\n";
     } else {
-        std::cout << "Indices: " << ti_bh[0] << "," << ti_bh[1] << "," << ti_bh[2] << std::endl;
+        std::cout << "Indices: " << ti_bh.i << std::endl;
         std::cout << "Contains hit " << hit_bh << std::endl;
 
         sv = std::make_unique<mplot::SphereVisual<>>(hit_bh, 0.07, mplot::colour::springgreen2);
