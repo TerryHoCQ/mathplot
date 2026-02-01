@@ -55,7 +55,6 @@ namespace mplot
             // If we also have the navmesh, then use its triangles to show face normals
             if (mymodel->navmesh) {
 
-                std::array<uint32_t, 4> ti = {};
                 sm::vec<float, 3> nv = {};
                 sm::vec<float, 3> nvc = {};
                 sm::vec<float, 3> nvd = {};
@@ -63,9 +62,12 @@ namespace mplot
 
                 for (auto ti : mymodel->navmesh->triangles) {
 
-                    const sm::vec<float>& v0 = mymodel->navmesh->vertex.p[ti[0]];
-                    const sm::vec<float>& v1 = mymodel->navmesh->vertex.p[ti[1]];
-                    const sm::vec<float>& v2 = mymodel->navmesh->vertex.p[ti[2]];
+                    const sm::vec<float>& v0 = mymodel->navmesh->vertex[ti.i[0]].p;
+                    const sm::vec<float>& v1 = mymodel->navmesh->vertex[ti.i[1]].p;
+                    const sm::vec<float>& v2 = mymodel->navmesh->vertex[ti.i[2]].p;
+
+                    nvc = v1 - v0;
+                    nvd = v2 - v0;
 
                     nv = mymodel->navmesh->triangle_normal ({v0, v1, v2});
 
