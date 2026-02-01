@@ -318,7 +318,7 @@ namespace mplot
             // as needed using equiv.first
             navmesh->vertex.resize (equiv.size(), {0});
             i = 0;
-            for (auto eq : equiv) { navmesh->vertex[i++] = (*vp)[eq.first]; } // FIXME?
+            for (auto eq : equiv) { navmesh->vertex[i++] = { (*vp)[eq.first], std::numeric_limits<uint32_t>::max()}; }
 
             // Lastly, generate edges. For which we require use of indices, which is expressed in
             // terms of the old indices. That lookup is navmesh_idx.
@@ -360,9 +360,9 @@ namespace mplot
 
                 // Compute trinorm as well and compare with the one from the mesh - perhaps it's
                 // different? We really want the right normal.
-                const sm::vec<float>& tv0 = navmesh->vertex[t[0]];
-                const sm::vec<float>& tv1 = navmesh->vertex[t[1]];
-                const sm::vec<float>& tv2 = navmesh->vertex[t[2]];
+                const sm::vec<float>& tv0 = navmesh->vertex[t[0]].p;
+                const sm::vec<float>& tv1 = navmesh->vertex[t[1]].p;
+                const sm::vec<float>& tv2 = navmesh->vertex[t[2]].p;
                 sm::vec<float> nx = (tv1 - tv0);
                 sm::vec<float> ny = (tv2 - tv0);
                 sm::vec<float> n = nx.cross (ny);

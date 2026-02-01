@@ -110,8 +110,8 @@ namespace mplot
          * Minimum set of vertices to generate a topological mesh. populated by
          * VisualModel::make_navmesh()
          */
-        std::vector<sm::vec<float>> vertex;
-        // to become: std::vector<mplot::he_vertex<>>
+        //std::vector<sm::vec<float>> vertex;
+        std::vector<mplot::he_vertex<>> vertex;
 
         // The vector of half edges in the mesh
         std::vector<mplot::he_edge<>> halfedges;
@@ -184,7 +184,7 @@ namespace mplot
             // Brute force it. (But we have a mesh; can this guarantee a faster search? I don't think so)
             float min_d = std::numeric_limits<float>::max();
             for (uint32_t j = 0; j < this->vertex.size(); ++j) {
-                sm::vec<float> vcoord = (viewmatrix * this->vertex[j]).less_one_dim();
+                sm::vec<float> vcoord = (viewmatrix * this->vertex[j].p).less_one_dim();
                 float d = (scene_coord - vcoord).length();
                 if (d < min_d) {
                     min_d = d;
@@ -198,9 +198,9 @@ namespace mplot
         sm::vec<sm::vec<float>, 3> triangle_vertices (const std::array<uint32_t, 4>& tri_indices) const
         {
             sm::vec<sm::vec<float>, 3> trivert;
-            if (tri_indices[0] < this->vertex.size()) { trivert[0] = this->vertex[tri_indices[0]]; }
-            if (tri_indices[1] < this->vertex.size()) { trivert[1] = this->vertex[tri_indices[1]]; }
-            if (tri_indices[2] < this->vertex.size()) { trivert[2] = this->vertex[tri_indices[2]]; }
+            if (tri_indices[0] < this->vertex.size()) { trivert[0] = this->vertex[tri_indices[0]].p; }
+            if (tri_indices[1] < this->vertex.size()) { trivert[1] = this->vertex[tri_indices[1]].p; }
+            if (tri_indices[2] < this->vertex.size()) { trivert[2] = this->vertex[tri_indices[2]].p; }
             return trivert;
         }
 
@@ -208,9 +208,9 @@ namespace mplot
         sm::vec<sm::vec<float>, 3> triangle_vertices (const std::array<uint32_t, 4>& tri_indices, const sm::mat<float, 4>& transform) const
         {
             sm::vec<sm::vec<float>, 3> trivert;
-            if (tri_indices[0] < this->vertex.size()) { trivert[0] = (transform * this->vertex[tri_indices[0]]).less_one_dim(); }
-            if (tri_indices[1] < this->vertex.size()) { trivert[1] = (transform * this->vertex[tri_indices[1]]).less_one_dim(); }
-            if (tri_indices[2] < this->vertex.size()) { trivert[2] = (transform * this->vertex[tri_indices[2]]).less_one_dim(); }
+            if (tri_indices[0] < this->vertex.size()) { trivert[0] = (transform * this->vertex[tri_indices[0]].p).less_one_dim(); }
+            if (tri_indices[1] < this->vertex.size()) { trivert[1] = (transform * this->vertex[tri_indices[1]].p).less_one_dim(); }
+            if (tri_indices[2] < this->vertex.size()) { trivert[2] = (transform * this->vertex[tri_indices[2]].p).less_one_dim(); }
             return trivert;
         }
 
@@ -457,9 +457,9 @@ namespace mplot
 
             // Have we been passed a 'most likely triangle' to test first? If so, test it.
             if (ti_ml[0] != std::numeric_limits<uint32_t>::max()) {
-                sm::vec<float> v0 = this->vertex[ti_ml[0]];
-                sm::vec<float> v1 = this->vertex[ti_ml[1]];
-                sm::vec<float> v2 = this->vertex[ti_ml[2]];
+                sm::vec<float> v0 = this->vertex[ti_ml[0]].p;
+                sm::vec<float> v1 = this->vertex[ti_ml[1]].p;
+                sm::vec<float> v2 = this->vertex[ti_ml[2]].p;
                 auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (v0, v1, v2, vstart, vdir);
                 if (isect) {
                     float d = (p - vstart).sos();
@@ -479,7 +479,9 @@ namespace mplot
 
             for (auto tri : this->triangles) {
                 auto [ti, tn, tnc, tnd] = tri;
-                auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (this->vertex[ti[0]], this->vertex[ti[1]], this->vertex[ti[2]], vstart, vdir);
+                auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (this->vertex[ti[0]].p,
+                                                                                                 this->vertex[ti[1]].p,
+                                                                                                 this->vertex[ti[2]].p, vstart, vdir);
                 // What if the triangle is one on the *other side of the model*?? Have to use
                 // vdir.sos() to exclude those that are too far and the distance^2 to find the
                 // closest one that isn't.
@@ -501,11 +503,11 @@ namespace mplot
                     sm::vec<float> vertex_n = this->find_vertex_normal (ti); // also loops
                     vertex_n.renormalize();
                     vstart = coord_mf + (vertex_n / 2.0f);
-                    if (sm::geometry::ray_point_intersection (this->vertex[ti], vstart, -vertex_n)) {
-                        float d = (this->vertex[ti] - vstart).sos();
+                    if (sm::geometry::ray_point_intersection (this->vertex[ti].p, vstart, -vertex_n)) {
+                        float d = (this->vertex[ti].p - vstart).sos();
                         if (d < isect_d && d < vdir.sos()) {
                             std::cout << "Register vertex triangle_crossing\n";
-                            isect_p = this->vertex[ti];
+                            isect_p = this->vertex[ti].p;
                             auto [_ti, _tn] = this->first_triangle_containing (ti);
                             isect_ti = _ti;
                             isect_tn = _tn;
