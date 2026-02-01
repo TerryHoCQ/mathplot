@@ -930,7 +930,7 @@ namespace mplot
                                                  const sm::mat<float, 4>& model_to_scene,
                                                  const float hoverheight)
         {
-            constexpr bool debug_move = false;
+            constexpr bool debug_move = true;
             constexpr bool debug_move2 = true;
 
             // A data-containing exception to throw
@@ -988,7 +988,11 @@ namespace mplot
                     }
                 }
             }
-#if 0
+#if 1
+            if (isect == false) {
+                if constexpr (debug_move) { std::cout << "Key for model_crawler...\n"; }
+            }
+#else
             // If that didn't work, try the triangle *vertices*
             uint32_t int_vertex = std::numeric_limits<uint32_t>::max(); // intersection vertex
             if (isect == false) {
