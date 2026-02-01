@@ -61,10 +61,16 @@ namespace mplot
                 sm::vec<float, 3> nvd = {};
                 sm::vec<float, 3> pos = {};
 
-                for (auto t : mymodel->navmesh->triangles) {
-                    std::tie(ti, nv, nvc, nvd) = t;
+                for (auto ti : mymodel->navmesh->triangles) {
+
+                    const sm::vec<float>& v0 = mymodel->navmesh->vertex.p[ti[0]];
+                    const sm::vec<float>& v1 = mymodel->navmesh->vertex.p[ti[1]];
+                    const sm::vec<float>& v2 = mymodel->navmesh->vertex.p[ti[2]];
+
+                    nv = mymodel->navmesh->triangle_normal ({v0, v1, v2});
+
                     // Plot tn at mean location of ti
-                    pos = (mymodel->navmesh->vertex[ti[0]] + mymodel->navmesh->vertex[ti[1]] + mymodel->navmesh->vertex[ti[2]]) / 3.0f;
+                    pos = (v0 + v1 + v2) / 3.0f;
                     // Mesh triangle normals
                     this->computeArrow (pos, (pos + nv * this->scale_factor),
                                         clr, tube_r, this->arrowhead_prop, cone_r, this->shapesides);

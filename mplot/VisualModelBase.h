@@ -349,35 +349,35 @@ namespace mplot
                 navmesh->edges.insert (e);
 
                 // Direct population of triangles. Three indices and a 4th number to hold flags (with bit0 meaning edge-triangle)
-                std::array<uint32_t, 4> t = { navmesh_idx[indices[i]], navmesh_idx[indices[i+1]], navmesh_idx[indices[i+2]], 0 };
+                mesh::face<> t = { {navmesh_idx[indices[i]], navmesh_idx[indices[i+1]], navmesh_idx[indices[i+2]]}, {} };
 
                 // The normal vector for this triangle could be obtained from the mesh normals, but
                 // we can't trust them (though they're easy to get, as we're dealing with indices
                 // already). However, use this to ensure that our triangle indices order is in
                 // agreement with mesh normal as far as direction goes.
-                sm::vec<float> trinorm = this->get_normal (indices[i]) + this->get_normal (indices[i+1]) + this->get_normal (indices[i+2]) ;
-                trinorm.renormalize();
+                t.n = this->get_normal (indices[i]) + this->get_normal (indices[i+1]) + this->get_normal (indices[i+2]) ;
+                t.n.renormalize();
 
                 // Compute trinorm as well and compare with the one from the mesh - perhaps it's
                 // different? We really want the right normal.
-                const sm::vec<float>& tv0 = navmesh->vertex[t[0]].p;
-                const sm::vec<float>& tv1 = navmesh->vertex[t[1]].p;
-                const sm::vec<float>& tv2 = navmesh->vertex[t[2]].p;
+                const sm::vec<float>& tv0 = navmesh->vertex[t.i[0]].p;
+                const sm::vec<float>& tv1 = navmesh->vertex[t.i[1]].p;
+                const sm::vec<float>& tv2 = navmesh->vertex[t.i[2]].p;
                 sm::vec<float> nx = (tv1 - tv0);
                 sm::vec<float> ny = (tv2 - tv0);
                 sm::vec<float> n = nx.cross (ny);
                 n.renormalize();
 
                 // Check rotational sense of triangles?
-                if (n.dot (trinorm) < 0.0f) {
+                if (n.dot (t.n) < 0.0f) {
                     // need to swap order in t:
-                    uint32_t ti = t[2];
-                    t[2] = t[1];
-                    t[1] = ti;
-                    n = -n; // Also reverse n
+                    uint32_t ti = t.i[2];
+                    t.i[2] = t.i[1];
+                    t.i[1] = ti;
+                    t.n = -t.n; // Also reverse n
                 }
 
-                navmesh->triangles.push_back ({t, n, nx, ny}); // n is computed normal, nx, ny never used?
+                navmesh->triangles.push_back (t);
             }
             if constexpr (debug_mn) { std::cout << "make_navmesh: Created triangles" << std::endl; }
 

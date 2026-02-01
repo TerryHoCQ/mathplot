@@ -93,7 +93,7 @@ int main (int argc, char** argv)
     // Find the triangle that we're initially located above with
     // mplot::NavMesh::find_triangle_hit. This updates internal state in NavMesh. It could be
     // executed automatically in compute_mesh_movement
-    auto[hp_scene, tn0, ti0] = gvp->navmesh->find_triangle_hit (ca_view, sph_view);
+    auto[hp_scene, ti0] = gvp->navmesh->find_triangle_hit (ca_view, sph_view);
     std::cout << "Find hit finds hit point " << hp_scene << std::endl;
 
     int move_counter = 0;
