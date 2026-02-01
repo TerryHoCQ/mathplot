@@ -19,7 +19,6 @@
 #include <map>
 #include <stdexcept>
 #include <string_view>
-#include <unordered_map>
 
 #include <sm/vec>
 #include <sm/vvec>
@@ -60,7 +59,7 @@ namespace mplot
              // for N>3 though). i[0] == max means unset.
             sm::vec<I, N> i = { max };
             // store normal vector in here?
-            sm::vec<F, N> n = {};
+            //sm::vec<F, N> n = {};
         };
     }
 
@@ -137,18 +136,6 @@ namespace mplot
          */
         //sm::vvec<std::tuple<std::array<uint32_t, 4>, sm::vec<float>, sm::vec<float>, sm::vec<float>>> triangles;
         std::vector<mesh::face<>> triangles;
-
-        /*!
-         * For triangles[i], one_neighbours[i] should contain the indices of the triangles that are
-         * its one-vertex-shared-neighbours
-         */
-        std::unordered_map<uint32_t, sm::vvec<uint32_t>> one_neighbours;
-
-        /*!
-         * For triangles[i], two_neighbours[i] should contain the indices of the triangles that are
-         * its two-vertices-shared-neighbours. Could be sm::vec<uint32_t, 3> as can never be >3?
-         */
-        std::unordered_map<uint32_t, sm::vvec<uint32_t>> two_neighbours;
 
         /*!
          * Maps index in vertex to the original parent->indices index. populated by
@@ -342,8 +329,6 @@ namespace mplot
                     if (d < vdsos) {
                         isect_p = p;
                         isect_ti = ti_ml;
-                        sm::vec<sm::vec<float>, 3> tverts = { v0, v1, v2 };
-                        isect_ti.n = this->triangle_normal (tverts); // compute tn?
                         isect_d = d;
                     }
                 }
@@ -369,7 +354,7 @@ namespace mplot
                     }
                 }
             }
-
+#if 0
             if (isect_p[0] == fmax && this->vertex.size() < 10000) {
                 // Found no triangle intersection; check vertices, in case vdir points perfectly at a vertex.
                 // This can be computationally expensive, hence the hacky check, above.
@@ -390,7 +375,7 @@ namespace mplot
                     }
                 }
             }
-
+#endif
             return { isect_p, isect_ti };
         }
 
@@ -419,16 +404,19 @@ namespace mplot
             }
             return other;
         }
-
+#if 0
+        // FIXME: This next
         sm::vec<float> find_vertex_normal (const uint32_t ti) const
         {
             auto neighbs = this->find_neighbours (ti);
             sm::vec<float> vn = {};
             if (neighbs.size() == 0) { return vn; }
-            for (auto nb : neighbs) { vn += nb.n; }
+            for (auto nb : neighbs) {
+                vn += nb.n; // Fixme: will have to look up vertices and compute. And in what frame?
+            }
             return (vn / neighbs.size());
         }
-
+#endif
         // Find the common vertex between a and b
         uint32_t common_vertex (const mesh::face<>& a, const mesh::face<>& b)
         {
@@ -798,14 +786,14 @@ namespace mplot
                 std::cout << "found hit at " << hit << " (model); " << hp_scene << " (scene) in direction " << vdir << "\n";
                 // Check we'll get a hit when we compute_mesh_movement:
                 sm::vec<sm::vec<float>, 3> tv_mf = this->triangle_vertices (this->ti0);
-                std::cout << "ti0.n: " << this->ti0.n << ", length " << this->ti0.n.length() << std::endl;
-                std::cout << "TEST ray_tri_intersection (hit,-tn0): " << (hit + (this->ti0.n / 2.0f)) << "," << -this->ti0.n << std::endl;
-                auto [isect, hov_mf] = sm::geometry::ray_tri_intersection<float> (tv_mf[0], tv_mf[1], tv_mf[2], hit + (this->ti0.n / 2.0f), -this->ti0.n);
+                auto tn = this->triangle_normal (tv_mf);
+                std::cout << "tn: " << tn << ", length " << tn.length() << std::endl;
+                std::cout << "TEST ray_tri_intersection (hit,-tn0): " << (hit + (tn / 2.0f)) << "," << -tn << std::endl;
+                auto [isect, hov_mf] = sm::geometry::ray_tri_intersection<float> (tv_mf[0], tv_mf[1], tv_mf[2], hit + (tn / 2.0f), -tn);
                 if (isect) {
                     std::cout << "ray_tri_intersection confirms we would hit at " << hov_mf << "\n";
                 } else {
                     std::cout << "ray_tri_intersection DOES NOT get a hit\n";
-                    //throw std::runtime_error ("ray_tri_intersection DOES NOT get a hit!");
                 }
             }
 
@@ -850,15 +838,16 @@ namespace mplot
          * _z and its 'x' axis in direction _x.
          */
         sm::mat<float, 4> position_camera (const sm::vec<float>& hp_scene, const sm::mat<float, 4>& model_to_scene,
-                                           const sm::vec<float>& _x, const sm::vec<float>& _z,
+                                           const sm::vec<float>& _x, const sm::vec<float>& _y, const sm::vec<float>& _z,
                                            const float hoverheight)
         {
             // I think this positions correctly now (which is all it has to do). It ignores scaling
             // in model_to_scene. Can be reduced to use fewer mat<>s.
             sm::mat<float, 4> cam_mv_y;
             cam_mv_y.translate (sm::vec<float>{0, hoverheight, 0});
+
             // The basis _x, tn0, _z, where these are vectors in the model frame that define a camera frame
-            sm::mat<float, 4> cam_to_model_rotn = sm::mat<float, 4>::frombasis (_x, this->ti0.n, _z);
+            sm::mat<float, 4> cam_to_model_rotn = sm::mat<float, 4>::frombasis (_x, _y, _z);
             // Get the rotation from scene frame to model
             sm::mat<float, 4> m_to_sc_rotn = model_to_scene.rotation_mat44();
             sm::mat<float, 4> hp_m;
@@ -880,7 +869,7 @@ namespace mplot
                                            const float hoverheight)
         {
             // Let's 'draw' the camera towards the model and then arrange its normal upwards wrt to the normal of the model.
-            if (this->ti0.n[0] == std::numeric_limits<float>::max()) {
+            if (this->ti0.i[0] == std::numeric_limits<uint32_t>::max()) {
                 std::cout << __func__ << ": No hit/triangle normal\n";
                 return sm::mat<float, 4>{};
             }
@@ -890,12 +879,13 @@ namespace mplot
             // and then set z from this random x and the triangle norm (y).
             sm::vec<float> rand_vec;
             rand_vec.randomize();
-            sm::vec<float> tn0 = (model_to_scene * this->ti0.n).less_one_dim();
-            sm::vec<float> _x = rand_vec.cross (tn0);
+            sm::vec<sm::vec<float>, 3> tv_sf = this->triangle_vertices (this->ti0, model_to_scene);
+            sm::vec<float> tn = this->triangle_normal (tv_sf);
+            sm::vec<float> _x = rand_vec.cross (tn);
             _x.renormalize();
-            sm::vec<float> _z = _x.cross (tn0);
+            sm::vec<float> _z = _x.cross (tn);
 
-            return this->position_camera (hp_scene, model_to_scene, _x, _z, hoverheight);
+            return this->position_camera (hp_scene, model_to_scene, _x, tn, _z, hoverheight);
         }
 
         /*!
@@ -906,19 +896,20 @@ namespace mplot
                                            const float hoverheight, const sm::vec<float>& fwds)
         {
             // Let's 'draw' the camera towards the model and then arrange its normal upwards wrt to the normal of the model.
-            if (this->ti0.n[0] == std::numeric_limits<float>::max()) {
+            if (this->ti0.i[0] == std::numeric_limits<uint32_t>::max()) {
                 std::cout << __func__ << ": No hit/triangle normal\n";
                 return sm::mat<float, 4>{};
             }
 
             // Project fwds onto the plane tn0
-            sm::vec<float> tn0 = (model_to_scene * this->ti0.n).less_one_dim();
-            sm::vec<float> _z = sm::geometry::vector_plane_projection (tn0, fwds);
+            sm::vec<sm::vec<float>, 3> tv_sf = this->triangle_vertices (this->ti0, model_to_scene);
+            sm::vec<float> tn = this->triangle_normal (tv_sf);
+            sm::vec<float> _z = sm::geometry::vector_plane_projection (tn, fwds);
             _z.renormalize();
-            sm::vec<float> _x = -_z.cross (tn0);
+            sm::vec<float> _x = -_z.cross (tn);
             _x.renormalize();
 
-            return this->position_camera (hp_scene, model_to_scene, _x, _z, hoverheight);
+            return this->position_camera (hp_scene, model_to_scene, _x, tn, _z, hoverheight);
         }
 
         /*!
@@ -997,7 +988,7 @@ namespace mplot
                     }
                 }
             }
-
+#if 0
             // If that didn't work, try the triangle *vertices*
             uint32_t int_vertex = std::numeric_limits<uint32_t>::max(); // intersection vertex
             if (isect == false) {
@@ -1022,7 +1013,7 @@ namespace mplot
                     }
                 }
             }
-
+#endif
             std::vector<mesh::face<>> trisearched; // the other triangles we search. To place in exception
             if (isect == false) {
 
@@ -1108,7 +1099,7 @@ namespace mplot
                 if constexpr (debug_move) { std::cout << "No movement, so return unchanged camera viewmatrix\n"; }
                 return cam_to_scene;
             }
-
+#if 0
             // New section to handle the case that we started right on a vertex
             if (isect == true && int_vertex != std::numeric_limits<uint32_t>::max()) {
                 // We HAVE a vertex intersection. Check if we either cross, or land in one of this vertex's neighbours to correct our starting triangle and normal.
@@ -1146,7 +1137,7 @@ namespace mplot
                     }
                 }
             } // Now carry on with corrected mv_inplane, tn0 and ti0
-
+#endif
             // A 'detected crossing' is one where we had to use a secondary method (comparing the
             // triangle containing the start and the triangle containing the end) to determine that
             // a triangle edge had been crossed, because the original method
@@ -1366,7 +1357,6 @@ namespace mplot
                                 } else { // end not in neighbour
                                     if (is) { // start is in neighbour tri (will re-orient to this and re-loop)
                                         _ti_2n = _ti;
-                                        _ti_2n.n = _tn;
                                         break; // out of for
                                     } // else end is not in neighbour, and neither is start. This
                                       // occurs if the end is ON the boundary, but precision errors
@@ -1410,7 +1400,6 @@ namespace mplot
                                 } else { // end not in one-neighbour
                                     if (is) { // start is in one-neighbour tri (will re-orient to this and re-loop)
                                         _ti_2n = _ti;
-                                        //_ti_2n.n = _tn;
                                         break; // out of for
                                     } // else end is not in one-neighbour, and neither is start.
                                 }

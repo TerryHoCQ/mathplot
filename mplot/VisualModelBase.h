@@ -349,14 +349,14 @@ namespace mplot
                 navmesh->edges.insert (e);
 
                 // Direct population of triangles. Three indices and a 4th number to hold flags (with bit0 meaning edge-triangle)
-                mesh::face<> t = { {navmesh_idx[indices[i]], navmesh_idx[indices[i+1]], navmesh_idx[indices[i+2]]}, {} };
+                mesh::face<> t = { {navmesh_idx[indices[i]], navmesh_idx[indices[i+1]], navmesh_idx[indices[i+2]]} };
 
                 // The normal vector for this triangle could be obtained from the mesh normals, but
                 // we can't trust them (though they're easy to get, as we're dealing with indices
                 // already). However, use this to ensure that our triangle indices order is in
                 // agreement with mesh normal as far as direction goes.
-                t.n = this->get_normal (indices[i]) + this->get_normal (indices[i+1]) + this->get_normal (indices[i+2]) ;
-                t.n.renormalize();
+                sm::vec<float> tn = this->get_normal (indices[i]) + this->get_normal (indices[i+1]) + this->get_normal (indices[i+2]) ;
+                tn.renormalize();
 
                 // Compute trinorm as well and compare with the one from the mesh - perhaps it's
                 // different? We really want the right normal.
@@ -369,12 +369,11 @@ namespace mplot
                 n.renormalize();
 
                 // Check rotational sense of triangles?
-                if (n.dot (t.n) < 0.0f) {
+                if (n.dot (tn) < 0.0f) {
                     // need to swap order in t:
                     uint32_t ti = t.i[2];
                     t.i[2] = t.i[1];
                     t.i[1] = ti;
-                    t.n = -t.n; // Also reverse n
                 }
 
                 navmesh->triangles.push_back (t);
