@@ -81,6 +81,7 @@ int main (int argc, char** argv)
     gvp->reinitColours();
     // Make the navmesh for the geodesic, this doesn't occur automatically and has to come after finalize()
     gvp->make_navmesh();
+    std::cout << "\nmake_navmesh() returned\n\n";
 
     // We're going to move the coordinate arrows forwards (along its z-axis), so that it 'orbits'
     float move_step = 0.1f; // 0.075 <= move_step and iterations 6 to fail

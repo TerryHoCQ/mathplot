@@ -326,7 +326,13 @@ namespace mplot
             }
 
             for (auto tri : this->triangles) {
-                std::cout << "Passing tri.he " << tri.he << " to triangle_vertices(): with he->vi =  " << tri.he->vi << std::endl;
+                std::cout << "this->halfedges["<< 0 << "] " << (&this->halfedges[0]) << " contains: vi:"
+                          <<  this->halfedges[0].vi
+                          << ", twin:" << this->halfedges[0].twin
+                          << ", next:" << this->halfedges[0].next
+                          << ", prev:" << this->halfedges[0].prev << std::endl;
+
+                std::cout << "CF. Passing tri.he " << tri.he << " to triangle_vertices(): with he->vi =  " << tri.he->vi << std::endl;
                 sm::vec<sm::vec<float>, 3> v = this->triangle_vertices (tri.he);
                 auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (v[0], v[1], v[2], vstart, vdir);
                 // What if the triangle is one on the *other side of the model*?? Have to use

@@ -316,7 +316,7 @@ namespace mplot
 
             // Can now populate vertex, a vector of coordinates, if required, or simply access (*vp)
             // as needed using equiv.first
-            navmesh->vertex.resize (equiv.size(), {0});
+            navmesh->vertex.resize (equiv.size(), mesh::vertex<>{});
             i = 0;
             for (auto eq : equiv) {
                 navmesh->vertex[i++] = { (*vp)[eq.first], nullptr };
@@ -325,6 +325,7 @@ namespace mplot
             // Lastly, generate edges. For which we require use of indices, which is expressed in
             // terms of the old indices. That lookup is navmesh_idx.
             std::cout << "At start, halfedges size is " << navmesh->halfedges.size() << std::endl;
+            //navmesh->halfedges.reserve (this->indices.size() / 3);
             for (uint32_t i = 0; i < this->indices.size(); i += 3) {
                 // Each three entries in indices is a triangle containing 3 edges. NB: Edges must be listed in ascending order!
                 std::array<uint32_t, 2> e = { navmesh_idx[indices[i]], navmesh_idx[indices[i + 1]] };
@@ -351,22 +352,23 @@ namespace mplot
                 }
                 navmesh->edges.insert (e);
 
+                constexpr uint32_t mlines = 10000;
                 // Add three halfedges for the triangle
                 uint32_t hesz = navmesh->halfedges.size();
-                navmesh->halfedges.resize (hesz + 3);
+                navmesh->halfedges.resize (hesz + 3, {});
                 const mesh::halfedge<>* he0 = &(navmesh->halfedges[hesz]);
                 const mesh::halfedge<>* he1 = &(navmesh->halfedges[hesz + 1]);
                 const mesh::halfedge<>* he2 = &(navmesh->halfedges[hesz + 2]);
-                if (hesz < 10) {
-                    std::cout << "setting halfedges["<<hesz<<"] to { {"
+                if (hesz < mlines) {
+                    std::cout << "setting halfedges["<<hesz<<"] " << he0 <<  " to { {"
                               << navmesh_idx[indices[i]] << ", " << navmesh_idx[indices[i + 1]]
                               << "}, nullptr, " << he1 << ", " << he2 << " }" << std::endl;
 
-                    std::cout << "setting halfedges["<<hesz + 1<<"] to { {"
+                    std::cout << "setting halfedges["<<hesz + 1<<"] " << he1 <<  " to { {"
                               << navmesh_idx[indices[i + 1]] << ", " << navmesh_idx[indices[i + 2]]
                               << "}, nullptr, " << he2 << ", " << he0 << " }" << std::endl;
 
-                    std::cout << "setting halfedges["<<hesz + 2<<"] to { {"
+                    std::cout << "setting halfedges["<<hesz + 2<<"] " << he2 <<  " to { {"
                               << navmesh_idx[indices[i + 2]] << ", " << navmesh_idx[indices[i]]
                               << "}, nullptr, " << he0 << ", " << he1 << " }" << std::endl;
                 }
@@ -374,8 +376,8 @@ namespace mplot
                 navmesh->halfedges[hesz + 1] = { {navmesh_idx[indices[i + 1]], navmesh_idx[indices[i + 2]]}, nullptr, he2, he0 };
                 navmesh->halfedges[hesz + 2] = { {navmesh_idx[indices[i + 2]], navmesh_idx[indices[i]]    }, nullptr, he0, he1 };
 
-                if (hesz < 10) {
-                    std::cout << "halfedges["<< hesz << "]: "
+                if (hesz < mlines) {
+                    std::cout << "halfedges["<< hesz << "] contains: vi:"
                               <<  navmesh->halfedges[hesz].vi
                               << ", twin:" << navmesh->halfedges[hesz].twin
                               << ", next:" << navmesh->halfedges[hesz].next
@@ -411,11 +413,11 @@ namespace mplot
                     //t.i[2] = t.i[1];
                     //t.i[1] = ti;
                 }
-                if (hesz < 10) {
+                if (hesz < mlines) {
                     std::cout << "Push_back triangle " << t.he << std::endl;
                 }
                 navmesh->triangles.push_back (t);
-                if (hesz < 10) {
+                if (hesz < mlines) {
                     std::cout << "back triangle is   " << navmesh->triangles.back().he << std::endl;
                 }
             }
