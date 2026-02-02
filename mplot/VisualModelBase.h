@@ -316,10 +316,10 @@ namespace mplot
 
             // Can now populate vertex, a vector of coordinates, if required, or simply access (*vp)
             // as needed using equiv.first
-            navmesh->vertex.resize (equiv.size(), mesh::vertex<>{});
+            navmesh->vertex.resize (equiv.size(), mesh::vertex{});
             i = 0;
             for (auto eq : equiv) {
-                navmesh->vertex[i++] = { (*vp)[eq.first], nullptr };
+                navmesh->vertex[i++] = { (*vp)[eq.first], std::numeric_limits<uint32_t>::max() };
             }
 
             // Lastly, generate edges. For which we require use of indices, which is expressed in
@@ -356,9 +356,13 @@ namespace mplot
                 // Add three halfedges for the triangle
                 uint32_t hesz = navmesh->halfedges.size();
                 navmesh->halfedges.resize (hesz + 3, {});
-                const mesh::halfedge<>* he0 = &(navmesh->halfedges[hesz]);
-                const mesh::halfedge<>* he1 = &(navmesh->halfedges[hesz + 1]);
-                const mesh::halfedge<>* he2 = &(navmesh->halfedges[hesz + 2]);
+                //const mesh::halfedge<>* he0 = &(navmesh->halfedges[hesz]);
+                //const mesh::halfedge<>* he1 = &(navmesh->halfedges[hesz + 1]);
+                //const mesh::halfedge<>* he2 = &(navmesh->halfedges[hesz + 2]);
+                uint32_t he0 = hesz;
+                uint32_t he1 = hesz + 1;
+                uint32_t he2 = hesz + 2;
+
                 if (hesz < mlines) {
                     std::cout << "setting halfedges["<<hesz<<"] " << he0 <<  " to { {"
                               << navmesh_idx[indices[i]] << ", " << navmesh_idx[indices[i + 1]]
@@ -372,9 +376,10 @@ namespace mplot
                               << navmesh_idx[indices[i + 2]] << ", " << navmesh_idx[indices[i]]
                               << "}, nullptr, " << he0 << ", " << he1 << " }" << std::endl;
                 }
-                navmesh->halfedges[hesz]     = { {navmesh_idx[indices[i]],     navmesh_idx[indices[i + 1]]}, nullptr, he1, he2 };
-                navmesh->halfedges[hesz + 1] = { {navmesh_idx[indices[i + 1]], navmesh_idx[indices[i + 2]]}, nullptr, he2, he0 };
-                navmesh->halfedges[hesz + 2] = { {navmesh_idx[indices[i + 2]], navmesh_idx[indices[i]]    }, nullptr, he0, he1 };
+
+                navmesh->halfedges[hesz]     = { {navmesh_idx[indices[i]],     navmesh_idx[indices[i + 1]]}, std::numeric_limits<uint32_t>::max(), he1, he2 };
+                navmesh->halfedges[hesz + 1] = { {navmesh_idx[indices[i + 1]], navmesh_idx[indices[i + 2]]}, std::numeric_limits<uint32_t>::max(), he2, he0 };
+                navmesh->halfedges[hesz + 2] = { {navmesh_idx[indices[i + 2]], navmesh_idx[indices[i]]    }, std::numeric_limits<uint32_t>::max(), he0, he1 };
 
                 if (hesz < mlines) {
                     std::cout << "halfedges["<< hesz << "] contains: vi:"

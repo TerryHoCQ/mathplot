@@ -38,23 +38,23 @@ namespace mplot
         {
             // two vertex indices for start and end of this halfedge
             sm::vec<I, 2> vi = { std::numeric_limits<I>::max(), std::numeric_limits<I>::max() };
-            const halfedge<I>* twin = nullptr; // twin half edge
-            const halfedge<I>* next = nullptr; // next half edge in face (or hole)
-            const halfedge<I>* prev = nullptr; // prev half edge in face (or hole)
+            I twin = std::numeric_limits<I>::max(); // twin half edge
+            I next = std::numeric_limits<I>::max(); // next half edge in face (or hole)
+            I prev = std::numeric_limits<I>::max(); // prev half edge in face (or hole)
         };
 
         template<typename I = uint32_t, typename F=float, I N = 3> requires std::is_integral_v<I>
         struct vertex
         {
             sm::vec<F, N> p = {}; // Coordinate position of vertex
-            const halfedge<I>* he = nullptr; // A halfedge emanating from this he_vertex
+            I he = std::numeric_limits<I>::max(); // A halfedge emanating from this he_vertex
         };
 
         template<typename I = uint32_t> requires std::is_integral_v<I>
         struct face
         {
             // The index of the starting halfedge
-            const halfedge<I>* he = nullptr;
+            I he = std::numeric_limits<I>::max();
         };
     }
 
@@ -139,7 +139,8 @@ namespace mplot
 
         //! When navigating, this is the 'current triangle' that you're located over/near
         //mesh::face<> ti0; // or could be a halfedge pointer?
-        const mesh::halfedge<>* ti0 = nullptr;
+        //const mesh::halfedge<>* ti0 = nullptr;
+        uint32_t ti0 = std::numeric_limits<uint32_t>::max();
 
         /*!
          * Stabilisation flag: if true, no rotation is applied when moving over a triangle boundary
@@ -173,45 +174,45 @@ namespace mplot
         }
 
         // Return the three vertices for the triangle specified as three indices into NavMesh::vertex
-        sm::vec<sm::vec<float>, 3> triangle_vertices (const mesh::halfedge<>* tri_he) const
+        sm::vec<sm::vec<float>, 3> triangle_vertices (uint32_t tri_he) const
         {
             sm::vec<sm::vec<float>, 3> trivert = {};
-            if (!tri_he) {
+            if (tri_he == std::numeric_limits<uint32_t>::max()) {
                 std::cout << "tri_he is null?\n";
                 return trivert;
             }
 
             uint32_t i = 0;
-            const mesh::halfedge<>* he = tri_he;
-            if (!he) {
-                std::cout << "he is null?\n";
-                return trivert;
-            }
+            uint32_t he = tri_he;
             do {
-                std::cout << "he: " << he << ", he->vi: " << he->vi << std::endl;
                 //std::cout << "vertex.size(): " << this->vertex.size() << std::endl;
-                if (he->vi[0] < this->vertex.size()) {
-                    //std::cout << "Getting vertex[" << he->vi[0] << "] from vertex size " << this->vertex.size() << " into trivert[" << i << "]" << std::endl;
-                    trivert[i] = this->vertex[he->vi[0]].p;
-                } else {
-                    //std::cout << "Not getting vertex[" << he->vi[0] << "] from vertex as it is of size " << this->vertex.size() << " into trivert[" << i << "]" << std::endl;
+                if (this->halfedges[he].vi[0] < this->vertex.size()) {
+                    trivert[i] = this->vertex[this->halfedges[he].vi[0]].p;
                 }
                 ++i;
-                he = he->next;
+                he = this->halfedges[he].next;
             } while (he != tri_he);
             return trivert;
         }
 
         // Return the three vertices for the triangle specified as three indices into NavMesh::vertex transformed by transform
-        sm::vec<sm::vec<float>, 3> triangle_vertices (const mesh::halfedge<>* tri_he, const sm::mat<float, 4>& transform) const
+        sm::vec<sm::vec<float>, 3> triangle_vertices (uint32_t tri_he, const sm::mat<float, 4>& transform) const
         {
-            sm::vec<sm::vec<float>, 3> trivert;
+            sm::vec<sm::vec<float>, 3> trivert = {};
+            if (tri_he == std::numeric_limits<uint32_t>::max()) {
+                std::cout << "tri_he is null?\n";
+                return trivert;
+            }
+
             uint32_t i = 0;
-            const mesh::halfedge<>* he = tri_he;
+            uint32_t he = tri_he;
             do {
-                if (he->vi[0] < this->vertex.size()) { trivert[i] = (transform * this->vertex[he->vi[0]].p).less_one_dim(); }
+                //std::cout << "vertex.size(): " << this->vertex.size() << std::endl;
+                if (this->halfedges[he].vi[0] < this->vertex.size()) {
+                    trivert[i] = (transform * this->vertex[this->halfedges[he].vi[0]].p).less_one_dim();
+                }
                 ++i;
-                he = he->next;
+                he = this->halfedges[he].next;
             } while (he != tri_he);
             return trivert;
         }
@@ -244,27 +245,23 @@ namespace mplot
 #endif
         // Find all the neighbours of triangle *vertex* index a.
         // \return vector of halfedges indices
-        std::vector<const mesh::halfedge<>*>
-        find_neighbours (const mesh::halfedge<>* a) const
+        std::vector<uint32_t>
+        find_neighbours (uint32_t a) const
         {
-            const mesh::halfedge<>* he = a;
-            std::vector<const mesh::halfedge<>*> rtn = {};
+            uint32_t he = a;
+            std::vector<uint32_t> rtn = {};
             do {
                 // he emanates from the vertex, so return it.
                 rtn.push_back (he);
-                he = he->next->twin;
+                he = this->halfedges[this->halfedges[he].next].twin;
+                if (he == std::numeric_limits<uint32_t>::max()) {
+                    std::cout << "Warning: twins need to be set up to find_neighbours\n";
+                    break;
+                }
             } while (he != a);
             return rtn;
         }
-#if 0
-        std::vector<const mesh::halfedge<>*>
-        find_neighbours (const uint32_t a) const
-        {
-            // a is an index into this->vertex
-            const mesh::halfedge<>* he = this->vertex[a].he; // The emanating half edge from this vertex
-            return find_neighbours (he);
-        }
-#endif
+
         /*
          * Determine neighbour relations. That means populating a halfedge data structure. Don't
          * think there's any way around the at-worst O(N^2) computation, so save results into an h5
@@ -288,27 +285,27 @@ namespace mplot
          * \param ti_ml The most likely triangle, if you know what it probably is, to reduce the
          * search time.
          *
-         * \return a tuple containing crossing location, halfedge (which is part of a triangle)
+         * \return a tuple containing crossing location, halfedge index (which specifies a triangle)
          */
-        std::tuple<sm::vec<float>, const mesh::halfedge<>*>
+        std::tuple<sm::vec<float>, uint32_t>
         find_triangle_crossing (const sm::vec<float>& coord_mf, const sm::vec<float>& vdir,
                                 const sm::mat<float, 4>& model_to_scene,
-                                const mesh::halfedge<>* ti_ml = nullptr ) const
+                                const uint32_t ti_ml = std::numeric_limits<uint32_t>::max() ) const
         {
             constexpr float fmax = std::numeric_limits<float>::max();
             sm::vec<float> vstart = coord_mf - (vdir / 2.0f);
 
             // Return objects
             sm::vec<float> isect_p = { fmax, fmax, fmax };
-            const mesh::halfedge<>* isect_ti = nullptr;
+            uint32_t isect_ti = std::numeric_limits<uint32_t>::max();
 
             float isect_d = std::numeric_limits<float>::max(); // distance to intersect
 
             const float vdsos = vdir.sos();
 
             // Have we been passed a 'most likely triangle' to test first? If so, test it.
-            if (ti_ml != nullptr) {
-                std::cout << "Passing ti_ml to trangle_vertices: with he->vi =  " << ti_ml->vi << std::endl;
+            if (ti_ml != std::numeric_limits<uint32_t>::max()) {
+                std::cout << "Passing ti_ml to trangle_vertices: with he->vi =  " << this->halfedges[ti_ml].vi << std::endl;
                 sm::vec<sm::vec<float>, 3> v = this->triangle_vertices (ti_ml);
                 auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (v[0], v[1], v[2], vstart, vdir);
                 if (isect) {
@@ -332,7 +329,7 @@ namespace mplot
                           << ", next:" << this->halfedges[0].next
                           << ", prev:" << this->halfedges[0].prev << std::endl;
 
-                std::cout << "CF. Passing tri.he " << tri.he << " to triangle_vertices(): with he->vi =  " << tri.he->vi << std::endl;
+                std::cout << "CF. Passing tri.he " << tri.he << " to triangle_vertices(): with he->vi =  " << this->halfedges[tri.he].vi << std::endl;
                 sm::vec<sm::vec<float>, 3> v = this->triangle_vertices (tri.he);
                 auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (v[0], v[1], v[2], vstart, vdir);
                 // What if the triangle is one on the *other side of the model*?? Have to use
@@ -371,9 +368,9 @@ namespace mplot
             return { isect_p, isect_ti };
         }
 
-        // Find the location, and the triangle indices at which a ray between coord (in model frame)
-        // and the model centroid cross - the 'penetration point'.
-        std::tuple<sm::vec<float>, const mesh::halfedge<>*>
+        // Find the location, and the triangle indices (by means of a halfedge index) at which a ray
+        // between coord (in model frame) and the model centroid cross - the 'penetration point'.
+        std::tuple<sm::vec<float>, uint32_t>
         find_triangle_crossing (const sm::vec<float>& coord_mf, const sm::mat<float, 4>& model_to_scene) const
         {
             sm::vec<float> vdir = this->bb.mid() - coord_mf;
@@ -401,18 +398,6 @@ namespace mplot
 
         // VERTEX_HANDLING
         // Find the normal of the vertex specified by halfedge vhe
-        sm::vec<float> find_vertex_normal (const mesh::halfedge<>* vhe, const sm::mat<float, 4>& transform) const
-        {
-            auto neighbs = this->find_neighbours (vhe);
-            sm::vec<float> vn = {};
-            if (neighbs.size() == 0) { return vn; }
-            for (auto nb : neighbs) {
-                // Turn nb, a half edge index, into a triangle?
-                vn += this->triangle_normal (this->triangle_vertices (nb, transform));
-            }
-            return (vn / neighbs.size());
-        }
-#ifdef UNDISABLED
         sm::vec<float> find_vertex_normal (const uint32_t ti, const sm::mat<float, 4>& transform) const
         {
             auto neighbs = this->find_neighbours (ti);
@@ -424,7 +409,6 @@ namespace mplot
             }
             return (vn / neighbs.size());
         }
-#endif
 
 #ifdef UNDISABLED
         // Find the common vertex between a and b
@@ -778,17 +762,17 @@ namespace mplot
          * \return tuple containing: the hit point in scene coordinates; --the triangle normal of the
          * triangle we hit;-- and the indices of the triangle we hit.
          */
-        std::tuple<sm::vec<float>, const mesh::halfedge<>*>
+        std::tuple<sm::vec<float>, uint32_t>
         find_triangle_hit (const sm::mat<float, 4>& model_to_scene,
                            const sm::vec<float>& camloc_mf, const sm::vec<float>& vdir,
-                           const mesh::halfedge<>* ti_ml = nullptr)
+                           uint32_t ti_ml = std::numeric_limits<uint32_t>::max())
         {
-            this->ti0 = nullptr;
+            this->ti0 = std::numeric_limits<uint32_t>::max();
             sm::vec<float> hit = {};
             // Want to pass 'best tri' to this
             std::tie (hit, this->ti0) = this->find_triangle_crossing (camloc_mf, vdir, model_to_scene, ti_ml);
 
-            if (this->ti0 == nullptr) { std::cout << __func__ << ": No hit\n"; }
+            if (this->ti0 == std::numeric_limits<uint32_t>::max()) { std::cout << __func__ << ": No hit\n"; }
 
             sm::vec<float> hp_scene = (model_to_scene * hit).less_one_dim();
 
@@ -831,7 +815,7 @@ namespace mplot
          *
          * \return tuple containing: the hit point in scene coordinates and the mesh::face we hit.
          */
-        std::tuple<sm::vec<float>, const mesh::halfedge<>*>
+        std::tuple<sm::vec<float>, uint32_t>
         find_triangle_hit (const sm::mat<float, 4>& camspace, const sm::mat<float, 4>& model_to_scene,
                            const float search_dist_mult = 1.0f)
         {
@@ -880,7 +864,7 @@ namespace mplot
                                            const float hoverheight)
         {
             // Let's 'draw' the camera towards the model and then arrange its normal upwards wrt to the normal of the model.
-            if (this->ti0 == nullptr) {
+            if (this->ti0 == std::numeric_limits<uint32_t>::max()) {
                 std::cout << __func__ << ": No hit/triangle normal\n";
                 return sm::mat<float, 4>{};
             }
@@ -907,7 +891,7 @@ namespace mplot
                                            const float hoverheight, const sm::vec<float>& fwds)
         {
             // Let's 'draw' the camera towards the model and then arrange its normal upwards wrt to the normal of the model.
-            if (this->ti0 == nullptr) {
+            if (this->ti0 == std::numeric_limits<uint32_t>::max()) {
                 std::cout << __func__ << ": No hit/triangle normal\n";
                 return sm::mat<float, 4>{};
             }
