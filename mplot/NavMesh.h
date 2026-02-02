@@ -51,6 +51,7 @@ namespace mplot
             I he = max;           // A halfedge emanating from this he_vertex
         };
 
+        // mesh::face could just be sm::vec<I, N> if it has no other information.
         template<typename I = uint32_t, typename F=float, I N = 3> requires std::is_integral_v<I>
         struct face
         {
@@ -354,7 +355,7 @@ namespace mplot
                     }
                 }
             }
-#if 0
+#ifdef VERTEX_HANDLING
             if (isect_p[0] == fmax && this->vertex.size() < 10000) {
                 // Found no triangle intersection; check vertices, in case vdir points perfectly at a vertex.
                 // This can be computationally expensive, hence the hacky check, above.
@@ -404,7 +405,7 @@ namespace mplot
             }
             return other;
         }
-#if 0
+#ifdef VERTEX_HANDLING
         // FIXME: This next
         sm::vec<float> find_vertex_normal (const uint32_t ti) const
         {
@@ -988,7 +989,7 @@ namespace mplot
                     }
                 }
             }
-#if 1
+#ifndef VERTEX_HANDLING
             if (isect == false) {
                 if constexpr (debug_move) { std::cout << "Key for model_crawler...\n"; }
             }
@@ -1103,7 +1104,7 @@ namespace mplot
                 if constexpr (debug_move) { std::cout << "No movement, so return unchanged camera viewmatrix\n"; }
                 return cam_to_scene;
             }
-#if 0
+#ifdef VERTEX_HANDLING
             // New section to handle the case that we started right on a vertex
             if (isect == true && int_vertex != std::numeric_limits<uint32_t>::max()) {
                 // We HAVE a vertex intersection. Check if we either cross, or land in one of this vertex's neighbours to correct our starting triangle and normal.
