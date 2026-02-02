@@ -71,7 +71,7 @@ int main (int argc, char** argv)
 
     auto start_wr = (vmi * start).less_one_dim(); // wr to tvp
     std::cout << "start_wr = " << start_wr << std::endl;
-    auto [hit, ti] = tvp->navmesh->find_triangle_crossing (start_wr, dirn);
+    auto [hit, ti] = tvp->navmesh->find_triangle_crossing (start_wr, dirn, vm);
     if (ti.i[0] == std::numeric_limits<uint32_t>::max()) {
         std::cout << "NO HIT\n";
     } else {

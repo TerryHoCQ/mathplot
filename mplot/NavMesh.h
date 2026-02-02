@@ -415,9 +415,7 @@ namespace mplot
             auto neighbs = this->find_neighbours (ti);
             sm::vec<float> vn = {};
             if (neighbs.size() == 0) { return vn; }
-            for (auto nb : neighbs) {
-                vn += this->triangle_normal (this->triangle_vertices (nb, transform));
-            }
+            for (auto nb : neighbs) { vn += this->triangle_normal (this->triangle_vertices (nb, transform)); }
             return (vn / neighbs.size());
         }
 
@@ -934,7 +932,7 @@ namespace mplot
                                                  const sm::mat<float, 4>& model_to_scene,
                                                  const float hoverheight)
         {
-            constexpr bool debug_move = true;
+            constexpr bool debug_move = false;
             constexpr bool debug_move2 = true;
 
             // A data-containing exception to throw

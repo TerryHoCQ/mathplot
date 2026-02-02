@@ -332,7 +332,7 @@ int main()
 
     auto start_wr = (vmi * start).less_one_dim(); // wr to tvp
     std::cout << "start_wr = " << start_wr << std::endl;
-    auto [hit, ti] = tvp->navmesh->find_triangle_crossing (start_wr, dirn);
+    auto [hit, ti] = tvp->navmesh->find_triangle_crossing (start_wr, dirn, vm);
     if (ti.i[0] == std::numeric_limits<uint32_t>::max()) {
         std::cout << "NO HIT\n";
     } else {
@@ -346,7 +346,7 @@ int main()
     }
 
     auto start_wr_fr2 = (vmi * start_fr2).less_one_dim(); // wr to tvp
-    auto [hit_fr2, ti_fr2] = tvp->navmesh->find_triangle_crossing (start_wr_fr2, dirn_fr2);
+    auto [hit_fr2, ti_fr2] = tvp->navmesh->find_triangle_crossing (start_wr_fr2, dirn_fr2, vm);
     if (ti_fr2.i[0] == std::numeric_limits<uint32_t>::max()) {
         std::cout << "NO HIT\n";
     } else {
@@ -361,7 +361,7 @@ int main()
 
     auto start_wr_bh = (vmi * start_bh).less_one_dim(); // wr to tvp
     std::cout << "start_wr = " << start_wr << std::endl;
-    auto [hit_bh, ti_bh] = tvp->navmesh->find_triangle_crossing (start_wr_bh, dirn_bh);
+    auto [hit_bh, ti_bh] = tvp->navmesh->find_triangle_crossing (start_wr_bh, dirn_bh, vm);
     if (ti_bh.i[0] == std::numeric_limits<uint32_t>::max()) {
         std::cout << "NO HIT\n";
     } else {
