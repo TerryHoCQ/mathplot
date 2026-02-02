@@ -51,8 +51,8 @@ namespace mplot
             I he = max;           // A halfedge emanating from this he_vertex
         };
 
-        // mesh::face could just be sm::vec<I, N> if it has no other information.
-        template<typename I = uint32_t, typename F=float, I N = 3> requires std::is_integral_v<I>
+        // Stores all three indices of a triangle for now, but will in future have a half edge that's part of the triangle.
+        template<typename I = uint32_t, I N = 3> requires std::is_integral_v<I>
         struct face
         {
             static constexpr I max = std::numeric_limits<I>::max();
@@ -60,7 +60,6 @@ namespace mplot
              // for N>3 though). i[0] == max means unset.
             sm::vec<I, N> i = { max };
             // store normal vector in here?
-            //sm::vec<F, N> n = {};
         };
     }
 
@@ -298,6 +297,8 @@ namespace mplot
          * model. The length of vdir is used to avoid finding the intersection at the 'back' of the
          * model.
          *
+         * \param model_to_scene Transform that is only passed to find_vertex_normal. May in future be unnecessary.
+         *
          * \param ti_ml The most likely triangle, if you know what it probably is, to reduce the
          * search time.
          *
@@ -305,6 +306,7 @@ namespace mplot
          */
         std::tuple<sm::vec<float>, mesh::face<>>
         find_triangle_crossing (const sm::vec<float>& coord_mf, const sm::vec<float>& vdir,
+                                const sm::mat<float, 4>& model_to_scene,
                                 const mesh::face<> ti_ml = mesh::face<>{ {std::numeric_limits<uint32_t>::max()} } ) const
         {
             //constexpr auto umax = std::numeric_limits<uint32_t>::max();
@@ -355,12 +357,13 @@ namespace mplot
                     }
                 }
             }
-#ifdef VERTEX_HANDLING
+
+            // VERTEX_HANDLING
             if (isect_p[0] == fmax && this->vertex.size() < 10000) {
                 // Found no triangle intersection; check vertices, in case vdir points perfectly at a vertex.
                 // This can be computationally expensive, hence the hacky check, above.
                 for (uint32_t ti = 0; ti < this->vertex.size(); ++ti) {
-                    sm::vec<float> vertex_n = this->find_vertex_normal (ti); // also loops
+                    sm::vec<float> vertex_n = this->find_vertex_normal (ti, model_to_scene); // also loops
                     vertex_n.renormalize();
                     vstart = coord_mf + (vertex_n / 2.0f);
                     if (sm::geometry::ray_point_intersection (this->vertex[ti].p, vstart, -vertex_n)) {
@@ -376,18 +379,18 @@ namespace mplot
                     }
                 }
             }
-#endif
+
             return { isect_p, isect_ti };
         }
 
         // Find the location, and the triangle indices at which a ray between coord (in model frame)
         // and the model centroid cross - the 'penetration point'.
         std::tuple<sm::vec<float>, mesh::face<>>
-        find_triangle_crossing (const sm::vec<float>& coord_mf) const
+        find_triangle_crossing (const sm::vec<float>& coord_mf, const sm::mat<float, 4>& model_to_scene) const
         {
             sm::vec<float> vdir = this->bb.mid() - coord_mf;
             vdir.renormalize();
-            return this->find_triangle_crossing (coord_mf, vdir);
+            return this->find_triangle_crossing (coord_mf, vdir, model_to_scene);
         }
 
         // Find a triangle containing indices a and b that isn't 'not_this' and return, along with its normal.
@@ -405,19 +408,19 @@ namespace mplot
             }
             return other;
         }
-#ifdef VERTEX_HANDLING
-        // FIXME: This next
-        sm::vec<float> find_vertex_normal (const uint32_t ti) const
+
+        // VERTEX_HANDLING
+        sm::vec<float> find_vertex_normal (const uint32_t ti, const sm::mat<float, 4>& transform) const
         {
             auto neighbs = this->find_neighbours (ti);
             sm::vec<float> vn = {};
             if (neighbs.size() == 0) { return vn; }
             for (auto nb : neighbs) {
-                vn += nb.n; // Fixme: will have to look up vertices and compute. And in what frame?
+                vn += this->triangle_normal (this->triangle_vertices (nb, transform));
             }
             return (vn / neighbs.size());
         }
-#endif
+
         // Find the common vertex between a and b
         uint32_t common_vertex (const mesh::face<>& a, const mesh::face<>& b)
         {
@@ -776,7 +779,7 @@ namespace mplot
             this->ti0 = { std::numeric_limits<uint32_t>::max() };
             sm::vec<float> hit = {};
             // Want to pass 'best tri' to this
-            std::tie (hit, this->ti0) = this->find_triangle_crossing (camloc_mf, vdir, ti_ml);
+            std::tie (hit, this->ti0) = this->find_triangle_crossing (camloc_mf, vdir, model_to_scene, ti_ml);
 
             if (this->ti0.i[0] == std::numeric_limits<uint32_t>::max()) { std::cout << __func__ << ": No hit\n"; }
 
@@ -789,7 +792,7 @@ namespace mplot
                 sm::vec<sm::vec<float>, 3> tv_mf = this->triangle_vertices (this->ti0);
                 auto tn = this->triangle_normal (tv_mf);
                 std::cout << "tn: " << tn << ", length " << tn.length() << std::endl;
-                std::cout << "TEST ray_tri_intersection (hit,-tn0): " << (hit + (tn / 2.0f)) << "," << -tn << std::endl;
+                std::cout << "TEST ray_tri_intersection (hit,-tn): " << (hit + (tn / 2.0f)) << "," << -tn << std::endl;
                 auto [isect, hov_mf] = sm::geometry::ray_tri_intersection<float> (tv_mf[0], tv_mf[1], tv_mf[2], hit + (tn / 2.0f), -tn);
                 if (isect) {
                     std::cout << "ray_tri_intersection confirms we would hit at " << hov_mf << "\n";
@@ -847,7 +850,7 @@ namespace mplot
             sm::mat<float, 4> cam_mv_y;
             cam_mv_y.translate (sm::vec<float>{0, hoverheight, 0});
 
-            // The basis _x, tn0, _z, where these are vectors in the model frame that define a camera frame
+            // The basis _x, _y, _z, where these are vectors in the model frame that define a camera frame
             sm::mat<float, 4> cam_to_model_rotn = sm::mat<float, 4>::frombasis (_x, _y, _z);
             // Get the rotation from scene frame to model
             sm::mat<float, 4> m_to_sc_rotn = model_to_scene.rotation_mat44();
@@ -902,7 +905,7 @@ namespace mplot
                 return sm::mat<float, 4>{};
             }
 
-            // Project fwds onto the plane tn0
+            // Project fwds onto the plane tn
             sm::vec<sm::vec<float>, 3> tv_sf = this->triangle_vertices (this->ti0, model_to_scene);
             sm::vec<float> tn = this->triangle_normal (tv_sf);
             sm::vec<float> _z = sm::geometry::vector_plane_projection (tn, fwds);
@@ -989,11 +992,8 @@ namespace mplot
                     }
                 }
             }
-#ifndef VERTEX_HANDLING
-            if (isect == false) {
-                if constexpr (debug_move) { std::cout << "Key for model_crawler...\n"; }
-            }
-#else
+
+            // VERTEX_HANDLING
             // If that didn't work, try the triangle *vertices*
             uint32_t int_vertex = std::numeric_limits<uint32_t>::max(); // intersection vertex
             if (isect == false) {
@@ -1001,7 +1001,7 @@ namespace mplot
                 for (uint32_t i = 0u; i < 3u; i++) {
 
                     // We need to use the *vertex* normal for this test - the average of all the adjacent triangle normals!
-                    sm::vec<float> vertex_n = this->find_vertex_normal (this->ti0.i[i]);
+                    sm::vec<float> vertex_n = this->find_vertex_normal (this->ti0.i[i], model_to_scene);
                     vertex_n.renormalize();
                     if constexpr (debug_move) {
                         std::cout << "Vertex normal for triangle index " << ti0.i[i] << " is " << vertex_n << std::endl;
@@ -1018,7 +1018,7 @@ namespace mplot
                     }
                 }
             }
-#endif
+
             std::vector<mesh::face<>> trisearched; // the other triangles we search. To place in exception
             if (isect == false) {
 
@@ -1104,7 +1104,8 @@ namespace mplot
                 if constexpr (debug_move) { std::cout << "No movement, so return unchanged camera viewmatrix\n"; }
                 return cam_to_scene;
             }
-#ifdef VERTEX_HANDLING
+
+            // VERTEX_HANDLING
             // New section to handle the case that we started right on a vertex
             if (isect == true && int_vertex != std::numeric_limits<uint32_t>::max()) {
                 // We HAVE a vertex intersection. Check if we either cross, or land in one of this vertex's neighbours to correct our starting triangle and normal.
@@ -1142,7 +1143,7 @@ namespace mplot
                     }
                 }
             } // Now carry on with corrected mv_inplane, tn0 and ti0
-#endif
+
             // A 'detected crossing' is one where we had to use a secondary method (comparing the
             // triangle containing the start and the triangle containing the end) to determine that
             // a triangle edge had been crossed, because the original method
