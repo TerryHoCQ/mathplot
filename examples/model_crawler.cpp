@@ -84,7 +84,7 @@ int main (int argc, char** argv)
 
     // We're going to move the coordinate arrows forwards (along its z-axis), so that it 'orbits'
     float move_step = 0.1f; // 0.075 <= move_step and iterations 6 to fail
-    sm::vec<float> mv_ca = sm::vec<float>::uz() * move_step;
+    [[maybe_unused]] sm::vec<float> mv_ca = sm::vec<float>::uz() * move_step;
 
     // The viewmatrices have to be passed to mplot::NavMesh::compute_mesh_movement
     sm::mat<float, 4> ca_view = cap->getViewMatrix();
@@ -94,8 +94,9 @@ int main (int argc, char** argv)
     // mplot::NavMesh::find_triangle_hit. This updates internal state in NavMesh. It could be
     // executed automatically in compute_mesh_movement
     auto[hp_scene, ti0] = gvp->navmesh->find_triangle_hit (ca_view, sph_view);
-    std::cout << "Find hit finds hit point " << hp_scene << " with ti0: " << ti0.i << std::endl;
+    std::cout << "Find hit finds hit point " << hp_scene << " with ti0 vertices: " << ti0->vi << std::endl;
 
+#if 0
     int move_counter = 0;
     constexpr int move_max = 1000;
     while (!v.readyToFinish()) {
@@ -129,7 +130,7 @@ int main (int argc, char** argv)
         // Re-render the scene
         v.render();
     }
-
+#endif
     v.keepOpen();
 
     return rtn;

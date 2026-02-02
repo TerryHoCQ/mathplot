@@ -36,30 +36,25 @@ namespace mplot
         template<typename I = uint32_t> requires std::is_integral_v<I>
         struct halfedge
         {
-            static constexpr I max = std::numeric_limits<I>::max();
-            sm::vec<I, 2> i = {max, max}; // two he_vertex indices for start and end of this halfedge
-            I twin = max; // Index of twin half edge
-            I next = max; // Index of next half edge in face (or hole)
-            I prev = max; // Index of prev half edge in face (or hole)
+            // two vertex indices for start and end of this halfedge
+            sm::vec<I, 2> vi = { std::numeric_limits<I>::max(), std::numeric_limits<I>::max() };
+            const halfedge<I>* twin = nullptr; // twin half edge
+            const halfedge<I>* next = nullptr; // next half edge in face (or hole)
+            const halfedge<I>* prev = nullptr; // prev half edge in face (or hole)
         };
 
         template<typename I = uint32_t, typename F=float, I N = 3> requires std::is_integral_v<I>
         struct vertex
         {
-            static constexpr I max = std::numeric_limits<I>::max();
             sm::vec<F, N> p = {}; // Coordinate position of vertex
-            I he = max;           // A halfedge emanating from this he_vertex
+            const halfedge<I>* he = nullptr; // A halfedge emanating from this he_vertex
         };
 
-        // Stores all three indices of a triangle for now, but will in future have a half edge that's part of the triangle.
-        template<typename I = uint32_t, I N = 3> requires std::is_integral_v<I>
+        template<typename I = uint32_t> requires std::is_integral_v<I>
         struct face
         {
-            static constexpr I max = std::numeric_limits<I>::max();
-             // Indices of vertices of a simplex in the mesh in ccw order (dunno what ccw would be
-             // for N>3 though). i[0] == max means unset.
-            sm::vec<I, N> i = { max };
-            // store normal vector in here?
+            // The index of the starting halfedge
+            const halfedge<I>* he = nullptr;
         };
     }
 
@@ -118,9 +113,6 @@ namespace mplot
          */
         std::vector<mesh::vertex<>> vertex;
 
-        // The vector of half edges in the mesh
-        std::vector<mesh::halfedge<>> halfedges;
-
         /*!
          * The edges that make up the same triangles as are shown with the parent VisualModel's
          * indices & vertexPositions, but in terms of this->vertex.  Each edge must be two indices
@@ -128,13 +120,12 @@ namespace mplot
          */
         std::set<std::array<uint32_t, 2>> edges; // This is edges, not half edges
 
+        // The vector of half edges in the mesh
+        std::vector<mesh::halfedge<>> halfedges;
+
         /*!
-         * Triangles too. Might be more useful than edges. Triangle given as indices into
-         * this->vertex. populated by VisualModel::make_navmesh()
-         *
-         * Tuple contains: triangle vertices (+flags), triangle normal, triangle 'x' edge vector, triangle 'y' edge vector.
+         * Triangle mesh faces. populated by VisualModel::make_navmesh()
          */
-        //sm::vvec<std::tuple<std::array<uint32_t, 4>, sm::vec<float>, sm::vec<float>, sm::vec<float>>> triangles;
         std::vector<mesh::face<>> triangles;
 
         /*!
@@ -147,13 +138,8 @@ namespace mplot
         sm::range<sm::vec<float>> bb;
 
         //! When navigating, this is the 'current triangle' that you're located over/near
-        mesh::face<> ti0;
-
-        /*!
-         * The normal of ti0. This is the current triangle normal (in our mesh's frame of
-         * reference) that our agent/camera is 'next to'
-         */
-        //sm::vec<float> tn0 = {}; // now in mesh::face
+        //mesh::face<> ti0; // or could be a halfedge pointer?
+        const mesh::halfedge<>* ti0 = nullptr;
 
         /*!
          * Stabilisation flag: if true, no rotation is applied when moving over a triangle boundary
@@ -187,22 +173,47 @@ namespace mplot
         }
 
         // Return the three vertices for the triangle specified as three indices into NavMesh::vertex
-        sm::vec<sm::vec<float>, 3> triangle_vertices (const mesh::face<>& tri_indices) const
+        sm::vec<sm::vec<float>, 3> triangle_vertices (const mesh::halfedge<>* tri_he) const
         {
-            sm::vec<sm::vec<float>, 3> trivert;
-            if (tri_indices.i[0] < this->vertex.size()) { trivert[0] = this->vertex[tri_indices.i[0]].p; }
-            if (tri_indices.i[1] < this->vertex.size()) { trivert[1] = this->vertex[tri_indices.i[1]].p; }
-            if (tri_indices.i[2] < this->vertex.size()) { trivert[2] = this->vertex[tri_indices.i[2]].p; }
+            sm::vec<sm::vec<float>, 3> trivert = {};
+            if (!tri_he) {
+                std::cout << "tri_he is null?\n";
+                return trivert;
+            }
+
+            uint32_t i = 0;
+            const mesh::halfedge<>* he = tri_he;
+            if (!he) {
+                std::cout << "he is null?\n";
+                return trivert;
+            }
+            do {
+                std::cout << "he: " << he << std::endl;
+                std::cout << "he->vi[0]: " << he->vi[0] << std::endl;
+                std::cout << "vertex.size(): " << this->vertex.size() << std::endl;
+                if (he->vi[0] < this->vertex.size()) {
+                    std::cout << "Getting vertex[" << he->vi[0] << "] from vertex size " << this->vertex.size() << " into trivert[" << i << "]" << std::endl;
+                    trivert[i] = this->vertex[he->vi[0]].p;
+                } else {
+                    std::cout << "Not getting vertex[" << he->vi[0] << "] from vertex as it is of size " << this->vertex.size() << " into trivert[" << i << "]" << std::endl;
+                }
+                ++i;
+                he = he->next;
+            } while (he != tri_he);
             return trivert;
         }
 
         // Return the three vertices for the triangle specified as three indices into NavMesh::vertex transformed by transform
-        sm::vec<sm::vec<float>, 3> triangle_vertices (const mesh::face<>& tri_indices, const sm::mat<float, 4>& transform) const
+        sm::vec<sm::vec<float>, 3> triangle_vertices (const mesh::halfedge<>* tri_he, const sm::mat<float, 4>& transform) const
         {
             sm::vec<sm::vec<float>, 3> trivert;
-            if (tri_indices.i[0] < this->vertex.size()) { trivert[0] = (transform * this->vertex[tri_indices.i[0]].p).less_one_dim(); }
-            if (tri_indices.i[1] < this->vertex.size()) { trivert[1] = (transform * this->vertex[tri_indices.i[1]].p).less_one_dim(); }
-            if (tri_indices.i[2] < this->vertex.size()) { trivert[2] = (transform * this->vertex[tri_indices.i[2]].p).less_one_dim(); }
+            uint32_t i = 0;
+            const mesh::halfedge<>* he = tri_he;
+            do {
+                if (he->vi[0] < this->vertex.size()) { trivert[i] = (transform * this->vertex[he->vi[0]].p).less_one_dim(); }
+                ++i;
+                he = he->next;
+            } while (he != tri_he);
             return trivert;
         }
 
@@ -214,6 +225,7 @@ namespace mplot
             return n;
         }
 
+#if 0 // unused?
         sm::vvec<uint32_t> neighbours (const uint32_t _idx) const
         {
             sm::vvec<uint32_t> rtn;
@@ -230,103 +242,75 @@ namespace mplot
             }
             return rtn;
         }
-
+#endif
         // Find all the neighbours of triangle *vertex* index a.
-        // \return tuple containing triangle vertex indices and triangle normal.
-        std::vector<mesh::face<>>
+        // \return vector of halfedges indices
+        std::vector<const mesh::halfedge<>*>
+        find_neighbours (const mesh::halfedge<>* a) const
+        {
+            const mesh::halfedge<>* he = a;
+            std::vector<const mesh::halfedge<>*> rtn = {};
+            do {
+                // he emanates from the vertex, so return it.
+                rtn.push_back (he);
+                he = he->next->twin;
+            } while (he != a);
+            return rtn;
+        }
+#if 0
+        std::vector<const mesh::halfedge<>*>
         find_neighbours (const uint32_t a) const
         {
-            std::vector<mesh::face<>> rtn = {};
-            for (auto tri : triangles) {
-                if (tri.i[0] == a || tri.i[1] == a || tri.i[2] == a) { rtn.push_back (tri); }
-            }
-            return rtn;
+            // a is an index into this->vertex
+            const mesh::halfedge<>* he = this->vertex[a].he; // The emanating half edge from this vertex
+            return find_neighbours (he);
         }
-
-        // Find all the one-neighbours of 'of_this'
-        std::vector<mesh::face<>>
-        find_one_neighbours (const mesh::face<>& of_this) const
-        {
-            std::vector<mesh::face<>> rtn = {};
-            auto a = of_this.i[0];
-            auto b = of_this.i[1];
-            auto c = of_this.i[2];
-            for (auto tri : triangles) {
-                if ((tri.i[0] == a && tri.i[1] != b && tri.i[1] != c && tri.i[2] != b && tri.i[2] != c)
-                    || (tri.i[1] == a && tri.i[2] != b && tri.i[2] != c && tri.i[0] != b && tri.i[0] != c)
-                    || (tri.i[2] == a && tri.i[0] != b && tri.i[0] != c && tri.i[1] != b && tri.i[1] != c)
-                    ||
-                    (tri.i[0] == b && tri.i[1] != c && tri.i[1] != a && tri.i[2] != c && tri.i[2] != a)
-                    || (tri.i[1] == b && tri.i[2] != c && tri.i[2] != a && tri.i[0] != c && tri.i[0] != a)
-                    || (tri.i[2] == b && tri.i[0] != c && tri.i[0] != a && tri.i[1] != c && tri.i[1] != a)
-                    ||
-                    (tri.i[0] == c && tri.i[1] != a && tri.i[1] != b && tri.i[2] != a && tri.i[2] != b)
-                    || (tri.i[1] == c && tri.i[2] != a && tri.i[2] != b && tri.i[0] != a && tri.i[0] != b)
-                    || (tri.i[2] == c && tri.i[0] != a && tri.i[0] != b && tri.i[1] != a && tri.i[1] != b)) {
-
-                    rtn.push_back (tri);
-                }
-            }
-            return rtn;
-        }
-
+#endif
         /*
-         * Populate containers of neighbour relations between the triangles. That's
-         * this->one_neighbours and this->two_neighbours. Can I do this in a non-n^2 way?
+         * Determine neighbour relations. That means populating a halfedge data structure. Don't
+         * think there's any way around the at-worst O(N^2) computation, so save results into an h5
+         * file that can be loaded at startup.
+         *
          * The key is the half-edge data structure.
          * See: https://jerryyin.info/geometry-processing-algorithms/half-edge/
          */
         void compute_neighbour_relations()
         {
-            // Writeme
-        }
-
-        mesh::face<> first_triangle_containing (uint32_t _idx) const
-        {
-            for (auto tri: this->triangles) {
-                if (tri.i[0] == _idx || tri.i[1] == _idx || tri.i[2] == _idx) {
-                    return tri;
-                }
-            }
-            return mesh::face<>{};
+            // Writeme. This fills in the 'twin' field of the halfedges appropriately
         }
 
         /*
-         * Find the location, and the triangle indices at which a ray starting from coord (scene
-         * frame) with direction vdir - the 'penetration point' intersects with this NavMesh
-         * model. The length of vdir is used to avoid finding the intersection at the 'back' of the
-         * model.
+         * Find the location, and the triangle indices at which a ray starting from coord with
+         * direction vdir - the 'penetration point' intersects with this NavMesh model. The length
+         * of vdir is used to avoid finding the intersection at the 'back' of the model.
          *
          * \param model_to_scene Transform that is only passed to find_vertex_normal. May in future be unnecessary.
          *
          * \param ti_ml The most likely triangle, if you know what it probably is, to reduce the
          * search time.
          *
-         * \return a tuple containing crossing location, triangle identity (three indices + triangle normal vector)
+         * \return a tuple containing crossing location, halfedge (which is part of a triangle)
          */
-        std::tuple<sm::vec<float>, mesh::face<>>
+        std::tuple<sm::vec<float>, const mesh::halfedge<>*>
         find_triangle_crossing (const sm::vec<float>& coord_mf, const sm::vec<float>& vdir,
                                 const sm::mat<float, 4>& model_to_scene,
-                                const mesh::face<> ti_ml = mesh::face<>{ {std::numeric_limits<uint32_t>::max()} } ) const
+                                const mesh::halfedge<>* ti_ml = nullptr ) const
         {
-            //constexpr auto umax = std::numeric_limits<uint32_t>::max();
-            constexpr auto fmax = std::numeric_limits<float>::max();
+            constexpr float fmax = std::numeric_limits<float>::max();
             sm::vec<float> vstart = coord_mf - (vdir / 2.0f);
 
             // Return objects
             sm::vec<float> isect_p = { fmax, fmax, fmax };
-            mesh::face<> isect_ti; // initializes unset (i[0] == max)
+            const mesh::halfedge<>* isect_ti = nullptr;
 
-            auto isect_d = std::numeric_limits<float>::max(); // distance to intersect
+            float isect_d = std::numeric_limits<float>::max(); // distance to intersect
 
-            const auto vdsos = vdir.sos();
+            const float vdsos = vdir.sos();
 
             // Have we been passed a 'most likely triangle' to test first? If so, test it.
-            if (ti_ml.i[0] != std::numeric_limits<uint32_t>::max()) {
-                sm::vec<float> v0 = this->vertex[ti_ml.i[0]].p;
-                sm::vec<float> v1 = this->vertex[ti_ml.i[1]].p;
-                sm::vec<float> v2 = this->vertex[ti_ml.i[2]].p;
-                auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (v0, v1, v2, vstart, vdir);
+            if (ti_ml != nullptr) {
+                sm::vec<sm::vec<float>, 3> v = this->triangle_vertices (ti_ml);
+                auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (v[0], v[1], v[2], vstart, vdir);
                 if (isect) {
                     float d = (p - vstart).sos();
                     if (d < vdsos) {
@@ -342,9 +326,8 @@ namespace mplot
             }
 
             for (auto tri : this->triangles) {
-                auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (this->vertex[tri.i[0]].p,
-                                                                                                 this->vertex[tri.i[1]].p,
-                                                                                                 this->vertex[tri.i[2]].p, vstart, vdir);
+                sm::vec<sm::vec<float>, 3> v = this->triangle_vertices (tri.he);
+                auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (v[0], v[1], v[2], vstart, vdir);
                 // What if the triangle is one on the *other side of the model*?? Have to use
                 // vdir.sos() to exclude those that are too far and the distance^2 to find the
                 // closest one that isn't.
@@ -352,28 +335,26 @@ namespace mplot
                     float d = (p - vstart).sos();
                     if (d < isect_d && d < vdsos) {
                         isect_p = p;
-                        isect_ti = tri; // assumes normal already computed
+                        isect_ti = tri.he;
                         isect_d = d;
                     }
                 }
             }
 
             // VERTEX_HANDLING
-            if (isect_p[0] == fmax && this->vertex.size() < 10000) {
+            if (isect_p[0] == fmax) {
                 // Found no triangle intersection; check vertices, in case vdir points perfectly at a vertex.
-                // This can be computationally expensive, hence the hacky check, above.
-                for (uint32_t ti = 0; ti < this->vertex.size(); ++ti) {
-                    sm::vec<float> vertex_n = this->find_vertex_normal (ti, model_to_scene); // also loops
+                for (uint32_t vi = 0; vi < this->vertex.size(); ++vi) {
+                    sm::vec<float> vertex_n = this->find_vertex_normal (this->vertex[vi].he, model_to_scene);
                     vertex_n.renormalize();
                     vstart = coord_mf + (vertex_n / 2.0f);
-                    if (sm::geometry::ray_point_intersection (this->vertex[ti].p, vstart, -vertex_n)) {
-                        float d = (this->vertex[ti].p - vstart).sos();
+                    if (sm::geometry::ray_point_intersection (this->vertex[vi].p, vstart, -vertex_n)) {
+                        float d = (this->vertex[vi].p - vstart).sos();
                         if (d < isect_d && d < vdir.sos()) {
                             std::cout << "Register vertex triangle_crossing\n";
-                            isect_p = this->vertex[ti].p;
-                            auto _ti = this->first_triangle_containing (ti);
-                            isect_ti = _ti;
-                            //isect_tn = _tn;
+                            isect_p = this->vertex[vi].p;
+                            // now have halfedge specifying a triangle. Could attempt to look up to face, but could just return halfedge?
+                            isect_ti = this->vertex[vi].he;
                             isect_d = d;
                         }
                     }
@@ -385,7 +366,7 @@ namespace mplot
 
         // Find the location, and the triangle indices at which a ray between coord (in model frame)
         // and the model centroid cross - the 'penetration point'.
-        std::tuple<sm::vec<float>, mesh::face<>>
+        std::tuple<sm::vec<float>, const mesh::halfedge<>*>
         find_triangle_crossing (const sm::vec<float>& coord_mf, const sm::mat<float, 4>& model_to_scene) const
         {
             sm::vec<float> vdir = this->bb.mid() - coord_mf;
@@ -393,6 +374,7 @@ namespace mplot
             return this->find_triangle_crossing (coord_mf, vdir, model_to_scene);
         }
 
+#ifdef UNDISABLED
         // Find a triangle containing indices a and b that isn't 'not_this' and return, along with its normal.
         mesh::face<> find_other_triangle_containing (const uint32_t a, const uint32_t b, const mesh::face<>& not_this) const
         {
@@ -408,17 +390,36 @@ namespace mplot
             }
             return other;
         }
+#endif
 
         // VERTEX_HANDLING
+        // Find the normal of the vertex specified by halfedge vhe
+        sm::vec<float> find_vertex_normal (const mesh::halfedge<>* vhe, const sm::mat<float, 4>& transform) const
+        {
+            auto neighbs = this->find_neighbours (vhe);
+            sm::vec<float> vn = {};
+            if (neighbs.size() == 0) { return vn; }
+            for (auto nb : neighbs) {
+                // Turn nb, a half edge index, into a triangle?
+                vn += this->triangle_normal (this->triangle_vertices (nb, transform));
+            }
+            return (vn / neighbs.size());
+        }
+#ifdef UNDISABLED
         sm::vec<float> find_vertex_normal (const uint32_t ti, const sm::mat<float, 4>& transform) const
         {
             auto neighbs = this->find_neighbours (ti);
             sm::vec<float> vn = {};
             if (neighbs.size() == 0) { return vn; }
-            for (auto nb : neighbs) { vn += this->triangle_normal (this->triangle_vertices (nb, transform)); }
+            for (auto nb : neighbs) {
+                // Turn nb, a half edge index, into a triangle?
+                vn += this->triangle_normal (this->triangle_vertices (nb, transform));
+            }
             return (vn / neighbs.size());
         }
+#endif
 
+#ifdef UNDISABLED
         // Find the common vertex between a and b
         uint32_t common_vertex (const mesh::face<>& a, const mesh::face<>& b)
         {
@@ -432,7 +433,7 @@ namespace mplot
             }
             return cv;
         }
-
+#endif
         // Flags class
         enum class pm_fl : uint32_t
         {
@@ -593,6 +594,7 @@ namespace mplot
             partial_movement pm = {};
         };
 
+#ifdef UNDISABLED
         /*
          * Find the location at which a movement from mv_s in the direction mv_inplane crosses one of
          * the edges of the triangle specified by the three vertices in t_verts/t_indices.
@@ -740,6 +742,7 @@ namespace mplot
 
             return cd;
         }
+#endif
 
         /*!
          * Find the model location, starting from the location of a camera specified in
@@ -768,18 +771,17 @@ namespace mplot
          * \return tuple containing: the hit point in scene coordinates; --the triangle normal of the
          * triangle we hit;-- and the indices of the triangle we hit.
          */
-        //std::tuple<sm::vec<float>, sm::vec<float>, mesh::face<>>
-        std::tuple<sm::vec<float>, mesh::face<>>
+        std::tuple<sm::vec<float>, const mesh::halfedge<>*>
         find_triangle_hit (const sm::mat<float, 4>& model_to_scene,
                            const sm::vec<float>& camloc_mf, const sm::vec<float>& vdir,
-                           const mesh::face<> ti_ml = {std::numeric_limits<uint32_t>::max()})
+                           const mesh::halfedge<>* ti_ml = nullptr)
         {
-            this->ti0 = { std::numeric_limits<uint32_t>::max() };
+            this->ti0 = nullptr;
             sm::vec<float> hit = {};
             // Want to pass 'best tri' to this
             std::tie (hit, this->ti0) = this->find_triangle_crossing (camloc_mf, vdir, model_to_scene, ti_ml);
 
-            if (this->ti0.i[0] == std::numeric_limits<uint32_t>::max()) { std::cout << __func__ << ": No hit\n"; }
+            if (this->ti0 == nullptr) { std::cout << __func__ << ": No hit\n"; }
 
             sm::vec<float> hp_scene = (model_to_scene * hit).less_one_dim();
 
@@ -822,7 +824,7 @@ namespace mplot
          *
          * \return tuple containing: the hit point in scene coordinates and the mesh::face we hit.
          */
-        std::tuple<sm::vec<float>, mesh::face<>>
+        std::tuple<sm::vec<float>, const mesh::halfedge<>*>
         find_triangle_hit (const sm::mat<float, 4>& camspace, const sm::mat<float, 4>& model_to_scene,
                            const float search_dist_mult = 1.0f)
         {
@@ -871,7 +873,7 @@ namespace mplot
                                            const float hoverheight)
         {
             // Let's 'draw' the camera towards the model and then arrange its normal upwards wrt to the normal of the model.
-            if (this->ti0.i[0] == std::numeric_limits<uint32_t>::max()) {
+            if (this->ti0 == nullptr) {
                 std::cout << __func__ << ": No hit/triangle normal\n";
                 return sm::mat<float, 4>{};
             }
@@ -898,7 +900,7 @@ namespace mplot
                                            const float hoverheight, const sm::vec<float>& fwds)
         {
             // Let's 'draw' the camera towards the model and then arrange its normal upwards wrt to the normal of the model.
-            if (this->ti0.i[0] == std::numeric_limits<uint32_t>::max()) {
+            if (this->ti0 == nullptr) {
                 std::cout << __func__ << ": No hit/triangle normal\n";
                 return sm::mat<float, 4>{};
             }
@@ -914,6 +916,7 @@ namespace mplot
             return this->position_camera (hp_scene, model_to_scene, _x, tn, _z, hoverheight);
         }
 
+#ifdef UNDISABLED
         /*!
          * Compute a movement over this navigation mesh.
          *
@@ -999,6 +1002,7 @@ namespace mplot
                 for (uint32_t i = 0u; i < 3u; i++) {
 
                     // We need to use the *vertex* normal for this test - the average of all the adjacent triangle normals!
+                    // Will be for each vertex in tri:
                     sm::vec<float> vertex_n = this->find_vertex_normal (this->ti0.i[i], model_to_scene);
                     vertex_n.renormalize();
                     if constexpr (debug_move) {
@@ -1320,6 +1324,57 @@ namespace mplot
                         if constexpr (debug_move) {
                             std::cout << "End of movement is NOT in ti0 " << this->ti0.i << ". Look for start neighbours\n";
                         }
+#if 1
+                        // Test neighbours, new scheme using halfedge data structures
+                        // Test neighbours to find any for which the start location is also within-boundary
+                        flags.set (cmm_fl::detected_crossing, false);
+                        flags.set (cmm_fl::vertex_crossing, false);
+
+                        // Was container for 'two neighbours'
+                        mesh::face<> _ti_2n = { std::numeric_limits<uint32_t>::max() };
+
+                        // We have this->ti0, which contains a halfedge and can use this to get all neighbours _ti being a halfedge index (uint32_t)
+                        for (each neighbour _ti) {
+                            // Test to see if start location was inside a neighbour
+                            sm::vec<sm::vec<float>, 3> tv_nb = this->triangle_vertices (_ti, model_to_scene);
+                            auto _tn = this->triangle_normal (tv_nb);
+
+                            auto [is, h] = sm::geometry::ray_tri_intersection<float, double> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + (_tn / 2.0f), -_tn);
+                            sm::vec<float> mv_orthog_nb = _tn * (mv_inplane.dot (_tn) / (_tn.dot(_tn)));
+                            sm::vec<float> mv_inplane_nb = mv_inplane - mv_orthog_nb;
+                            if constexpr (debug_move) {
+                                std::cout << "endis? ray_tri_intersection with " << (hov_sf + mv_inplane_nb + (_tn / 2.0f)) << "," << -_tn << std::endl;
+                            }
+                            auto [endis, endh] = sm::geometry::ray_tri_intersection<float, double> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + mv_inplane_nb + (_tn / 2.0f), -_tn);
+                            if constexpr (debug_move) {
+                                std::cout << "Start of move " << (is ? "IS" : "is NOT")
+                                          << " in " << _ti.i << " / " <<  tv_nb << std::endl;
+                                std::cout << "End of move " << (endis ? "IS" : "is NOT")
+                                          << " in that triangle" << std::endl;
+                            }
+
+                            // Here, start is in original, end may not be in original. This
+                            // is an 'intersection detected crossing' of a triangle edge
+                            // which wasn't picked up with compute_crossing_location
+                            if (endis) {
+                                // End is in neighbour so this is a detected crossing
+                                if constexpr (debug_move) { std::cout << "DETECTED crossing! Pass on to next loop!\n"; }
+                                flags.set (cmm_fl::detected_crossing, true);
+                                detected_edge = { this->ti0.i[i1], this->ti0.i[i2] };
+                                detected_edgevec = tv_nb[i2] - tv_nb[i1];
+                                break; // out of for
+                            } else { // end not in neighbour
+                                if (is) { // start is in neighbour tri (will re-orient to this and re-loop)
+                                    _ti_2n = _ti;
+                                    break; // out of for
+                                } // else end is not in neighbour, and neither is start. This
+                                // occurs if the end is ON the boundary, but precision errors
+                                // mean this location isn't 'in' either start or neighbour
+                                // (according to ray_tri_intersection)
+                            }
+
+                        }
+#else
 
                         // Test 3 neighbours across the edges to find any for which the start location is also within-boundary
                         flags.set (cmm_fl::detected_crossing, false);
@@ -1409,6 +1464,7 @@ namespace mplot
                                 }
                             }
                         }
+#endif
 
                         if (_ti_2n.i[0] != std::numeric_limits<uint32_t>::max()) {
                             // Now we know an alternative start triangle for the movement. Re-orient to this and re-loop
@@ -1443,6 +1499,7 @@ namespace mplot
             return cam_to_surface;
 
         } // compute_mesh_movement
+#endif // UNDISABLED
 
     }; // struct NavMesh
 

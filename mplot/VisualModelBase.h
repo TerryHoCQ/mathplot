@@ -318,13 +318,15 @@ namespace mplot
             // as needed using equiv.first
             navmesh->vertex.resize (equiv.size(), {0});
             i = 0;
-            for (auto eq : equiv) { navmesh->vertex[i++] = { (*vp)[eq.first], std::numeric_limits<uint32_t>::max()}; }
+            for (auto eq : equiv) {
+                navmesh->vertex[i++] = { (*vp)[eq.first], nullptr };
+            }
 
             // Lastly, generate edges. For which we require use of indices, which is expressed in
             // terms of the old indices. That lookup is navmesh_idx.
             for (uint32_t i = 0; i < this->indices.size(); i += 3) {
                 // Each three entries in indices is a triangle containing 3 edges. NB: Edges must be listed in ascending order!
-                std::array<uint32_t, 2> e = { navmesh_idx[indices[i]], navmesh_idx[indices[i+1]] };
+                std::array<uint32_t, 2> e = { navmesh_idx[indices[i]], navmesh_idx[indices[i + 1]] };
                 if (e[0] > e[1]) {
                     uint32_t t = e[0];
                     e[0] = e[1];
@@ -332,7 +334,7 @@ namespace mplot
                 }
                 navmesh->edges.insert (e);
 
-                e = { navmesh_idx[indices[i]], navmesh_idx[indices[i+2]] };
+                e = { navmesh_idx[indices[i]], navmesh_idx[indices[i + 2]] };
                 if (e[0] > e[1]) {
                     uint32_t t = e[0];
                     e[0] = e[1];
@@ -340,16 +342,28 @@ namespace mplot
                 }
                 navmesh->edges.insert (e);
 
-                e = { navmesh_idx[indices[i+1]], navmesh_idx[indices[i+2]] };
+                e = { navmesh_idx[indices[i + 1]], navmesh_idx[indices[i + 2]] };
                 if (e[0] > e[1]) {
                     uint32_t t = e[0];
                     e[0] = e[1];
                     e[1] = t;
                 }
                 navmesh->edges.insert (e);
+
+                // Add three halfedges for the triangle
+                uint32_t hesz = navmesh->halfedges.size();
+                navmesh->halfedges.resize (hesz + 3);
+                const mesh::halfedge<>* he0 = &navmesh->halfedges[hesz];
+                const mesh::halfedge<>* he1 = &navmesh->halfedges[hesz + 1];
+                const mesh::halfedge<>* he2 = &navmesh->halfedges[hesz + 2];
+                navmesh->halfedges[hesz]     = { {navmesh_idx[indices[i]],     navmesh_idx[indices[i + 1]]}, nullptr, he1, he2 };
+                navmesh->halfedges[hesz + 1] = { {navmesh_idx[indices[i + 1]], navmesh_idx[indices[i + 2]]}, nullptr, he2, he0 };
+                navmesh->halfedges[hesz + 2] = { {navmesh_idx[indices[i + 2]], navmesh_idx[indices[i]]    }, nullptr, he0, he1 };
 
                 // Direct population of triangles. Three indices and a 4th number to hold flags (with bit0 meaning edge-triangle)
-                mesh::face<> t = { {navmesh_idx[indices[i]], navmesh_idx[indices[i+1]], navmesh_idx[indices[i+2]]} };
+                // mesh::face<> t = { {navmesh_idx[indices[i]], navmesh_idx[indices[i+1]], navmesh_idx[indices[i+2]]} };
+
+                mesh::face<> t = { he0 }; // Face will just be this? The first half edge.
 
                 // The normal vector for this triangle could be obtained from the mesh normals, but
                 // we can't trust them (though they're easy to get, as we're dealing with indices
@@ -360,9 +374,9 @@ namespace mplot
 
                 // Compute trinorm as well and compare with the one from the mesh - perhaps it's
                 // different? We really want the right normal.
-                const sm::vec<float>& tv0 = navmesh->vertex[t.i[0]].p;
-                const sm::vec<float>& tv1 = navmesh->vertex[t.i[1]].p;
-                const sm::vec<float>& tv2 = navmesh->vertex[t.i[2]].p;
+                const sm::vec<float>& tv0 = navmesh->vertex[navmesh_idx[indices[i]]].p;
+                const sm::vec<float>& tv1 = navmesh->vertex[navmesh_idx[indices[i + 1]]].p;
+                const sm::vec<float>& tv2 = navmesh->vertex[navmesh_idx[indices[i + 2]]].p;
                 sm::vec<float> nx = (tv1 - tv0);
                 sm::vec<float> ny = (tv2 - tv0);
                 sm::vec<float> n = nx.cross (ny);
@@ -370,17 +384,18 @@ namespace mplot
 
                 // Check rotational sense of triangles?
                 if (n.dot (tn) < 0.0f) {
-                    // need to swap order in t:
-                    uint32_t ti = t.i[2];
-                    t.i[2] = t.i[1];
-                    t.i[1] = ti;
+                    // need to swap order in t?
+                    throw std::runtime_error ("Need to swap triangle order\n");
+                    //uint32_t ti = t.i[2];
+                    //t.i[2] = t.i[1];
+                    //t.i[1] = ti;
                 }
 
                 navmesh->triangles.push_back (t);
             }
-            if constexpr (debug_mn) { std::cout << "make_navmesh: Created triangles" << std::endl; }
+            if constexpr (debug_mn) { std::cout << "make_navmesh: Created triangles (" << navmesh->halfedges.size() << " halfedges)" << std::endl; }
 
-            navmesh->compute_neighbour_relations();
+            navmesh->compute_neighbour_relations(); // finds the halfedge twins
         }
 
         /**
