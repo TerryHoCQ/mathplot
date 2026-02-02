@@ -324,6 +324,7 @@ namespace mplot
 
             // Lastly, generate edges. For which we require use of indices, which is expressed in
             // terms of the old indices. That lookup is navmesh_idx.
+            std::cout << "At start, halfedges size is " << navmesh->halfedges.size() << std::endl;
             for (uint32_t i = 0; i < this->indices.size(); i += 3) {
                 // Each three entries in indices is a triangle containing 3 edges. NB: Edges must be listed in ascending order!
                 std::array<uint32_t, 2> e = { navmesh_idx[indices[i]], navmesh_idx[indices[i + 1]] };
@@ -353,13 +354,33 @@ namespace mplot
                 // Add three halfedges for the triangle
                 uint32_t hesz = navmesh->halfedges.size();
                 navmesh->halfedges.resize (hesz + 3);
-                const mesh::halfedge<>* he0 = &navmesh->halfedges[hesz];
-                const mesh::halfedge<>* he1 = &navmesh->halfedges[hesz + 1];
-                const mesh::halfedge<>* he2 = &navmesh->halfedges[hesz + 2];
+                const mesh::halfedge<>* he0 = &(navmesh->halfedges[hesz]);
+                const mesh::halfedge<>* he1 = &(navmesh->halfedges[hesz + 1]);
+                const mesh::halfedge<>* he2 = &(navmesh->halfedges[hesz + 2]);
+                if (hesz < 10) {
+                    std::cout << "setting halfedges["<<hesz<<"] to { {"
+                              << navmesh_idx[indices[i]] << ", " << navmesh_idx[indices[i + 1]]
+                              << "}, nullptr, " << he1 << ", " << he2 << " }" << std::endl;
+
+                    std::cout << "setting halfedges["<<hesz + 1<<"] to { {"
+                              << navmesh_idx[indices[i + 1]] << ", " << navmesh_idx[indices[i + 2]]
+                              << "}, nullptr, " << he2 << ", " << he0 << " }" << std::endl;
+
+                    std::cout << "setting halfedges["<<hesz + 2<<"] to { {"
+                              << navmesh_idx[indices[i + 2]] << ", " << navmesh_idx[indices[i]]
+                              << "}, nullptr, " << he0 << ", " << he1 << " }" << std::endl;
+                }
                 navmesh->halfedges[hesz]     = { {navmesh_idx[indices[i]],     navmesh_idx[indices[i + 1]]}, nullptr, he1, he2 };
                 navmesh->halfedges[hesz + 1] = { {navmesh_idx[indices[i + 1]], navmesh_idx[indices[i + 2]]}, nullptr, he2, he0 };
                 navmesh->halfedges[hesz + 2] = { {navmesh_idx[indices[i + 2]], navmesh_idx[indices[i]]    }, nullptr, he0, he1 };
 
+                if (hesz < 10) {
+                    std::cout << "halfedges["<< hesz << "]: "
+                              <<  navmesh->halfedges[hesz].vi
+                              << ", twin:" << navmesh->halfedges[hesz].twin
+                              << ", next:" << navmesh->halfedges[hesz].next
+                              << ", prev:" << navmesh->halfedges[hesz].prev << std::endl;
+                }
                 // Direct population of triangles. Three indices and a 4th number to hold flags (with bit0 meaning edge-triangle)
                 // mesh::face<> t = { {navmesh_idx[indices[i]], navmesh_idx[indices[i+1]], navmesh_idx[indices[i+2]]} };
 
@@ -390,8 +411,13 @@ namespace mplot
                     //t.i[2] = t.i[1];
                     //t.i[1] = ti;
                 }
-
+                if (hesz < 10) {
+                    std::cout << "Push_back triangle " << t.he << std::endl;
+                }
                 navmesh->triangles.push_back (t);
+                if (hesz < 10) {
+                    std::cout << "back triangle is   " << navmesh->triangles.back().he << std::endl;
+                }
             }
             if constexpr (debug_mn) { std::cout << "make_navmesh: Created triangles (" << navmesh->halfedges.size() << " halfedges)" << std::endl; }
 

@@ -111,7 +111,7 @@ namespace mplot
          * Minimum set of vertices to generate a topological mesh. populated by
          * VisualModel::make_navmesh()
          */
-        std::vector<mesh::vertex<>> vertex;
+        std::vector<mesh::vertex<>> vertex = {};
 
         /*!
          * The edges that make up the same triangles as are shown with the parent VisualModel's
@@ -121,12 +121,12 @@ namespace mplot
         std::set<std::array<uint32_t, 2>> edges; // This is edges, not half edges
 
         // The vector of half edges in the mesh
-        std::vector<mesh::halfedge<>> halfedges;
+        std::vector<mesh::halfedge<>> halfedges = {};
 
         /*!
          * Triangle mesh faces. populated by VisualModel::make_navmesh()
          */
-        std::vector<mesh::face<>> triangles;
+        std::vector<mesh::face<>> triangles = {};
 
         /*!
          * Maps index in vertex to the original parent->indices index. populated by
@@ -188,14 +188,13 @@ namespace mplot
                 return trivert;
             }
             do {
-                std::cout << "he: " << he << std::endl;
-                std::cout << "he->vi[0]: " << he->vi[0] << std::endl;
-                std::cout << "vertex.size(): " << this->vertex.size() << std::endl;
+                std::cout << "he: " << he << ", he->vi: " << he->vi << std::endl;
+                //std::cout << "vertex.size(): " << this->vertex.size() << std::endl;
                 if (he->vi[0] < this->vertex.size()) {
-                    std::cout << "Getting vertex[" << he->vi[0] << "] from vertex size " << this->vertex.size() << " into trivert[" << i << "]" << std::endl;
+                    //std::cout << "Getting vertex[" << he->vi[0] << "] from vertex size " << this->vertex.size() << " into trivert[" << i << "]" << std::endl;
                     trivert[i] = this->vertex[he->vi[0]].p;
                 } else {
-                    std::cout << "Not getting vertex[" << he->vi[0] << "] from vertex as it is of size " << this->vertex.size() << " into trivert[" << i << "]" << std::endl;
+                    //std::cout << "Not getting vertex[" << he->vi[0] << "] from vertex as it is of size " << this->vertex.size() << " into trivert[" << i << "]" << std::endl;
                 }
                 ++i;
                 he = he->next;
@@ -309,6 +308,7 @@ namespace mplot
 
             // Have we been passed a 'most likely triangle' to test first? If so, test it.
             if (ti_ml != nullptr) {
+                std::cout << "Passing ti_ml to trangle_vertices: with he->vi =  " << ti_ml->vi << std::endl;
                 sm::vec<sm::vec<float>, 3> v = this->triangle_vertices (ti_ml);
                 auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (v[0], v[1], v[2], vstart, vdir);
                 if (isect) {
@@ -326,6 +326,7 @@ namespace mplot
             }
 
             for (auto tri : this->triangles) {
+                std::cout << "Passing tri.he " << tri.he << " to triangle_vertices(): with he->vi =  " << tri.he->vi << std::endl;
                 sm::vec<sm::vec<float>, 3> v = this->triangle_vertices (tri.he);
                 auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (v[0], v[1], v[2], vstart, vdir);
                 // What if the triangle is one on the *other side of the model*?? Have to use
