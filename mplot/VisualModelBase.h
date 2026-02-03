@@ -407,10 +407,11 @@ namespace mplot
 
                 // Check rotational sense of triangles?
                 if (n.dot (tn) < 0.0f) {
-                    throw std::runtime_error ("Need to swap triangle order\n");
-                    //uint32_t ti = t.i[2];
-                    //t.i[2] = t.i[1];
-                    //t.i[1] = ti;
+                    //throw std::runtime_error ("Need to swap triangle order\n");
+                    // Swap first and last half edge?
+                    navmesh->halfedges[hesz].vi.rotate();
+                    navmesh->halfedges[hesz + 1].vi.rotate();
+                    navmesh->halfedges[hesz + 2].vi.rotate();
                 }
                 navmesh->triangles.push_back (t);
             }

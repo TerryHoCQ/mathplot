@@ -285,57 +285,82 @@ namespace mplot
         void compute_neighbour_relations ()
         {
             uint32_t sz = this->halfedges.size();
+            std::cout << "Finding twins for " << sz << " halfedges\n";
 
             // Search a 'band' either side of i first, assuming that neighbour triangles are likely
             // to have been nearby in the indices array
-            const uint32_t band = 3 * 100;
+            const uint32_t band = 3 * 1000;
+
+            uint32_t wider_searches = 0; // Count how many times we make a wider search
+
+            uint64_t twin_meandist = 0; // See how far a search has to search for a twin
+            uint32_t twins = 0;
+
             for (uint32_t i = 0; i < sz; ++i) {
+
+                const sm::vec<uint32_t, 2>& vi = this->halfedges[i].vi;
+
+                // halfedges[i].twin may already have been set (as we set two twins at a time)
+                if (this->halfedges[i].twin != std::numeric_limits<uint32_t>::max()) { continue; }
+
+                // It's useful to know how long you will have to wait...
+                if (i % 20000u == 0u) { std::cout << ((100.0f * i)/sz) << " \%...\n" << std::endl; }
 
                 uint32_t sb = i >= band ? i - band : 0;
                 uint32_t eb = i + band < sz ? i + band : sz;
 
-                // std::cout << "Search " << 0 << " -> " << sb << " -> " << eb << " -> " << sz << std::endl;
-
-                sm::vec<uint32_t, 2> vi = this->halfedges[i].vi;
-
-                // bool matched = false; // can test twin
                 // First sb to eb, which we hope is most likely to find a twin
                 for (uint32_t j = sb; j < eb; ++j) {
                     if (j == i) { continue; }
                     const sm::vec<uint32_t, 2>& vij = this->halfedges[j].vi;
                     if (vi[0] == vij[1] && vi[1] == vij[0]) { // It's a match
                         this->halfedges[i].twin = j;
+                        this->halfedges[j].twin = i;
+                        break;
                     }
                 }
 
+                uint32_t wider = 0;
                 if (this->halfedges[i].twin == std::numeric_limits<uint32_t>::max()) {
                     // Then, if no match, search rest
-                    if (sb != 0) { std::cout << "Wider search pre-band\n"; }
+                    if (sb != 0 && !wider) { wider = 1; }
                     for (uint32_t j = 0; j < sb; ++j) {
                         if (j == i) { continue; }
                         const sm::vec<uint32_t, 2>& vij = this->halfedges[j].vi;
                         if (vi[0] == vij[1] && vi[1] == vij[0]) { // It's a match
                             this->halfedges[i].twin = j;
+                            this->halfedges[j].twin = i;
+                            break;
                         }
-
                     }
                 }
 
                 if (this->halfedges[i].twin == std::numeric_limits<uint32_t>::max()) {
-                    if (eb != sz) { std::cout << "Wider search post-band\n"; }
+                    if (eb != sz && !wider) { wider = 1; }
                     for (uint32_t j = eb; j < sz; ++j) {
                         if (j == i) { continue; }
                         const sm::vec<uint32_t, 2>& vij = this->halfedges[j].vi;
                         if (vi[0] == vij[1] && vi[1] == vij[0]) { // It's a match
                             this->halfedges[i].twin = j;
+                            this->halfedges[j].twin = i;
+                            break;
                         }
                     }
                 }
 
+                wider_searches += wider;
+
                 if (this->halfedges[i].twin != std::numeric_limits<uint32_t>::max()) {
-                    std::cout << "Twin of " << i << " is " << this->halfedges[i].twin << std::endl;
+                    // std::cout << "Twin of " << i << " is " << this->halfedges[i].twin << std::endl;
+                    if (wider) {
+                        twin_meandist += i > this->halfedges[i].twin ? i - this->halfedges[i].twin : this->halfedges[i].twin - i;
+                        ++twins;
+                    }
                 } // else halfedges[i] is an edge of the mesh
             }
+
+            std::cout << "In " << sz << " halfedge searches, had to widen the search in " << (100.0 * wider_searches) / sz << " \%\n";
+            std::cout << "Mean wider twin search distance (in array elements) was " << static_cast<double>(twin_meandist) / twins << "\n";
         }
 
         /*
