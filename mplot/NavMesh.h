@@ -134,13 +134,6 @@ namespace mplot
         //const mesh::halfedge<>* ti0 = nullptr;
         uint32_t ti0 = std::numeric_limits<uint32_t>::max();
 
-        /*!
-         * Stabilisation flag: if true, no rotation is applied when moving over a triangle boundary
-         * in NavMesh::compute_mesh_movement. If false, then a rotation about the triangle boundary
-         * is made.
-         */
-        bool stabilised = false;
-
         void save (const std::string& filename) const
         {
             std::cout << "FIXME: Save to " << filename << std::endl;
@@ -1175,9 +1168,7 @@ namespace mplot
                         if (flags.test (cmm_fl::vertex_crossing)) { cd.tri_edge = tn0.cross (_tn); }
 
                         // Compute the reorientation due to the requested movement.
-                        float rotn_angle = 0.0f;
-                        // Rotate by the angle between the normals (if stabilised is false). I think this is constrained to be <= pi
-                        if (stabilised == false) { rotn_angle = tn0.angle (_tn, cd.tri_edge); }
+                        float rotn_angle = tn0.angle (_tn, cd.tri_edge);
                         // If tn0 and _tn are identical, then rotn_angle will be NaN, but in that case we want no rotation
                         if (std::isnan (rotn_angle)) { rotn_angle = 0.0f; }
                         sm::mat<float, 4> reorient_model; // reorientation transformation in sf
