@@ -237,24 +237,6 @@ namespace mplot
             return v1 - v0;
         }
 
-#if 0 // unused?
-        sm::vvec<uint32_t> neighbours (const uint32_t _idx) const
-        {
-            sm::vvec<uint32_t> rtn;
-            // Search edges to find those that include _idx and then pack up the other ends in a return object
-            for (auto e : this->edges) {
-                // we have e[0] and e[1]
-                if (e[0] == _idx) {
-                    // neighb is e[1]
-                    rtn.push_back (e[1]);
-                } else if (e[1] == _idx) {
-                    // neighb is e[0]
-                    rtn.push_back (e[0]);
-                }
-            }
-            return rtn;
-        }
-#endif
         // Find all the neighbours of triangle *vertex* index a.
         // \return vector of halfedges indices
         std::vector<uint32_t>
@@ -437,7 +419,6 @@ namespace mplot
                 }
             }
 
-            // VERTEX_HANDLING
             if (isect_p[0] == fmax) {
                 // Found no triangle intersection; check vertices, in case vdir points perfectly at a vertex.
                 for (uint32_t vi = 0; vi < this->vertex.size(); ++vi) {
@@ -470,7 +451,6 @@ namespace mplot
             return this->find_triangle_crossing (coord_mf, vdir, model_to_scene);
         }
 
-        // VERTEX_HANDLING
         // Find the normal of the vertex specified by halfedge vhe
         sm::vec<float> find_vertex_normal (const uint32_t ti, const sm::mat<float, 4>& transform) const
         {
@@ -980,7 +960,6 @@ namespace mplot
             sm::mat<float, 4> cam_to_surface = cam_to_scene;
             cam_to_surface.pretranslate (hov_sf - camloc_sf); // This is now our init pose; the camera is now at the surface
 
-//#ifdef NEED_DOUBLE_PRECISION
             // Try double precision
             if (isect == false) {
                 std::tie (isect, hov_sf) = sm::geometry::ray_tri_intersection<float, double> (tv_sf[0], tv_sf[1], tv_sf[2], camloc_sf + (tn0 / 2.0f), -tn0);
@@ -992,9 +971,7 @@ namespace mplot
                     }
                 }
             }
-//#endif
 
-            // VERTEX_HANDLING
             // If that didn't work, try the triangle *vertices*
             uint32_t int_vertex_hi = std::numeric_limits<uint32_t>::max(); // intersection vertex
             if (isect == false) {
@@ -1094,7 +1071,6 @@ namespace mplot
                 return cam_to_scene;
             }
 
-            // VERTEX_HANDLING
             // New section to handle the case that we started right on a vertex
             if (isect == true && int_vertex_hi != std::numeric_limits<uint32_t>::max()) {
                 // We HAVE a vertex intersection. Check if we either cross, or land in one of this vertex's neighbours to correct our starting triangle and normal.
