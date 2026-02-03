@@ -419,11 +419,11 @@ namespace mplot
                     //t.i[1] = ti;
                 }
                 if (hesz < mlines) {
-                    std::cout << "Push_back triangle " << t.he << std::endl;
+                    std::cout << "Push_back triangle " << t.hi << std::endl;
                 }
                 navmesh->triangles.push_back (t);
                 if (hesz < mlines) {
-                    std::cout << "back triangle is   " << navmesh->triangles.back().he << std::endl;
+                    std::cout << "back triangle is   " << navmesh->triangles.back().hi << std::endl;
                 }
             }
             if constexpr (debug_mn) { std::cout << "make_navmesh: Created triangles (" << navmesh->halfedges.size() << " halfedges)" << std::endl; }

@@ -46,15 +46,17 @@ namespace mplot
         template<typename I = uint32_t, typename F=float, I N = 3> requires std::is_integral_v<I>
         struct vertex
         {
-            sm::vec<F, N> p = {}; // Coordinate position of vertex
-            I he = std::numeric_limits<I>::max(); // A halfedge emanating from this he_vertex
+            // Coordinate position of vertex
+            sm::vec<F, N> p = {};
+            // A halfedge (hi: halfedge index) emanating from this vertex
+            I hi = std::numeric_limits<I>::max();
         };
 
         template<typename I = uint32_t> requires std::is_integral_v<I>
         struct face
         {
-            // The index of the starting halfedge
-            I he = std::numeric_limits<I>::max();
+            // The index of the starting halfedge that records the existence of this face
+            I hi = std::numeric_limits<I>::max();
         };
     }
 
@@ -329,8 +331,8 @@ namespace mplot
                           << ", next:" << this->halfedges[0].next
                           << ", prev:" << this->halfedges[0].prev << std::endl;
 
-                std::cout << "CF. Passing tri.he " << tri.he << " to triangle_vertices(): with he->vi =  " << this->halfedges[tri.he].vi << std::endl;
-                sm::vec<sm::vec<float>, 3> v = this->triangle_vertices (tri.he);
+                std::cout << "CF. Passing tri.he " << tri.hi << " to triangle_vertices(): with he->vi =  " << this->halfedges[tri.hi].vi << std::endl;
+                sm::vec<sm::vec<float>, 3> v = this->triangle_vertices (tri.hi);
                 auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (v[0], v[1], v[2], vstart, vdir);
                 // What if the triangle is one on the *other side of the model*?? Have to use
                 // vdir.sos() to exclude those that are too far and the distance^2 to find the
@@ -339,7 +341,7 @@ namespace mplot
                     float d = (p - vstart).sos();
                     if (d < isect_d && d < vdsos) {
                         isect_p = p;
-                        isect_ti = tri.he;
+                        isect_ti = tri.hi;
                         isect_d = d;
                     }
                 }
@@ -349,7 +351,7 @@ namespace mplot
             if (isect_p[0] == fmax) {
                 // Found no triangle intersection; check vertices, in case vdir points perfectly at a vertex.
                 for (uint32_t vi = 0; vi < this->vertex.size(); ++vi) {
-                    sm::vec<float> vertex_n = this->find_vertex_normal (this->vertex[vi].he, model_to_scene);
+                    sm::vec<float> vertex_n = this->find_vertex_normal (this->vertex[vi].hi, model_to_scene);
                     vertex_n.renormalize();
                     vstart = coord_mf + (vertex_n / 2.0f);
                     if (sm::geometry::ray_point_intersection (this->vertex[vi].p, vstart, -vertex_n)) {
@@ -358,7 +360,7 @@ namespace mplot
                             std::cout << "Register vertex triangle_crossing\n";
                             isect_p = this->vertex[vi].p;
                             // now have halfedge specifying a triangle. Could attempt to look up to face, but could just return halfedge?
-                            isect_ti = this->vertex[vi].he;
+                            isect_ti = this->vertex[vi].hi;
                             isect_d = d;
                         }
                     }
