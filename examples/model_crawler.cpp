@@ -97,14 +97,13 @@ int main (int argc, char** argv)
     auto[hp_scene, ti0] = gvp->navmesh->find_triangle_hit (ca_view, sph_view);
     std::cout << "Find hit finds hit point " << hp_scene << " with ti0 halfedge: " << ti0 << std::endl;
 
-#if 0
     int move_counter = 0;
     constexpr int move_max = 1000;
     while (!v.readyToFinish()) {
 
         // Wait .018 s and also poll for mouse/keyboard events
         v.waitevents (0.018);
-
+#if 1
         // Compute a new movement over the landscape mesh (the sphere)
         try {
             ca_view = gvp->navmesh->compute_mesh_movement (mv_ca, ca_view, sph_view, hoverheight);
@@ -115,7 +114,7 @@ int main (int argc, char** argv)
             std::cout << "Exception navigating mesh at movement count " << move_counter << ": " << e.what() << std::endl;
             throw e;
         }
-
+#endif
         // Update the viewmatrix of the coord arrows, setting its position within the scene
         cap->setViewMatrix (ca_view);
 
@@ -131,7 +130,7 @@ int main (int argc, char** argv)
         // Re-render the scene
         v.render();
     }
-#endif
+
     v.keepOpen();
 
     return rtn;

@@ -306,9 +306,8 @@ namespace mplot
                 }
                 ++i;
             }
-            if constexpr (debug_mn) {
-                std::cout << "make_navmesh: Created equiv inverse" << std::endl;
-            }
+            if constexpr (debug_mn) { std::cout << "make_navmesh: Created equiv inverse" << std::endl; }
+
             if (vcount != vps) {
                 std::cout << "make_navmesh: WARNING: Vertex count from equiv is " << vcount
                           << " which should (but does not) equal " << vps << std::endl;
@@ -324,8 +323,6 @@ namespace mplot
 
             // Lastly, generate edges. For which we require use of indices, which is expressed in
             // terms of the old indices. That lookup is navmesh_idx.
-            std::cout << "At start, halfedges size is " << navmesh->halfedges.size() << std::endl;
-            //navmesh->halfedges.reserve (this->indices.size() / 3);
             for (uint32_t i = 0; i < this->indices.size(); i += 3) {
                 // Each three entries in indices is a triangle containing 3 edges. NB: Edges must be listed in ascending order!
                 std::array<uint32_t, 2> e = { navmesh_idx[indices[i]], navmesh_idx[indices[i + 1]] };
@@ -356,42 +353,40 @@ namespace mplot
                 // Add three halfedges for the triangle
                 uint32_t hesz = navmesh->halfedges.size();
                 navmesh->halfedges.resize (hesz + 3, {});
-                //const mesh::halfedge<>* he0 = &(navmesh->halfedges[hesz]);
-                //const mesh::halfedge<>* he1 = &(navmesh->halfedges[hesz + 1]);
-                //const mesh::halfedge<>* he2 = &(navmesh->halfedges[hesz + 2]);
                 uint32_t he0 = hesz;
                 uint32_t he1 = hesz + 1;
                 uint32_t he2 = hesz + 2;
 
-                if (hesz < mlines) {
-                    std::cout << "setting halfedges["<<hesz<<"] " << he0 <<  " to { {"
-                              << navmesh_idx[indices[i]] << ", " << navmesh_idx[indices[i + 1]]
-                              << "}, nullptr, " << he1 << ", " << he2 << " }" << std::endl;
+                if constexpr (debug_mn) {
+                    if (hesz < mlines) {
+                        std::cout << "setting halfedges["<<hesz<<"] " << he0 <<  " to { {"
+                                  << navmesh_idx[indices[i]] << ", " << navmesh_idx[indices[i + 1]]
+                                  << "}, nullptr, " << he1 << ", " << he2 << " }" << std::endl;
 
-                    std::cout << "setting halfedges["<<hesz + 1<<"] " << he1 <<  " to { {"
-                              << navmesh_idx[indices[i + 1]] << ", " << navmesh_idx[indices[i + 2]]
-                              << "}, nullptr, " << he2 << ", " << he0 << " }" << std::endl;
+                        std::cout << "setting halfedges["<<hesz + 1<<"] " << he1 <<  " to { {"
+                                  << navmesh_idx[indices[i + 1]] << ", " << navmesh_idx[indices[i + 2]]
+                                  << "}, nullptr, " << he2 << ", " << he0 << " }" << std::endl;
 
-                    std::cout << "setting halfedges["<<hesz + 2<<"] " << he2 <<  " to { {"
-                              << navmesh_idx[indices[i + 2]] << ", " << navmesh_idx[indices[i]]
-                              << "}, nullptr, " << he0 << ", " << he1 << " }" << std::endl;
+                        std::cout << "setting halfedges["<<hesz + 2<<"] " << he2 <<  " to { {"
+                                  << navmesh_idx[indices[i + 2]] << ", " << navmesh_idx[indices[i]]
+                                  << "}, nullptr, " << he0 << ", " << he1 << " }" << std::endl;
+                    }
                 }
-
                 navmesh->halfedges[hesz]     = { {navmesh_idx[indices[i]],     navmesh_idx[indices[i + 1]]}, std::numeric_limits<uint32_t>::max(), he1, he2 };
                 navmesh->halfedges[hesz + 1] = { {navmesh_idx[indices[i + 1]], navmesh_idx[indices[i + 2]]}, std::numeric_limits<uint32_t>::max(), he2, he0 };
                 navmesh->halfedges[hesz + 2] = { {navmesh_idx[indices[i + 2]], navmesh_idx[indices[i]]    }, std::numeric_limits<uint32_t>::max(), he0, he1 };
 
-                if (hesz < mlines) {
-                    std::cout << "halfedges["<< hesz << "] contains: vi:"
-                              <<  navmesh->halfedges[hesz].vi
-                              << ", twin:" << navmesh->halfedges[hesz].twin
-                              << ", next:" << navmesh->halfedges[hesz].next
-                              << ", prev:" << navmesh->halfedges[hesz].prev << std::endl;
+                if constexpr (debug_mn) {
+                    if (hesz < mlines) {
+                        std::cout << "halfedges["<< hesz << "] contains: vi:"
+                                  <<  navmesh->halfedges[hesz].vi
+                                  << ", twin:" << navmesh->halfedges[hesz].twin
+                                  << ", next:" << navmesh->halfedges[hesz].next
+                                  << ", prev:" << navmesh->halfedges[hesz].prev << std::endl;
+                    }
                 }
                 // Direct population of triangles. Three indices and a 4th number to hold flags (with bit0 meaning edge-triangle)
-                // mesh::face<> t = { {navmesh_idx[indices[i]], navmesh_idx[indices[i+1]], navmesh_idx[indices[i+2]]} };
-
-                mesh::face<> t = { he0 }; // Face will just be this? The first half edge.
+                mesh::face<> t = { he0 }; // Face will just be the first half edge.
 
                 // The normal vector for this triangle could be obtained from the mesh normals, but
                 // we can't trust them (though they're easy to get, as we're dealing with indices
@@ -412,19 +407,12 @@ namespace mplot
 
                 // Check rotational sense of triangles?
                 if (n.dot (tn) < 0.0f) {
-                    // need to swap order in t?
                     throw std::runtime_error ("Need to swap triangle order\n");
                     //uint32_t ti = t.i[2];
                     //t.i[2] = t.i[1];
                     //t.i[1] = ti;
                 }
-                if (hesz < mlines) {
-                    std::cout << "Push_back triangle " << t.hi << std::endl;
-                }
                 navmesh->triangles.push_back (t);
-                if (hesz < mlines) {
-                    std::cout << "back triangle is   " << navmesh->triangles.back().hi << std::endl;
-                }
             }
             if constexpr (debug_mn) { std::cout << "make_navmesh: Created triangles (" << navmesh->halfedges.size() << " halfedges)" << std::endl; }
 
