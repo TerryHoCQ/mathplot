@@ -282,9 +282,60 @@ namespace mplot
          * The key is the half-edge data structure.
          * See: https://jerryyin.info/geometry-processing-algorithms/half-edge/
          */
-        void compute_neighbour_relations()
+        void compute_neighbour_relations ()
         {
-            // Writeme. This fills in the 'twin' field of the halfedges appropriately
+            uint32_t sz = this->halfedges.size();
+
+            // Search a 'band' either side of i first, assuming that neighbour triangles are likely
+            // to have been nearby in the indices array
+            const uint32_t band = 3 * 100;
+            for (uint32_t i = 0; i < sz; ++i) {
+
+                uint32_t sb = i >= band ? i - band : 0;
+                uint32_t eb = i + band < sz ? i + band : sz;
+
+                // std::cout << "Search " << 0 << " -> " << sb << " -> " << eb << " -> " << sz << std::endl;
+
+                sm::vec<uint32_t, 2> vi = this->halfedges[i].vi;
+
+                // bool matched = false; // can test twin
+                // First sb to eb, which we hope is most likely to find a twin
+                for (uint32_t j = sb; j < eb; ++j) {
+                    if (j == i) { continue; }
+                    const sm::vec<uint32_t, 2>& vij = this->halfedges[j].vi;
+                    if (vi[0] == vij[1] && vi[1] == vij[0]) { // It's a match
+                        this->halfedges[i].twin = j;
+                    }
+                }
+
+                if (this->halfedges[i].twin == std::numeric_limits<uint32_t>::max()) {
+                    // Then, if no match, search rest
+                    if (sb != 0) { std::cout << "Wider search pre-band\n"; }
+                    for (uint32_t j = 0; j < sb; ++j) {
+                        if (j == i) { continue; }
+                        const sm::vec<uint32_t, 2>& vij = this->halfedges[j].vi;
+                        if (vi[0] == vij[1] && vi[1] == vij[0]) { // It's a match
+                            this->halfedges[i].twin = j;
+                        }
+
+                    }
+                }
+
+                if (this->halfedges[i].twin == std::numeric_limits<uint32_t>::max()) {
+                    if (eb != sz) { std::cout << "Wider search post-band\n"; }
+                    for (uint32_t j = eb; j < sz; ++j) {
+                        if (j == i) { continue; }
+                        const sm::vec<uint32_t, 2>& vij = this->halfedges[j].vi;
+                        if (vi[0] == vij[1] && vi[1] == vij[0]) { // It's a match
+                            this->halfedges[i].twin = j;
+                        }
+                    }
+                }
+
+                if (this->halfedges[i].twin != std::numeric_limits<uint32_t>::max()) {
+                    std::cout << "Twin of " << i << " is " << this->halfedges[i].twin << std::endl;
+                } // else halfedges[i] is an edge of the mesh
+            }
         }
 
         /*
