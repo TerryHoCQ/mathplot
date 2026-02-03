@@ -220,6 +220,25 @@ namespace mplot
             this->indices.reserve (6u * n_vertices);
         }
 
+        // Make a hash of vertexPositions, etc as an identifier for this model
+        std::size_t hash() const
+        {
+            std::size_t h = std::hash<float>{}(this->vertexPositions[0]);
+            for (std::size_t i = 1u; i < this->vertexPositions.size(); ++i) {
+                h ^= std::hash<float>{}(this->vertexPositions[i]);
+            }
+            for (std::size_t i = 0u; i < this->vertexNormals.size(); ++i) {
+                h ^= std::hash<float>{}(this->vertexNormals[i]);
+            }
+            for (std::size_t i = 0u; i < this->vertexColors.size(); ++i) {
+                h ^= std::hash<float>{}(this->vertexColors[i]);
+            }
+            for (std::size_t i = 0u; i < this->indices.size(); ++i) {
+                h ^= std::hash<uint32_t>{}(this->vertexColors[i]);
+            }
+            return h;
+        }
+
         // Get a single position from vertexPositions, using the index into the vector<vec>
         // interpretation of vertexPositions
         sm::vec<float, 3> get_position (const uint32_t vec_idx) const
@@ -403,11 +422,15 @@ namespace mplot
             this->navmesh = std::make_unique<mplot::NavMesh>();
 
             // Have we got a saved one?
+            uint64_t h = this->hash();
+            std::string filename = std::string("navmesh_") + std::to_string (h) + ".h5";
+            std::cout << "Check for saved navmesh in " << filename << std::endl;
             bool have_file_matching_this_visualmodel = false;
             if (have_file_matching_this_visualmodel) {
-                // this->navmesh->load (filename);
+                this->navmesh->load (filename);
             } else {
                 this->build_navmesh();
+                this->navmesh->save (filename);
             }
         }
 

@@ -141,6 +141,16 @@ namespace mplot
          */
         bool stabilised = false;
 
+        void save (const std::string& filename) const
+        {
+            std::cout << "FIXME: Save to " << filename << std::endl;
+        }
+
+        void load (const std::string& filename)
+        {
+            std::cout << "FIXME: Load from file " << filename << std::endl;
+        }
+
         /*!
          * Return index of this->vertex that is closest to scene_coord. Can use vertexidx_to_indices
          * to find the indices into vertexPositions and vertexNormals that this index in the
