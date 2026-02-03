@@ -136,7 +136,39 @@ namespace mplot
 
         void save (const std::string& filename) const
         {
-            std::cout << "FIXME: Save to " << filename << std::endl;
+            std::cout << "Save NavMesh to " << filename << std::endl;
+            sm::hdfdata d (filename, std::ios::out | std::ios::trunc);
+
+            sm::vvec<sm::vec<float, 3>> p = {};
+            sm::vvec<uint32_t> hi = {};
+            for (auto v : this->vertex) {
+                p.push_back (v.p);
+                hi.push_back (v.hi);
+            }
+            d.add_contained_vals ("/vertex_p", p);
+            d.add_contained_vals ("/vertex_hi", hi);
+
+            sm::vvec<sm::vec<uint32_t, 2>> vi = {};
+            sm::vvec<uint32_t> twin = {};
+            sm::vvec<uint32_t> next = {};
+            sm::vvec<uint32_t> prev = {};
+            for (auto he : this->halfedges) {
+                vi.push_back (he.vi);
+                twin.push_back (he.twin);
+                next.push_back (he.next);
+                prev.push_back (he.prev);
+            }
+            d.add_contained_vals ("/halfedges_vi", vi);
+            d.add_contained_vals ("/halfedges_twin", twin);
+            d.add_contained_vals ("/halfedges_next", next);
+            d.add_contained_vals ("/halfedges_prev", prev);
+
+            hi.clear();
+            for (auto t : this->triangles) { hi.push_back (t.hi); }
+            d.add_contained_vals ("/triangles_hi", hi);
+
+            d.add_contained_vals ("/bb_min", bb.min);
+            d.add_contained_vals ("/bb_max", bb.max);
         }
 
         void load (const std::string& filename)
