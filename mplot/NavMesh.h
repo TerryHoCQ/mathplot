@@ -25,6 +25,7 @@
 #include <sm/flags>
 #include <sm/mat>
 #include <sm/geometry>
+#include <sm/hdfdata>
 
 namespace mplot
 {
@@ -116,13 +117,6 @@ namespace mplot
         std::vector<mesh::vertex<>> vertex = {};
 
         /*!
-         * The edges that make up the same triangles as are shown with the parent VisualModel's
-         * indices & vertexPositions, but in terms of this->vertex.  Each edge must be two indices
-         * in *ascending numerical order*. populated by VisualModel::make_navmesh()
-         */
-        std::set<std::array<uint32_t, 2>> edges; // This is edges, not half edges
-
-        /*!
          * The vector of half edges in the mesh
          */
         std::vector<mesh::halfedge<>> halfedges = {};
@@ -131,12 +125,6 @@ namespace mplot
          * Triangle mesh faces. populated by VisualModel::make_navmesh()
          */
         std::vector<mesh::face<>> triangles = {};
-
-        /*!
-         * Maps index in vertex to the original parent->indices index. populated by
-         * VisualModel::make_navmesh()
-         */
-        sm::vvec<sm::vvec<uint32_t>> vertexidx_to_indices;
 
         //! Holds a copy of the bb of the parent model
         sm::range<sm::vec<float>> bb;

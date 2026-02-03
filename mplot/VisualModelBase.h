@@ -243,29 +243,12 @@ namespace mplot
         // Our navigation mesh data struct
         std::unique_ptr<mplot::NavMesh> navmesh;
 
-        /*!
-         * Post-process vertices to generate a neighbour relationship mesh. The usual vertices and
-         * indices may not be useful to help an agent to navigate the surface defined by the
-         * mesh. This is because vertices may be duplicated at any location, so that adjacent faces
-         * can have different normals and colours.
-         *
-         * To help guide movement across a mesh, it would be useful to have a mesh that always gives
-         * neighbour relationships.
-         */
-        void make_navmesh()
+        void build_navmesh()
         {
             constexpr bool debug_mn = false;
-            if constexpr (debug_mn) { std::cout << "make_navmesh: Called" << std::endl; }
+            if constexpr (debug_mn) { std::cout << __func__ << " called" << std::endl; }
 
-            if (this->navmesh) { return; } // already made it
-
-            if (this->flags.test (vm_bools::compute_bb) == false) {
-                throw std::runtime_error ("make_navmesh requires compute_bb flag to be true");
-            }
-            this->update_bb();
-
-            // Create a new navmesh
-            this->navmesh = std::make_unique<mplot::NavMesh>();
+            if (!this->navmesh) { return; }
 
             // Copy the bounding box
             navmesh->bb = this->bb;
@@ -292,14 +275,17 @@ namespace mplot
             // Make inverse of equiv to translate from original (indices, vertexPositions) index to
             // new topographic mesh index
             sm::vvec<uint32_t> navmesh_idx (vps, 0);
-            navmesh->vertexidx_to_indices.resize (equiv.size());
+
+            // Maps index in vertex to the original parent->indices index. Was originally a member
+            // of NavMesh
+            sm::vvec<sm::vvec<uint32_t>> vertexidx_to_indices (equiv.size());
 
             uint32_t vcount = 0;
             i = 0;
             for (auto eqs : equiv) {
                 vcount += eqs.second.size();
-                navmesh->vertexidx_to_indices[i].resize (eqs.second.size());
-                std::copy (eqs.second.begin(), eqs.second.end(), navmesh->vertexidx_to_indices[i].begin());
+                vertexidx_to_indices[i].resize (eqs.second.size());
+                std::copy (eqs.second.begin(), eqs.second.end(), vertexidx_to_indices[i].begin());
                 for (auto ev : eqs.second) {
                     if constexpr (debug_mn) { std::cout << "make_navmesh: set navmesh_idx[" << ev << "] = " << i << std::endl; }
                     navmesh_idx[ev] = i;
@@ -320,34 +306,9 @@ namespace mplot
             for (auto eq : equiv) {
                 navmesh->vertex[i++] = { (*vp)[eq.first], std::numeric_limits<uint32_t>::max() };
             }
-
             // Lastly, generate edges. For which we require use of indices, which is expressed in
             // terms of the old indices. That lookup is navmesh_idx.
             for (uint32_t i = 0; i < this->indices.size(); i += 3) {
-                // Each three entries in indices is a triangle containing 3 edges. NB: Edges must be listed in ascending order!
-                std::array<uint32_t, 2> e = { navmesh_idx[indices[i]], navmesh_idx[indices[i + 1]] };
-                if (e[0] > e[1]) {
-                    uint32_t t = e[0];
-                    e[0] = e[1];
-                    e[1] = t;
-                }
-                navmesh->edges.insert (e);
-
-                e = { navmesh_idx[indices[i]], navmesh_idx[indices[i + 2]] };
-                if (e[0] > e[1]) {
-                    uint32_t t = e[0];
-                    e[0] = e[1];
-                    e[1] = t;
-                }
-                navmesh->edges.insert (e);
-
-                e = { navmesh_idx[indices[i + 1]], navmesh_idx[indices[i + 2]] };
-                if (e[0] > e[1]) {
-                    uint32_t t = e[0];
-                    e[0] = e[1];
-                    e[1] = t;
-                }
-                navmesh->edges.insert (e);
 
                 constexpr uint32_t mlines = 10000;
                 // Add three halfedges for the triangle
@@ -418,6 +379,36 @@ namespace mplot
             if constexpr (debug_mn) { std::cout << "make_navmesh: Created triangles (" << navmesh->halfedges.size() << " halfedges)" << std::endl; }
 
             navmesh->compute_neighbour_relations(); // finds the halfedge twins
+        }
+
+        /*!
+         * Post-process vertices to generate a neighbour relationship mesh. The usual vertices and
+         * indices may not be useful to help an agent to navigate the surface defined by the
+         * mesh. This is because vertices may be duplicated at any location, so that adjacent faces
+         * can have different normals and colours.
+         *
+         * To help guide movement across a mesh, it would be useful to have a mesh that always gives
+         * neighbour relationships.
+         */
+        void make_navmesh()
+        {
+            if (this->navmesh) { return; } // already made it
+
+            if (this->flags.test (vm_bools::compute_bb) == false) {
+                throw std::runtime_error ("make_navmesh requires compute_bb flag to be true");
+            }
+            this->update_bb();
+
+            // Create a new navmesh
+            this->navmesh = std::make_unique<mplot::NavMesh>();
+
+            // Have we got a saved one?
+            bool have_file_matching_this_visualmodel = false;
+            if (have_file_matching_this_visualmodel) {
+                // this->navmesh->load (filename);
+            } else {
+                this->build_navmesh();
+            }
         }
 
         /**
