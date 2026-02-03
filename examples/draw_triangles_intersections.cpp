@@ -333,10 +333,10 @@ int main()
     auto start_wr = (vmi * start).less_one_dim(); // wr to tvp
     std::cout << "start_wr = " << start_wr << std::endl;
     auto [hit, ti] = tvp->navmesh->find_triangle_crossing (start_wr, dirn, vm);
-    if (ti.i[0] == std::numeric_limits<uint32_t>::max()) {
+    if (ti == std::numeric_limits<uint32_t>::max()) {
         std::cout << "NO HIT\n";
     } else {
-        std::cout << "Indices: " << ti.i << std::endl;
+        std::cout << "Indices: " << ti << std::endl;
         std::cout << "Contains hit " << hit << std::endl;
 
         sv = std::make_unique<mplot::SphereVisual<>>(hit, 0.07, mplot::colour::springgreen2);
@@ -347,10 +347,10 @@ int main()
 
     auto start_wr_fr2 = (vmi * start_fr2).less_one_dim(); // wr to tvp
     auto [hit_fr2, ti_fr2] = tvp->navmesh->find_triangle_crossing (start_wr_fr2, dirn_fr2, vm);
-    if (ti_fr2.i[0] == std::numeric_limits<uint32_t>::max()) {
+    if (ti_fr2 == std::numeric_limits<uint32_t>::max()) {
         std::cout << "NO HIT\n";
     } else {
-        std::cout << "Indices: " << ti_fr2.i << std::endl;
+        std::cout << "Indices: " << ti_fr2 << std::endl;
         std::cout << "Contains hit " << hit_fr2 << std::endl;
 
         sv = std::make_unique<mplot::SphereVisual<>>(hit_fr2, 0.07, mplot::colour::springgreen2);
@@ -362,10 +362,10 @@ int main()
     auto start_wr_bh = (vmi * start_bh).less_one_dim(); // wr to tvp
     std::cout << "start_wr = " << start_wr << std::endl;
     auto [hit_bh, ti_bh] = tvp->navmesh->find_triangle_crossing (start_wr_bh, dirn_bh, vm);
-    if (ti_bh.i[0] == std::numeric_limits<uint32_t>::max()) {
+    if (ti_bh == std::numeric_limits<uint32_t>::max()) {
         std::cout << "NO HIT\n";
     } else {
-        std::cout << "Indices: " << ti_bh.i << std::endl;
+        std::cout << "Indices: " << ti_bh << std::endl;
         std::cout << "Contains hit " << hit_bh << std::endl;
 
         sv = std::make_unique<mplot::SphereVisual<>>(hit_bh, 0.07, mplot::colour::springgreen2);

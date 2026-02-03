@@ -286,7 +286,7 @@ namespace mplot
                 if (this->halfedges[i].twin != std::numeric_limits<uint32_t>::max()) { continue; }
 
                 // It's useful to know how long you will have to wait...
-                if (i % 20000u == 0u) { std::cout << ((100.0f * i)/sz) << " \%...\n" << std::endl; }
+                if (i % 20000u == 0u) { std::cout << ((100.0f * i)/sz) << " percent...\n" << std::endl; }
 
                 uint32_t sb = i >= band ? i - band : 0;
                 uint32_t eb = i + band < sz ? i + band : sz;
@@ -341,7 +341,7 @@ namespace mplot
                 } // else halfedges[i] is an edge of the mesh
             }
 
-            std::cout << "In " << sz << " halfedge searches, had to widen the search in " << (100.0 * wider_searches) / sz << " \%\n";
+            std::cout << "In " << sz << " halfedge searches, had to widen the search in " << (100.0 * wider_searches) / sz << " percent\n";
             std::cout << "Mean wider twin search distance (in array elements) was " << static_cast<double>(twin_meandist) / twins << "\n";
         }
 
