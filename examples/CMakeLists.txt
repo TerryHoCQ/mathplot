@@ -43,19 +43,17 @@ if(ARMADILLO_FOUND)
   target_link_libraries(convolve OpenGL::GL glfw Freetype::Freetype)
 
   # Adaptive Simulated Annealing algo on a made up objective
-  if(HDF5_FOUND)
-    add_executable(anneal_asa anneal_asa.cpp)
-    target_compile_definitions(anneal_asa PUBLIC VISUALISE)
-    target_link_libraries(anneal_asa OpenGL::GL glfw Freetype::Freetype)
+  add_executable(anneal_asa anneal_asa.cpp)
+  target_compile_definitions(anneal_asa PUBLIC VISUALISE)
+  target_link_libraries(anneal_asa OpenGL::GL glfw Freetype::Freetype)
 
-    add_executable(anneal_asa_novis anneal_asa.cpp)
-    target_link_libraries(anneal_asa_novis)
+  add_executable(anneal_asa_novis anneal_asa.cpp)
+  target_link_libraries(anneal_asa_novis)
 
-    # Adaptive Simulated Annealing algo on objective from Bohachevsky
-    add_executable(anneal_boha anneal_asa.cpp)
-    target_compile_definitions(anneal_boha PUBLIC USE_BOHACHEVSKY_FUNCTION VISUALISE)
-    target_link_libraries(anneal_boha OpenGL::GL glfw Freetype::Freetype)
-  endif(HDF5_FOUND)
+  # Adaptive Simulated Annealing algo on objective from Bohachevsky
+  add_executable(anneal_boha anneal_asa.cpp)
+  target_compile_definitions(anneal_boha PUBLIC USE_BOHACHEVSKY_FUNCTION VISUALISE)
+  target_link_libraries(anneal_boha OpenGL::GL glfw Freetype::Freetype)
 
   # Plots a surface, counts (and shows) the frames per second
   add_executable(fps fps.cpp)
@@ -109,11 +107,9 @@ if(ARMADILLO_FOUND)
   target_compile_definitions(rosenbrock PUBLIC FLT=float)
   target_link_libraries(rosenbrock OpenGL::GL glfw Freetype::Freetype)
 
-  if(HDF5_FOUND)
-    add_executable(rosenbrock_asa rosenbrock_asa.cpp)
-    target_compile_definitions(rosenbrock_asa PUBLIC FLT=float VISUALISE)
-    target_link_libraries(rosenbrock_asa OpenGL::GL glfw Freetype::Freetype)
-  endif(HDF5_FOUND)
+  add_executable(rosenbrock_asa rosenbrock_asa.cpp)
+  target_compile_definitions(rosenbrock_asa PUBLIC FLT=float VISUALISE)
+  target_link_libraries(rosenbrock_asa OpenGL::GL glfw Freetype::Freetype)
 
   # Utility prog to test your .svg boundary files
   add_executable(show_svg_boundary show_svg_boundary.cpp)
