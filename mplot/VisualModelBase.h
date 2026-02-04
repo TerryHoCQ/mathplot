@@ -220,7 +220,8 @@ namespace mplot
             this->indices.reserve (6u * n_vertices);
         }
 
-        // Make a hash of vertexPositions, etc as an identifier for this model
+        // Make a hash of vertexPositions, etc as an identifier for this model. The hash identifies
+        // the model's mesh geometry for NavMesh and so the vertexColors are not important.
         std::size_t hash() const
         {
             std::size_t h = std::hash<float>{}(this->vertexPositions[0]);
@@ -229,9 +230,6 @@ namespace mplot
             }
             for (std::size_t i = 0u; i < this->vertexNormals.size(); ++i) {
                 h ^= std::hash<float>{}(this->vertexNormals[i]);
-            }
-            for (std::size_t i = 0u; i < this->vertexColors.size(); ++i) {
-                h ^= std::hash<float>{}(this->vertexColors[i]);
             }
             for (std::size_t i = 0u; i < this->indices.size(); ++i) {
                 h ^= std::hash<uint32_t>{}(this->vertexColors[i]);
