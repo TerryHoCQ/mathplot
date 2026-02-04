@@ -60,16 +60,16 @@ namespace mplot
                 sm::vec<float, 3> nvd = {};
                 sm::vec<float, 3> pos = {};
 
-                for (auto ti : mymodel->navmesh->triangles) {
+                for (auto t : mymodel->navmesh->triangles) {
 
-                    sm::vec<sm::vec<float>, 3> vrts = mymodel->navmesh->triangle_vertices (ti.hi);
+                    sm::vec<sm::vec<float>, 3> vrts = mymodel->navmesh->triangle_vertices (t.hi);
 
                     nvc = vrts[1] - vrts[0];
                     nvd = vrts[2] - vrts[0];
 
                     nv = mymodel->navmesh->triangle_normal (vrts);
 
-                    // Plot tn at mean location of ti
+                    // Plot tn at mean location of f
                     pos = vrts.mean();
                     // Mesh triangle normals
                     this->computeArrow (pos, (pos + nv * this->scale_factor),

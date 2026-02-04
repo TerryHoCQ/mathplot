@@ -119,7 +119,7 @@ namespace mplot
         /*!
          * The vector of half edges in the mesh
          */
-        std::vector<mesh::halfedge<>> halfedges = {};
+        std::vector<mesh::halfedge<>> halfedge = {};
 
         /*!
          * Triangle mesh faces. populated by VisualModel::make_navmesh()
@@ -145,12 +145,12 @@ namespace mplot
             }
             // fout is open
             uint64_t vertex_sz = this->vertex.size();
-            uint64_t halfedges_sz = this->halfedges.size();
+            uint64_t halfedge_sz = this->halfedge.size();
             uint64_t triangles_sz = this->triangles.size();
 
             // Write sizes at head of file, as the first thing
             sm::util::binary_write (fout, vertex_sz);
-            sm::util::binary_write (fout, halfedges_sz);
+            sm::util::binary_write (fout, halfedge_sz);
             sm::util::binary_write (fout, triangles_sz); // 3 * 8 = 24 bytes
 
             // Write the bb range next.
@@ -163,7 +163,7 @@ namespace mplot
                 sm::util::binary_write (fout, v.hi);     // 3 * 4 + 4 = 16 bytes per line
             }
 
-            for (auto he : this->halfedges) {
+            for (auto he : this->halfedge) {
                 sm::util::binary_write (fout, he.vi);
                 sm::util::binary_write (fout, he.twin);
                 sm::util::binary_write (fout, he.next);
@@ -181,18 +181,18 @@ namespace mplot
             if (!fin.is_open()) { throw std::runtime_error ("NavMesh::load: Failed to open file"); }
 
             uint64_t vertex_sz = 0;
-            uint64_t halfedges_sz = 0;
+            uint64_t halfedge_sz = 0;
             uint64_t triangles_sz = 0;
 
             sm::util::binary_read (fin, vertex_sz);
-            sm::util::binary_read (fin, halfedges_sz);
+            sm::util::binary_read (fin, halfedge_sz);
             sm::util::binary_read (fin, triangles_sz); // 3 * 8 = 24 bytes
 
             sm::util::binary_read (fin, this->bb.min);
             sm::util::binary_read (fin, this->bb.max);
 
             this->vertex.resize (vertex_sz);
-            this->halfedges.resize (halfedges_sz);
+            this->halfedge.resize (halfedge_sz);
             this->triangles.resize (triangles_sz);
 
             for (auto& v : this->vertex) {
@@ -200,7 +200,7 @@ namespace mplot
                 sm::util::binary_read (fin, v.hi);     // 3 * 4 + 4 = 16 bytes per line
             }
 
-            for (auto& he : this->halfedges) {
+            for (auto& he : this->halfedge) {
                 sm::util::binary_read (fin, he.vi);
                 sm::util::binary_read (fin, he.twin);
                 sm::util::binary_read (fin, he.next);
@@ -247,11 +247,11 @@ namespace mplot
             uint32_t hi = tri_hi;
             do {
                 //std::cout << "vertex.size(): " << this->vertex.size() << std::endl;
-                if (this->halfedges[hi].vi[0] < this->vertex.size()) {
-                    trivert[i] = this->vertex[this->halfedges[hi].vi[0]].p;
+                if (this->halfedge[hi].vi[0] < this->vertex.size()) {
+                    trivert[i] = this->vertex[this->halfedge[hi].vi[0]].p;
                 }
                 ++i;
-                hi = this->halfedges[hi].next;
+                hi = this->halfedge[hi].next;
             } while (hi != tri_hi);
             return trivert;
         }
@@ -269,11 +269,11 @@ namespace mplot
             uint32_t hi = tri_hi;
             do {
                 //std::cout << "vertex.size(): " << this->vertex.size() << std::endl;
-                if (this->halfedges[hi].vi[0] < this->vertex.size()) {
-                    trivert[i] = (transform * this->vertex[this->halfedges[hi].vi[0]].p).less_one_dim();
+                if (this->halfedge[hi].vi[0] < this->vertex.size()) {
+                    trivert[i] = (transform * this->vertex[this->halfedge[hi].vi[0]].p).less_one_dim();
                 }
                 ++i;
-                hi = this->halfedges[hi].next;
+                hi = this->halfedge[hi].next;
             } while (hi != tri_hi);
             return trivert;
         }
@@ -289,13 +289,13 @@ namespace mplot
         // Retrieve the halfedge as a vector, transformed by the given transform
         sm::vec<float> edge_vector (uint32_t hi, const sm::mat<float, 4>& transform) const
         {
-            const sm::vec<float> v0 = (transform * this->vertex[this->halfedges[hi].vi[0]].p).less_one_dim();
-            const sm::vec<float> v1 = (transform * this->vertex[this->halfedges[hi].vi[1]].p).less_one_dim();
+            const sm::vec<float> v0 = (transform * this->vertex[this->halfedge[hi].vi[0]].p).less_one_dim();
+            const sm::vec<float> v1 = (transform * this->vertex[this->halfedge[hi].vi[1]].p).less_one_dim();
             return v1 - v0;
         }
 
         // Find all the neighbours of triangle *vertex* index a.
-        // \return vector of halfedges indices
+        // \return vector of halfedge indices
         std::vector<uint32_t>
         find_neighbours (uint32_t a) const
         {
@@ -304,7 +304,7 @@ namespace mplot
             do {
                 // hi emanates from the vertex, so return it.
                 rtn.push_back (hi);
-                hi = this->halfedges[this->halfedges[hi].next].twin;
+                hi = this->halfedge[this->halfedge[hi].next].twin;
                 if (hi == std::numeric_limits<uint32_t>::max()) {
                     std::cout << "Warning: twins need to be set up to find_neighbours\n";
                     break;
@@ -323,10 +323,11 @@ namespace mplot
          */
         void compute_neighbour_relations ()
         {
-            uint32_t sz = this->halfedges.size();
-            std::cout << "Finding twins for " << sz << " halfedges\n";
+            constexpr bool debug_nr = false;
+            uint32_t sz = this->halfedge.size();
+            if constexpr (debug_nr) { std::cout << "Finding twins for " << sz << " halfedge\n"; }
 
-            // Search a 'band' either side of i first, assuming that neighbour triangles are likely
+            // Search a 'band' either side of i first, assuming that neighbour faces are likely
             // to have been nearby in the indices array
             const uint32_t band = 3 * 1000;
 
@@ -337,10 +338,10 @@ namespace mplot
 
             for (uint32_t i = 0; i < sz; ++i) {
 
-                const sm::vec<uint32_t, 2>& vi = this->halfedges[i].vi;
+                const sm::vec<uint32_t, 2>& vi = this->halfedge[i].vi;
 
-                // halfedges[i].twin may already have been set (as we set two twins at a time)
-                if (this->halfedges[i].twin != std::numeric_limits<uint32_t>::max()) { continue; }
+                // halfedge[i].twin may already have been set (as we set two twins at a time)
+                if (this->halfedge[i].twin != std::numeric_limits<uint32_t>::max()) { continue; }
 
                 // It's useful to know how long you will have to wait...
                 if (i % 20000u == 0u) { std::cout << ((100.0f * i)/sz) << " percent...\n" << std::endl; }
@@ -351,37 +352,37 @@ namespace mplot
                 // First sb to eb, which we hope is most likely to find a twin
                 for (uint32_t j = sb; j < eb; ++j) {
                     if (j == i) { continue; }
-                    const sm::vec<uint32_t, 2>& vij = this->halfedges[j].vi;
+                    const sm::vec<uint32_t, 2>& vij = this->halfedge[j].vi;
                     if (vi[0] == vij[1] && vi[1] == vij[0]) { // It's a match
-                        this->halfedges[i].twin = j;
-                        this->halfedges[j].twin = i;
+                        this->halfedge[i].twin = j;
+                        this->halfedge[j].twin = i;
                         break;
                     }
                 }
 
                 uint32_t wider = 0;
-                if (this->halfedges[i].twin == std::numeric_limits<uint32_t>::max()) {
+                if (this->halfedge[i].twin == std::numeric_limits<uint32_t>::max()) {
                     // Then, if no match, search rest
                     if (sb != 0 && !wider) { wider = 1; }
                     for (uint32_t j = 0; j < sb; ++j) {
                         if (j == i) { continue; }
-                        const sm::vec<uint32_t, 2>& vij = this->halfedges[j].vi;
+                        const sm::vec<uint32_t, 2>& vij = this->halfedge[j].vi;
                         if (vi[0] == vij[1] && vi[1] == vij[0]) { // It's a match
-                            this->halfedges[i].twin = j;
-                            this->halfedges[j].twin = i;
+                            this->halfedge[i].twin = j;
+                            this->halfedge[j].twin = i;
                             break;
                         }
                     }
                 }
 
-                if (this->halfedges[i].twin == std::numeric_limits<uint32_t>::max()) {
+                if (this->halfedge[i].twin == std::numeric_limits<uint32_t>::max()) {
                     if (eb != sz && !wider) { wider = 1; }
                     for (uint32_t j = eb; j < sz; ++j) {
                         if (j == i) { continue; }
-                        const sm::vec<uint32_t, 2>& vij = this->halfedges[j].vi;
+                        const sm::vec<uint32_t, 2>& vij = this->halfedge[j].vi;
                         if (vi[0] == vij[1] && vi[1] == vij[0]) { // It's a match
-                            this->halfedges[i].twin = j;
-                            this->halfedges[j].twin = i;
+                            this->halfedge[i].twin = j;
+                            this->halfedge[j].twin = i;
                             break;
                         }
                     }
@@ -389,17 +390,19 @@ namespace mplot
 
                 wider_searches += wider;
 
-                if (this->halfedges[i].twin != std::numeric_limits<uint32_t>::max()) {
-                    // std::cout << "Twin of " << i << " is " << this->halfedges[i].twin << std::endl;
+                if (this->halfedge[i].twin != std::numeric_limits<uint32_t>::max()) {
                     if (wider) {
-                        twin_meandist += i > this->halfedges[i].twin ? i - this->halfedges[i].twin : this->halfedges[i].twin - i;
+                        twin_meandist += i > this->halfedge[i].twin ? i - this->halfedge[i].twin : this->halfedge[i].twin - i;
                         ++twins;
                     }
-                } // else halfedges[i] is an edge of the mesh
+                } // else halfedge[i] is an edge of the mesh
             }
-
-            std::cout << "In " << sz << " halfedge searches, had to widen the search in " << (100.0 * wider_searches) / sz << " percent\n";
-            std::cout << "Mean wider twin search distance (in array elements) was " << static_cast<double>(twin_meandist) / twins << "\n";
+            if constexpr (debug_nr) {
+                std::cout << "In " << sz << " halfedge searches, had to widen the search in "
+                          << (100.0 * wider_searches) / sz << " percent\n";
+                std::cout << "Mean wider twin search distance (in array elements) was "
+                          << static_cast<double>(twin_meandist) / twins << "\n";
+            }
         }
 
         /*
@@ -433,7 +436,7 @@ namespace mplot
 
             // Have we been passed a 'most likely triangle' to test first? If so, test it.
             if (ti_ml != std::numeric_limits<uint32_t>::max()) {
-                std::cout << "Passing ti_ml to trangle_vertices: with he->vi =  " << this->halfedges[ti_ml].vi << std::endl;
+                std::cout << "Passing ti_ml to trangle_vertices: with he->vi =  " << this->halfedge[ti_ml].vi << std::endl;
                 sm::vec<sm::vec<float>, 3> v = this->triangle_vertices (ti_ml);
                 auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (v[0], v[1], v[2], vstart, vdir);
                 if (isect) {
@@ -453,12 +456,12 @@ namespace mplot
             for (auto tri : this->triangles) {
 
                 if constexpr (debug_ftc) {
-                    std::cout << "this->halfedges["<< 0 << "] " << (&this->halfedges[0]) << " contains: vi:"
-                              <<  this->halfedges[0].vi
-                              << ", twin:" << this->halfedges[0].twin
-                              << ", next:" << this->halfedges[0].next
-                              << ", prev:" << this->halfedges[0].prev << std::endl;
-                    std::cout << "CF. Passing tri.he " << tri.hi << " to triangle_vertices(): with he->vi =  " << this->halfedges[tri.hi].vi << std::endl;
+                    std::cout << "this->halfedge["<< 0 << "] " << (&this->halfedge[0]) << " contains: vi:"
+                              <<  this->halfedge[0].vi
+                              << ", twin:" << this->halfedge[0].twin
+                              << ", next:" << this->halfedge[0].next
+                              << ", prev:" << this->halfedge[0].prev << std::endl;
+                    std::cout << "CF. Passing tri.he " << tri.hi << " to triangle_vertices(): with he->vi =  " << this->halfedge[tri.hi].vi << std::endl;
                 }
 
                 sm::vec<sm::vec<float>, 3> v = this->triangle_vertices (tri.hi);
@@ -485,9 +488,8 @@ namespace mplot
                     if (sm::geometry::ray_point_intersection (this->vertex[vi].p, vstart, -vertex_n)) {
                         float d = (this->vertex[vi].p - vstart).sos();
                         if (d < isect_d && d < vdir.sos()) {
-                            std::cout << "Register vertex triangle_crossing\n";
+                            if constexpr (debug_ftc) { std::cout << "Register vertex triangle_crossing\n"; }
                             isect_p = this->vertex[vi].p;
-                            // now have halfedge specifying a triangle. Could attempt to look up to face, but could just return halfedge?
                             isect_ti = this->vertex[vi].hi;
                             isect_d = d;
                         }
@@ -751,7 +753,7 @@ namespace mplot
                 }
 
                 ++a;
-                hi = this->halfedges[hi].next;
+                hi = this->halfedge[hi].next;
 
             } while (hi != tri && a < 3);
 
@@ -1040,7 +1042,7 @@ namespace mplot
                     sm::vec<float> vertex_n = this->find_vertex_normal (hi, model_to_scene);
                     vertex_n.renormalize();
                     // How to figure out tv_sf[i]?
-                    // sm::vec<float> v_sf = (model_to_scane * this->vertex[halfedges[hi].vi[0]]).less_one_dim();
+                    // sm::vec<float> v_sf = (model_to_scane * this->vertex[halfedge[hi].vi[0]]).less_one_dim();
                     // or, if tv_sf[0] is the start of ti0, then we can do this:
                     if (sm::geometry::ray_point_intersection (tv_sf[i], camloc_sf + (vertex_n / 2.0f), -vertex_n)) {
                         if constexpr (debug_move) {
@@ -1052,7 +1054,7 @@ namespace mplot
                         isect = true;
                     }
                     ++i;
-                    hi = this->halfedges[hi].next;
+                    hi = this->halfedge[hi].next;
 
                 } while (hi != this->ti0);
             }
@@ -1069,7 +1071,7 @@ namespace mplot
                 // (this can occur when moving along an edge)
                 uint32_t hi = this->ti0;
                 do {
-                    uint32_t twin = this->halfedges[hi].twin;
+                    uint32_t twin = this->halfedge[hi].twin;
                     if (twin != std::numeric_limits<uint32_t>::max()) {
                         // Test to see if start location was inside this twin
                         sm::vec<sm::vec<float>, 3> tv_lf = this->triangle_vertices (twin, model_to_scene);
@@ -1090,7 +1092,7 @@ namespace mplot
                             break; // out of do-while
                         }
                     }
-                    hi = this->halfedges[hi].next;
+                    hi = this->halfedge[hi].next;
                 } while (hi != this->ti0);
 
                 if (isect == false) {
@@ -1216,7 +1218,7 @@ namespace mplot
                         _ti = detected_newtri;
                     } else {
                         // new triangle is the twin of the crossed edge
-                        _ti = this->halfedges[cd.halfedge].twin;
+                        _ti = this->halfedge[cd.halfedge].twin;
                         if constexpr (debug_move) {
                             std::cout << "find triangle across edge: halfedge " << cd.halfedge << " gives the neighbour, which is its twin: " << _ti << std::endl;
                         }
@@ -1333,7 +1335,7 @@ namespace mplot
                         std::set<uint32_t> neighbours_tested;
                         uint32_t hi = this->ti0;
                         do {
-                            uint32_t twin = this->halfedges[hi].twin;
+                            uint32_t twin = this->halfedge[hi].twin;
                             if (twin != std::numeric_limits<uint32_t>::max()) {
                                 // Test to see if start location was inside a neighbour
                                 sm::vec<sm::vec<float>, 3> tv_nb = this->triangle_vertices (twin, model_to_scene);
@@ -1372,7 +1374,7 @@ namespace mplot
                                 }
                             }
 
-                            hi = this->halfedges[hi].next;
+                            hi = this->halfedge[hi].next;
 
                         } while (hi != this->ti0);
 
@@ -1416,7 +1418,7 @@ namespace mplot
                                         } // else end is not in one-neighbour, and neither is start.
                                     }
                                 }
-                                hi = this->halfedges[hi].next;
+                                hi = this->halfedge[hi].next;
 
                             } while (hi != this->ti0);
                         }

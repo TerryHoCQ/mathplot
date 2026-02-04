@@ -48,6 +48,7 @@
 
 #include <mplot/VisualCommon.h>
 #include <mplot/colour.h>
+#include <mplot/tools.h>
 #include <mplot/NavMesh.h>
 
 namespace mplot
@@ -329,42 +330,42 @@ namespace mplot
 
                 constexpr uint32_t mlines = 10000;
                 // Add three halfedges for the triangle
-                uint32_t hesz = navmesh->halfedges.size();
-                navmesh->halfedges.resize (hesz + 3, {});
+                uint32_t hesz = navmesh->halfedge.size();
+                navmesh->halfedge.resize (hesz + 3, {});
                 uint32_t he0 = hesz;
                 uint32_t he1 = hesz + 1;
                 uint32_t he2 = hesz + 2;
 
                 if constexpr (debug_mn) {
                     if (hesz < mlines) {
-                        std::cout << "setting halfedges["<<hesz<<"] " << he0 <<  " to { {"
+                        std::cout << "setting halfedge["<<hesz<<"] " << he0 <<  " to { {"
                                   << navmesh_idx[indices[i]] << ", " << navmesh_idx[indices[i + 1]]
                                   << "}, nullptr, " << he1 << ", " << he2 << " }" << std::endl;
 
-                        std::cout << "setting halfedges["<<hesz + 1<<"] " << he1 <<  " to { {"
+                        std::cout << "setting halfedge["<<hesz + 1<<"] " << he1 <<  " to { {"
                                   << navmesh_idx[indices[i + 1]] << ", " << navmesh_idx[indices[i + 2]]
                                   << "}, nullptr, " << he2 << ", " << he0 << " }" << std::endl;
 
-                        std::cout << "setting halfedges["<<hesz + 2<<"] " << he2 <<  " to { {"
+                        std::cout << "setting halfedge["<<hesz + 2<<"] " << he2 <<  " to { {"
                                   << navmesh_idx[indices[i + 2]] << ", " << navmesh_idx[indices[i]]
                                   << "}, nullptr, " << he0 << ", " << he1 << " }" << std::endl;
                     }
                 }
-                navmesh->halfedges[hesz]     = { {navmesh_idx[indices[i]],     navmesh_idx[indices[i + 1]]}, std::numeric_limits<uint32_t>::max(), he1, he2 };
-                navmesh->halfedges[hesz + 1] = { {navmesh_idx[indices[i + 1]], navmesh_idx[indices[i + 2]]}, std::numeric_limits<uint32_t>::max(), he2, he0 };
-                navmesh->halfedges[hesz + 2] = { {navmesh_idx[indices[i + 2]], navmesh_idx[indices[i]]    }, std::numeric_limits<uint32_t>::max(), he0, he1 };
+                navmesh->halfedge[hesz]     = { {navmesh_idx[indices[i]],     navmesh_idx[indices[i + 1]]}, std::numeric_limits<uint32_t>::max(), he1, he2 };
+                navmesh->halfedge[hesz + 1] = { {navmesh_idx[indices[i + 1]], navmesh_idx[indices[i + 2]]}, std::numeric_limits<uint32_t>::max(), he2, he0 };
+                navmesh->halfedge[hesz + 2] = { {navmesh_idx[indices[i + 2]], navmesh_idx[indices[i]]    }, std::numeric_limits<uint32_t>::max(), he0, he1 };
 
                 if constexpr (debug_mn) {
                     if (hesz < mlines) {
-                        std::cout << "halfedges["<< hesz << "] contains: vi:"
-                                  <<  navmesh->halfedges[hesz].vi
-                                  << ", twin:" << navmesh->halfedges[hesz].twin
-                                  << ", next:" << navmesh->halfedges[hesz].next
-                                  << ", prev:" << navmesh->halfedges[hesz].prev << std::endl;
+                        std::cout << "halfedge["<< hesz << "] contains: vi:"
+                                  <<  navmesh->halfedge[hesz].vi
+                                  << ", twin:" << navmesh->halfedge[hesz].twin
+                                  << ", next:" << navmesh->halfedge[hesz].next
+                                  << ", prev:" << navmesh->halfedge[hesz].prev << std::endl;
                     }
                 }
-                // Direct population of triangles. Three indices and a 4th number to hold flags (with bit0 meaning edge-triangle)
-                mesh::face<> t = { he0 }; // Face will just be the first half edge.
+                // A face contains just the first half edge index
+                mesh::face<> t = { he0 };
 
                 // The normal vector for this triangle could be obtained from the mesh normals, but
                 // we can't trust them (though they're easy to get, as we're dealing with indices
@@ -383,17 +384,18 @@ namespace mplot
                 sm::vec<float> n = nx.cross (ny);
                 n.renormalize();
 
-                // Check rotational sense of triangles?
+                // Check rotational sense of triangles
                 if (n.dot (tn) < 0.0f) {
-                    //throw std::runtime_error ("Need to swap triangle order\n");
-                    // Swap first and last half edge?
-                    navmesh->halfedges[hesz].vi.rotate();
-                    navmesh->halfedges[hesz + 1].vi.rotate();
-                    navmesh->halfedges[hesz + 2].vi.rotate();
+                    // Swap first and last half edge
+                    navmesh->halfedge[hesz].vi.rotate();
+                    navmesh->halfedge[hesz + 1].vi.rotate();
+                    navmesh->halfedge[hesz + 2].vi.rotate();
                 }
                 navmesh->triangles.push_back (t);
             }
-            if constexpr (debug_mn) { std::cout << "make_navmesh: Created triangles (" << navmesh->halfedges.size() << " halfedges)" << std::endl; }
+            if constexpr (debug_mn) {
+                std::cout << "make_navmesh: Created triangles (" << navmesh->halfedge.size() << " halfedges)" << std::endl;
+            }
 
             navmesh->compute_neighbour_relations(); // finds the halfedge twins
         }
@@ -419,17 +421,10 @@ namespace mplot
             // Create a new navmesh
             this->navmesh = std::make_unique<mplot::NavMesh>();
 
-            // Have we got a saved one?
+            // Have we got a pre-computed navmesh file for the halfedge twin relationships?
             uint64_t h = this->hash();
-            std::string filename = std::string("navmesh_") + std::to_string (h);
-            std::cout << "Check for saved navmesh in " << filename << std::endl;
-
-            bool have_file_matching_this_visualmodel = false;
+            std::string filename = mplot::tools::getTmpPath() + std::string("navmesh_") + std::to_string (h);
             if (mplot::tools::fileExists (filename)) {
-                have_file_matching_this_visualmodel = true;
-            }
-
-            if (have_file_matching_this_visualmodel) {
                 this->navmesh->load (filename);
             } else {
                 this->build_navmesh();
