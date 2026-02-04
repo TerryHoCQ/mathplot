@@ -282,11 +282,11 @@ namespace mplot
             for (auto e : equiv_v) { equiv[*e.second.begin()] = e.second; }
             if constexpr (debug_mn) {
                 for (auto e : equiv) {
-                    std::cout << "make_navmesh: equiv[" << e.first << "] = ";
+                    std::cout << "build_navmesh: equiv[" << e.first << "] = ";
                     for (auto idx : e.second) {  std::cout << idx << ","; }
                     std::cout << std::endl;
                 }
-                std::cout << "make_navmesh: Populated equiv which has "
+                std::cout << "build_navmesh: Populated equiv which has "
                           << equiv.size() << " vvecs" << std::endl;
             }
 
@@ -305,15 +305,15 @@ namespace mplot
                 vertexidx_to_indices[i].resize (eqs.second.size());
                 std::copy (eqs.second.begin(), eqs.second.end(), vertexidx_to_indices[i].begin());
                 for (auto ev : eqs.second) {
-                    if constexpr (debug_mn) { std::cout << "make_navmesh: set navmesh_idx[" << ev << "] = " << i << std::endl; }
+                    if constexpr (debug_mn) { std::cout << "build_navmesh: set navmesh_idx[" << ev << "] = " << i << std::endl; }
                     navmesh_idx[ev] = i;
                 }
                 ++i;
             }
-            if constexpr (debug_mn) { std::cout << "make_navmesh: Created equiv inverse" << std::endl; }
+            if constexpr (debug_mn) { std::cout << "build_navmesh: Created equiv inverse" << std::endl; }
 
             if (vcount != vps) {
-                std::cout << "make_navmesh: WARNING: Vertex count from equiv is " << vcount
+                std::cout << "build_navmesh: WARNING: Vertex count from equiv is " << vcount
                           << " which should (but does not) equal " << vps << std::endl;
             }
 
@@ -394,7 +394,7 @@ namespace mplot
                 navmesh->triangles.push_back (t);
             }
             if constexpr (debug_mn) {
-                std::cout << "make_navmesh: Created triangles (" << navmesh->halfedge.size() << " halfedges)" << std::endl;
+                std::cout << "build_navmesh: Created triangles (" << navmesh->halfedge.size() << " halfedges)" << std::endl;
             }
 
             navmesh->compute_neighbour_relations(); // finds the halfedge twins
@@ -427,6 +427,7 @@ namespace mplot
             if (mplot::tools::fileExists (filename)) {
                 this->navmesh->load (filename);
             } else {
+                std::cout << "Building NavMesh to save into file " << filename << std::endl;
                 this->build_navmesh();
                 this->navmesh->save (filename);
             }

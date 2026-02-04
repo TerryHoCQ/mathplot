@@ -436,7 +436,6 @@ namespace mplot
 
             // Have we been passed a 'most likely triangle' to test first? If so, test it.
             if (ti_ml != std::numeric_limits<uint32_t>::max()) {
-                std::cout << "Passing ti_ml to trangle_vertices: with he->vi =  " << this->halfedge[ti_ml].vi << std::endl;
                 sm::vec<sm::vec<float>, 3> v = this->triangle_vertices (ti_ml);
                 auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (v[0], v[1], v[2], vstart, vdir);
                 if (isect) {
@@ -447,12 +446,32 @@ namespace mplot
                         isect_d = d;
                     }
                 }
-            }
-            if (isect_d != std::numeric_limits<float>::max()) {
-                // we found it already!
-                return { isect_p, isect_ti };
+                if (isect_d != std::numeric_limits<float>::max()) {
+                    // we found it in the first triangle!
+                    return { isect_p, isect_ti };
+                }
+
+                // Next, test the neighbours of ti_ml
+                std::vector<uint32_t> nbs = this->find_neighbours (ti_ml);
+                for (uint32_t nb : nbs) {
+                    v = this->triangle_vertices (nb);
+                    auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (v[0], v[1], v[2], vstart, vdir);
+                    if (isect) {
+                        float d = (p - vstart).sos();
+                        if (d < vdsos) {
+                            isect_p = p;
+                            isect_ti = ti_ml;
+                            isect_d = d;
+                        }
+                    }
+
+                    if (isect_d != std::numeric_limits<float>::max()) {
+                        return { isect_p, isect_ti };
+                    }
+                }
             }
 
+            // Fall back to testing ALL the triangles...
             for (auto tri : this->triangles) {
 
                 if constexpr (debug_ftc) {
