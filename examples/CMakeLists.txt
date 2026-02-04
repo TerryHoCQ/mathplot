@@ -393,10 +393,8 @@ if(NOT APPLE)
   target_link_libraries(geodesic_ce OpenGL::GL glfw Freetype::Freetype)
 endif()
 
-if(HDF5_FOUND)
 add_executable(model_crawler model_crawler.cpp)
-target_link_libraries(model_crawler OpenGL::GL glfw Freetype::Freetype ${HDF5_C_LIBRARIES})
-endif()
+target_link_libraries(model_crawler OpenGL::GL glfw Freetype::Freetype)
 
 add_executable(tri tri.cpp)
 target_link_libraries(tri OpenGL::GL glfw Freetype::Freetype)

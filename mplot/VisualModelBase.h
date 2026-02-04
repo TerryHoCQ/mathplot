@@ -423,9 +423,14 @@ namespace mplot
 
             // Have we got a saved one?
             uint64_t h = this->hash();
-            std::string filename = std::string("navmesh_") + std::to_string (h) + ".h5";
+            std::string filename = std::string("navmesh_") + std::to_string (h);
             std::cout << "Check for saved navmesh in " << filename << std::endl;
+
             bool have_file_matching_this_visualmodel = false;
+            if (mplot::tools::fileExists (filename)) {
+                have_file_matching_this_visualmodel = true;
+            }
+
             if (have_file_matching_this_visualmodel) {
                 this->navmesh->load (filename);
             } else {

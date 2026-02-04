@@ -25,7 +25,7 @@
 #include <sm/flags>
 #include <sm/mat>
 #include <sm/geometry>
-#include <sm/hdfdata>
+#include <sm/util>
 
 namespace mplot
 {
@@ -137,43 +137,77 @@ namespace mplot
         void save (const std::string& filename) const
         {
             std::cout << "Save NavMesh to " << filename << std::endl;
-            sm::hdfdata d (filename, std::ios::out | std::ios::trunc);
 
-            sm::vvec<sm::vec<float, 3>> p = {};
-            sm::vvec<uint32_t> hi = {};
+            std::ofstream fout (filename, std::ios::binary | std::ios::out | std::ios::trunc);
+            if (!fout.is_open()) {
+                std::cerr << "NavMesh::save: Failed to open " << filename << " for writing, continue\n";
+                return;
+            }
+            // fout is open
+            uint64_t vertex_sz = this->vertex.size();
+            uint64_t halfedges_sz = this->halfedges.size();
+            uint64_t triangles_sz = this->triangles.size();
+
+            // Write sizes at head of file, as the first thing
+            sm::util::binary_write (fout, vertex_sz);
+            sm::util::binary_write (fout, halfedges_sz);
+            sm::util::binary_write (fout, triangles_sz); // 3 * 8 = 24 bytes
+
+            // Write the bb range next.
+            sm::util::binary_write (fout, this->bb.min);
+            sm::util::binary_write (fout, this->bb.max); // 2 * 3 * 4 = 24 bytes
+
+            // Now loop
             for (auto v : this->vertex) {
-                p.push_back (v.p);
-                hi.push_back (v.hi);
+                sm::util::binary_write (fout, v.p);
+                sm::util::binary_write (fout, v.hi);     // 3 * 4 + 4 = 16 bytes per line
             }
-            d.add_contained_vals ("/vertex_p", p);
-            d.add_contained_vals ("/vertex_hi", hi);
 
-            sm::vvec<sm::vec<uint32_t, 2>> vi = {};
-            sm::vvec<uint32_t> twin = {};
-            sm::vvec<uint32_t> next = {};
-            sm::vvec<uint32_t> prev = {};
             for (auto he : this->halfedges) {
-                vi.push_back (he.vi);
-                twin.push_back (he.twin);
-                next.push_back (he.next);
-                prev.push_back (he.prev);
+                sm::util::binary_write (fout, he.vi);
+                sm::util::binary_write (fout, he.twin);
+                sm::util::binary_write (fout, he.next);
+                sm::util::binary_write (fout, he.prev);  // 5 * 4 = 20 bytes per line
             }
-            d.add_contained_vals ("/halfedges_vi", vi);
-            d.add_contained_vals ("/halfedges_twin", twin);
-            d.add_contained_vals ("/halfedges_next", next);
-            d.add_contained_vals ("/halfedges_prev", prev);
 
-            hi.clear();
-            for (auto t : this->triangles) { hi.push_back (t.hi); }
-            d.add_contained_vals ("/triangles_hi", hi);
-
-            d.add_contained_vals ("/bb_min", bb.min);
-            d.add_contained_vals ("/bb_max", bb.max);
+            for (auto t : this->triangles) { sm::util::binary_write (fout, t.hi); }
         }
 
         void load (const std::string& filename)
         {
-            std::cout << "FIXME: Load from file " << filename << std::endl;
+            std::cout << "Load NavMesh from " << filename << std::endl;
+
+            std::ifstream fin (filename, std::ios::binary | std::ios::in);
+            if (!fin.is_open()) { throw std::runtime_error ("NavMesh::load: Failed to open file"); }
+
+            uint64_t vertex_sz = 0;
+            uint64_t halfedges_sz = 0;
+            uint64_t triangles_sz = 0;
+
+            sm::util::binary_read (fin, vertex_sz);
+            sm::util::binary_read (fin, halfedges_sz);
+            sm::util::binary_read (fin, triangles_sz); // 3 * 8 = 24 bytes
+
+            sm::util::binary_read (fin, this->bb.min);
+            sm::util::binary_read (fin, this->bb.max);
+
+            this->vertex.resize (vertex_sz);
+            this->halfedges.resize (halfedges_sz);
+            this->triangles.resize (triangles_sz);
+
+            for (auto& v : this->vertex) {
+                sm::util::binary_read (fin, v.p);
+                sm::util::binary_read (fin, v.hi);     // 3 * 4 + 4 = 16 bytes per line
+            }
+
+            for (auto& he : this->halfedges) {
+                sm::util::binary_read (fin, he.vi);
+                sm::util::binary_read (fin, he.twin);
+                sm::util::binary_read (fin, he.next);
+                sm::util::binary_read (fin, he.prev);  // 5 * 4 = 20 bytes per line
+            }
+
+            for (auto& t : this->triangles) { sm::util::binary_read (fin, t.hi); }
         }
 
         /*!
