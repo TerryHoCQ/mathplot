@@ -61,13 +61,12 @@ namespace mplot
         };
     }
 
-    // Exception that returns triangles that were near the location of the error
+    // Exception that (used to) return triangles that were near the location of the error
     struct NavException : public std::exception
     {
         enum class type : uint32_t { generic, no_intersection, zero_mv, mv_to_vertex, undetected_crossing, nan_mv, off_edge };
 
         NavException (const type _type) : m_type(_type) {}
-        NavException (const type _type, const std::vector<uint32_t>& t) : m_type(_type) { this->tris = t; }
 
         using std::exception::what;
         const char* what()
@@ -99,8 +98,6 @@ namespace mplot
         }
         // Error type determines message generated
         type m_type = type::generic;
-        // Triangles of interest (as indices into NavMesh::halfedges)
-        std::vector<uint32_t> tris;
     };
 
     /*!
@@ -130,8 +127,6 @@ namespace mplot
         sm::range<sm::vec<float>> bb;
 
         //! When navigating, this is the 'current triangle' that you're located over/near
-        //mesh::face<> ti0; // or could be a halfedge pointer?
-        //const mesh::halfedge<>* ti0 = nullptr;
         uint32_t ti0 = std::numeric_limits<uint32_t>::max();
 
         void save (const std::string& filename) const
@@ -304,13 +299,36 @@ namespace mplot
             do {
                 // hi emanates from the vertex, so return it.
                 rtn.push_back (hi);
-                hi = this->halfedge[this->halfedge[hi].next].twin;
-                if (hi == std::numeric_limits<uint32_t>::max()) {
-                    std::cout << "Warning: twins need to be set up to find_neighbours\n";
-                    break;
-                }
+                hi = this->halfedge[this->halfedge[hi].prev].twin;
+                // or hi = this->halfedge[this->halfedge[hi].twin].next; // Clockwise
             } while (hi != a);
             return rtn;
+        }
+
+        /*
+         * After making the neighbour relations from the OpenGL mesh, the last step is to fill in
+         * the boundary halfedges. Find all halfedges with an unset twin and then start creating the
+         * new half edges to fill in.
+         */
+        void add_boundary_halfedges()
+        {
+#if 0
+            constexpr bool debug_bnd = false;
+            uint32_t sz = this->halfedge.size();
+
+            // Create a new vector of boundary halfedges which will then be appended to this->halfedge
+            std::vector<mesh::halfedge> bhe;
+
+            uint32_t j = sz;
+            for (uint32_t i = 0; i < sz; ++i) {
+                if (this->halfedge[i].twin == std::numeric_limits<uint32_t>::max()) {
+                    // This halfedge does not have a twin.
+                    uint32_t bhe_next = 0; // Figure these out...
+                    uint32_t bhe_prev = 0;
+                    bhe.push_back ({this->halfedge[i].v[1], this->halfedge[i].v[0]}, i, bhe_next, bhe_prev);
+                }
+            }
+#endif
         }
 
         /*
@@ -321,7 +339,7 @@ namespace mplot
          * The key is the half-edge data structure.
          * See: https://jerryyin.info/geometry-processing-algorithms/half-edge/
          */
-        void compute_neighbour_relations ()
+        void compute_neighbour_relations()
         {
             constexpr bool debug_nr = false;
             uint32_t sz = this->halfedge.size();
@@ -362,7 +380,7 @@ namespace mplot
 
                 uint32_t wider = 0;
                 if (this->halfedge[i].twin == std::numeric_limits<uint32_t>::max()) {
-                    // Then, if no match, search rest
+                    // Then, if no match, search from 0 to sb
                     if (sb != 0 && !wider) { wider = 1; }
                     for (uint32_t j = 0; j < sb; ++j) {
                         if (j == i) { continue; }
@@ -376,6 +394,7 @@ namespace mplot
                 }
 
                 if (this->halfedge[i].twin == std::numeric_limits<uint32_t>::max()) {
+                    // If still no match search from eb to sz
                     if (eb != sz && !wider) { wider = 1; }
                     for (uint32_t j = eb; j < sz; ++j) {
                         if (j == i) { continue; }
@@ -1364,12 +1383,11 @@ namespace mplot
                                 sm::vec<float> mv_orthog_nb = _tn * (mv_inplane.dot (_tn) / (_tn.dot(_tn)));
                                 sm::vec<float> mv_inplane_nb = mv_inplane - mv_orthog_nb;
                                 if constexpr (debug_move) {
-                                    std::cout << "endis? ray_tri_intersection with " << (hov_sf + mv_inplane_nb + (_tn / 2.0f)) << "," << -_tn << std::endl;
+                                    std::cout << "TN: " << twin << ": isect vector " << (hov_sf + mv_inplane_nb + (_tn / 2.0f)) << "," << -_tn << " with tri " << tv_nb;
                                 }
                                 auto [endis, endh] = sm::geometry::ray_tri_intersection<float, double> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + mv_inplane_nb + (_tn / 2.0f), -_tn);
                                 if constexpr (debug_move) {
-                                    std::cout << "Start of move " << (is ? "IS" : "is NOT") << " in twin " << twin << " / " <<  tv_nb << std::endl;
-                                    std::cout << "End of move " << (endis ? "IS" : "is NOT") << " in that triangle" << std::endl;
+                                    std::cout << " Start IN? " << (is ? "Y" : "N") << "End IN? " << (endis ? "Y" : "N") << std::endl;
                                 }
 
                                 neighbours_tested.insert (twin);
