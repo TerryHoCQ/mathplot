@@ -225,15 +225,15 @@ namespace mplot
         // the model's mesh geometry for NavMesh and so the vertexColors are not important.
         std::size_t hash() const
         {
-            std::size_t h = std::hash<float>{}(this->vertexPositions[0]);
-            for (std::size_t i = 1u; i < this->vertexPositions.size(); ++i) {
-                h ^= std::hash<float>{}(this->vertexPositions[i]);
+            std::size_t h = 17;
+            for (std::size_t i = 0u; i < this->vertexPositions.size(); ++i) {
+                h = (h << 5) - 1 + std::hash<float>{}(this->vertexPositions[i]);
             }
             for (std::size_t i = 0u; i < this->vertexNormals.size(); ++i) {
-                h ^= std::hash<float>{}(this->vertexNormals[i]);
+                h = (h << 5) - 1 + std::hash<float>{}(this->vertexNormals[i]);
             }
             for (std::size_t i = 0u; i < this->indices.size(); ++i) {
-                h ^= std::hash<uint32_t>{}(this->vertexColors[i]);
+                h = (h << 5) - 1 + std::hash<uint32_t>{}(this->indices[i]);
             }
             return h;
         }
