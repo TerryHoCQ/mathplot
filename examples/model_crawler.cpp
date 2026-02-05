@@ -81,11 +81,10 @@ int main (int argc, char** argv)
     gvp->reinitColours();
     // Make the navmesh for the geodesic, this doesn't occur automatically and has to come after finalize()
     gvp->make_navmesh();
-    std::cout << "\nmake_navmesh() returned\n\n";
 
     // We're going to move the coordinate arrows forwards (along its z-axis), so that it 'orbits'
     float move_step = 0.1f; // 0.075 <= move_step and iterations 6 to fail
-    [[maybe_unused]] sm::vec<float> mv_ca = sm::vec<float>::uz() * move_step;
+    sm::vec<float> mv_ca = sm::vec<float>::uz() * move_step;
 
     // The viewmatrices have to be passed to mplot::NavMesh::compute_mesh_movement
     sm::mat<float, 4> ca_view = cap->getViewMatrix();
@@ -103,7 +102,7 @@ int main (int argc, char** argv)
 
         // Wait .018 s and also poll for mouse/keyboard events
         v.waitevents (0.018);
-#if 1
+
         // Compute a new movement over the landscape mesh (the sphere)
         try {
             ca_view = gvp->navmesh->compute_mesh_movement (mv_ca, ca_view, sph_view, hoverheight);
@@ -114,7 +113,7 @@ int main (int argc, char** argv)
             std::cout << "Exception navigating mesh at movement count " << move_counter << ": " << e.what() << std::endl;
             throw e;
         }
-#endif
+
         // Update the viewmatrix of the coord arrows, setting its position within the scene
         cap->setViewMatrix (ca_view);
 

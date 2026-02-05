@@ -398,6 +398,8 @@ namespace mplot
             }
 
             navmesh->compute_neighbour_relations(); // finds the halfedge twins
+
+            navmesh->add_boundary_halfedges();
         }
 
         /*!

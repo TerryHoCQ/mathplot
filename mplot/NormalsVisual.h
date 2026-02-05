@@ -80,6 +80,22 @@ namespace mplot
                     this->computeArrow (pos, (pos + nvd * scale_factor),
                                         clrnd, tube_r, this->arrowhead_prop, cone_r, this->shapesides);
                 }
+
+                // Can also show halfedges from the navmesh
+                for (auto h : mymodel->navmesh->halfedge) {
+
+                    auto p0 = mymodel->navmesh->vertex[h.vi[0]].p;
+                    auto p1 = mymodel->navmesh->vertex[h.vi[1]].p;
+                    if (h.flags) {
+                        // boundary
+                        this->computeArrow (p0, p1, mplot::colour::crimson,
+                                            tube_r, this->arrowhead_prop, cone_r, this->shapesides);
+                    } else {
+                        // internal
+                        this->computeArrow (p0, p1, mplot::colour::dodgerblue2,
+                                            tube_r, this->arrowhead_prop, cone_r, this->shapesides);
+                    }
+                }
             }
         };
 

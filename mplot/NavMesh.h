@@ -42,6 +42,7 @@ namespace mplot
             I twin = std::numeric_limits<I>::max(); // twin half edge
             I next = std::numeric_limits<I>::max(); // next half edge in face (or hole)
             I prev = std::numeric_limits<I>::max(); // prev half edge in face (or hole)
+            I flags = 0; // 0x1: boundary halfedge
         };
 
         template<typename I = uint32_t, typename F=float, I N = 3> requires std::is_integral_v<I>
@@ -163,6 +164,7 @@ namespace mplot
                 sm::util::binary_write (fout, he.twin);
                 sm::util::binary_write (fout, he.next);
                 sm::util::binary_write (fout, he.prev);  // 5 * 4 = 20 bytes per line
+                sm::util::binary_write (fout, he.flags);  // plus 4
             }
 
             for (auto t : this->triangles) { sm::util::binary_write (fout, t.hi); }
@@ -200,6 +202,7 @@ namespace mplot
                 sm::util::binary_read (fin, he.twin);
                 sm::util::binary_read (fin, he.next);
                 sm::util::binary_read (fin, he.prev);  // 5 * 4 = 20 bytes per line
+                sm::util::binary_read (fin, he.flags);
             }
 
             for (auto& t : this->triangles) { sm::util::binary_read (fin, t.hi); }
@@ -312,23 +315,63 @@ namespace mplot
          */
         void add_boundary_halfedges()
         {
-#if 0
-            constexpr bool debug_bnd = false;
-            uint32_t sz = this->halfedge.size();
+            constexpr uint32_t max = std::numeric_limits<uint32_t>::max();
+            constexpr bool debug_bnd = true;
 
-            // Create a new vector of boundary halfedges which will then be appended to this->halfedge
-            std::vector<mesh::halfedge> bhe;
-
-            uint32_t j = sz;
+            const uint32_t sz = this->halfedge.size();
+            uint32_t j = 0;
             for (uint32_t i = 0; i < sz; ++i) {
-                if (this->halfedge[i].twin == std::numeric_limits<uint32_t>::max()) {
-                    // This halfedge does not have a twin.
-                    uint32_t bhe_next = 0; // Figure these out...
-                    uint32_t bhe_prev = 0;
-                    bhe.push_back ({this->halfedge[i].v[1], this->halfedge[i].v[0]}, i, bhe_next, bhe_prev);
+                if (this->halfedge[i].twin == max) {
+                    // This halfedge does not have a twin, walk the boundary from here
+                    const uint32_t j0 = j; // j index at boundary start
+                    uint32_t bprev = max;
+                    uint32_t cur = i;
+                    uint32_t done = 0u;
+                    while (!done) {
+                        if constexpr (debug_bnd) {
+                            std::cout << "                     Search for boundary from cur = " << cur << std::endl;
+                        }
+                        uint32_t bcand = cur; // bcand starts as an internal halfedge
+                        uint32_t bcandi = max;
+                        uint32_t counter = 0u;
+                        std::cout << "halfedge[i].twin = " << this->halfedge[i].twin << std::endl;
+                        //uint32_t bcand0 = this->halfedge[this->halfedge[bcand].prev].twin;
+                        //uint32_t bcand0t = max;
+                        do {
+                            bcandi = this->halfedge[bcand].prev;
+                            std::cout << "bcandi: " << bcandi << std::endl;
+                            bcand = this->halfedge[bcandi].twin; // if max, it's a boundary, else it's internal
+                            std::cout << "bcand: " << bcand << std::endl;
+                            if (counter++ > 6) {
+                                std::cout << "Something is wrong; returning\n";
+                                return;
+                            }
+                            //if (counter == 1) { bcand0t = bcand0; }
+
+                        } while (bcand != max // halfedge[i].twin is usually max, so second condition may be sufficient
+                                 && bcand != this->halfedge[i].twin
+                                 //&& bcand != bcand0t
+                                 && bcandi != cur
+                            );
+
+                        this->halfedge.push_back ({{this->halfedge[cur].vi[1], this->halfedge[cur].vi[0]}, cur, bprev, sz + j + 1, 1});
+                        this->halfedge[cur].twin = sz + j;
+
+                        if (bcandi == i) {
+                            this->halfedge[sz + j0].prev = sz + j - 1;
+                            ++done;
+                        } else {
+                            bprev = sz + j;
+                            cur = bcandi;
+                            ++j;
+                        }
+                    }
+                    if constexpr (debug_bnd) {
+                        std::cout << "Added " << (j - j0) << " halfedges to that boundary\n";
+                    }
                 }
             }
-#endif
+            if constexpr (debug_bnd) { std::cout << __func__ << " returning\n"; }
         }
 
         /*
