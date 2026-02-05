@@ -1558,11 +1558,11 @@ namespace mplot
             size_t i0 = this->indices.size();
             this->indices.resize (i0 + 6, 0);
             this->indices[i0++] = this->idx;
+            this->indices[i0++] = this->idx + 2;
             this->indices[i0++] = this->idx + 1;
-            this->indices[i0++] = this->idx + 2;
             this->indices[i0++] = this->idx;
-            this->indices[i0++] = this->idx + 2;
             this->indices[i0++] = this->idx + 3;
+            this->indices[i0++] = this->idx + 2;
 
             this->idx += 4;
         }
