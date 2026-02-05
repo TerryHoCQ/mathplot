@@ -493,12 +493,12 @@ namespace mplot
                         // Triangle 1
                         I ii = ri * dims[0] + ci;
                         this->indices[ind_idx++] = (ii);
-                        this->indices[ind_idx++] = (ii + dims[0] + 1);  // NNE
                         this->indices[ind_idx++] = (ii + 1);            // NE
+                        this->indices[ind_idx++] = (ii + dims[0] + 1);  // NNE
                         // Triangle 2
                         this->indices[ind_idx++] = (ii);
-                        this->indices[ind_idx++] = (ii + dims[0]);      // NN
                         this->indices[ind_idx++] = (ii + dims[0] + 1);  // NNE
+                        this->indices[ind_idx++] = (ii + dims[0]);      // NN
                     }
                 }
             } else if (this->grid->get_order() == sm::gridorder::topleft_to_bottomright) {
