@@ -77,7 +77,7 @@ namespace mplot
                 sm::vec<float, 3> pos = {};
 
                 if (this->options.any_of ({normalsvisual_flags::show_tri_normals, normalsvisual_flags::show_tri_edges})) {
-                    std::cout << "About to show normals/edges for " << mymodel->navmesh->triangles.size() << " triangles" << std::endl;
+                    std::cout << "About to show normals and/or edges for " << mymodel->navmesh->triangles.size() << " triangles" << std::endl;
 
                     for (auto t : mymodel->navmesh->triangles) {
 
@@ -106,7 +106,18 @@ namespace mplot
                 if (this->options.any_of ({normalsvisual_flags::show_halfedges,
                                            normalsvisual_flags::show_inner_halfedges,
                                            normalsvisual_flags::show_boundary_halfedges})) {
-                    std::cout << "About to show " << mymodel->navmesh->halfedge.size() << " halfedges from the model..." << std::endl;
+
+                    if (this->options.test (normalsvisual_flags::show_halfedges)
+                        || this->options.test ({normalsvisual_flags::show_inner_halfedges, normalsvisual_flags::show_boundary_halfedges})) {
+                        std::cout << "About to show " << mymodel->navmesh->halfedge.size() << " halfedges from the model...\n";
+                    } else {
+                        if (this->options.test (normalsvisual_flags::show_inner_halfedges)) {
+                            std::cout << "Showing only inner halfedges (approx " << mymodel->navmesh->halfedge.size() << ")\n";
+                        } else if (this->options.test (normalsvisual_flags::show_inner_halfedges)) {
+                            std::cout << "Showing only boundary halfedges (approx " << mymodel->navmesh->halfedge.size() << ")\n";
+                        }
+                    }
+
                     for (auto h : mymodel->navmesh->halfedge) {
 
                         auto p0 = mymodel->navmesh->vertex[h.vi[0]].p;
@@ -146,7 +157,6 @@ namespace mplot
         sm::flags<normalsvisual_flags> options;
         void options_defaults()
         {
-            std::cout << __func__ << " called\n";
             this->options.reset();
             this->options.set (normalsvisual_flags::show_gl_normals, true);
             this->options.set (normalsvisual_flags::show_tri_edges, false);
