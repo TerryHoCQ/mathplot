@@ -237,20 +237,23 @@ namespace mplot
         {
             sm::vec<sm::vec<float>, 3> trivert = {};
             if (tri_hi == std::numeric_limits<uint32_t>::max()) {
-                std::cout << "tri_hi is null?\n";
+                std::cout << "tri_hi is unset?\n";
                 return trivert;
             }
 
-            uint32_t i = 0;
             uint32_t hi = tri_hi;
-            do {
-                //std::cout << "vertex.size(): " << this->vertex.size() << std::endl;
+            for (uint32_t i = 0; i < 3; ++i) {
                 if (this->halfedge[hi].vi[0] < this->vertex.size()) {
                     trivert[i] = this->vertex[this->halfedge[hi].vi[0]].p;
                 }
-                ++i;
                 hi = this->halfedge[hi].next;
-            } while (hi != tri_hi);
+                if (hi >= this->halfedge.size()) { break; }
+            }
+            if (hi != tri_hi) {
+                // Triangle didn't close. This can occur at the edge of a flat model
+                trivert[0][0] = std::numeric_limits<float>::max(); // to tell client code
+            }
+
             return trivert;
         }
 
@@ -259,20 +262,23 @@ namespace mplot
         {
             sm::vec<sm::vec<float>, 3> trivert = {};
             if (tri_hi == std::numeric_limits<uint32_t>::max()) {
-                std::cout << "tri_hi is null?\n";
+                std::cout << "tri_hi is unset?\n";
                 return trivert;
             }
 
-            uint32_t i = 0;
             uint32_t hi = tri_hi;
-            do {
-                //std::cout << "vertex.size(): " << this->vertex.size() << std::endl;
+            for (uint32_t i = 0; i < 3; ++i) {
                 if (this->halfedge[hi].vi[0] < this->vertex.size()) {
                     trivert[i] = (transform * this->vertex[this->halfedge[hi].vi[0]].p).less_one_dim();
                 }
-                ++i;
                 hi = this->halfedge[hi].next;
-            } while (hi != tri_hi);
+                if (hi >= this->halfedge.size()) { break; }
+            }
+            if (hi != tri_hi) {
+                // Triangle didn't close. This can occur at the edge of a flat model
+                trivert[0][0] = std::numeric_limits<float>::max(); // to tell client code
+            }
+
             return trivert;
         }
 
@@ -1057,20 +1063,26 @@ namespace mplot
                                                  const sm::mat<float, 4>& model_to_scene,
                                                  const float hoverheight)
         {
-            constexpr bool debug_move = false;
+            constexpr bool debug_move = true;
             constexpr bool debug_move2 = true;
 
             // A data-containing exception to throw
             mplot::NavException ne (mplot::NavException::type::generic);
+
+            // In case we throw off-edge, we need to restore ti0's state
+            const uint32_t ti0_save = this->ti0;
 
             // Boolean state flags used in this function
             enum class cmm_fl : uint32_t { done, detected_crossing, single_movement, vertex_crossing };
             sm::flags<cmm_fl> flags;
 
             // Camera location, scene frame
-            sm::vec<float> camloc_sf = cam_to_scene.translation();
+            const sm::vec<float> camloc_sf = cam_to_scene.translation();
             // Convert indices to vertices for triangle ti0, converting to the scene frame
             sm::vec<sm::vec<float>, 3> tv_sf = this->triangle_vertices (this->ti0, model_to_scene);
+            if (tv_sf[0][0] == std::numeric_limits<float>::max()) {
+                throw std::runtime_error ("ti0 is not a triangle");
+            }
             // Compute the triangle normal in the scene frame
             sm::vec<float> tn0 = this->triangle_normal (tv_sf);
 
@@ -1159,6 +1171,9 @@ namespace mplot
                     if (twin != std::numeric_limits<uint32_t>::max()) {
                         // Test to see if start location was inside this twin
                         sm::vec<sm::vec<float>, 3> tv_lf = this->triangle_vertices (twin, model_to_scene);
+                        if (tv_lf[0][0] == std::numeric_limits<float>::max()) {
+                            throw std::runtime_error ("twin is not a triangle");
+                        }
                         sm::vec<float> _tn = this->triangle_normal (tv_lf);
                         auto [is, h] = sm::geometry::ray_tri_intersection<float> (tv_lf[0], tv_lf[1], tv_lf[2], camloc_sf + (_tn / 2.0f), -_tn);
                         if constexpr (debug_move) { std::cout << "Start of move " << (is ? "IS" : "is NOT") << " in twin " << twin << std::endl; }
@@ -1220,6 +1235,9 @@ namespace mplot
                 auto onens = this->find_neighbours (int_vertex_hi);
                 for (auto _ti : onens) {
                     sm::vec<sm::vec<float>, 3> tv_nb = this->triangle_vertices (_ti, model_to_scene);
+                    if (tv_nb[0][0] == std::numeric_limits<float>::max()) {
+                        throw std::runtime_error ("_ti is not a triangle");
+                    }
                     auto _tn = this->triangle_normal (tv_nb); // gets normal in *scene frame*
                     sm::vec<float> _mv_orthog = _tn * (mv_sf.dot (_tn) / (_tn.dot (_tn))); // This tn needs to be in scene frame
                     sm::vec<float> _mv_inplane = mv_sf - _mv_orthog; // scene frame, a relative movement
@@ -1312,64 +1330,72 @@ namespace mplot
 
                         // Re-orient onto the new triangle
                         sm::vec<sm::vec<float>, 3> newtv_sf = this->triangle_vertices (_ti, model_to_scene);
-                        _tn = this->triangle_normal (newtv_sf);
+                        if (newtv_sf[0][0] != std::numeric_limits<float>::max()) {
 
-                        if constexpr (debug_move) { std::cout << "RE-ORIENT to _ti: " << _ti << " " << newtv_sf << " norm: " << _tn << "\n"; }
+                            _tn = this->triangle_normal (newtv_sf);
 
-                        // If a vertex crossing, we have to make an edge that is the cross product of the two triangle normals
-                        if (flags.test (cmm_fl::vertex_crossing)) { cd.tri_edge = tn0.cross (_tn); }
+                            if constexpr (debug_move) { std::cout << "RE-ORIENT to _ti: " << _ti << " " << newtv_sf << " norm: " << _tn << "\n"; }
 
-                        // Compute the reorientation due to the requested movement.
-                        float rotn_angle = tn0.angle (_tn, cd.tri_edge);
-                        // If tn0 and _tn are identical, then rotn_angle will be NaN, but in that case we want no rotation
-                        if (std::isnan (rotn_angle)) { rotn_angle = 0.0f; }
-                        sm::mat<float, 4> reorient_model; // reorientation transformation in sf
-                        reorient_model.rotate (cd.tri_edge, rotn_angle);
-                        sm::vec<float> mv_rest = (reorient_model * (mv_inplane - cd.pm.mv)).less_one_dim();
-                        reorient_model.pretranslate (hov_sf + cd.pm.mv + mv_rest);
-                        reorient_model.translate (-hov_sf); // r_t_to + r_t1 = -(hov_sf + cd.pm.mv) + cd.pm.mv = -hov_sf
+                            // If a vertex crossing, we have to make an edge that is the cross product of the two triangle normals
+                            if (flags.test (cmm_fl::vertex_crossing)) { cd.tri_edge = tn0.cross (_tn); }
 
-                        if (mv_rest.length() == 0) {
-                            // The first movement to edge completed the movement. We actually landed ON the edge.
-                            cam_to_surface = reorient_model * cam_to_surface;
-                            flags.set (cmm_fl::done, true);
-                        } else {
-                            // There's additional movement to complete.
-                            if constexpr (debug_move) { std::cout << "mv_rest length is " << mv_rest.length() << std::endl; }
+                            // Compute the reorientation due to the requested movement.
+                            float rotn_angle = tn0.angle (_tn, cd.tri_edge);
+                            // If tn0 and _tn are identical, then rotn_angle will be NaN, but in that case we want no rotation
+                            if (std::isnan (rotn_angle)) { rotn_angle = 0.0f; }
+                            sm::mat<float, 4> reorient_model; // reorientation transformation in sf
+                            reorient_model.rotate (cd.tri_edge, rotn_angle);
+                            sm::vec<float> mv_rest = (reorient_model * (mv_inplane - cd.pm.mv)).less_one_dim();
+                            reorient_model.pretranslate (hov_sf + cd.pm.mv + mv_rest);
+                            reorient_model.translate (-hov_sf); // r_t_to + r_t1 = -(hov_sf + cd.pm.mv) + cd.pm.mv = -hov_sf
 
-                            // At this point, can test to see if the end point of the movement
-                            // lands in the adjacent triangle. If so, we're done, if not, time
-                            // for another loop.
-                            sm::vec<float> endmv = (reorient_model * cam_to_surface * sm::vec<float>{}).less_one_dim();
-                            // Is endmv in newtv_sf/_ti?
-                            auto [isect2, isectpoint2] = sm::geometry::ray_tri_intersection<float, float> (newtv_sf[0], newtv_sf[1], newtv_sf[2], endmv + (_tn / 2.0f), -_tn);
-                            if constexpr (debug_move) { std::cout << "endmv = " << endmv << " DOES" << (isect2 ? "" : " NOT") << " land in new triangle\n"; }
-                            if (isect2) {
-                                // We DID land in the neighbouring triangle. We are done.
+                            if (mv_rest.length() == 0) {
+                                // The first movement to edge completed the movement. We actually landed ON the edge.
                                 cam_to_surface = reorient_model * cam_to_surface;
                                 flags.set (cmm_fl::done, true);
                             } else {
-                                if constexpr (debug_move) { std::cout << "did we sail past or land on the boundary or land in a 1-neighbour?\n"; }
-                                // Incomplete; We've sailed past newtv_sf. Or perhaps landed on the boundary???
-                                // We need to
-                                // set an end-point that is on newtv_sf, update hov_sf,
-                                // then recurse.  also recompute the movement encoded in
-                                // reorient_model
-                                reorient_model.pretranslate (-mv_rest);
-                                cam_to_surface = reorient_model * cam_to_surface;
-                                hov_sf = cd.pm.end; // crossing data planned movement end
-                                // Also update planned move, which is now shorter and in a new direction
-                                tv_sf = newtv_sf;
-                                mv_inplane = mv_rest;
+                                // There's additional movement to complete.
+                                if constexpr (debug_move) { std::cout << "mv_rest length is " << mv_rest.length() << std::endl; }
+
+                                // At this point, can test to see if the end point of the movement
+                                // lands in the adjacent triangle. If so, we're done, if not, time
+                                // for another loop.
+                                sm::vec<float> endmv = (reorient_model * cam_to_surface * sm::vec<float>{}).less_one_dim();
+                                // Is endmv in newtv_sf/_ti?
+                                auto [isect2, isectpoint2] = sm::geometry::ray_tri_intersection<float, float> (newtv_sf[0], newtv_sf[1], newtv_sf[2], endmv + (_tn / 2.0f), -_tn);
+                                if constexpr (debug_move) { std::cout << "endmv = " << endmv << " DOES" << (isect2 ? "" : " NOT") << " land in new triangle\n"; }
+                                if (isect2) {
+                                    // We DID land in the neighbouring triangle. We are done.
+                                    cam_to_surface = reorient_model * cam_to_surface;
+                                    flags.set (cmm_fl::done, true);
+                                } else {
+                                    if constexpr (debug_move) { std::cout << "did we sail past or land on the boundary or land in a 1-neighbour?\n"; }
+                                    // Incomplete; We've sailed past newtv_sf. Or perhaps landed on the boundary???
+                                    // We need to
+                                    // set an end-point that is on newtv_sf, update hov_sf,
+                                    // then recurse.  also recompute the movement encoded in
+                                    // reorient_model
+                                    reorient_model.pretranslate (-mv_rest);
+                                    cam_to_surface = reorient_model * cam_to_surface;
+                                    hov_sf = cd.pm.end; // crossing data planned movement end
+                                    // Also update planned move, which is now shorter and in a new direction
+                                    tv_sf = newtv_sf;
+                                    mv_inplane = mv_rest;
+                                }
                             }
+
+                            this->ti0 = _ti;
+                            tn0 = _tn;
+                        } else {
+                            ne.m_type = NavException::type::off_edge;
+                            this->ti0 = ti0_save;
+                            throw ne;
+                            continue;
                         }
-
-                        this->ti0 = _ti;
-                        tn0 = _tn;
-
                     } else {
                         // other triangle not found?! We probably went off the edge of our navigation model mesh
                         ne.m_type = NavException::type::off_edge;
+                        this->ti0 = ti0_save;
                         throw ne;
                         continue;
                     }
@@ -1412,7 +1438,7 @@ namespace mplot
                         flags.set (cmm_fl::vertex_crossing, false);
 
                         uint32_t _ti_2n = std::numeric_limits<uint32_t>::max();
-                        sm::vec<float>_tn_2n = {};
+                        sm::vec<float> _tn_2n = {};
                         sm::vec<float> _tn = {};
 
                         // TWO NEIGHBOURS
@@ -1423,6 +1449,9 @@ namespace mplot
                             if (twin != std::numeric_limits<uint32_t>::max()) {
                                 // Test to see if start location was inside a neighbour
                                 sm::vec<sm::vec<float>, 3> tv_nb = this->triangle_vertices (twin, model_to_scene);
+                                if (tv_nb[0][0] == std::numeric_limits<float>::max()) {
+                                    throw std::runtime_error ("two-neighbour twin is not a triangle");
+                                }
                                 _tn = this->triangle_normal (tv_nb);
 
                                 auto [is, h] = sm::geometry::ray_tri_intersection<float, double> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + (_tn / 2.0f), -_tn);
@@ -1472,6 +1501,9 @@ namespace mplot
                                     neighbours_tested.insert (_ti);
 
                                     sm::vec<sm::vec<float>, 3> tv_nb = this->triangle_vertices (_ti, model_to_scene);
+                                    if (tv_nb[0][0] == std::numeric_limits<float>::max()) {
+                                        throw std::runtime_error ("one-neighbour _ti is not a triangle");
+                                    }
                                     _tn = this->triangle_normal (tv_nb);
                                     auto [is, h] = sm::geometry::ray_tri_intersection<float, double> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + (_tn / 2.0f), -_tn);
                                     sm::vec<float> mv_orthog_nb = _tn * (mv_inplane.dot (_tn) / (_tn.dot(_tn)));
