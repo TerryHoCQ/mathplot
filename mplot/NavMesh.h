@@ -317,6 +317,7 @@ namespace mplot
         {
             constexpr uint32_t max = std::numeric_limits<uint32_t>::max();
             constexpr bool debug_bnd = true;
+            constexpr bool debug_bnd2 = false;
 
             const uint32_t sz = this->halfedge.size();
             uint32_t j = 0;
@@ -333,37 +334,44 @@ namespace mplot
                         }
                         uint32_t bcand = cur; // bcand starts as an internal halfedge
                         uint32_t bcandi = max;
-                        uint32_t counter = 0u;
-                        if constexpr (debug_bnd) { std::cout << "halfedge[i].twin = " << this->halfedge[i].twin << std::endl; }
-                        //uint32_t bcand0 = this->halfedge[this->halfedge[bcand].prev].twin;
-                        //uint32_t bcand0t = max;
+                        if constexpr (debug_bnd2) { std::cout << "halfedge[i].twin = " << this->halfedge[i].twin << std::endl; }
+                        uint32_t bcand0 = max;
                         do {
                             bcandi = this->halfedge[bcand].prev;
-                            if constexpr (debug_bnd) { std::cout << "bcandi: " << bcandi << std::endl; }
                             bcand = this->halfedge[bcandi].twin; // if max, it's a boundary, else it's internal
-                            if constexpr (debug_bnd) { std::cout << "bcand: " << bcand << std::endl; }
-                            if (counter++ > 6) {
-                                std::cout << "Something is wrong; returning\n";
-                                return;
+                            if constexpr (debug_bnd2) {
+                                std::cout << "bcandi (inner): " << bcandi << ", bcand: " << bcand << std::endl;
                             }
-                            //if (counter == 1) { bcand0t = bcand0; }
+                            if (bcand != max && bcand == bcand0) {
+                                // We've looped back without finding a boundary halfedge. halfedge[cur] is probably a rogue halfedge/vertex
+                                ++done;
+                                if constexpr (debug_bnd) {
+                                    std::cout << "Completed a loop, but didn't find a boundary halfedge. cur is probably a rogue halfedge/vertex\n";
+                                }
+                            }
+                            if (bcand0 == max) { bcand0 = bcand; } // bcand0 tests we we looped back, but not to halfedge[i].twin
 
-                        } while (bcand != max // halfedge[i].twin is usually max, so second condition may be sufficient
-                                 && bcand != this->halfedge[i].twin
-                                 //&& bcand != bcand0t
-                                 && bcandi != cur
-                            );
+                        } while (bcand != max && // halfedge[i].twin is usually max, so second condition may be sufficient
+                                 bcand != this->halfedge[i].twin
+                                 && !done
+                                 /*&& bcandi != cur*/); // This last test probably crept in during development without being necessary
 
-                        this->halfedge.push_back ({{this->halfedge[cur].vi[1], this->halfedge[cur].vi[0]}, cur, bprev, sz + j + 1, 1});
-                        this->halfedge[cur].twin = sz + j;
-
-                        if (bcandi == i) {
-                            this->halfedge[sz + j0].prev = sz + j - 1;
-                            ++done;
+                        if (done) {
+                            // The bcand we have right now is NOT a boundary halfedge, nor is it the twin for cur, so just mark halfedge flags with the 'rogue' flag (0x2)
+                            this->halfedge[cur].flags |= 0x2; // Mark halfedge[cur]
                         } else {
-                            bprev = sz + j;
-                            cur = bcandi;
-                            ++j;
+                            // Here, we add the new halfedge twin for cur.
+                            this->halfedge.push_back ({{this->halfedge[cur].vi[1], this->halfedge[cur].vi[0]}, cur, bprev, sz + j + 1, 1});
+                            this->halfedge[cur].twin = sz + j;
+
+                            if (bcandi == i) {
+                                this->halfedge[sz + j0].prev = sz + j - 1;
+                                ++done;
+                            } else {
+                                bprev = sz + j;
+                                cur = bcandi;
+                                ++j;
+                            }
                         }
                     }
                     if constexpr (debug_bnd) {
