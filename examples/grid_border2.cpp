@@ -196,6 +196,7 @@ int main()
     // Add a Normals visual for the last one, too
     auto nrm = std::make_unique<mplot::NormalsVisual<>> (gvp);
     v.bindmodel (nrm);
+    nrm->options.set (mplot::normalsvisual_flags::show_halfedges);
     nrm->finalize();
     v.addVisualModel (nrm);
 
