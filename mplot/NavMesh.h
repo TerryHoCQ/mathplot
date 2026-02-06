@@ -334,14 +334,14 @@ namespace mplot
                         uint32_t bcand = cur; // bcand starts as an internal halfedge
                         uint32_t bcandi = max;
                         uint32_t counter = 0u;
-                        std::cout << "halfedge[i].twin = " << this->halfedge[i].twin << std::endl;
+                        if constexpr (debug_bnd) { std::cout << "halfedge[i].twin = " << this->halfedge[i].twin << std::endl; }
                         //uint32_t bcand0 = this->halfedge[this->halfedge[bcand].prev].twin;
                         //uint32_t bcand0t = max;
                         do {
                             bcandi = this->halfedge[bcand].prev;
-                            std::cout << "bcandi: " << bcandi << std::endl;
+                            if constexpr (debug_bnd) { std::cout << "bcandi: " << bcandi << std::endl; }
                             bcand = this->halfedge[bcandi].twin; // if max, it's a boundary, else it's internal
-                            std::cout << "bcand: " << bcand << std::endl;
+                            if constexpr (debug_bnd) { std::cout << "bcand: " << bcand << std::endl; }
                             if (counter++ > 6) {
                                 std::cout << "Something is wrong; returning\n";
                                 return;
