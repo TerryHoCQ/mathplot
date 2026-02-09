@@ -106,12 +106,8 @@ int main (int argc, char** argv)
         // Compute a new movement over the landscape mesh (the sphere)
         try {
             ca_view = gvp->navmesh->compute_mesh_movement (mv_ca, ca_view, sph_view, hoverheight);
-        } catch (mplot::NavException& e) {
-            if (e.m_type == mplot::NavException::type::off_edge) {
-                std::cout << "You can handle movements that go off the edge of a flat model\n";
-            }
+        } catch (std::exception& e) {
             std::cout << "Exception navigating mesh at movement count " << move_counter << ": " << e.what() << std::endl;
-            throw e;
         }
 
         // Update the viewmatrix of the coord arrows, setting its position within the scene
