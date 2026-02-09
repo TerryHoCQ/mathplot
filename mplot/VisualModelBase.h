@@ -398,8 +398,6 @@ namespace mplot
             }
 
             navmesh->compute_neighbour_relations(); // finds the halfedge twins
-
-            navmesh->add_boundary_halfedges();
         }
 
         /*!
@@ -426,11 +424,19 @@ namespace mplot
             // Have we got a pre-computed navmesh file for the halfedge twin relationships?
             uint64_t h = this->hash();
             std::string filename = mplot::tools::getTmpPath() + std::string("navmesh_") + std::to_string (h);
+            std::string filename_pre_boundary = filename + ".pre";
+
             if (mplot::tools::fileExists (filename)) {
                 this->navmesh->load (filename);
+            } else if (mplot::tools::fileExists (filename_pre_boundary)) {
+                std::cout << "Pre-boundary navmesh\n";
+                this->navmesh->load (filename_pre_boundary);
+                this->navmesh->add_boundary_halfedges();
             } else {
                 std::cout << "Building NavMesh to save into file " << filename << std::endl;
                 this->build_navmesh();
+                this->navmesh->save (filename_pre_boundary);
+                this->navmesh->add_boundary_halfedges();
                 this->navmesh->save (filename);
             }
         }
