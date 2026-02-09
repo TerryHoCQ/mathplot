@@ -401,15 +401,11 @@ namespace mplot
         }
 
         /*!
-         * Post-process vertices to generate a neighbour relationship mesh. The usual vertices and
-         * indices may not be useful to help an agent to navigate the surface defined by the
-         * mesh. This is because vertices may be duplicated at any location, so that adjacent faces
-         * can have different normals and colours.
+         * Post-process vertices to generate a neighbour relationship mesh suitable for navigation.
          *
-         * To help guide movement across a mesh, it would be useful to have a mesh that always gives
-         * neighbour relationships.
+         * \param navmesh_dir The directory into which to store/read the navmesh data file.
          */
-        void make_navmesh()
+        void make_navmesh (std::string navmesh_dir = "")
         {
             if (this->navmesh) { return; } // already made it
 
@@ -423,7 +419,12 @@ namespace mplot
 
             // Have we got a pre-computed navmesh file for the halfedge twin relationships?
             uint64_t h = this->hash();
-            std::string filename = mplot::tools::getTmpPath() + std::string("navmesh_") + std::to_string (h);
+            if (navmesh_dir.empty()) {
+                navmesh_dir = mplot::tools::getTmpPath();
+            } else {
+                if (navmesh_dir.back() != '/') { navmesh_dir += "/"; }
+            }
+            std::string filename = navmesh_dir + std::string("navmesh_") + std::to_string (h);
             std::string filename_pre_boundary = filename + ".pre";
 
             if (mplot::tools::fileExists (filename)) {
