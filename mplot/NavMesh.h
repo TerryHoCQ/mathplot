@@ -62,45 +62,6 @@ namespace mplot
         };
     }
 
-    // Exception that (used to) return triangles that were near the location of the error
-    struct NavException : public std::exception
-    {
-        enum class type : uint32_t { generic, no_intersection, zero_mv, mv_to_vertex, undetected_crossing, nan_mv, off_edge };
-
-        NavException (const type _type) : m_type(_type) {}
-
-        using std::exception::what;
-        const char* what()
-        {
-            switch (m_type) {
-            case type::no_intersection:
-                return "No intersection (at start) with triangle or neighbours";
-                break;
-            case type::zero_mv:
-                return "Zero length mv_inplane so stop/freeze/crash";
-                break;
-            case type::mv_to_vertex:
-                return "We've moved to a vertex, should have captured this case";
-                break;
-            case type::undetected_crossing:
-                return "Should have detected crossing just now";
-                break;
-            case type::nan_mv:
-                return "mv_inplane contained NaN";
-                break;
-            case type::off_edge:
-                return "The movement went off the edge of the model";
-                break;
-            case type::generic:
-            default:
-                break;
-            }
-            return "Generic";
-        }
-        // Error type determines message generated
-        type m_type = type::generic;
-    };
-
     /*!
      * Navigation mesh of triangles.
      *
@@ -1082,9 +1043,6 @@ namespace mplot
             constexpr bool debug_move = true;
             constexpr bool debug_move2 = true;
 
-            // A data-containing exception to throw
-            mplot::NavException ne (mplot::NavException::type::generic);
-
             // In case we throw off-edge, we need to restore ti0's state
             const uint32_t ti0_save = this->ti0;
 
@@ -1223,9 +1181,7 @@ namespace mplot
                         // make tiny adjustment to camloc_sf so we ARE in the triangle? OR...
                         isect = true; // SAY we are, and proceed? <-- this if it works.
                     } else {
-                        std::cout << "Got no_intersection exception...\n";
-                        ne.m_type = NavException::type::no_intersection;
-                        throw ne;
+                        throw std::runtime_error ("No intersection (at start) with triangle or neighbours");
                     }
                 } else {
                     if constexpr (debug_move2) {
@@ -1303,12 +1259,10 @@ namespace mplot
                 }
 
                 if (mv_inplane.length() == 0) {
-                    ne.m_type = NavException::type::zero_mv;
-                    throw ne;
+                    throw std::runtime_error ("Zero length mv_inplane so stop/freeze/crash");
                 }
                 if (mv_inplane.has_nan()) {
-                    ne.m_type = NavException::type::nan_mv;
-                    throw ne;
+                    throw std::runtime_error ("mv_inplane contained NaN");
                 }
 
                 // Apply the edge crossing algorithm
@@ -1404,16 +1358,14 @@ namespace mplot
                             this->ti0 = _ti;
                             tn0 = _tn;
                         } else {
-                            ne.m_type = NavException::type::off_edge;
                             this->ti0 = ti0_save;
-                            throw ne;
+                            throw std::runtime_error ("off-edge: The movement went off the edge of the model");
                             continue;
                         }
                     } else {
                         // other triangle not found?! We probably went off the edge of our navigation model mesh
-                        ne.m_type = NavException::type::off_edge;
                         this->ti0 = ti0_save;
-                        throw ne;
+                        throw std::runtime_error ("off-edge: The movement went off the edge of the model");
                         continue;
                     }
 
@@ -1427,8 +1379,7 @@ namespace mplot
                         if (cd.pm.flags.test (pm_fl::no_cross_point) == true) {
                             flags.set (cmm_fl::single_movement, true);
                         } else { // We've moved to a vertex, should have captured this case
-                            ne.m_type = NavException::type::mv_to_vertex;
-                            throw ne;
+                            throw std::runtime_error ("We've moved to a vertex, should have captured this case");
                         }
                     } else {
                         // Test if it was movement-within; the simplest case
