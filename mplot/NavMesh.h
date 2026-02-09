@@ -69,7 +69,7 @@ namespace mplot
 
         NavException (const type _type) : m_type(_type) {}
 
-        //using std::exception::what;
+        using std::exception::what;
         const char* what()
         {
             switch (m_type) {
@@ -307,10 +307,17 @@ namespace mplot
             std::vector<uint32_t> rtn = {};
 
             if (hi > this->halfedge.size()) { return rtn; }
-
+            // We have to defensively check for repeated halfedges as we cycle around neighbours.
+            std::set<uint32_t> repeat;
             do {
+                if (repeat.count (hi)) {
+                    // hi is a repeat. This means the mesh isn't perfect.
+                    std::cout << "find_neighbours: Found a repeated halfedge that wasn't the first one; break (imperfect mesh)\n";
+                    break;
+                }
                 // hi emanates from the vertex, so return it.
                 rtn.push_back (hi);
+                repeat.insert (hi);
                 uint32_t pr = this->halfedge[hi].prev;
                 if (pr != std::numeric_limits<uint32_t>::max()) {
                     hi = this->halfedge[this->halfedge[hi].prev].twin;
@@ -318,6 +325,7 @@ namespace mplot
                 } else {
                     hi = pr; // pr was max, so set hi to max too
                 }
+
             } while (hi != a && hi != std::numeric_limits<uint32_t>::max());
             return rtn;
         }
@@ -329,9 +337,8 @@ namespace mplot
          */
         void add_boundary_halfedges()
         {
-            std::cout << __func__ << " called\n";
             constexpr uint32_t max = std::numeric_limits<uint32_t>::max();
-            constexpr bool debug_bnd = true;
+            constexpr bool debug_bnd = false;
 
             const uint32_t sz = this->halfedge.size();
             uint32_t j = 0;
@@ -1529,13 +1536,14 @@ namespace mplot
                                             if constexpr (debug_move) { std::cout << "DETECTED crossing over ONE-neighbour! Pass on to next loop!\n"; }
                                             flags.set (cmm_fl::vertex_crossing, true);
                                             detected_edge = hi;
-                                            //detected_edgevec = {std::numeric_limits<float>::max()}; // to be the cross product of the last-triangle normal and the newtri normal.
                                             detected_newtri = _ti;
+                                            hi = this->ti0; // to end the do-while
                                             break; // out of for
                                         } else { // end not in one-neighbour
                                             if (is) { // start is in one-neighbour tri (will re-orient to this and re-loop)
                                                 _ti_2n = _ti;
                                                 _tn_2n = _tn;
+                                                hi = this->ti0; // to end the do-while
                                                 break; // out of for
                                             } // else end is not in one-neighbour, and neither is start.
                                         }
