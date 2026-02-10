@@ -193,70 +193,51 @@ namespace mplot
             return i;
         }
 
-        bool verify_boundary (const uint32_t boundary_hi) const
+        bool verify_halfedge_chain (const uint32_t _hi, const uint32_t chain_length = std::numeric_limits<uint32_t>::max()) const
         {
             constexpr uint32_t max = std::numeric_limits<uint32_t>::max();
 
-            if (boundary_hi >= this->halfedge.size()) { return false; }
+            if (_hi >= this->halfedge.size()) { return false; }
 
-            // Each boundary should be the same forwards and backwards.
-            // Via 'next':
+            // Each boundary should be the same forwards and backwards from every possible start halfedge
             uint32_t fcount = 0;
-            uint32_t fhi = boundary_hi;
+            uint32_t fhi = _hi;
             do {
-                std::cout << "this->halfedge["<<fhi<<"].flags = " << this->halfedge[fhi].flags << " go to next..." << std::endl;
+                //std::cout << "this->halfedge["<<fhi<<"].flags = " << this->halfedge[fhi].flags << " go to next..." << std::endl;
+                if (this->halfedge[fhi].next == fhi) { throw std::runtime_error ("self next referral!"); }
                 fhi = this->halfedge[fhi].next;
                 ++fcount;
-            } while (fhi != boundary_hi && fhi != max && fcount < this->halfedge.size());
+            } while (fhi != _hi && fhi != max && fcount < this->halfedge.size());
 
-            std::cout << "fcount = "  << fcount << " and fhi = " << fhi << " cf boundary_hi = " << boundary_hi << std::endl;
+            //std::cout << "fcount = "  << fcount << " and fhi = " << fhi << " cf _hi = " << _hi << std::endl;
 
             uint32_t rcount = 0;
-            uint32_t rhi = boundary_hi;
+            uint32_t rhi = _hi;
             do {
-                std::cout << "this->halfedge["<<rhi<<"].flags = " << this->halfedge[rhi].flags << " go to prev..." << std::endl;
+                //std::cout << "this->halfedge["<<rhi<<"].flags = " << this->halfedge[rhi].flags << " go to prev..." << std::endl;
                 if (this->halfedge[rhi].prev == rhi) { throw std::runtime_error ("self prev referral!"); }
                 rhi = this->halfedge[rhi].prev;
                 ++rcount;
-            } while (rhi != boundary_hi && rhi != max && rcount < this->halfedge.size());
+            } while (rhi != _hi && rhi != max && rcount < this->halfedge.size());
 
-            std::cout << "rcount = "  << rcount << " and rhi = " << rhi << " cf boundary_hi = " << boundary_hi << std::endl;
+            //std::cout << "rcount = "  << rcount << " and rhi = " << rhi << " cf _hi = " << _hi << std::endl;
 
-            if (fcount == rcount && rhi == boundary_hi && fhi == boundary_hi) {
-                return true;
+            if (fcount == rcount && rhi == _hi && fhi == _hi) {
+                if (chain_length != max) {
+                    if (fcount == chain_length) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return true;
+                }
             } else {
                 return false;
             }
         }
-
-        bool verify_triangle (const uint32_t tri_hi) const
-        {
-            if (tri_hi == std::numeric_limits<uint32_t>::max()) {
-                std::cout << __func__ << ": not triangle; tri_hi=" << tri_hi << " is max\n";
-                return false;
-            }
-            bool is_triangle = false;
-
-            // Should do-while this one in both directions, like the boundary
-
-            uint32_t hi = tri_hi;
-            // We should go to 3 halfedges and get back to tri_hi. Each half edge should have a valid vertex, too.
-            for (uint32_t i = 0; i < 3; ++i) {
-                if (this->halfedge[hi].vi[0] >= this->vertex.size() || this->halfedge[hi].vi[1] >= this->vertex.size()) {
-                    std::cout << __func__ << ": not triangle; invalid vertex index\n";
-                    hi = std::numeric_limits<uint32_t>::max();
-                    break;
-                }
-                hi = this->halfedge[hi].next;
-                if (hi >= this->halfedge.size()) {
-                    std::cout << __func__ << ": not triangle; invalid next halfedge index\n";
-                    hi = std::numeric_limits<uint32_t>::max();
-                    break;
-                }
-            }
-            if (hi == tri_hi) { is_triangle = true; }
-            return is_triangle;
-        }
+        bool verify_boundary (const uint32_t boundary_hi) const { return verify_halfedge_chain (boundary_hi); }
+        bool verify_triangle (const uint32_t tri_hi) const { return verify_halfedge_chain (tri_hi, 3); }
 
         // Return the three vertices for the triangle specified as three indices into NavMesh::vertex
         sm::vec<sm::vec<float>, 3> triangle_vertices (uint32_t tri_hi) const
@@ -339,7 +320,7 @@ namespace mplot
                 if (repeat.count (hi)) {
                     // hi is a repeat. This means the mesh isn't perfect.
                     std::cout << "find_neighbours: Found a repeated halfedge that wasn't the first one; break (imperfect mesh)\n";
-#if 0
+#if 1
                     for (auto h : rtn) {
                         std::cout << h << " flag: " << this->halfedge[h].flags
                                   << " prev: " << this->halfedge[h].prev
@@ -365,6 +346,7 @@ namespace mplot
             return rtn;
         }
 
+        // Test the navmesh, to make sure it is perfect
         void test()
         {
             std::cout << __func__ << " called to test the navmesh\n";
@@ -379,16 +361,15 @@ namespace mplot
                     if (this->verify_triangle (hi) == false) {
                         throw std::runtime_error ("Imperfect halfedge mesh (face triangle)");
                     }
-#if 0
+
                     std::vector<uint32_t> nb = this->find_neighbours (hi);
                     if (nb.size() > 100) {
                         for (auto n : nb) {
                             std::cout << n << std::endl;
                         }
-                        throw std::runtime_error ("Imperfect halfedge mesh (too many neighbours)");
+                        throw std::runtime_error ("too many neighbours?");
                     }
-                    std::cout << "num neighbours = " << nb.size() << std::endl;
-#endif
+                    // std::cout << "num neighbours = " << nb.size() << std::endl;
                 }
             }
         }
@@ -401,18 +382,18 @@ namespace mplot
         void add_boundary_halfedges()
         {
             constexpr uint32_t max = std::numeric_limits<uint32_t>::max();
-            constexpr bool debug_bnd = true;
+            constexpr bool debug_bnd = false;
             constexpr bool debug_bnd2 = false;
 
             const uint32_t sz = this->halfedge.size();
             uint32_t j = 0;
-            std::cout << "BEFORE adding boundary, halfedge.size() = " << halfedge.size() << std::endl;
+            if constexpr (debug_bnd) { std::cout << "BEFORE adding boundary, halfedge.size() = " << halfedge.size() << std::endl; }
             for (uint32_t i = 0; i < sz; ++i) {
                 if (this->halfedge[i].twin == max) {
-                    std::cout << "STARTING at i = " << i;
+                    if constexpr (debug_bnd) { std::cout << "STARTING at i = " << i; }
                     // This halfedge does not have a twin, walk the boundary from here
                     const uint32_t j0 = j; // j index at boundary start
-                    std::cout << ".... with j0 = " << j0 << std::endl;
+                    if constexpr (debug_bnd) { std::cout << ".... with j0 = " << j0 << std::endl; }
                     uint32_t bprev = max;
                     uint32_t cur = i;
                     uint32_t done = 0u;
@@ -484,7 +465,7 @@ namespace mplot
          */
         void compute_neighbour_relations()
         {
-            constexpr bool debug_nr = false;
+            constexpr bool debug_nr = true;
             uint32_t sz = this->halfedge.size();
             if constexpr (debug_nr) { std::cout << "Finding twins for " << sz << " halfedge\n"; }
 
@@ -507,21 +488,38 @@ namespace mplot
                 // It's useful to know how long you will have to wait...
                 if (i % 20000u == 0u) { std::cout << ((100.0f * i)/sz) << " percent...\n" << std::endl; }
 
-                uint32_t sb = i >= band ? i - band : 0;
-                uint32_t eb = i + band < sz ? i + band : sz;
+                [[maybe_unused]] uint32_t sb = i >= band ? i - band : 0;
+                [[maybe_unused]] uint32_t eb = i + band < sz ? i + band : sz;
 
+                uint32_t wider = 0;
+
+#if 1 // Simplest code
+                for (uint32_t j = 0; j <  sz; ++j) {
+                    if (j == i) { continue; }
+                    const sm::vec<uint32_t, 2>& vij = this->halfedge[j].vi;
+                    if (vi[0] == vij[1] && vi[1] == vij[0]) { // It's a match.
+                        if (j == 1105771 || i == 1105771) {
+                            std::cout << "halfedge["<<i<<"].vi[0] == vij[1] == " << vi[0] << " and halfedge["<<i<<"].vi[1] == vij[0] == " << vi[1] << std::endl;
+                            std::cout << "Setting halfedge[i="<<i<<"].twin = j = " << j << std::endl;
+                            std::cout << "Setting halfedge[j="<<j<<"].twin = i = " << i << std::endl;
+                        }
+                        this->halfedge[i].twin = j;
+                        this->halfedge[j].twin = i;
+                        break;
+                    }
+                }
+#else // Optimize
                 // First sb to eb, which we hope is most likely to find a twin
                 for (uint32_t j = sb; j < eb; ++j) {
                     if (j == i) { continue; }
                     const sm::vec<uint32_t, 2>& vij = this->halfedge[j].vi;
-                    if (vi[0] == vij[1] && vi[1] == vij[0]) { // It's a match
+                    if (vi[0] == vij[1] && vi[1] == vij[0]) { // It's a match.
                         this->halfedge[i].twin = j;
                         this->halfedge[j].twin = i;
                         break;
                     }
                 }
 
-                uint32_t wider = 0;
                 if (this->halfedge[i].twin == std::numeric_limits<uint32_t>::max()) {
                     // Then, if no match, search from 0 to sb
                     if (sb != 0 && !wider) { wider = 1; }
@@ -549,7 +547,7 @@ namespace mplot
                         }
                     }
                 }
-
+#endif
                 wider_searches += wider;
 
                 if (this->halfedge[i].twin != std::numeric_limits<uint32_t>::max()) {

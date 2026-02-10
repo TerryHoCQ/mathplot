@@ -429,16 +429,21 @@ namespace mplot
 
             if (mplot::tools::fileExists (filename)) {
                 this->navmesh->load (filename);
+                this->navmesh->test();
+
             } else if (mplot::tools::fileExists (filename_pre_boundary)) {
                 std::cout << "Pre-boundary navmesh\n";
                 this->navmesh->load (filename_pre_boundary);
                 this->navmesh->add_boundary_halfedges();
+                this->navmesh->test();
+                //this->navmesh->save (filename);
             } else {
                 std::cout << "Building NavMesh to save into file " << filename << std::endl;
                 this->build_navmesh();
                 this->navmesh->save (filename_pre_boundary);
                 this->navmesh->add_boundary_halfedges();
-                this->navmesh->save (filename);
+                //this->navmesh->test();
+                //this->navmesh->save (filename);
             }
         }
 
