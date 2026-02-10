@@ -20,6 +20,10 @@ namespace mplot
         show_halfedges,   // Show the navmesh halfedges (all of them)?
         show_inner_halfedges,    // Show the main, internal navmesh halfedges (the blue ones)?
         show_boundary_halfedges, // Show the boundary navmesh halfedges (the red ones)?
+        show_inner_next,  // Visualize the 'next' halfedge of each inner halfedge
+        show_inner_prev,  // Visualize the 'prev' halfedge of each inner halfedge
+        show_boundary_next,  // Visualize the 'next' halfedge of each boundary halfedge
+        show_boundary_prev,  // Visualize the 'prev' halfedge of each boundary halfedge
         singlecolour      // Plot vertex normals in a single colour?
     };
 
@@ -30,7 +34,6 @@ namespace mplot
     public:
         NormalsVisual(mplot::VisualModel<glver>* _mymodel)
         {
-            this->options_defaults();
             this->mymodel = _mymodel;
             this->viewmatrix = _mymodel->getViewMatrix();
             // We create the model's navmesh, in case it wasn't already done
@@ -137,10 +140,37 @@ namespace mplot
                                 this->computeArrow (p0, p1, mplot::colour::crimson,
                                                     tube_r, this->arrowhead_prop, cone_r, this->shapesides);
                             }
+
                         } else {
                             // internal
                             if (this->options.any_of ({normalsvisual_flags::show_halfedges, normalsvisual_flags::show_inner_halfedges})) {
                                 this->computeArrow (p0, p1, mplot::colour::dodgerblue2,
+                                                    tube_r, this->arrowhead_prop, cone_r, this->shapesides);
+                            }
+                        }
+
+                        if ((this->options.test (normalsvisual_flags::show_inner_next) && (h.flags & 0x1) == 0x0)
+                            ||
+                            (this->options.test (normalsvisual_flags::show_boundary_next) && (h.flags & 0x1) == 0x1)) {
+                            auto mid = (p0 + p1) / 2.0f + nextprev_offset;
+                            auto nexti = h.next;
+                            if (nexti < mymodel->navmesh->halfedge.size()) {
+                                auto n0 = mymodel->navmesh->vertex[mymodel->navmesh->halfedge[nexti].vi[0]].p;
+                                auto n1 = mymodel->navmesh->vertex[mymodel->navmesh->halfedge[nexti].vi[1]].p;
+                                this->computeArrow (mid, (n0 + n1)/2.0f, mplot::colour::goldenrod2,
+                                                    tube_r, this->arrowhead_prop, cone_r, this->shapesides);
+                            }
+
+                        }
+                        if ((this->options.test (normalsvisual_flags::show_inner_prev) && (h.flags & 0x1) == 0x0)
+                            ||
+                            (this->options.test (normalsvisual_flags::show_boundary_prev) && (h.flags & 0x1) == 0x1)) {
+                            auto mid = (p0 + p1) / 2.0f + nextprev_offset;
+                            auto previ = h.prev;
+                            if (previ < mymodel->navmesh->halfedge.size()) {
+                                auto pr0 = mymodel->navmesh->vertex[mymodel->navmesh->halfedge[previ].vi[0]].p;
+                                auto pr1 = mymodel->navmesh->vertex[mymodel->navmesh->halfedge[previ].vi[1]].p;
+                                this->computeArrow (mid, (pr0 + pr1)/2.0f, mplot::colour::springgreen2,
                                                     tube_r, this->arrowhead_prop, cone_r, this->shapesides);
                             }
                         }
@@ -162,20 +192,22 @@ namespace mplot
         // Options for this VisualModel. Set these with calls like
         // vm.options.set (mplot::normalsvisual_flags::show_gl_normals, false)
         // from your client code
-        sm::flags<normalsvisual_flags> options;
-        void options_defaults()
+        sm::flags<normalsvisual_flags> options = options_defaults();
+        constexpr sm::flags<normalsvisual_flags> options_defaults()
         {
-            this->options.reset();
-            this->options.set (normalsvisual_flags::show_gl_normals, true);
-            this->options.set (normalsvisual_flags::show_tri_edges, false);
-            this->options.set (normalsvisual_flags::show_tri_normals, true);
-            this->options.set (normalsvisual_flags::show_halfedges, false);
-            this->options.set (normalsvisual_flags::singlecolour, false);
+            sm::flags<normalsvisual_flags> _options;
+            _options.reset();
+            _options.set (normalsvisual_flags::show_gl_normals, true);
+            _options.set (normalsvisual_flags::show_tri_normals, true);
+            return _options;
         }
         // Vector single colour
         std::array<float, 3> clr = mplot::colour::grey20;
         std::array<float, 3> clrnc = mplot::colour::grey60; // computed norm
         std::array<float, 3> clrnd = mplot::colour::grey90; // computed norm
+
+        // An offset to make the 'next' and 'prev' vectors meaningful.
+        sm::vec<float> nextprev_offset = sm::vec<float>::uz() * 0.1f;
     };
 
 } // namespace mplot
