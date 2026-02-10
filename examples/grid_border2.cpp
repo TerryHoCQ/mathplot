@@ -21,6 +21,7 @@ int main()
 {
     mplot::Visual v(1600, 1000, "Flat GridVisual grids with borders");
     v.lightingEffects();
+    v.rotateAboutNearest (true);
 
     // Create a grid to show in the scene
     constexpr unsigned int Nside = 4; // You can change this
@@ -186,7 +187,7 @@ int main()
     gv->colourScale.compute_scaling (-1, 1);
     // Border specific parameters
     gv->showborder (false);
-    gv->addLabel ("Triangles, no border (smaller is as expected)", lblpos, mplot::TextFeatures(0.08f));
+    gv->addLabel ("Triangles, no border, showing halfedges", lblpos, mplot::TextFeatures(0.08f));
     gv->finalize();
     auto gvp = v.addVisualModel (gv);
 
@@ -197,6 +198,8 @@ int main()
     auto nrm = std::make_unique<mplot::NormalsVisual<>> (gvp);
     v.bindmodel (nrm);
     nrm->options.set (mplot::normalsvisual_flags::show_halfedges);
+    nrm->options.set (mplot::normalsvisual_flags::show_boundary_next);
+    nrm->options.set (mplot::normalsvisual_flags::show_boundary_prev);
     nrm->finalize();
     v.addVisualModel (nrm);
 
