@@ -402,30 +402,30 @@ namespace mplot
         {
             constexpr uint32_t max = std::numeric_limits<uint32_t>::max();
             constexpr bool debug_bnd = true;
+            constexpr bool debug_bnd2 = false;
 
             const uint32_t sz = this->halfedge.size();
             uint32_t j = 0;
-            std::cout << "BEFORE BEFORE adding boundary, halfedge.size() = " << halfedge.size() << std::endl;
+            std::cout << "BEFORE adding boundary, halfedge.size() = " << halfedge.size() << std::endl;
             for (uint32_t i = 0; i < sz; ++i) {
                 if (this->halfedge[i].twin == max) {
-                    std::cout << "STARTING at i = " << i << std::endl;
+                    std::cout << "STARTING at i = " << i;
                     // This halfedge does not have a twin, walk the boundary from here
                     const uint32_t j0 = j; // j index at boundary start
+                    std::cout << ".... with j0 = " << j0 << std::endl;
                     uint32_t bprev = max;
                     uint32_t cur = i;
                     uint32_t done = 0u;
                     while (!done) {
-                        if constexpr (debug_bnd) {
-                            std::cout << "** Search for boundary from cur = " << cur << std::endl;
-                        }
+                        if constexpr (debug_bnd2) { std::cout << "** Search for boundary from cur = " << cur << std::endl; }
                         uint32_t bcand = cur; // bcand starts as an internal halfedge
                         uint32_t bcandi = max;
-                        if constexpr (debug_bnd) { std::cout << "halfedge[i].twin = " << this->halfedge[i].twin << std::endl; }
+                        if constexpr (debug_bnd2) { std::cout << "halfedge[" << i << "].twin = " << this->halfedge[i].twin << std::endl; }
                         uint32_t bcand0 = max;
                         do {
                             bcandi = this->halfedge[bcand].prev;
                             bcand = this->halfedge[bcandi].twin; // if max, it's a boundary, else it's internal
-                            if constexpr (debug_bnd) { std::cout << "bcandi (inner): " << bcandi << ", bcand: " << bcand << std::endl; }
+                            if constexpr (debug_bnd2) { std::cout << "bcandi (inner): " << bcandi << ", bcand: " << bcand << std::endl; }
                             if (bcand != max && bcand == bcand0) {
                                 // We've looped back without finding a boundary halfedge. halfedge[cur] is probably a rogue halfedge/vertex
                                 ++done;
@@ -455,17 +455,17 @@ namespace mplot
                                 // We've come all the way around the boundary loop and we are finished.
                                 const uint32_t _first = sz + j0;
                                 const uint32_t _last = sz + j;
-                                if constexpr (debug_bnd) {  std::cout << "Set final prev for halfedge[" << _first << "] to " <<  _last << std::endl; }
                                 this->halfedge[_first].prev = _last;
-                                if constexpr (debug_bnd) {  std::cout << "Set final next for halfedge[" << _last << "] to " <<  _first << std::endl; }
+                                if constexpr (debug_bnd) {  std::cout << "Update final next for halfedge[" << _last << "] to " <<  _first << std::endl; }
+                                if constexpr (debug_bnd) {  std::cout << "Set initial prev for halfedge[" << _first << "] to " <<  _last << std::endl; }
                                 this->halfedge[_last].next = _first;
                                 ++done;
                             } else {
                                 // We've only added one new halfedge to the boundary loop, so carry on...
                                 bprev = sz + j;
                                 cur = bcandi;
-                                ++j;
                             }
+                            ++j;
                         }
                     }
                     if constexpr (debug_bnd) { std::cout << "Added " << (j - j0) << " halfedges to that boundary\n"; }
