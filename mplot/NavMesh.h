@@ -328,10 +328,11 @@ namespace mplot
             return v1 - v0;
         }
 
-        // Find all the neighbours of triangle *vertex* index a.
+        // Find all the neighbours of triangle *vertex* index a, throwing exceptions on errors.
+        // Returns the same vector of halfedge indices as find_neighbours, but without assuming that the navmesh is good.
         // \return vector of halfedge indices
         std::vector<uint32_t>
-        find_neighbours (uint32_t a) const
+        test_neighbours (const uint32_t a) const
         {
             uint32_t hi = a;
             std::vector<uint32_t> rtn = {};
@@ -342,15 +343,13 @@ namespace mplot
             do {
                 if (repeat.count (hi)) {
                     // hi is a repeat. This means the mesh isn't perfect.
-#if 1
-                    std::cout << "find_neighbours: Found a repeated halfedge that wasn't the first one\n";
+                    std::cout << "test_neighbours: Found a repeated halfedge that wasn't the first one\n";
                     for (auto h : rtn) {
                         std::cout << h << " flag: " << this->halfedge[h].flags
                                   << " prev: " << this->halfedge[h].prev
                                   << " prev.twin: " << this->halfedge[this->halfedge[h].prev].twin << std::endl;
                     }
                     std::cout << "The repeat was: " << hi << std::endl;
-#endif
                     throw std::runtime_error ("Repeated non-start halfedge"); // caused by 2 boundary halfedges with the same 'prev'
                 }
                 // hi emanates from the vertex, so return it.
@@ -364,10 +363,25 @@ namespace mplot
                 // or hi = this->halfedge[this->halfedge[hi].twin].next; // Clockwise
             } while (hi != a && hi != std::numeric_limits<uint32_t>::max());
 
-            if (hi == std::numeric_limits<uint32_t>::max()) {
-                throw std::runtime_error ("A twin was unset!?!");
-            }
+            if (hi == std::numeric_limits<uint32_t>::max()) { throw std::runtime_error ("A twin was unset!?!"); }
+            return rtn;
+        }
 
+        // Find all the neighbours of triangle *vertex* index a.
+        // Assumes the navmesh is good, and has passed NavMesh::test()
+        // \return vector of halfedge indices
+        std::vector<uint32_t> find_neighbours (const uint32_t a) const
+        {
+            uint32_t hi = a;
+            std::vector<uint32_t> rtn = {};
+            if (hi > this->halfedge.size()) { return rtn; }
+            do {
+                // hi emanates from the vertex, so return it.
+                rtn.push_back (hi);
+                uint32_t pr = this->halfedge[hi].prev;
+                hi = this->halfedge[pr].twin;
+                // or hi = this->halfedge[this->halfedge[hi].twin].next; // Clockwise
+            } while (hi != a);
             return rtn;
         }
 
@@ -387,13 +401,17 @@ namespace mplot
                         throw std::runtime_error ("Imperfect halfedge mesh (face triangle)");
                     }
 
-                    std::vector<uint32_t> nb = this->find_neighbours (hi);
+                    std::vector<uint32_t> nb = this->test_neighbours (hi);
                     if (nb.size() > 100) {
                         for (auto n : nb) {
                             std::cout << n << std::endl;
                         }
                         throw std::runtime_error ("too many neighbours?");
                     }
+                }
+                // Make sure twin is set for every halfedge
+                if (this->halfedge[hi].twin == std::numeric_limits<uint32_t>::max()) {
+                    throw std::runtime_error ("Contains an untwinned halfedge");
                 }
             }
         }
@@ -446,7 +464,8 @@ namespace mplot
                             // twin for cur, so just mark halfedge flags with the 'rogue' flag (0x2)
                             // which can be used by NormalsVisual to show the offending halfedge
                             bool rogue_is_tri = this->verify_triangle (cur, true);
-                            std::cout << "Identified a rogue, which " << (rogue_is_tri ? "IS" : "ISN'T") << " a triangle.\n";
+                            std::cout << "Identified a rogue, which " << (rogue_is_tri ? "IS" : "ISN'T")
+                                      << " a triangle; navmesh not likely to be usable\n";
                             this->halfedge[cur].flags |= 0x2;
                         } else {
                             // Now we add the new halfedge twin for cur.
