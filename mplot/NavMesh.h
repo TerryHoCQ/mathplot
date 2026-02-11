@@ -193,15 +193,32 @@ namespace mplot
             return i;
         }
 
-        bool verify_halfedge_chain (const uint32_t _hi, const uint32_t chain_length = std::numeric_limits<uint32_t>::max()) const
+        bool verify_halfedge_chain (const uint32_t _hi,
+                                    const uint32_t chain_length = std::numeric_limits<uint32_t>::max(),
+                                    const bool debug = false) const
         {
             constexpr uint32_t max = std::numeric_limits<uint32_t>::max();
 
             if (_hi >= this->halfedge.size()) { return false; }
 
-            // Each boundary should be the same forwards and backwards from every possible start halfedge
-            uint32_t fcount = 0;
+            uint32_t fcount = 0u;
             uint32_t fhi = _hi;
+
+            if (debug) {
+                // Loop through once showing chain info (index, prev, next, twin)
+                do {
+                    std::cout << "(prev: " << this->halfedge[fhi].prev << ") halfedge["
+                              << fhi << "] (next: " << this->halfedge[fhi].next << ") has twin "
+                              << this->halfedge[fhi].twin << " and flags " << this->halfedge[fhi].flags << std::endl;
+                    fhi = this->halfedge[fhi].next;
+                    ++fcount;
+                } while (fhi != _hi && fhi != max && fcount < this->halfedge.size());
+                // Reset for forward again:
+                fcount = 0u;
+                fhi = _hi;
+            }
+
+            // Each boundary should be the same forwards and backwards from every possible start halfedge
             do {
                 //std::cout << "this->halfedge["<<fhi<<"].flags = " << this->halfedge[fhi].flags << " go to next..." << std::endl;
                 if (this->halfedge[fhi].next == fhi) { throw std::runtime_error ("self next referral!"); }
@@ -209,9 +226,11 @@ namespace mplot
                 ++fcount;
             } while (fhi != _hi && fhi != max && fcount < this->halfedge.size());
 
-            //std::cout << "fcount = "  << fcount << " and fhi = " << fhi << " cf _hi = " << _hi << std::endl;
+            if (debug) {
+                std::cout << "From forwards loop: fcount = "  << fcount << " and fhi = " << fhi << " cf _hi = " << _hi << std::endl;
+            }
 
-            uint32_t rcount = 0;
+            uint32_t rcount = 0u;
             uint32_t rhi = _hi;
             do {
                 //std::cout << "this->halfedge["<<rhi<<"].flags = " << this->halfedge[rhi].flags << " go to prev..." << std::endl;
@@ -220,7 +239,9 @@ namespace mplot
                 ++rcount;
             } while (rhi != _hi && rhi != max && rcount < this->halfedge.size());
 
-            //std::cout << "rcount = "  << rcount << " and rhi = " << rhi << " cf _hi = " << _hi << std::endl;
+            if (debug) {
+                std::cout << "From reverse loop: rcount = "  << rcount << " and rhi = " << rhi << " cf _hi = " << _hi << std::endl;
+            }
 
             if (fcount == rcount && rhi == _hi && fhi == _hi) {
                 if (chain_length != max) {
@@ -236,8 +257,10 @@ namespace mplot
                 return false;
             }
         }
-        bool verify_boundary (const uint32_t boundary_hi) const { return verify_halfedge_chain (boundary_hi); }
-        bool verify_triangle (const uint32_t tri_hi) const { return verify_halfedge_chain (tri_hi, 3); }
+        bool verify_boundary (const uint32_t boundary_hi, const bool debug = false) const
+        { return verify_halfedge_chain (boundary_hi, std::numeric_limits<uint32_t>::max(), debug); }
+        bool verify_triangle (const uint32_t tri_hi, const bool debug = false) const
+        { return verify_halfedge_chain (tri_hi, 3, debug); }
 
         // Return the three vertices for the triangle specified as three indices into NavMesh::vertex
         sm::vec<sm::vec<float>, 3> triangle_vertices (uint32_t tri_hi) const
@@ -319,30 +342,32 @@ namespace mplot
             do {
                 if (repeat.count (hi)) {
                     // hi is a repeat. This means the mesh isn't perfect.
-                    std::cout << "find_neighbours: Found a repeated halfedge that wasn't the first one; break (imperfect mesh)\n";
 #if 1
+                    std::cout << "find_neighbours: Found a repeated halfedge that wasn't the first one\n";
                     for (auto h : rtn) {
                         std::cout << h << " flag: " << this->halfedge[h].flags
                                   << " prev: " << this->halfedge[h].prev
                                   << " prev.twin: " << this->halfedge[this->halfedge[h].prev].twin << std::endl;
                     }
                     std::cout << "The repeat was: " << hi << std::endl;
-                    throw std::runtime_error ("Repeated halfedge"); // caused by 2 boundary halfedges with the same 'prev'
 #endif
-                    break;
+                    throw std::runtime_error ("Repeated non-start halfedge"); // caused by 2 boundary halfedges with the same 'prev'
                 }
                 // hi emanates from the vertex, so return it.
                 rtn.push_back (hi);
                 repeat.insert (hi);
                 uint32_t pr = this->halfedge[hi].prev;
-                if (pr != std::numeric_limits<uint32_t>::max()) {
-                    hi = this->halfedge[this->halfedge[hi].prev].twin;
-                    // or hi = this->halfedge[this->halfedge[hi].twin].next; // Clockwise
-                } else {
-                    hi = pr; // pr was max, so set hi to max too
+                if (pr == std::numeric_limits<uint32_t>::max()) {
+                    throw std::runtime_error ("halfedge.prev was unset!?!");
                 }
-
+                hi = this->halfedge[pr].twin;
+                // or hi = this->halfedge[this->halfedge[hi].twin].next; // Clockwise
             } while (hi != a && hi != std::numeric_limits<uint32_t>::max());
+
+            if (hi == std::numeric_limits<uint32_t>::max()) {
+                throw std::runtime_error ("A twin was unset!?!");
+            }
+
             return rtn;
         }
 
@@ -369,7 +394,6 @@ namespace mplot
                         }
                         throw std::runtime_error ("too many neighbours?");
                     }
-                    // std::cout << "num neighbours = " << nb.size() << std::endl;
                 }
             }
         }
@@ -421,6 +445,8 @@ namespace mplot
                             // The bcand we have right now is NOT a boundary halfedge, nor is it the
                             // twin for cur, so just mark halfedge flags with the 'rogue' flag (0x2)
                             // which can be used by NormalsVisual to show the offending halfedge
+                            bool rogue_is_tri = this->verify_triangle (cur, true);
+                            std::cout << "Identified a rogue, which " << (rogue_is_tri ? "IS" : "ISN'T") << " a triangle.\n";
                             this->halfedge[cur].flags |= 0x2;
                         } else {
                             // Now we add the new halfedge twin for cur.
@@ -452,6 +478,17 @@ namespace mplot
                     if constexpr (debug_bnd) { std::cout << "Added " << (j - j0) << " halfedges to that boundary\n"; }
                 }
             }
+
+            // Lastly - check through for rogues!
+            std::cout << "Post-search for rogues\n";
+            for (uint32_t i = 0; i < sz; ++i) {
+                if (this->halfedge[i].twin == max) {
+                    bool rogue_is_tri = this->verify_triangle (i, true);
+                    std::cout << "Identified a rogue, which " << (rogue_is_tri ? "IS" : "ISN'T") << " a triangle.\n";
+                    // How to remove?
+                }
+            }
+
             if constexpr (debug_bnd) { std::cout << __func__ << " returning\n"; }
         }
 
@@ -493,16 +530,11 @@ namespace mplot
 
                 uint32_t wider = 0;
 
-#if 1 // Simplest code
+#if 0 // Simplest code
                 for (uint32_t j = 0; j <  sz; ++j) {
                     if (j == i) { continue; }
                     const sm::vec<uint32_t, 2>& vij = this->halfedge[j].vi;
                     if (vi[0] == vij[1] && vi[1] == vij[0]) { // It's a match.
-                        if (j == 1105771 || i == 1105771) {
-                            std::cout << "halfedge["<<i<<"].vi[0] == vij[1] == " << vi[0] << " and halfedge["<<i<<"].vi[1] == vij[0] == " << vi[1] << std::endl;
-                            std::cout << "Setting halfedge[i="<<i<<"].twin = j = " << j << std::endl;
-                            std::cout << "Setting halfedge[j="<<j<<"].twin = i = " << i << std::endl;
-                        }
                         this->halfedge[i].twin = j;
                         this->halfedge[j].twin = i;
                         break;

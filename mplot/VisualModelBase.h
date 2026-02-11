@@ -254,6 +254,16 @@ namespace mplot
             return (*vn)[vec_idx];
         }
 
+        // Get the area of the triangle whose start index is vec_idx
+        float get_area (const uint32_t vec_idx0, const uint32_t vec_idx1, const uint32_t vec_idx2) const
+        {
+            auto vp = reinterpret_cast<const std::vector<sm::vec<float, 3>>*>(&this->vertexPositions);
+            auto t0 = (*vp)[vec_idx0];
+            auto t1 = (*vp)[vec_idx1];
+            auto t2 = (*vp)[vec_idx2];
+            return sm::geometry::tri_area (t0, t1, t2);
+        }
+
         /**
          * Neighbour vertex mesh code.
          */
@@ -286,26 +296,20 @@ namespace mplot
                     for (auto idx : e.second) {  std::cout << idx << ","; }
                     std::cout << std::endl;
                 }
-                std::cout << "build_navmesh: Populated equiv which has "
-                          << equiv.size() << " vvecs" << std::endl;
+                std::cout << "build_navmesh: Populated equiv which has " << equiv.size() << " vvecs" << std::endl;
             }
 
             // Make inverse of equiv to translate from original (indices, vertexPositions) index to
             // new topographic mesh index
             sm::vvec<uint32_t> navmesh_idx (vps, 0);
-
-            // Maps index in vertex to the original parent->indices index. Was originally a member
-            // of NavMesh
-            sm::vvec<sm::vvec<uint32_t>> vertexidx_to_indices (equiv.size());
-
             uint32_t vcount = 0;
             i = 0;
             for (auto eqs : equiv) {
                 vcount += eqs.second.size();
-                vertexidx_to_indices[i].resize (eqs.second.size());
-                std::copy (eqs.second.begin(), eqs.second.end(), vertexidx_to_indices[i].begin());
                 for (auto ev : eqs.second) {
-                    if constexpr (debug_mn) { std::cout << "build_navmesh: set navmesh_idx[" << ev << "] = " << i << std::endl; }
+                    if constexpr (debug_mn) {
+                        std::cout << "build_navmesh: set navmesh_idx[" << ev << "] = " << i << std::endl;
+                    }
                     navmesh_idx[ev] = i;
                 }
                 ++i;
@@ -324,45 +328,49 @@ namespace mplot
             for (auto eq : equiv) {
                 navmesh->vertex[i++] = { (*vp)[eq.first], std::numeric_limits<uint32_t>::max() };
             }
+
+            // We're turing a triangle mesh into a navmesh. Don't know what to do if there are stray vertices.
+            if (this->indices.size() % 3u != 0u) {
+                throw std::runtime_error ("Uh oh, indices size not divisible by 3!!!! Call the cops!");
+            }
+
             // Lastly, generate edges. For which we require use of indices, which is expressed in
             // terms of the old indices. That lookup is navmesh_idx.
             for (uint32_t i = 0; i < this->indices.size(); i += 3) {
 
-                constexpr uint32_t mlines = 10000;
                 // Add three halfedges for the triangle
-                uint32_t hesz = navmesh->halfedge.size();
-                navmesh->halfedge.resize (hesz + 3, {});
-                uint32_t he0 = hesz;
-                uint32_t he1 = hesz + 1;
-                uint32_t he2 = hesz + 2;
+                const uint32_t hesz = navmesh->halfedge.size();
+                const uint32_t he0 = hesz;
+                const uint32_t he1 = hesz + 1;
+                const uint32_t he2 = hesz + 2;
 
                 if constexpr (debug_mn) {
-                    if (hesz < mlines) {
-                        std::cout << "setting halfedge["<<hesz<<"] " << he0 <<  " to { {"
-                                  << navmesh_idx[indices[i]] << ", " << navmesh_idx[indices[i + 1]]
-                                  << "}, nullptr, " << he1 << ", " << he2 << " }" << std::endl;
+                    std::cout << "setting halfedge["<< he0 << "]  to { {"
+                              << navmesh_idx[indices[i]] << ", " << navmesh_idx[indices[i + 1]]
+                              << "}, nullptr, " << he1 << ", " << he2 << " }" << std::endl;
 
-                        std::cout << "setting halfedge["<<hesz + 1<<"] " << he1 <<  " to { {"
-                                  << navmesh_idx[indices[i + 1]] << ", " << navmesh_idx[indices[i + 2]]
-                                  << "}, nullptr, " << he2 << ", " << he0 << " }" << std::endl;
+                    std::cout << "setting halfedge[" << he1 << "]  to { {"
+                              << navmesh_idx[indices[i + 1]] << ", " << navmesh_idx[indices[i + 2]]
+                              << "}, nullptr, " << he2 << ", " << he0 << " }" << std::endl;
 
-                        std::cout << "setting halfedge["<<hesz + 2<<"] " << he2 <<  " to { {"
-                                  << navmesh_idx[indices[i + 2]] << ", " << navmesh_idx[indices[i]]
-                                  << "}, nullptr, " << he0 << ", " << he1 << " }" << std::endl;
-                    }
+                    std::cout << "setting halfedge[" << he2 << "]  to { {"
+                              << navmesh_idx[indices[i + 2]] << ", " << navmesh_idx[indices[i]]
+                              << "}, nullptr, " << he0 << ", " << he1 << " }" << std::endl;
                 }
-                navmesh->halfedge[hesz]     = { {navmesh_idx[indices[i]],     navmesh_idx[indices[i + 1]]}, std::numeric_limits<uint32_t>::max(), he1, he2 };
-                navmesh->halfedge[hesz + 1] = { {navmesh_idx[indices[i + 1]], navmesh_idx[indices[i + 2]]}, std::numeric_limits<uint32_t>::max(), he2, he0 };
-                navmesh->halfedge[hesz + 2] = { {navmesh_idx[indices[i + 2]], navmesh_idx[indices[i]]    }, std::numeric_limits<uint32_t>::max(), he0, he1 };
+
+                navmesh->halfedge.resize (hesz + 3, {});
+
+                // Now, could also try to identify LINES
+                navmesh->halfedge[he0] = { {navmesh_idx[indices[i    ]], navmesh_idx[indices[i + 1]]}, std::numeric_limits<uint32_t>::max(), he1, he2, 0u };
+                navmesh->halfedge[he1] = { {navmesh_idx[indices[i + 1]], navmesh_idx[indices[i + 2]]}, std::numeric_limits<uint32_t>::max(), he2, he0, 0u };
+                navmesh->halfedge[he2] = { {navmesh_idx[indices[i + 2]], navmesh_idx[indices[i    ]]}, std::numeric_limits<uint32_t>::max(), he0, he1, 0u };
 
                 if constexpr (debug_mn) {
-                    if (hesz < mlines) {
-                        std::cout << "halfedge["<< hesz << "] contains: vi:"
-                                  <<  navmesh->halfedge[hesz].vi
-                                  << ", twin:" << navmesh->halfedge[hesz].twin
-                                  << ", next:" << navmesh->halfedge[hesz].next
-                                  << ", prev:" << navmesh->halfedge[hesz].prev << std::endl;
-                    }
+                    std::cout << "halfedge["<< hesz << "] contains: vi:"
+                              <<  navmesh->halfedge[hesz].vi
+                              << ", twin:" << navmesh->halfedge[hesz].twin
+                              << ", next:" << navmesh->halfedge[hesz].next
+                              << ", prev:" << navmesh->halfedge[hesz].prev << std::endl;
                 }
                 // A face contains just the first half edge index
                 mesh::face<> t = { he0 };
@@ -371,7 +379,7 @@ namespace mplot
                 // we can't trust them (though they're easy to get, as we're dealing with indices
                 // already). However, use this to ensure that our triangle indices order is in
                 // agreement with mesh normal as far as direction goes.
-                sm::vec<float> tn = this->get_normal (indices[i]) + this->get_normal (indices[i+1]) + this->get_normal (indices[i+2]) ;
+                sm::vec<float> tn = this->get_normal (indices[i]) + this->get_normal (indices[i + 1]) + this->get_normal (indices[i + 2]) ;
                 tn.renormalize();
 
                 // Compute trinorm as well and compare with the one from the mesh - perhaps it's
@@ -386,10 +394,11 @@ namespace mplot
 
                 // Check rotational sense of triangles
                 if (n.dot (tn) < 0.0f) {
+                    std::cout << "Swap order of triangle with he " << he0 << std::endl;
                     // Swap first and last half edge
-                    navmesh->halfedge[hesz].vi.rotate();
-                    navmesh->halfedge[hesz + 1].vi.rotate();
-                    navmesh->halfedge[hesz + 2].vi.rotate();
+                    navmesh->halfedge[he0].vi.rotate();
+                    navmesh->halfedge[he1].vi.rotate();
+                    navmesh->halfedge[he2].vi.rotate();
                 }
                 navmesh->triangles.push_back (t);
             }
@@ -436,14 +445,14 @@ namespace mplot
                 this->navmesh->load (filename_pre_boundary);
                 this->navmesh->add_boundary_halfedges();
                 this->navmesh->test();
-                //this->navmesh->save (filename);
+                this->navmesh->save (filename);
             } else {
                 std::cout << "Building NavMesh to save into file " << filename << std::endl;
                 this->build_navmesh();
                 this->navmesh->save (filename_pre_boundary);
                 this->navmesh->add_boundary_halfedges();
-                //this->navmesh->test();
-                //this->navmesh->save (filename);
+                this->navmesh->test();
+                this->navmesh->save (filename);
             }
         }
 
