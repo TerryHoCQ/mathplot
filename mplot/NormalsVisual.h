@@ -6,6 +6,7 @@
 
 #include <array>
 #include <sm/vec>
+#include <sm/mat>
 #include <sm/flags>
 #include <mplot/colour.h>
 #include <mplot/VisualModel.h>
@@ -128,10 +129,12 @@ namespace mplot
                         if ((h.flags & 0x2) == 0x2) {
                             // special/rogue
                             sm::vec<> rpos = ((p0 + p1) / 2.0f);
+                            // output text position of rogue half edge in Blender (not glTF/OpenGL y-up) z-up coordinates, so need this transform:
+                            auto to_blender = sm::mat<float, 4>::frombasis (sm::vec<float>::ux(), sm::vec<float>::uz(), -sm::vec<float>::uy());
                             std::cout << "Showing a rogue at "
-                                      << (mplot::compoundray::blender_transform_mat() * p0).less_one_dim()
+                                      << (to_blender * p0).less_one_dim()
                                       << " " << rpos.length() << " from origin\n"
-                                      << "       otherend: " << (mplot::compoundray::blender_transform_mat() * p1).less_one_dim() << std::endl;
+                                      << "       otherend: " << (to_blender * p1).less_one_dim() << std::endl;
 
 
                             if (this->options.any_of ({normalsvisual_flags::show_halfedges, normalsvisual_flags::show_boundary_halfedges, normalsvisual_flags::show_inner_halfedges})) {
