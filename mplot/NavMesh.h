@@ -1334,7 +1334,8 @@ namespace mplot
                         // Test to see if start location was inside this twin
                         sm::vec<sm::vec<float>, 3> tv_lf = this->triangle_vertices (twin, model_to_scene);
                         if (tv_lf[0][0] == std::numeric_limits<float>::max()) {
-                            throw std::runtime_error ("twin is not a triangle");
+                            // This probably means we've attempted to go over a boundary. client code should turn around
+                            throw std::runtime_error ("off-edge: twin is not a triangle");
                         }
                         sm::vec<float> _tn = this->triangle_normal (tv_lf);
                         auto [is, h] = sm::geometry::ray_tri_intersection<float> (tv_lf[0], tv_lf[1], tv_lf[2], camloc_sf + (_tn / 2.0f), -_tn);
