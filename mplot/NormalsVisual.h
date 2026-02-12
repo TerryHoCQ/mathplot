@@ -133,6 +133,7 @@ namespace mplot
                                 this->computeArrow (p0, p1, mplot::colour::yellow,
                                                     tube_r, this->arrowhead_prop, cone_r, this->shapesides);
                             }
+                            this->computeSphere (((p0 + p1) / 2.0f) + sm::vec<>::uy() * 0.2f, mplot::colour::yellow, 0.1f);
                         } else if ((h.flags & 0x1) == 0x1) {
                             // boundary
                             if (this->options.any_of ({normalsvisual_flags::show_halfedges, normalsvisual_flags::show_boundary_halfedges})) {
