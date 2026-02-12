@@ -534,6 +534,7 @@ namespace mplot
             uint64_t twin_meandist = 0; // See how far a search has to search for a twin
             uint32_t twins = 0;
 
+#pragma omp parallel for
             for (uint32_t i = 0; i < sz; ++i) {
 
                 const sm::vec<uint32_t, 2>& vi = this->halfedge[i].vi;
