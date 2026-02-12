@@ -127,13 +127,19 @@ namespace mplot
                         auto p1 = mymodel->navmesh->vertex[h.vi[1]].p;
                         if ((h.flags & 0x2) == 0x2) {
                             // special/rogue
-                            std::cout << "Showing a rogue!\n";
+                            sm::vec<> rpos = ((p0 + p1) / 2.0f);
+                            std::cout << "Showing a rogue at "
+                                      << (mplot::compoundray::blender_transform_mat() * p0).less_one_dim()
+                                      << " " << rpos.length() << " from origin\n"
+                                      << "       otherend: " << (mplot::compoundray::blender_transform_mat() * p1).less_one_dim() << std::endl;
+
+
                             if (this->options.any_of ({normalsvisual_flags::show_halfedges, normalsvisual_flags::show_boundary_halfedges, normalsvisual_flags::show_inner_halfedges})) {
 
                                 this->computeArrow (p0, p1, mplot::colour::yellow,
                                                     tube_r, this->arrowhead_prop, cone_r, this->shapesides);
                             }
-                            this->computeSphere (((p0 + p1) / 2.0f) + sm::vec<>::uy() * 0.2f, mplot::colour::yellow, 0.1f);
+                            this->computeSphere (rpos + sm::vec<>::uy() * 0.2f, mplot::colour::yellow, 0.1f);
                         } else if ((h.flags & 0x1) == 0x1) {
                             // boundary
                             if (this->options.any_of ({normalsvisual_flags::show_halfedges, normalsvisual_flags::show_boundary_halfedges})) {
