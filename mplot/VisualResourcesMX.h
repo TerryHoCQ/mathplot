@@ -135,6 +135,7 @@ namespace mplot
 
         void insert_instance_data (const unsigned int instance_idx, const sm::vec<float, 3>& coord)
         {
+            // If this function fails, make sure to call v.render before calling set_instance_data :)
             if (instance_idx >= this->max_instances) {
                 throw std::runtime_error ("insert_instance_data: bad instance_idx");
             }

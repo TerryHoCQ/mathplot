@@ -14,18 +14,22 @@
 #include <sm/vec>
 #include <sm/mat>
 #include <sm/vvec>
+#include <sm/random>
+
+#include <mplot/gl/version.h>
+constexpr int32_t glver = mplot::gl::version_4_3;
 
 #include <mplot/Visual.h>
 #include <mplot/ColourMap.h>
 #include <mplot/CoordArrows.h>
-#include <mplot/ScatterVisual.h>
+#include <mplot/InstancedScatterVisual.h>
 #include <mplot/GeodesicVisual.h>
 
 int main (int argc, char** argv)
 {
     int rtn = -1;
 
-    mplot::Visual v(1024, 768, "Crawling a surface with NavMesh features");
+    mplot::Visual<glver> v(1024, 768, "Crawling a surface with NavMesh features");
     v.rotateAboutNearest (true);
 
     // How big to make the sphere?
@@ -46,33 +50,32 @@ int main (int argc, char** argv)
     sm::vec<float, 3> sphere_loc = {};
 
     // A CoordArrows is our "crawling" agent
-    auto ca = std::make_unique<mplot::CoordArrows<>> (arrows_loc);
+    auto ca = std::make_unique<mplot::CoordArrows<glver>> (arrows_loc);
     v.bindmodel (ca);
     ca->finalize();
     [[maybe_unused]] auto cap = v.addVisualModel (ca);
 
-    // A ScatterVisual will show the agent's trail
-    sm::vvec<sm::vec<float>> sv_points;
-    sm::vvec<float> sv_data;
-    auto sv = std::make_unique<mplot::ScatterVisual<float>> (sphere_loc);
-    v.bindmodel (sv);
-    sv->setDataCoords (&sv_points);
-    sv->setScalarData (&sv_data);
-    sv->radiusFixed = 0.015f;
-    sv->cm.setType (mplot::ColourMapType::Plasma);
-    sv->colourScale.compute_scaling (0.0f, 1.0f);
-    sv->finalize();
-    [[maybe_unused]] auto svp = v.addVisualModel (sv); // use svp->add (coord, value)
+    // Breadcrumb trail
+    uint64_t move_counter = 0u;
+    uint64_t max_bc = 1000;
+    sm::vvec<sm::vec<float, 3>> sv_points = {};
+    sm::vvec<float> sv_data = {};
+    auto isv = std::make_unique<mplot::InstancedScatterVisual<glver>> (sphere_loc);
+    v.bindmodel (isv);
+    isv->max_instances = max_bc;
+    isv->radiusFixed = 0.01f;
+    isv->finalize();
+    auto isvp = v.addVisualModel (isv);
 
     // A sphere, approximated by an icosahedral geodesic, is our landscape
     mplot::ColourMap<float> cm (mplot::ColourMapType::Jet);
     auto cl = cm.convert (0.5f);
-    auto gv = std::make_unique<mplot::GeodesicVisual<float>> (sphere_loc, radius);
+    auto gv = std::make_unique<mplot::GeodesicVisual<float, glver>> (sphere_loc, radius);
     v.bindmodel (gv);
     gv->iterations = geo_itrns;
     std::string lbl = "GeodesicVisual with computed NavMesh";
     gv->addLabel (lbl, {0, -(radius + 0.1f), 0}, mplot::TextFeatures (0.06f));
-    gv->cm.setType (mplot::ColourMapType::Jet);
+    gv->cm.setType (mplot::ColourMapType::NaviaW);
     gv->colour_bb = cl;
     gv->finalize();
     auto gvp = v.addVisualModel (gv);
@@ -82,9 +85,14 @@ int main (int argc, char** argv)
     // Make the navmesh for the geodesic, this doesn't occur automatically and has to come after finalize()
     gvp->make_navmesh();
 
-    // We're going to move the coordinate arrows forwards (along its z-axis), so that it 'orbits'
-    float move_step = 0.1f; // 0.075 <= move_step and iterations 6 to fail
+    // We're going to move the coordinate arrows forwards (along its z-axis) on each step
+    float move_step = 0.01f;
     sm::vec<float> mv_ca = sm::vec<float>::uz() * move_step;
+
+    // We'll also rotate by a small amount on each step, drawn from a Von Mises distribution
+    constexpr float mu = 0.0f;
+    constexpr float kappa = 3.0f;
+    sm::rand_vonmises<float> rvm (mu, kappa);
 
     // The viewmatrices have to be passed to mplot::NavMesh::compute_mesh_movement
     sm::mat<float, 4> ca_view = cap->getViewMatrix();
@@ -96,15 +104,20 @@ int main (int argc, char** argv)
     auto[hp_scene, ti0] = gvp->navmesh->find_triangle_hit (ca_view, sph_view);
     std::cout << "Find hit finds hit point " << hp_scene << " with ti0 halfedge: " << ti0 << std::endl;
 
-    int move_counter = 0;
-    constexpr int move_max = 1000;
+    cap->setHide (true);
+
     while (!v.readyToFinish()) {
 
+        // Render the scene. Make sure this happens before first call to set_instance_data
+        v.render();
+
         // Wait .018 s and also poll for mouse/keyboard events
-        v.waitevents (0.018);
+        v.waitevents (0.002);
 
         // Compute a new movement over the landscape mesh (the sphere)
         try {
+            // rotate ca_view each time by a little (randomly)
+            ca_view.rotate (sm::vec<>::uy(), rvm.get());
             ca_view = gvp->navmesh->compute_mesh_movement (mv_ca, ca_view, sph_view, hoverheight);
         } catch (std::exception& e) {
             std::cout << "Exception navigating mesh at movement count " << move_counter << ": " << e.what() << std::endl;
@@ -118,12 +131,15 @@ int main (int argc, char** argv)
 
         // We're adding and rebuilding the not-very-optimized ScatterVisual, so if move_max is too
         // high, the program will slow down (too many tiny spheres!)
-        if (move_counter++ < move_max) {
-            svp->add (arrows_loc, static_cast<float>(move_counter) / move_max);
+        move_counter++;
+        // This should be the right place to update breadcrumbs
+        if (sv_points.size() < max_bc) {
+            sv_points.push_back (arrows_loc);
+            sv_data.push_back (0.0f); // dummy for now
+        } else {
+            sv_points[move_counter % max_bc] = arrows_loc;
         }
-
-        // Re-render the scene
-        v.render();
+        isvp->set_instance_data (sv_points);
     }
 
     v.keepOpen();

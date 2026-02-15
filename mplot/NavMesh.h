@@ -1236,7 +1236,7 @@ namespace mplot
             const uint32_t ti0_save = this->ti0;
 
             // Boolean state flags used in this function
-            enum class cmm_fl : uint32_t { done, detected_crossing, single_movement, vertex_crossing };
+            enum class cmm_fl : uint32_t { done, detected_crossing, single_movement, vertex_crossing, end_on_boundary };
             sm::flags<cmm_fl> flags;
 
             // Camera location, scene frame
@@ -1441,7 +1441,7 @@ namespace mplot
             while (!flags.test (cmm_fl::done)) {
 
                 if constexpr (debug_move) {
-                    std::cout << "\nWHILE LOOP\n"
+                    std::cout << "\nWHILE LOOP, TRAVERSING TRIANGLES\n"
                               << "ti0 = (" << this->ti0 << ") = " << tv_sf << "\n"
                               << "mv_inplane: " << hov_sf << "," << mv_inplane << "\n"
                               << "tn0 = " << tn0 << ")\n";
@@ -1552,21 +1552,8 @@ namespace mplot
                                     flags.set (cmm_fl::done, true);
                                 } else {
 
-                                    if constexpr (debug_move) { std::cout << "did we sail past or land on the boundary or land in a 1-neighbour?\n"; }
-                                    // Incomplete; We've sailed past newtv_sf. Or perhaps landed on the boundary???
-
-                                    // Can now test if we went beyond the boundary?
-
-                                    // Think I HAVE to here. On next loop (4th WHILE LOOP in my debug example), mv_inplane is weird - too long.
-                                    // Use dist_to_lineseg??
-                                    for (uint32_t i = 0; i < 3; ++i) {
-                                        float d2 = sm::geometry::dist_to_lineseg (newtv_sf[i], newtv_sf[(i + 1) % 3u], endmv);
-                                        std::cout << "Dist to triedge: " << d2 << std::endl;
-                                        if (d2 <= std::numeric_limits<float>::epsilon()) {
-                                            cam_to_surface = reorient_model * cam_to_surface;
-                                            flags.set (cmm_fl::done, true);
-                                        }
-                                    }
+                                    if constexpr (debug_move) { std::cout << "did we sail past or land in a 1-neighbour?\n"; }
+                                    // Incomplete; We've sailed past newtv_sf.
 
                                     if (!flags.test (cmm_fl::done)) {
                                         // We need to
@@ -1594,7 +1581,7 @@ namespace mplot
                     }
 
                 } else { // NO triangle edge crossing was detected with compute_crossing_location
-                    std::cout << "B) NOT: Then an edge (or vertex) crossing WAS detected (by compute_crossing_location or a prev. 'detected crossing')\n";
+                    std::cout << "B) An edge (or vertex) crossing was NOT detected (by compute_crossing_location or a prev. 'detected crossing')\n";
 
                     // We had intersection in ti0, but no apparent crossing over its edges.
                     // We may have moved entirely within the starting triangle or colinear with an edge. Test for these cases.
@@ -1625,7 +1612,7 @@ namespace mplot
                     } else {
                         if constexpr (debug_move) {
                             std::cout << "End of movement is NOT in ti0 " << this->ti0 // But it might be ON the boundary
-                                      << ". Look for start neighbours\n"; // << Why 'look for *start* neighbours'?
+                                      << ". Checking neighbours, but Check BOUNDARY TOO; it might have landed there?\n";
                         }
 
                         // Test neighbours, new scheme using halfedge data structures
@@ -1645,6 +1632,7 @@ namespace mplot
                             if (twin != std::numeric_limits<uint32_t>::max()) {
                                 // Test to see if start location was inside a neighbour
                                 sm::vec<sm::vec<float>, 3> tv_nb = this->triangle_vertices (twin, model_to_scene);
+                                std::cout << "Checking two-neighbour " << twin << ": " << tv_nb << std::endl;
                                 if (tv_nb[0][0] == std::numeric_limits<float>::max()) {
                                     // tv_nb is not a triangle
                                     std::cout << "Are we off-edge?";
@@ -1679,17 +1667,28 @@ namespace mplot
                                         break; // out of for
 
                                     } else { // end not in neighbour
+
+                                        // Check if end is on boundary between self and twin here.
+                                        // Need the exact endmv on the triangle surface here
+                                        sm::vec<float> endmv = hov_sf + mv_inplane;
+                                        float d2 = sm::geometry::dist_to_lineseg (tv_nb[0], tv_nb[1], endmv);
+                                        std::cout << "Dist from endmv: " << endmv << " to twin boundary: " << d2 << std::endl;
+                                        if (d2 <= std::numeric_limits<float>::epsilon()) {
+                                            // Take appropriate action...
+                                            std::cout << "Movement ends ON that boundary: " << tv_nb[0] << "," << (tv_nb[1] - tv_nb[0]) << "\n";
+                                            flags.set (cmm_fl::end_on_boundary);
+                                            hi = this->ti0; // to end the do-while
+                                            break; // out of for
+                                        }
+#ifdef OLD_REORIENT_START_CODE
                                         if (is) { // start is in neighbour tri (will re-orient to this and re-loop)
+                                            std::cout << "Start in neighbour, end NOT in neighbour exit do-while\n";
                                             _ti_2n = twin;
                                             _tn_2n = _tn;
-                                            std::cout << "Start in neighbour, end NOT in neighbour exit do-while\n";
                                             hi = this->ti0; // to end the do-while
                                             break; // out of for
                                         } // Neither end nor start are in neighbour. This occurs if the end is ON the boundary, but precision errors
-                                        // mean this location isn't 'in' either start or neighbour (according to ray_tri_intersection)
-                                        else {
-                                            std::cout << "Start not in neighbour, end not in neighbour...\n";
-                                        }
+#endif
                                     }
                                 }
                             }
@@ -1697,7 +1696,7 @@ namespace mplot
                             hi = this->halfedge[hi].next;
 
                         } while (hi != this->ti0);
-
+#if 0
                         // Test one-neighbours here if necessary (that is, if the two neighbour test above failed)
                         if (flags.test (cmm_fl::detected_crossing) == false && _ti_2n == std::numeric_limits<uint32_t>::max()) {
                             uint32_t hi = this->ti0;
@@ -1747,7 +1746,7 @@ namespace mplot
 
                             } while (hi != this->ti0);
                         }
-
+#endif
                         if (_ti_2n != std::numeric_limits<uint32_t>::max()) {
                             // Now we know an alternative start triangle for the movement. Re-orient to this and re-loop
                             if constexpr (debug_move) { std::cout << "CHANGE ti0 to _ti_2n = " << _ti_2n << "\n"; }
@@ -1761,6 +1760,10 @@ namespace mplot
                             // We didn't find an alternative start triangle, but we did detect an edge crossing by intersection, so continue.
                         } else if (flags.test (cmm_fl::vertex_crossing)) {
                             // We didn't find an alternative start triangle, but we did detect a vertex crossing, so continue.
+                        } else if (flags.test (cmm_fl::end_on_boundary)) {
+                            if constexpr (debug_move2) { std::cout << "Movement complete on boundary (detected)\n"; }
+                            cam_to_surface.pretranslate (mv_inplane);
+                            flags.set (cmm_fl::done, true);
                         } else {
                             // End of move not evidently in self or neighbours, so assume it's bang on the boundary
                             if constexpr (debug_move2) { std::cout << "Movement complete on boundary ASSUMPTION\n"; }
