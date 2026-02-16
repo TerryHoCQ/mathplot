@@ -1621,7 +1621,7 @@ namespace mplot
                         flags.set (cmm_fl::vertex_crossing, false);
 
                         uint32_t _ti_2n = std::numeric_limits<uint32_t>::max();
-                        sm::vec<float> _tn_2n = {};
+                        //sm::vec<float> _tn_2n = {};
                         sm::vec<float> _tn = {};
 
                         // TWO NEIGHBOURS
