@@ -174,7 +174,7 @@ namespace mplot
          * to find the indices into vertexPositions and vertexNormals that this index in the
          * topographic mesh relates to.
          *
-         * \param scene_coord Supplied coordinate in scene frame of referencea
+         * \param scene_coord Supplied coordinate in scene frame of reference
          * \param viewmatrix The viewmatrix of the model which converts model frame coordinates to the scene frame
          */
         uint32_t find_vertex_nearest (const sm::vec<float>& scene_coord, const sm::mat<float, 4>& viewmatrix) const
@@ -218,16 +218,50 @@ namespace mplot
                 fhi = _hi;
             }
 
+            bool zlen_halfedge = false;
+            bool zlen_halfedge_to_halfedge = false;
+            bool approx_zlen_halfedge_to_halfedge = false;
             // Each boundary should be the same forwards and backwards from every possible start halfedge
             do {
                 //std::cout << "this->halfedge["<<fhi<<"].flags = " << this->halfedge[fhi].flags << " go to next..." << std::endl;
                 if (this->halfedge[fhi].next == fhi) { throw std::runtime_error ("self next referral!"); }
+                // Also make sure that the vertices are not the same (no triangles-that-are-lines)
+                const uint32_t fhi_nx = this->halfedge[fhi].next;
+                auto hlen = (this->vertex[halfedge[fhi].vi[1]].p - this->vertex[halfedge[fhi_nx].vi[1]].p).length();
+
+                if (halfedge[fhi].vi[0] == halfedge[fhi].vi[1]) { zlen_halfedge = true; }
+
+                if (halfedge[fhi].vi[1] == halfedge[fhi_nx].vi[1]) { zlen_halfedge_to_halfedge = true; }
+
+                if (hlen < (10.0f * std::numeric_limits<float>::epsilon())) {
+                    approx_zlen_halfedge_to_halfedge = true;
+                    //std::cout << "Curr fhi = " << fhi << ": " << this->vertex[halfedge[fhi].vi[0]].p << ","
+                    //          << (this->vertex[halfedge[fhi].vi[1]].p - this->vertex[halfedge[fhi].vi[0]].p)
+                    //          << ", Next fhi = " << fhi_nx << ": " << this->vertex[halfedge[fhi_nx].vi[0]].p << ","
+                    //          << (this->vertex[halfedge[fhi_nx].vi[1]].p - this->vertex[halfedge[fhi_nx].vi[0]].p)
+                    //          << std::endl;
+                }
+
                 fhi = this->halfedge[fhi].next;
                 ++fcount;
             } while (fhi != _hi && fhi != max && fcount < this->halfedge.size());
 
             if (debug) {
                 std::cout << "From forwards loop: fcount = "  << fcount << " and fhi = " << fhi << " cf _hi = " << _hi << std::endl;
+
+                if (zlen_halfedge == true) {
+                    std::cout << "test fails because we have zlen_halfedge\n";
+                }
+                if (zlen_halfedge_to_halfedge == true) {
+                    std::cout << "test fails because we have zlen_halfedge_to_halfedge\n";
+                }
+                if (approx_zlen_halfedge_to_halfedge == true) {
+                    std::cout << "test fails because we have at least one zero or ~zero length halfedge\n";
+                }
+            }
+
+            if (zlen_halfedge || zlen_halfedge_to_halfedge || approx_zlen_halfedge_to_halfedge) {
+                return false;
             }
 
             uint32_t rcount = 0u;
@@ -391,19 +425,25 @@ namespace mplot
         }
 
         // Test the navmesh, to make sure it is perfect
-        void test()
+        void test (const bool just_mark_bad = false)
         {
-            std::cout << __func__ << " called to test the navmesh\n";
-            // 1) Verify that each halfedge is part of a face or hole (boundary)
+            std::cout << "NavMesh verification test running...\n";
+            // 1) Verify that each halfedge is part of a face or hole (boundary) and is not a line?
             for (uint32_t hi = 0; hi < this->halfedge.size(); ++hi) {
                 if ((this->halfedge[hi].flags & 0x1) == 0x1) {
                     //std::cout << "This halfedge was marked as boundary\n";
                     if (this->verify_boundary (hi) == false) {
-                        throw std::runtime_error ("Imperfect halfedge mesh (boundary hole)");
+                        if (just_mark_bad == false) {
+                            throw std::runtime_error ("Imperfect halfedge mesh (boundary hole)");
+                        }
                     }
                 } else {
                     if (this->verify_triangle (hi) == false) {
-                        throw std::runtime_error ("Imperfect halfedge mesh (face triangle)");
+                        if (just_mark_bad == true) {
+                            this->halfedge[hi].flags |= 0x2; // Do want to mark whole triangle
+                        } else {
+                            throw std::runtime_error ("Imperfect halfedge mesh (face triangle)");
+                        }
                     }
 
                     std::vector<uint32_t> nb = this->test_neighbours (hi);
@@ -477,9 +517,16 @@ namespace mplot
                             const uint32_t _bnext = sz + j + 1;
                             const uint32_t newi = halfedge.size();
                             if constexpr (debug_bnd) { std::cout << "Push-back to halfedge[" << newi
-                                                                 << "] with prev = " << bprev << " next = " << _bnext
+                                                                 << "]: " << this->vertex[this->halfedge[cur].vi[1]].p
+                                                                 << "," << (this->vertex[this->halfedge[cur].vi[0]].p - this->vertex[this->halfedge[cur].vi[1]].p)
+                                                                 << " with prev = " << bprev << " next = " << _bnext
                                                                  << " and twin = " << cur << std::endl; }
-                            this->halfedge.push_back ({{this->halfedge[cur].vi[1], this->halfedge[cur].vi[0]}, cur, _bnext, bprev, 1});
+                            uint32_t fl = 1;
+                            if ((this->vertex[this->halfedge[cur].vi[0]].p - this->vertex[this->halfedge[cur].vi[1]].p).length() < 10.0f * std::numeric_limits<float>::epsilon()) {
+                                fl |= 2;
+                            }
+
+                            this->halfedge.push_back ({{this->halfedge[cur].vi[1], this->halfedge[cur].vi[0]}, cur, _bnext, bprev, fl});
                             this->halfedge[cur].twin = newi;
 
                             if (bcandi == i) {
@@ -505,6 +552,7 @@ namespace mplot
 
             // Lastly - check through for rogues!
             std::cout << "Post-search for rogues\n";
+
             for (uint32_t i = 0; i < sz; ++i) {
                 if (this->halfedge[i].twin == max) {
                     bool rogue_is_tri = this->verify_triangle (i, true);
@@ -994,18 +1042,18 @@ namespace mplot
                             std::cout << "ccl: fec returned pm.colinear true for t" << a << "t" << b << "\n";
                         }
                     }
-                    if (pm.flags.test (pm_fl::no_cross_point)
-                        && pm.flags.test (pm_fl::colinear) == false) {
+                    if (pm.flags.test (pm_fl::no_cross_point) == true && pm.flags.test (pm_fl::colinear) == false) {
                         inside[a] = true;
                         if constexpr (debug) {
-                            std::cout << "ccl: No intersection for edge t" << a << "t" << b << " " << t_verts[a] << " -- " << t_verts[b]
-                                      << " and move " << mv_s << " -- " << (mv_s + mv_inplane) << std::endl;
+                            std::cout << "ccl: No intersection for edge t" << a << "t" << b << " " << t_verts[a] << "," << (t_verts[b] - t_verts[a])
+                                      << " and move " << mv_s << "," << mv_inplane << std::endl;
                         }
                     } else {
                         if constexpr (debug) {
                             if (pm.flags.test (pm_fl::colinear)) { std::cout << "ccl: colinear t0t1\n"; }
-                            std::cout << "ccl: Intersection for edge t" << a << "t" << b << " " << t_verts[a] << " -- " << t_verts[b]
-                                      << " and move " << mv_s << " -- " << (mv_s + mv_inplane) << std::endl;
+                            if (pm.flags.test (pm_fl::no_cross_point)) { std::cout << "ccl: no cross point t0t1\n"; }
+                            std::cout << "ccl: Intersection for edge t" << a << "t" << b << " " << t_verts[a] << "," << (t_verts[b] - t_verts[a])
+                                      << " and move " << mv_s << "," << mv_inplane << std::endl;
                         }
                         cd.pm = pm;
                         cd.tri_edge = edge;
@@ -1439,6 +1487,7 @@ namespace mplot
         // Construct the plane dividing the triangles t0 and t1 which are assumed adjacent (joined
         // by vertex or edge). Return the plane in transformed (i.e. scene) coordinates. The
         // dividing edge_sc is supplied already transformed by model_to_scene.
+        // FIXME: Check this works as expected
         sm::vec<sm::vec<float>, 2> dividing_plane (const uint32_t t0, const uint32_t t1,
                                                    const sm::vec<float>& dividing_edge_sc,
                                                    const sm::mat<float, 4>& model_to_scene)
@@ -1594,8 +1643,11 @@ namespace mplot
 
                 // 1. Apply the fast edge crossing algorithm
                 crossing_data cd = this->compute_crossing_location (tv_sf, this->ti0, hov_sf, mv_inplane);
-                // If it failed to find a crossing,
-                if (cd.pm.flags.test (pm_fl::no_cross_point) == true) {
+
+                // If it failed to find a cross point, then we test inside the triangle and neighbours
+                // (Also if we moved colinearly along edge past a vertex)
+                if ((cd.pm.flags.test (pm_fl::colinear) == true && cd.pm.flags.test (pm_fl::no_cross_point) == false)
+                    || (cd.pm.flags.test (pm_fl::colinear) == false && cd.pm.flags.test (pm_fl::no_cross_point) == true)) {
                     // Now test if our movement stays within the triangle
                     sm::vec<float> endmv = (cam_to_surface * sm::vec<float>{}).less_one_dim() + mv_inplane;
                     if constexpr (debug_move) {
@@ -1611,7 +1663,11 @@ namespace mplot
                 }
 
                 // crossing_data gives us info about if there is NO cross point in the partial mv no_cross_point flag
-                if (cd.pm.flags.test (pm_fl::no_cross_point) == true) { // move a bit, shorten mv_inplane
+                if (cd.pm.flags.test (pm_fl::colinear) == true && cd.pm.flags.test (pm_fl::no_cross_point) == true) {
+                    std::cout << "A: Movement stays inside triangle ti0 (colinear within boundary\n";
+                    cam_to_surface.pretranslate (mv_inplane);
+                    done = true;
+                } else if (cd.pm.flags.test (pm_fl::no_cross_point) == true) { // move a bit, shorten mv_inplane
                     // mv_inplane moved camera inside triangle.
                     std::cout << "A: Movement stays inside triangle ti0\n";
                     cam_to_surface.pretranslate (mv_inplane);

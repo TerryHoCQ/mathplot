@@ -436,22 +436,24 @@ namespace mplot
             std::string filename = navmesh_dir + std::string("navmesh_") + std::to_string (h);
             std::string filename_pre_boundary = filename + ".pre";
 
+            constexpr bool just_mark = true;
             if (mplot::tools::fileExists (filename)) {
                 this->navmesh->load (filename);
+                std::cout << "Full test...\n";
                 this->navmesh->test();
 
             } else if (mplot::tools::fileExists (filename_pre_boundary)) {
                 std::cout << "Pre-boundary navmesh\n";
                 this->navmesh->load (filename_pre_boundary);
                 this->navmesh->add_boundary_halfedges();
-                this->navmesh->test();
+                this->navmesh->test (just_mark);
                 this->navmesh->save (filename);
             } else {
                 std::cout << "Building NavMesh to save into file " << filename << std::endl;
                 this->build_navmesh();
                 this->navmesh->save (filename_pre_boundary);
                 this->navmesh->add_boundary_halfedges();
-                this->navmesh->test();
+                this->navmesh->test (just_mark);
                 this->navmesh->save (filename);
             }
         }
