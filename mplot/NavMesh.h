@@ -1549,39 +1549,53 @@ namespace mplot
             constexpr bool debug_move = true;
             crossing_data cd;
 
-            // Get neighbours of ti0
-            auto nbs = this->find_neighbours (this->ti0);
-
-            // For each neighbour, test to see if start location was inside a neighbour
+#if 0 // The going-through-neighbours logic is OK, but the test is not right (see find_triangle_over_vertex)
             uint32_t nb0 = std::numeric_limits<uint32_t>::max();
-            sm::vec<float> _tn = {};
-            sm::vec<float> mv_orthog_nb = {};
-            sm::vec<float> mv_inplane_nb = {};
-            sm::vec<sm::vec<float>, 3> tv_nb = {};
-            for (auto nb : nbs) {
 
-                if (nb == ti0) { continue; } // Don't test self (i.e. ti0)
+            // for each vertex in ti0...
+            uint32_t _ti = this->ti0;
 
-                tv_nb = this->triangle_vertices (nb, model_to_scene);
-                if (tv_nb[0][0] == std::numeric_limits<float>::max()) {
-                    // tv_nb is not a triangle. Could be an off-edge triangle
-                    continue;
-                } else {
-                    // Construct the mv_inplane within this neighbour and test if it lands inside
-                    _tn = this->triangle_normal (tv_nb);
-                    mv_orthog_nb = _tn * (mv_inplane.dot (_tn) / (_tn.dot(_tn)));
-                    mv_inplane_nb = mv_inplane - mv_orthog_nb;
-                    if constexpr (debug_move) {
-                        std::cout << "Neighbour: " << nb << ": test intersect vector " << (hov_sf + mv_inplane_nb + (_tn / 2.0f)) << "," << -_tn << " with tri " << tv_nb << std::endl;;
-                    }
-                    auto [endis, endh] = sm::geometry::ray_tri_intersection<float, double> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + mv_inplane_nb + (_tn / 2.0f), -_tn);
-                    if constexpr (debug_move) { std::cout << "End lands IN? " << (endis ? "Y" : "N") << std::endl; }
+            std::set<uint32_t> tested;
+            tested.insert (this->ti0); // never test ti0
 
-                    if (endis) {
-                        nb0 = nb;
-                        break;
+            // Ok - so this testing neighbours thing is fallible. Or rather, I would need to recompute the mv_rest like I did in find_triangle_over_vertex
+            for (uint32_t i = 0; i < 3; ++i) {
+                // Get neighbours of _ti
+                auto nbs = this->find_neighbours (_ti);
+
+                // For each neighbour, test to see if start location was inside a neighbour
+                sm::vec<float> _tn = {};
+                sm::vec<float> mv_orthog_nb = {};
+                sm::vec<float> mv_inplane_nb = {};
+                sm::vec<sm::vec<float>, 3> tv_nb = {};
+                for (auto nb : nbs) {
+
+                    if (tested.count(nb) > 0) { continue; } // Don't test already-tested
+                    tested.insert (nb); // Oops: keep counting same triangle as each tri has 3 halfedges
+
+                    tv_nb = this->triangle_vertices (nb, model_to_scene);
+                    if (tv_nb[0][0] == std::numeric_limits<float>::max()) {
+                        // tv_nb is not a triangle. Could be an off-edge triangle
+                        continue;
+                    } else {
+                        // Construct the mv_inplane within this neighbour and test if it lands inside
+                        _tn = this->triangle_normal (tv_nb);
+                        mv_orthog_nb = _tn * (mv_inplane.dot (_tn) / (_tn.dot(_tn)));
+                        mv_inplane_nb = mv_inplane - mv_orthog_nb;
+                        if constexpr (debug_move) {
+                            std::cout << "Neighbour: " << nb << ": test intersect vector " << (hov_sf + mv_inplane_nb + (_tn / 2.0f)) << "," << -_tn << " with tri " << tv_nb << std::endl;;
+                        }
+                        auto [endis, endh] = sm::geometry::ray_tri_intersection<float, double> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + mv_inplane_nb + (_tn / 2.0f), -_tn);
+                        if constexpr (debug_move) { std::cout << "End lands IN? " << (endis ? "Y" : "N") << std::endl; }
+
+                        if (endis) {
+                            nb0 = nb;
+                            break;
+                        }
                     }
                 }
+
+                _ti = this->halfedge[_ti].next;
             }
 
             // Did we get a result?
@@ -1622,28 +1636,41 @@ namespace mplot
                 cd.pm.flags.reset();
 
             } else {
-                if constexpr (debug_move) { std::cout << "No neighbour landed in, do plane testing for ray " << hov_sf << "," << mv_inplane << "\n"; }
+#endif
+                if constexpr (debug_move) { std::cout << "Do plane testing for ray " << hov_sf << "," << mv_inplane << "\n"; }
                 // No neighbour was landed in; so do the plane test approach for each of the three edges of ti0
                 uint32_t hi = ti0;
                 do {
                     sm::vec<float> tri_edge = this->edge_vector (hi, model_to_scene);
-                    sm::vec<sm::vec<float>, 2> dp = this->dividing_plane (hi, this->halfedge[hi].twin, tri_edge, model_to_scene);
-                    std::cout << "Find ray_plane_intersection for plane " << dp[0] << " -- " << dp[1] << std::endl;
+                    sm::vec<float> te_start = this->edge_start (hi, model_to_scene);
+                    if constexpr (debug_move) { std::cout << "Test edge plane for " << te_start << "," << tri_edge << std::endl; }
+
+                    const uint32_t twin = this->halfedge[hi].twin;
+                    sm::vec<sm::vec<float>, 2> dp = this->dividing_plane (hi, twin, tri_edge, model_to_scene);
+
+                    if constexpr (debug_move) {
+                        std::cout << "For twin triangle " << this->triangle_vertices (twin, model_to_scene) << std::endl;
+                        std::cout << "Dividing plane: " << dp[0] << "," << (dp[0] + tri_edge) << "," << (dp[0] + tri_edge.cross (dp[1])) << std::endl;
+                    }
+
                     float pdist = sm::geometry::ray_plane_intersection<float> (dp[0], dp[1], hov_sf, mv_inplane); // returns distance along mv_inplane
                     if constexpr (debug_move) { std::cout << "pdist = " << pdist << std::endl; }
 
-                    if (pdist < 0.00001f) { // what threshold? Get case where ray_tri_intersection does not give hit for adjacent triangles, and pdist is 0.000127231
-                        std::cout << "CLOSE to BOUNDARY of " << hi << std::endl; // now do something
+                    if (pdist > 0.0f) { // what does distance mean? If >0 then good? But will pass through two planes...
+                        // Find distance from cross point to edge? FIXME...
+                        if constexpr (debug_move) { std::cout << "CLOSE to BOUNDARY of " << hi << std::endl; }
                         cd.pm.mv = mv_inplane;
                         cd.pm.end = hov_sf + mv_inplane;
                         cd.halfedge = hi;
                         cd.tri_edge = tri_edge;
-                        cd.pm.flags.set (pm_fl::crossed, false);
+                        cd.pm.flags.set (pm_fl::crossed, true);
                         break;
                     }
                     hi = this->halfedge[hi].next;
                 } while (hi != ti0);
+#if 0
             }
+#endif
 
             return cd;
         }
