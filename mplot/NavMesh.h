@@ -296,6 +296,26 @@ namespace mplot
         bool verify_triangle (const uint32_t tri_hi, const bool debug = false) const
         { return verify_halfedge_chain (tri_hi, 3, debug); }
 
+        /**
+         * Return the three indices in the triangle containing halfedge hi
+         *
+         * A single max value in the set indicates an error
+         */
+        std::set<uint32_t> triangle_indices (uint32_t hi) const
+        {
+            std::set<uint32_t> indices;
+            if (hi == std::numeric_limits<uint32_t>::max()) {
+                indices.insert (hi);
+                return indices;
+            }
+            for (uint32_t i = 0; i < 3; ++i) {
+                indices.insert (hi);
+                hi = this->halfedge[hi].next;
+                if (hi >= this->halfedge.size()) { break; }
+            }
+            return indices;
+        }
+
         // Return the three vertices for the triangle specified as three indices into NavMesh::vertex
         sm::vec<sm::vec<float>, 3> triangle_vertices (uint32_t tri_hi) const
         {
@@ -322,7 +342,7 @@ namespace mplot
         }
 
         // Return the three vertices for the triangle specified as three indices into NavMesh::vertex transformed by transform
-        sm::vec<sm::vec<float>, 3> triangle_vertices (uint32_t tri_hi, const sm::mat<float, 4>& transform) const
+        sm::vec<sm::vec<float>, 3> triangle_vertices (const uint32_t tri_hi, const sm::mat<float, 4>& transform) const
         {
             sm::vec<sm::vec<float>, 3> trivert = {};
             if (tri_hi == std::numeric_limits<uint32_t>::max()) {
@@ -602,8 +622,8 @@ namespace mplot
                 [[maybe_unused]] uint32_t eb = i + band < sz ? i + band : sz;
 
                 uint32_t wider = 0;
-
-#if 0 // Simplest code
+#if 0
+                // The Simplest code would be a single loop
                 for (uint32_t j = 0; j <  sz; ++j) {
                     if (j == i) { continue; }
                     const sm::vec<uint32_t, 2>& vij = this->halfedge[j].vi;
@@ -613,7 +633,8 @@ namespace mplot
                         break;
                     }
                 }
-#else // Optimize
+#endif
+                // But it's worth optimizing:
                 // First sb to eb, which we hope is most likely to find a twin
                 for (uint32_t j = sb; j < eb; ++j) {
                     if (j == i) { continue; }
@@ -652,7 +673,7 @@ namespace mplot
                         }
                     }
                 }
-#endif
+
                 wider_searches += wider;
 
                 if (this->halfedge[i].twin != std::numeric_limits<uint32_t>::max()) {
@@ -1541,7 +1562,7 @@ namespace mplot
             return p0_n;
         }
 
-        // By searching neighbours, find a boundary crossing.
+        // By searching over-the-vertex neighbours, find a boundary crossing.
         crossing_data find_nearest_boundary_crossing (const sm::vec<float>& hov_sf,
                                                       const sm::vec<float>& mv_inplane,
                                                       const sm::mat<float, 4>& model_to_scene)
@@ -1549,133 +1570,201 @@ namespace mplot
             constexpr bool debug_move = true;
             crossing_data cd;
 
-#if 0 // The going-through-neighbours logic is OK, but the test is not right (see find_triangle_over_vertex)
             uint32_t nb0 = std::numeric_limits<uint32_t>::max();
+
+            // Get the 'from' triangle normal
+            sm::vec<sm::vec<float>, 3> tv_frm = this->triangle_vertices (this->ti0, model_to_scene);
+            sm::vec<float> tn_frm = this->triangle_normal (tv_frm);
 
             // for each vertex in ti0...
             uint32_t _ti = this->ti0;
 
-            std::set<uint32_t> tested;
-            tested.insert (this->ti0); // never test ti0
+            std::set<std::set<uint32_t>> tested;
+            tested.insert (this->triangle_indices(this->ti0)); // never test ti0
 
-            // Ok - so this testing neighbours thing is fallible. Or rather, I would need to recompute the mv_rest like I did in find_triangle_over_vertex
             for (uint32_t i = 0; i < 3; ++i) {
-                // Get neighbours of _ti
-                auto nbs = this->find_neighbours (_ti);
 
-                // For each neighbour, test to see if start location was inside a neighbour
-                sm::vec<float> _tn = {};
-                sm::vec<float> mv_orthog_nb = {};
-                sm::vec<float> mv_inplane_nb = {};
-                sm::vec<sm::vec<float>, 3> tv_nb = {};
-                for (auto nb : nbs) {
+                const sm::vec<float> vtx_loc = this->edge_start (_ti, model_to_scene);
+                const sm::vec<float> to_vtx = vtx_loc - hov_sf;
+                // to_vtx.cross (mv_inplane) should be very short
+                auto cp = to_vtx.cross (mv_inplane);
+                std::cout << "i = " << i << ", cp.length(): " << cp.length()
+                          << " and to_vtx.dot (mv_inplane) / to_vtx.length() = "
+                          << (to_vtx.dot (mv_inplane) / to_vtx.length()) << std::endl;
 
-                    if (tested.count(nb) > 0) { continue; } // Don't test already-tested
-                    tested.insert (nb); // Oops: keep counting same triangle as each tri has 3 halfedges
-
-                    tv_nb = this->triangle_vertices (nb, model_to_scene);
-                    if (tv_nb[0][0] == std::numeric_limits<float>::max()) {
-                        // tv_nb is not a triangle. Could be an off-edge triangle
-                        continue;
-                    } else {
-                        // Construct the mv_inplane within this neighbour and test if it lands inside
-                        _tn = this->triangle_normal (tv_nb);
-                        mv_orthog_nb = _tn * (mv_inplane.dot (_tn) / (_tn.dot(_tn)));
-                        mv_inplane_nb = mv_inplane - mv_orthog_nb;
-                        if constexpr (debug_move) {
-                            std::cout << "Neighbour: " << nb << ": test intersect vector " << (hov_sf + mv_inplane_nb + (_tn / 2.0f)) << "," << -_tn << " with tri " << tv_nb << std::endl;;
-                        }
-                        auto [endis, endh] = sm::geometry::ray_tri_intersection<float, double> (tv_nb[0], tv_nb[1], tv_nb[2], hov_sf + mv_inplane_nb + (_tn / 2.0f), -_tn);
-                        if constexpr (debug_move) { std::cout << "End lands IN? " << (endis ? "Y" : "N") << std::endl; }
-
-                        if (endis) {
-                            nb0 = nb;
-                            break;
-                        }
-                    }
+                // Check to see if vtx_loc is in the direction mv_inplane...
+                if (to_vtx.dot (mv_inplane) < 0.0f) {
+                    // Then mv_inplane points away from this vtx
+                     _ti = this->halfedge[_ti].next;
+                     continue;
                 }
 
+                // Get neighbours of _ti
+                auto nbs = this->find_neighbours (_ti);
+                const sm::vec<float> mv_rest = mv_inplane - to_vtx;
+
+                // For each neighbour, test to see if start location was inside a neighbour
+                for (auto nb : nbs) {
+                    std::set<uint32_t> ind = this->triangle_indices(nb);
+                    if (tested.count (ind) > 0) { continue; } // Don't test already-tested
+                    tested.insert (ind);
+                    auto[found_in, r_axis, _mv_rest] = detect_movement_in_neighbour (nb, tn_frm, mv_rest, vtx_loc, model_to_scene);
+                    if (found_in) {
+                        nb0 = nb;
+                        cd.halfedge = _ti; // the vtx halfedge
+                        cd.tri_edge = r_axis;
+                        cd.pm.mv = _mv_rest;
+                        cd.pm.end = vtx_loc;
+                        cd.pm.flags.set (pm_fl::crossed);
+                        break; // also need to break out of outer loop
+                    }
+                }
+                if (nb0 != std::numeric_limits<uint32_t>::max()) { break; }
                 _ti = this->halfedge[_ti].next;
             }
 
             // Did we get a result?
             if (nb0 != std::numeric_limits<uint32_t>::max()) {
-                if constexpr (debug_move) { std::cout << "Found a neighbour because endmv lands in it\n"; }
+                if constexpr (debug_move) { std::cout << "detected a neighbour with detect_movement_in_neighbour()\n"; }
+#if 0
                 // We got the neighbour. Now find the edge/vertex that joins them, to construct crossing_data for return
                 // We have ti0 and nb0. Do they have a twinned edge?
                 uint32_t twinned = this->test_twin (this->ti0, nb0);
                 if (twinned == std::numeric_limits<uint32_t>::max()) {
                     // If twinned is not set, do they have a twinned vertex? That's a vertex with the same index in this->vertex
                     twinned = this->test_vertex_twin (this->ti0, nb0);
+
                     cd.pm.flags.set (pm_fl::near_vertex_0); // shared vertex of twinned will be v[0]
                     if (twinned == std::numeric_limits<uint32_t>::max()) {
                         // Found no neighbour! Weird.
                         throw std::runtime_error ("Found end triangle, and know ti0, but found no twinning edge or vertex between them ?!?!");
                         if constexpr (debug_move) { std::cout << "...across a vertex\n"; }
                     }
+                } else {
+                    std::cout << "We have a twin edge joining ti0 " << ti0 << " and nb " << nb0 << std::endl;
                 }
 
                 cd.halfedge = twinned;
                 // Now process twinned...
+#endif
+                // cd should have been set up...
+
+#if 0 // will have set tri_edge already
                 if (cd.pm.flags.test (pm_fl::near_vertex_0)) {
-                    // Build edge vector from normals in two triangles
-                    throw std::runtime_error ("Create vertex crossing edge vector");
+                    // Have set cd.tri_edge = r_axis, above
+                    std::cout << "cd.tri_edge should have been set to " << cd.tri_edge << std::endl;
                 } else {
                     cd.tri_edge = this->edge_vector (twinned, model_to_scene);
                 }
+
                 sm::vec<sm::vec<float>, 2> dp = this->dividing_plane (ti0, twinned, cd.tri_edge, model_to_scene);
                 float pdist = sm::geometry::ray_plane_intersection<float> (dp[0], dp[1], hov_sf, mv_inplane); // returns distance along mv_inplane
+
+                // Think this logic is flawed
                 if constexpr (debug_move) { std::cout << "pdist = " << pdist << std::endl; }
+
                 // To find end coord, look at mv_inplane and cd.tri_edge
-                sm::vec<float> mv_start = mv_inplane;
-                mv_start.renormalize();
+                sm::vec<float> mv_start = mv_inplane; // No - this needs to be the mv_rest inside detect_movement_in_neighbour
+                //mv_start.renormalize();
                 mv_start *= pdist;
+
                 // Find closest location on cd.tri_edge to mv_inplane. That allows the construction of cd.pm.mv and cd.pm.end
-                cd.pm.mv = mv_start;           // movement vector to the crossing
-                cd.pm.end = hov_sf + mv_start; // end coord of the crossing
-                cd.pm.flags.reset();
+                //cd.pm.mv = mv_start;           // movement vector to the crossing
+                std::cout << "movement to the crossing: " << cd.pm.mv << std::endl;
+                //cd.pm.end = hov_sf + mv_start; // end coord of the crossing
+                std::cout << "end (the crossing): " << cd.pm.end << std::endl;
 
+                cd.pm.flags.reset(); // ?
+#endif
             } else {
-#endif
-                if constexpr (debug_move) { std::cout << "Do plane testing for ray " << hov_sf << "," << mv_inplane << "\n"; }
-                // No neighbour was landed in; so do the plane test approach for each of the three edges of ti0
-                uint32_t hi = ti0;
-                do {
-                    sm::vec<float> tri_edge = this->edge_vector (hi, model_to_scene);
-                    sm::vec<float> te_start = this->edge_start (hi, model_to_scene);
-                    if constexpr (debug_move) { std::cout << "Test edge plane for " << te_start << "," << tri_edge << std::endl; }
 
-                    const uint32_t twin = this->halfedge[hi].twin;
-                    sm::vec<sm::vec<float>, 2> dp = this->dividing_plane (hi, twin, tri_edge, model_to_scene);
-
-                    if constexpr (debug_move) {
-                        std::cout << "For twin triangle " << this->triangle_vertices (twin, model_to_scene) << std::endl;
-                        std::cout << "Dividing plane: " << dp[0] << "," << (dp[0] + tri_edge) << "," << (dp[0] + tri_edge.cross (dp[1])) << std::endl;
-                    }
-
-                    float pdist = sm::geometry::ray_plane_intersection<float> (dp[0], dp[1], hov_sf, mv_inplane); // returns distance along mv_inplane
-                    if constexpr (debug_move) { std::cout << "pdist = " << pdist << std::endl; }
-
-                    if (pdist > 0.0f) { // what does distance mean? If >0 then good? But will pass through two planes...
-                        // Find distance from cross point to edge? FIXME...
-                        if constexpr (debug_move) { std::cout << "CLOSE to BOUNDARY of " << hi << std::endl; }
-                        cd.pm.mv = mv_inplane;
-                        cd.pm.end = hov_sf + mv_inplane;
-                        cd.halfedge = hi;
-                        cd.tri_edge = tri_edge;
-                        cd.pm.flags.set (pm_fl::crossed, true);
-                        break;
-                    }
-                    hi = this->halfedge[hi].next;
-                } while (hi != ti0);
-#if 0
+                if constexpr (debug_move) { std::cout << "Do some other kind of test for ray " << hov_sf << "," << mv_inplane << "\n"; }
+                throw std::runtime_error ("Out of ideas"); // Had a plane-testing approach, but it didn't work
             }
-#endif
 
             return cd;
         }
 
-        // Find which triangle we crossed into over the vertex. Update cd with new tri_edge
+        /**
+         * Did the movement pass through the given neighbour triangle, which is probably a
+         * neighbour-over-a-vertex?
+         *
+         * \param _ti The triangle index of the 'from' triangle.
+         *
+         * \param tn_frm The normal of the 'from' triangle.
+         *
+         * \param mv is the movement, assumed to start in the boundary from triangle, in the plane
+         * of the from triangle
+         *
+         * \param start is the start the movement in the new triangle (and the end in the 'from'
+         * triangle). I.e. it's on the border
+         *
+         * \param model_to_scene Transform required to obtain triangle vertices in scene frame
+         *
+         * \return tuple containing true/false was a crossing found; the rotation axis and the rest of the movement
+         */
+        std::tuple<bool, sm::vec<float>, sm::vec<float>>
+        detect_movement_in_neighbour (const uint32_t _ti,
+                                      const sm::vec<float>& tn_frm,
+                                      const sm::vec<float>& mv,
+                                      const sm::vec<float>& start,
+                                      const sm::mat<float, 4>& model_to_scene)
+        {
+            constexpr bool debug_move = true;
+
+            bool found = false;
+
+            // Does mv_rest pass through this neighbour?
+            sm::vec<sm::vec<float>, 3> tv_nb = this->triangle_vertices (_ti, model_to_scene);
+
+            // Have to reorient to each neighbour to test
+            auto _tn = this->triangle_normal (tv_nb);
+            if constexpr (debug_move) {
+                std::cout << "Test candidate movement in _ti: " << _ti << " " << tv_nb;
+                std::cout << "\n norm: " << tv_nb.mean() << "," << (_tn * 0.05f) << "\n";
+                std::cout << "start: " << start << " mv : " << mv << "\n";
+            }
+
+            sm::vec<float> r_axis = tn_frm.cross (_tn);
+            std::cout << "Rotation axis: " << start << "," << r_axis << std::endl;
+            r_axis.renormalize();
+            // Compute the reorientation due to the requested movement into this neighbour
+            float rotn_angle = tn_frm.angle (_tn, r_axis);
+            // If tn0 and _tn are identical, then rotn_angle will be NaN, but in that case we want no rotation
+            if (std::isnan (rotn_angle)) { rotn_angle = 0.0f; }
+            sm::mat<float, 4> reorient_model; // reorientation transformation in sf between these two triangles
+            reorient_model.rotate (r_axis, rotn_angle);
+            // The 'new' mv_rest
+            sm::vec<float> _mv_rest = (reorient_model * mv).less_one_dim();
+            const float rl = _mv_rest.length();
+            if (std::isnan (rl)) { return {found, r_axis, _mv_rest}; }
+            // Now test points along mv_rest to be in
+            if constexpr (debug_move) { std::cout << "candidate _mv_rest is " << start << "," << _mv_rest << std::endl; }
+            // The far edge will be
+            uint32_t faredge = this->halfedge[_ti].next;
+            const sm::vec<float> fes = (model_to_scene * this->vertex[this->halfedge[_ti].vi[1]].p).less_one_dim();
+            const sm::vec<float> fee = (model_to_scene * this->vertex[this->halfedge[faredge].vi[1]].p).less_one_dim();
+            if constexpr (debug_move) { std::cout << "Far edge is " << fes << "," << (fee - fes) << std::endl; }
+            partial_movement pm = find_edge_crossing (fes, fee, _tn, start, _mv_rest);
+            if (pm.flags.test (pm_fl::crossed) == true) {
+                if constexpr (debug_move) { std::cout << "Found cross point with triangle (" << _ti << ")\n"; }
+                found = true;
+            } else {
+                // No crossing, did we land in the triangle?
+                auto [is, h] = sm::geometry::ray_tri_intersection<float, double> (tv_nb[0], tv_nb[1], tv_nb[2], start + _mv_rest + (_tn / 2.0f), -_tn);
+                if (is) { // then we DID land in this neighbour tri
+                    if constexpr (debug_move) { std::cout << "Found, as we landed IN triangle (" << _ti << ")\n"; }
+                    found = true;
+                }
+            }
+
+            return {found, r_axis, _mv_rest};
+        }
+
+        /**
+         * Find which triangle we crossed into over the vertex. Update cd with new
+         * tri_edge. crossing_data required here for
+         */
         uint32_t find_triangle_over_vertex (crossing_data& cd, const sm::vec<float>& mv_inplane, const sm::mat<float, 4>& model_to_scene)
         {
             constexpr bool debug_move = true;
@@ -1693,7 +1782,7 @@ namespace mplot
 
             std::vector<uint32_t> nbs = find_neighbours (cv);
 
-            // The 'from' triangle
+            // Get the 'from' triangle normal
             sm::vec<sm::vec<float>, 3> tv_frm = this->triangle_vertices (cv, model_to_scene);
             sm::vec<float> tn_frm = this->triangle_normal (tv_frm);
             if constexpr (debug_move) {
@@ -1701,54 +1790,15 @@ namespace mplot
                 std::cout << "FROM normal: " << tv_frm.mean() << "," << tn_frm << std::endl;
             }
 
+            const sm::vec<float> mv_rest = mv_inplane - cd.pm.mv;
+            const sm::vec<float> end_at_border = cd.pm.end;
             for (auto _ti : nbs) {
-
                 if (_ti == cv) { continue; } // Don't test crossing into self
+                auto[found_in, r_axis, _mv_rest] = detect_movement_in_neighbour (_ti, tn_frm, mv_rest, end_at_border, model_to_scene);
 
-                // Does mv_rest pass through this neighbour?
-                sm::vec<sm::vec<float>, 3> tv_nb = this->triangle_vertices (_ti, model_to_scene);
-
-                // Have to reorient to each neighbour to test
-                auto _tn = this->triangle_normal (tv_nb);
-                if constexpr (debug_move) {
-                    std::cout << "Test candidate movement in _ti: " << _ti << " " << tv_nb;
-                    std::cout << "\n norm: " << tv_nb.mean() << "," << _tn << "\n";
-                }
-
-                auto r_axis = tn_frm.cross (_tn);
-                std::cout << "Rotation axis: " << r_axis << std::endl;
-                r_axis.renormalize();
-                // Compute the reorientation due to the requested movement into this neighbour
-                float rotn_angle = tn_frm.angle (_tn, r_axis);
-                // If tn0 and _tn are identical, then rotn_angle will be NaN, but in that case we want no rotation
-                if (std::isnan (rotn_angle)) { rotn_angle = 0.0f; }
-                sm::mat<float, 4> reorient_model; // reorientation transformation in sf
-                reorient_model.rotate (r_axis, rotn_angle);
-                sm::vec<float> mv_rest = (reorient_model * (mv_inplane - cd.pm.mv)).less_one_dim();
-                const float rl = mv_rest.length();
-                if (std::isnan (rl)) { throw std::runtime_error ("NaN in mv_rest"); }
-                // Now test points along mv_rest to be in
-                if constexpr (debug_move) { std::cout << "candidate mv_rest is " << cd.pm.end << "," << mv_rest << std::endl; }
-                // The far edge will be
-                uint32_t faredge = this->halfedge[_ti].next;
-                const sm::vec<float> fes = (model_to_scene * this->vertex[this->halfedge[_ti].vi[1]].p).less_one_dim();
-                const sm::vec<float> fee = (model_to_scene * this->vertex[this->halfedge[faredge].vi[1]].p).less_one_dim();
-                if constexpr (debug_move) { std::cout << "Far edge is " << fes << "," << (fee - fes) << std::endl; }
-                partial_movement pm = find_edge_crossing (fes, fee, _tn, cd.pm.end, mv_rest);
-                if (pm.flags.test (pm_fl::crossed) == true) {
-                    if constexpr (debug_move) { std::cout << "Break on cross point with triangle (" << _ti << ")\n"; }
+                if (found_in) {
                     newt = _ti;
                     cd.tri_edge = r_axis;
-                    break;
-                } else {
-                    // No crossing, did we land in the triangle?
-                    auto [is, h] = sm::geometry::ray_tri_intersection<float, double> (tv_nb[0], tv_nb[1], tv_nb[2], cd.pm.end + mv_rest + (_tn / 2.0f), -_tn);
-                    if (is) { // then we DID land in this neighbour tri
-                        if constexpr (debug_move) { std::cout << "Break as we landed IN triangle (" << _ti << ")\n"; }
-                        newt = _ti;
-                        cd.tri_edge = r_axis;
-                        break;
-                    }
                 }
             }
 
@@ -1936,7 +1986,7 @@ namespace mplot
             if constexpr (debug_move) {
                 std::cout << "\n# compute_mesh_movement:\n"
                           << "\nti0: " << this->ti0
-                          << "\nti0 (sf): " << tv_sf << "\nnormal " << tn0
+                          << "\nti0 (sf): " << tv_sf << "\nnormal " << tv_sf.mean() << "," << tn0
                           << "\nmovement (camframe): " << mv_camframe
                           << "\nInitial camera location: " << cam_to_scene.translation() << "\n\n";
             }
