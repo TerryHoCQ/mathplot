@@ -1594,9 +1594,12 @@ namespace mplot
                 const sm::vec<float> to_vtx = vtx_loc - hov_sf;
                 // to_vtx.cross (mv_inplane) should be very short
                 auto cp = to_vtx.cross (mv_inplane);
-                std::cout << "i = " << i << ", cp.length(): " << cp.length()
-                          << " and to_vtx.dot (mv_inplane) / to_vtx.length() = "
-                          << (to_vtx.dot (mv_inplane) / to_vtx.length()) << std::endl;
+
+                if constexpr (debug_move) {
+                    std::cout << "i = " << i << ", cp.length(): " << cp.length()
+                              << " and to_vtx.dot (mv_inplane) / to_vtx.length() = "
+                              << (to_vtx.dot (mv_inplane) / to_vtx.length()) << std::endl;
+                }
 
                 // Check to see if vtx_loc is in the direction mv_inplane...
                 if (to_vtx.dot (mv_inplane) < 0.0f) {
@@ -1614,7 +1617,6 @@ namespace mplot
                     std::set<uint32_t> ind = this->triangle_indices (nb);
                     if (tested.count (ind) > 0) { continue; } // Don't test already-tested
                     tested.insert (ind);
-                    std::cout << __func__ << " calling detect_movement_in_neighbour\n";
                     auto[found_in, r_axis, _mv_rest] = detect_movement_in_neighbour (nb, tn_frm, mv_rest, vtx_loc, model_to_scene);
                     if (found_in) {
                         cd.crossed = _ti; // the vtx halfedge
@@ -1678,14 +1680,14 @@ namespace mplot
             // Have to reorient to each neighbour to test
             auto _tn = this->triangle_normal (tv_nb);
             if constexpr (debug_move) {
-                std::cout << __func__ << " called\n";
+                std::cout << __func__ << " called:\n";
                 std::cout << "Test candidate movement in nb: " << nb << " " << tv_nb;
                 std::cout << "\n norm: " << tv_nb.mean() << "," << (_tn * 0.05f) << "\n";
                 std::cout << "start/mv: " << start << "," << mv << "\n";
             }
 
             sm::vec<float> r_axis = tn_frm.cross (_tn);
-            std::cout << "Rotation axis: " << start << "," << r_axis << std::endl;
+            if constexpr (debug_move) { std::cout << "Rotation axis: " << start << "," << r_axis << std::endl; }
             r_axis.renormalize();
             // Compute the reorientation due to the requested movement into this neighbour
             float rotn_angle = tn_frm.angle (_tn, r_axis);
@@ -1722,8 +1724,6 @@ namespace mplot
                     if constexpr (debug_move) { std::cout << "NO ray_tri_intersection in nb " << nb << "\n"; }
                 }
             }
-
-            std::cout << __func__ << " returning\n";
 
             return {found, r_axis, mv_reoriented};
         }
@@ -1766,7 +1766,6 @@ namespace mplot
             const sm::vec<float> end_at_border = cd.pm.end;
             for (auto nb : nbs) {
                 if (nb == cv) { continue; } // Don't test crossing into self
-                std::cout << __func__ << " calling detect_movement_in_neighbour\n";
                 auto[found_in, r_axis, _mv_rest] = detect_movement_in_neighbour (nb, tn_frm, mv_rest, end_at_border, model_to_scene);
 
                 if (found_in) {
