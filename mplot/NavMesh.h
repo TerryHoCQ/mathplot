@@ -594,7 +594,7 @@ namespace mplot
          */
         void compute_neighbour_relations()
         {
-            constexpr bool debug_nr = true;
+            constexpr bool debug_nr = false;
             uint32_t sz = this->halfedge.size();
             if constexpr (debug_nr) { std::cout << "Finding twins for " << sz << " halfedge\n"; }
 
@@ -1072,7 +1072,7 @@ namespace mplot
                                                  const sm::vec<float>& mv_s,
                                                  const sm::vec<float>& mv_inplane)
         {
-            constexpr bool debug = true;
+            constexpr bool debug = false;
             crossing_data cd;
             cd.pm.flags.set (pm_fl::crossed, false);
 
@@ -1338,7 +1338,7 @@ namespace mplot
                                       const sm::mat<float, 4>& model_to_scene,
                                       const float hoverheight)
         {
-            constexpr bool debug_move = true;
+            constexpr bool debug_move = false;
 
             // Camera location, scene frame
             const sm::vec<float> camloc_sf = cam_to_scene.translation();
@@ -1571,7 +1571,7 @@ namespace mplot
                                                       const sm::vec<float>& mv_inplane,
                                                       const sm::mat<float, 4>& model_to_scene)
         {
-            constexpr bool debug_move = true;
+            constexpr bool debug_move = false;
             crossing_data cd;
 
             // Get the 'from' triangle normal
@@ -1668,7 +1668,7 @@ namespace mplot
                                       const sm::vec<float>& start,
                                       const sm::mat<float, 4>& model_to_scene)
         {
-            constexpr bool debug_move = true;
+            constexpr bool debug_move = false;
 
             bool found = false;
 
@@ -1737,7 +1737,7 @@ namespace mplot
                                         const sm::vec<float>& mv_inplane,
                                         const sm::mat<float, 4>& model_to_scene)
         {
-            constexpr bool debug_move = true;
+            constexpr bool debug_move = false;
 
             if (cd.pm.flags.any_of ({pm_fl::near_vertex_0, pm_fl::near_vertex_1}) == false) {
                 if constexpr (debug_move) { std::cout << "Crossing cd does not go near a vertex, returning\n"; }
@@ -1795,7 +1795,7 @@ namespace mplot
                                  sm::mat<float, 4>& cam_to_surface,
                                  const sm::mat<float, 4>& model_to_scene)
         {
-            constexpr bool debug_move = true;
+            constexpr bool debug_move = false;
             // In case we throw off-edge, we need to restore ti0's state
             const uint32_t ti0_save = this->ti0;
             bool done = false;
@@ -1829,9 +1829,7 @@ namespace mplot
                     if constexpr (debug_move) { std::cout << "End lands in ? " << (isect ? "Y" : "N") << std::endl; }
                     if (isect == false) {
                         // Didn't find edge crossing or that the end point is within ti0, so now search neighbours for an end point or boundary crossing.
-                        std::cout << "About to use find_nearest_boundary_crossing function...\n";
                         cd = find_nearest_boundary_crossing (hov_sf, mv_inplane, model_to_scene);
-                        std::cout << "find_nearest_boundary_crossing returns cd which has cd.pm.flags: " << cd.pm.flags << std::endl;
                         if (cd.into == std::numeric_limits<uint32_t>::max()) {
                             this->ti0 = ti0_save;
                             throw std::runtime_error ("off-edge: The movement went off the edge of the model over a vertex");
@@ -1841,36 +1839,36 @@ namespace mplot
 
                 // crossing_data gives us info about if there is NO cross point in the partial mv crossed flag
                 if (cd.pm.flags.test (pm_fl::colinear) == true && cd.pm.flags.test (pm_fl::crossed) == false) {
-                    std::cout << "A: Movement stays inside triangle ti0 (colinear within boundary\n";
+                    if constexpr (debug_move) { std::cout << "A: Movement stays inside triangle ti0 (colinear within boundary\n"; }
                     cam_to_surface.pretranslate (mv_inplane);
                     done = true;
                 } else if (cd.pm.flags.test (pm_fl::crossed) == false) { // move a bit, shorten mv_inplane
                     // mv_inplane moved camera inside triangle.
-                    std::cout << "A: Movement stays inside triangle ti0\n";
+                    if constexpr (debug_move) { std::cout << "A: Movement stays inside triangle ti0\n"; }
                     cam_to_surface.pretranslate (mv_inplane);
                     done = true;
                 } else {
 
                     if (cd.pm.flags.any_of ({pm_fl::near_vertex_0, pm_fl::near_vertex_1})) {
-                        if (cd.pm.flags.test (pm_fl::near_vertex_0)) {
-                            std::cout << "B: Crossed near vertex 0 of crossed edge\n";
-                        } else if (cd.pm.flags.test (pm_fl::near_vertex_1)) {
-                            std::cout << "B: Crossed near vertex 1 of crossed edge\n";
+                        if constexpr (debug_move) {
+                            if (cd.pm.flags.test (pm_fl::near_vertex_0)) {
+                                std::cout << "B: Crossed near vertex 0 of crossed edge\n";
+                            } else if (cd.pm.flags.test (pm_fl::near_vertex_1)) {
+                                std::cout << "B: Crossed near vertex 1 of crossed edge\n";
+                            }
                         }
                         // The right triangle to reorient onto may not be the twin across the crossed edge
                         // Check all neighbours of the crossed vertex to find out if our path travels through.
                         find_triangle_over_vertex (cd, mv_inplane, model_to_scene); // This could set cd itself
 
                     } else {
-                        std::cout << "B: Crossed a boundary\n";
-
                         // If compute_crossing_location found boundary, then new triangle is the twin of the crossed edge.
                         if (cd.into == std::numeric_limits<uint32_t>::max()) {
                             cd.into = this->halfedge[cd.crossed].twin;
                         } // else: BUT if find_nearest_boundary_crossing found boundary, then new triangle _ti has been set into cd.into
 
                         if constexpr (debug_move) {
-                            std::cout << "find triangle across edge: halfedge " << cd.crossed << " twins/crosses to: " << cd.into << std::endl;
+                            std::cout << "B: Crossed a boundary halfedge " << cd.crossed << " which twins/crosses to: " << cd.into << std::endl;
                         }
                     }
 
@@ -1964,7 +1962,7 @@ namespace mplot
                                                  const sm::mat<float, 4>& model_to_scene,
                                                  const float hoverheight)
         {
-            constexpr bool debug_move = true;
+            constexpr bool debug_move = false;
 
             // Convert indices to vertices for triangle ti0, converting to the scene frame
             sm::vec<sm::vec<float>, 3> tv_sf = this->triangle_vertices (this->ti0, model_to_scene);
