@@ -1637,10 +1637,7 @@ namespace mplot
             if (cd.into != std::numeric_limits<uint32_t>::max()) {
                 if constexpr (debug_move) { std::cout << "detected a neighbour with detect_movement_in_neighbour()\n"; }
                 // cd should have been set up...
-            } else {
-                if constexpr (debug_move) { std::cout << "Do some other kind of test for ray " << hov_sf << "," << mv_inplane << "\n"; }
-                throw std::runtime_error ("Out of ideas"); // Had a plane-testing approach, but it didn't work
-            }
+            } // else cd.into is max, that means we're off-edge.
 
             return cd;
         }
@@ -1733,16 +1730,19 @@ namespace mplot
 
         /**
          * Find which triangle we crossed into over the vertex. Update cd with new
-         * tri_edge. crossing_data required here for in itial halfedge and also to be populated.
+         * tri_edge. crossing_data required here for initial halfedge and also to be populated.
+         * The triangle into which we cross is placed into cd.into
          */
-        uint32_t find_triangle_over_vertex (crossing_data& cd,
-                                            const sm::vec<float>& mv_inplane,
-                                            const sm::mat<float, 4>& model_to_scene)
+        void find_triangle_over_vertex (crossing_data& cd,
+                                        const sm::vec<float>& mv_inplane,
+                                        const sm::mat<float, 4>& model_to_scene)
         {
             constexpr bool debug_move = true;
 
-            uint32_t newt = std::numeric_limits<uint32_t>::max();
-            if (cd.pm.flags.any_of ({pm_fl::near_vertex_0, pm_fl::near_vertex_1}) == false) { return newt; }
+            if (cd.pm.flags.any_of ({pm_fl::near_vertex_0, pm_fl::near_vertex_1}) == false) {
+                if constexpr (debug_move) { std::cout << "Crossing cd does not go near a vertex, returning\n"; }
+                return;
+            }
 
             if constexpr (debug_move) {
                 std::cout << "Finding triangle after crossing halfedge " << cd.crossed << " near vertex "
@@ -1771,7 +1771,6 @@ namespace mplot
 
                 if (found_in) {
                     if constexpr (debug_move) { std::cout << "Found movement into neighbour " << nb << "\n"; }
-                    newt = nb;
                     cd.into = nb;
                     cd.crossed = cv; // Correct to update?
                     cd.tri_edge = r_axis;
@@ -1781,8 +1780,6 @@ namespace mplot
                     break;
                 }
             }
-
-            return newt;
         }
 
         /**
@@ -1792,7 +1789,6 @@ namespace mplot
          * triangle (ti0) OR we move to the boundary that we cross, and adjust mv_inplane.
          */
         void traverse_triangles (sm::vec<float>& mv_inplane,
-                                 const sm::vec<float, 3>& mv_sf,
                                  sm::vec<sm::vec<float>, 3>& tv_sf,
                                  sm::vec<float>& tn0,
                                  sm::vec<float, 3>& hov_sf,
@@ -1836,6 +1832,10 @@ namespace mplot
                         std::cout << "About to use find_nearest_boundary_crossing function...\n";
                         cd = find_nearest_boundary_crossing (hov_sf, mv_inplane, model_to_scene);
                         std::cout << "find_nearest_boundary_crossing returns cd which has cd.pm.flags: " << cd.pm.flags << std::endl;
+                        if (cd.into == std::numeric_limits<uint32_t>::max()) {
+                            this->ti0 = ti0_save;
+                            throw std::runtime_error ("off-edge: The movement went off the edge of the model over a vertex");
+                        }
                     }
                 } // else We HAVE a crossing of some sort.
 
@@ -1999,7 +1999,7 @@ namespace mplot
             }
 
             // Now traverse those triangles! The output of this function is cam_to_surface
-            traverse_triangles (mv_inplane, mv_sf, tv_sf, tn0, hov_sf, cam_to_surface, model_to_scene);
+            traverse_triangles (mv_inplane, tv_sf, tn0, hov_sf, cam_to_surface, model_to_scene);
 
             // Raise cam_to_surface up by hoverheight and then return
             cam_to_surface.pretranslate (hoverheight * tn0);
