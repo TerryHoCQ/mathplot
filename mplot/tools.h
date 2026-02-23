@@ -399,6 +399,20 @@ namespace mplot
             return std::make_pair (fpath, fname);
         }
 
+        // Get the correct path to the temporary file store directory. /tmp/ on Unix systems.
+        std::string getTmpPath()
+        {
+#ifdef _MSC_VER
+            char* userprofile = getenv ("USERPROFILE");
+            std::string uppath("");
+            if (userprofile != nullptr) { uppath = std::string (userprofile); }
+            std::string tmp = uppath + "\\AppData\\Local\\Temp\\";
+#else
+            std::string tmp = "/tmp/";
+#endif
+            return tmp;
+        }
+
         /*!
          * Given a path like /path/to/file.ext or just file.ext in str, remove the file
          * suffix.

@@ -36,15 +36,20 @@ namespace mplot::compoundray
 
     // Blender has a transformation to convert the native y-up OpenGL/GLTF coordinate system into a
     // z-up coordinate system. To work in Blender, we need a "match blender" mode in which we apply
-    // the same transform. This function returns the matrix that should be passed to
+    // the same transform. This function returns the matrix (as sm::mat<float, 4>) that should be passed to
     // libEyeRenderer's loadGlTFscene
+    sm::mat<float, 4> blender_transform_mat()
+    {
+        return sm::mat<float, 4>::frombasis (sm::vec<float>::ux(), sm::vec<float>::uz(), -sm::vec<float>::uy());
+    }
+
+    // Blender has a transformation to convert the native y-up OpenGL/GLTF coordinate system into a
+    // z-up coordinate system. To work in Blender, we need a "match blender" mode in which we apply
+    // the same transform. This function returns the matrix (as sutil::Matrix4x4) that should be
+    // passed to libEyeRenderer's loadGlTFscene
     sutil::Matrix4x4 blender_transform()
     {
-        constexpr sm::vec<float> ux = { 1.0f, 0.0f, 0.0f };
-        constexpr sm::vec<float> uy = { 0.0f, 1.0f, 0.0f };
-        constexpr sm::vec<float> uz = { 0.0f, 0.0f, 1.0f };
-        sm::mat<float, 4> world_transform = sm::mat<float, 4>::frombasis (ux, uz, -uy);
-        return mplot::compoundray::mat44_to_Matrix4x4 (world_transform);
+        return mplot::compoundray::mat44_to_Matrix4x4 (mplot::compoundray::blender_transform_mat());
     }
 
     /*!

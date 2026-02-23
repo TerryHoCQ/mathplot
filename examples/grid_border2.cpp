@@ -15,11 +15,13 @@
 #include <mplot/Visual.h>
 #include <mplot/VisualDataModel.h>
 #include <mplot/GridVisual.h>
+#include <mplot/NormalsVisual.h>
 
 int main()
 {
     mplot::Visual v(1600, 1000, "Flat GridVisual grids with borders");
     v.lightingEffects();
+    v.rotateAboutNearest (true);
 
     // Create a grid to show in the scene
     constexpr unsigned int Nside = 4; // You can change this
@@ -172,6 +174,35 @@ int main()
     gv->addLabel ("Triangles, border (smaller is as expected)", lblpos, mplot::TextFeatures(0.08f));
     gv->finalize();
     v.addVisualModel (gv);
+
+    offset[0] += grid.width_of_pixels() * 1.2f;
+    gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
+    v.bindmodel (gv);
+    gv->gridVisMode = mplot::GridVisMode::Triangles;
+    gv->setScalarData (&data);
+    gv->cm.setType (mplot::ColourMapType::Cork);
+    gv->zScale.do_autoscale = false;
+    gv->zScale.null_scaling();
+    gv->colourScale.do_autoscale = false;
+    gv->colourScale.compute_scaling (-1, 1);
+    // Border specific parameters
+    gv->showborder (false);
+    gv->addLabel ("Triangles, no border, showing halfedges", lblpos, mplot::TextFeatures(0.08f));
+    gv->finalize();
+    auto gvp = v.addVisualModel (gv);
+
+    // Make a navmesh for this last one
+    gvp->make_navmesh();
+
+    // Add a Normals visual for the last one, too
+    auto nrm = std::make_unique<mplot::NormalsVisual<>> (gvp);
+    v.bindmodel (nrm);
+    nrm->options.set (mplot::normalsvisual_flags::show_halfedges);
+    nrm->options.set (mplot::normalsvisual_flags::show_boundary_next);
+    nrm->options.set (mplot::normalsvisual_flags::show_boundary_prev);
+    nrm->finalize();
+    v.addVisualModel (nrm);
+
     v.keepOpen();
 
     return 0;

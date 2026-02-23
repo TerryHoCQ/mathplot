@@ -71,11 +71,11 @@ int main (int argc, char** argv)
 
     auto start_wr = (vmi * start).less_one_dim(); // wr to tvp
     std::cout << "start_wr = " << start_wr << std::endl;
-    auto [hit, ti, tn] = tvp->navmesh->find_triangle_crossing (start_wr, dirn);
-    if (ti[0] == std::numeric_limits<uint32_t>::max()) {
+    auto [hit, ti] = tvp->navmesh->find_triangle_crossing (start_wr, dirn, vm);
+    if (ti == std::numeric_limits<uint32_t>::max()) {
         std::cout << "NO HIT\n";
     } else {
-        std::cout << "Indices: " << ti[0] << "," << ti[1] << "," << ti[2] << std::endl;
+        std::cout << "Indices: " << ti << std::endl;
         std::cout << "Contains hit " << hit << std::endl;
 
         sv = std::make_unique<mplot::SphereVisual<>>(hit, start_sphr * 1.1f, mplot::colour::springgreen2);

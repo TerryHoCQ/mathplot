@@ -256,6 +256,9 @@ if(NOT APPLE)
   target_link_libraries(scatter_instanced OpenGL::GL glfw Freetype::Freetype)
   add_executable(breadcrumbs breadcrumbs.cpp)
   target_link_libraries(breadcrumbs OpenGL::GL glfw Freetype::Freetype)
+
+  add_executable(model_crawler model_crawler.cpp)
+  target_link_libraries(model_crawler OpenGL::GL glfw Freetype::Freetype)
 endif()
 
 add_executable(scatter_dynamic scatter_dynamic.cpp)
@@ -388,9 +391,6 @@ if(NOT APPLE)
   add_executable(geodesic_ce geodesic_ce.cpp)
   target_link_libraries(geodesic_ce OpenGL::GL glfw Freetype::Freetype)
 endif()
-
-add_executable(model_crawler model_crawler.cpp)
-target_link_libraries(model_crawler OpenGL::GL glfw Freetype::Freetype)
 
 add_executable(tri tri.cpp)
 target_link_libraries(tri OpenGL::GL glfw Freetype::Freetype)

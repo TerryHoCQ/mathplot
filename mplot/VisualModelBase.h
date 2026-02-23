@@ -48,6 +48,7 @@
 
 #include <mplot/VisualCommon.h>
 #include <mplot/colour.h>
+#include <mplot/tools.h>
 #include <mplot/NavMesh.h>
 
 namespace mplot
@@ -220,6 +221,23 @@ namespace mplot
             this->indices.reserve (6u * n_vertices);
         }
 
+        // Make a hash of vertexPositions, etc as an identifier for this model. The hash identifies
+        // the model's mesh geometry for NavMesh and so the vertexColors are not important.
+        std::size_t hash() const
+        {
+            std::size_t h = 17;
+            for (std::size_t i = 0u; i < this->vertexPositions.size(); ++i) {
+                h = (h << 5) - 1 + std::hash<float>{}(this->vertexPositions[i]);
+            }
+            for (std::size_t i = 0u; i < this->vertexNormals.size(); ++i) {
+                h = (h << 5) - 1 + std::hash<float>{}(this->vertexNormals[i]);
+            }
+            for (std::size_t i = 0u; i < this->indices.size(); ++i) {
+                h = (h << 5) - 1 + std::hash<uint32_t>{}(this->indices[i]);
+            }
+            return h;
+        }
+
         // Get a single position from vertexPositions, using the index into the vector<vec>
         // interpretation of vertexPositions
         sm::vec<float, 3> get_position (const uint32_t vec_idx) const
@@ -236,6 +254,16 @@ namespace mplot
             return (*vn)[vec_idx];
         }
 
+        // Get the area of the triangle whose start index is vec_idx
+        float get_area (const uint32_t vec_idx0, const uint32_t vec_idx1, const uint32_t vec_idx2) const
+        {
+            auto vp = reinterpret_cast<const std::vector<sm::vec<float, 3>>*>(&this->vertexPositions);
+            auto t0 = (*vp)[vec_idx0];
+            auto t1 = (*vp)[vec_idx1];
+            auto t2 = (*vp)[vec_idx2];
+            return sm::geometry::tri_area (t0, t1, t2);
+        }
+
         /**
          * Neighbour vertex mesh code.
          */
@@ -243,29 +271,12 @@ namespace mplot
         // Our navigation mesh data struct
         std::unique_ptr<mplot::NavMesh> navmesh;
 
-        /*!
-         * Post-process vertices to generate a neighbour relationship mesh. The usual vertices and
-         * indices may not be useful to help an agent to navigate the surface defined by the
-         * mesh. This is because vertices may be duplicated at any location, so that adjacent faces
-         * can have different normals and colours.
-         *
-         * To help guide movement across a mesh, it would be useful to have a mesh that always gives
-         * neighbour relationships.
-         */
-        void make_navmesh()
+        void build_navmesh()
         {
             constexpr bool debug_mn = false;
-            if constexpr (debug_mn) { std::cout << "make_navmesh: Called" << std::endl; }
+            if constexpr (debug_mn) { std::cout << __func__ << " called" << std::endl; }
 
-            if (this->navmesh) { return; } // already made it
-
-            if (this->flags.test (vm_bools::compute_bb) == false) {
-                throw std::runtime_error ("make_navmesh requires compute_bb flag to be true");
-            }
-            this->update_bb();
-
-            // Create a new navmesh
-            this->navmesh = std::make_unique<mplot::NavMesh>();
+            if (!this->navmesh) { return; }
 
             // Copy the bounding box
             navmesh->bb = this->bb;
@@ -281,108 +292,170 @@ namespace mplot
             for (auto e : equiv_v) { equiv[*e.second.begin()] = e.second; }
             if constexpr (debug_mn) {
                 for (auto e : equiv) {
-                    std::cout << "make_navmesh: equiv[" << e.first << "] = ";
+                    std::cout << "build_navmesh: equiv[" << e.first << "] = ";
                     for (auto idx : e.second) {  std::cout << idx << ","; }
                     std::cout << std::endl;
                 }
-                std::cout << "make_navmesh: Populated equiv which has "
-                          << equiv.size() << " vvecs" << std::endl;
+                std::cout << "build_navmesh: Populated equiv which has " << equiv.size() << " vvecs" << std::endl;
             }
 
             // Make inverse of equiv to translate from original (indices, vertexPositions) index to
             // new topographic mesh index
             sm::vvec<uint32_t> navmesh_idx (vps, 0);
-            navmesh->vertexidx_to_indices.resize (equiv.size());
-
             uint32_t vcount = 0;
             i = 0;
             for (auto eqs : equiv) {
                 vcount += eqs.second.size();
-                navmesh->vertexidx_to_indices[i].resize (eqs.second.size());
-                std::copy (eqs.second.begin(), eqs.second.end(), navmesh->vertexidx_to_indices[i].begin());
                 for (auto ev : eqs.second) {
-                    if constexpr (debug_mn) { std::cout << "make_navmesh: set navmesh_idx[" << ev << "] = " << i << std::endl; }
+                    if constexpr (debug_mn) {
+                        std::cout << "build_navmesh: set navmesh_idx[" << ev << "] = " << i << std::endl;
+                    }
                     navmesh_idx[ev] = i;
                 }
                 ++i;
             }
-            if constexpr (debug_mn) {
-                std::cout << "make_navmesh: Created equiv inverse" << std::endl;
-            }
+            if constexpr (debug_mn) { std::cout << "build_navmesh: Created equiv inverse" << std::endl; }
+
             if (vcount != vps) {
-                std::cout << "make_navmesh: WARNING: Vertex count from equiv is " << vcount
+                std::cout << "build_navmesh: WARNING: Vertex count from equiv is " << vcount
                           << " which should (but does not) equal " << vps << std::endl;
             }
 
             // Can now populate vertex, a vector of coordinates, if required, or simply access (*vp)
             // as needed using equiv.first
-            navmesh->vertex.resize (equiv.size(), {0});
+            navmesh->vertex.resize (equiv.size(), mesh::vertex{});
             i = 0;
-            for (auto eq : equiv) { navmesh->vertex[i++] = (*vp)[eq.first]; } // FIXME?
+            for (auto eq : equiv) {
+                navmesh->vertex[i++] = { (*vp)[eq.first], std::numeric_limits<uint32_t>::max() };
+            }
+
+            // We're turing a triangle mesh into a navmesh. Don't know what to do if there are stray vertices.
+            if (this->indices.size() % 3u != 0u) {
+                throw std::runtime_error ("Uh oh, indices size not divisible by 3!!!! Call the cops!");
+            }
 
             // Lastly, generate edges. For which we require use of indices, which is expressed in
             // terms of the old indices. That lookup is navmesh_idx.
             for (uint32_t i = 0; i < this->indices.size(); i += 3) {
-                // Each three entries in indices is a triangle containing 3 edges. NB: Edges must be listed in ascending order!
-                std::array<uint32_t, 2> e = { navmesh_idx[indices[i]], navmesh_idx[indices[i+1]] };
-                if (e[0] > e[1]) {
-                    uint32_t t = e[0];
-                    e[0] = e[1];
-                    e[1] = t;
-                }
-                navmesh->edges.insert (e);
 
-                e = { navmesh_idx[indices[i]], navmesh_idx[indices[i+2]] };
-                if (e[0] > e[1]) {
-                    uint32_t t = e[0];
-                    e[0] = e[1];
-                    e[1] = t;
-                }
-                navmesh->edges.insert (e);
+                // Add three halfedges for the triangle
+                const uint32_t hesz = navmesh->halfedge.size();
+                const uint32_t he0 = hesz;
+                const uint32_t he1 = hesz + 1;
+                const uint32_t he2 = hesz + 2;
 
-                e = { navmesh_idx[indices[i+1]], navmesh_idx[indices[i+2]] };
-                if (e[0] > e[1]) {
-                    uint32_t t = e[0];
-                    e[0] = e[1];
-                    e[1] = t;
-                }
-                navmesh->edges.insert (e);
+                if constexpr (debug_mn) {
+                    std::cout << "setting halfedge["<< he0 << "]  to { {"
+                              << navmesh_idx[indices[i]] << ", " << navmesh_idx[indices[i + 1]]
+                              << "}, nullptr, " << he1 << ", " << he2 << " }" << std::endl;
 
-                // Direct population of triangles. Three indices and a 4th number to hold flags (with bit0 meaning edge-triangle)
-                std::array<uint32_t, 4> t = { navmesh_idx[indices[i]], navmesh_idx[indices[i+1]], navmesh_idx[indices[i+2]], 0 };
+                    std::cout << "setting halfedge[" << he1 << "]  to { {"
+                              << navmesh_idx[indices[i + 1]] << ", " << navmesh_idx[indices[i + 2]]
+                              << "}, nullptr, " << he2 << ", " << he0 << " }" << std::endl;
+
+                    std::cout << "setting halfedge[" << he2 << "]  to { {"
+                              << navmesh_idx[indices[i + 2]] << ", " << navmesh_idx[indices[i]]
+                              << "}, nullptr, " << he0 << ", " << he1 << " }" << std::endl;
+                }
+
+                navmesh->halfedge.resize (hesz + 3, {});
+
+                // Now, could also try to identify LINES
+                navmesh->halfedge[he0] = { {navmesh_idx[indices[i    ]], navmesh_idx[indices[i + 1]]}, std::numeric_limits<uint32_t>::max(), he1, he2, 0u };
+                navmesh->halfedge[he1] = { {navmesh_idx[indices[i + 1]], navmesh_idx[indices[i + 2]]}, std::numeric_limits<uint32_t>::max(), he2, he0, 0u };
+                navmesh->halfedge[he2] = { {navmesh_idx[indices[i + 2]], navmesh_idx[indices[i    ]]}, std::numeric_limits<uint32_t>::max(), he0, he1, 0u };
+
+                if constexpr (debug_mn) {
+                    std::cout << "halfedge["<< hesz << "] contains: vi:"
+                              <<  navmesh->halfedge[hesz].vi
+                              << ", twin:" << navmesh->halfedge[hesz].twin
+                              << ", next:" << navmesh->halfedge[hesz].next
+                              << ", prev:" << navmesh->halfedge[hesz].prev << std::endl;
+                }
+                // A face contains just the first half edge index
+                mesh::face<> t = { he0 };
 
                 // The normal vector for this triangle could be obtained from the mesh normals, but
                 // we can't trust them (though they're easy to get, as we're dealing with indices
                 // already). However, use this to ensure that our triangle indices order is in
                 // agreement with mesh normal as far as direction goes.
-                sm::vec<float> trinorm = this->get_normal (indices[i]) + this->get_normal (indices[i+1]) + this->get_normal (indices[i+2]) ;
-                trinorm.renormalize();
+                sm::vec<float> tn = this->get_normal (indices[i]) + this->get_normal (indices[i + 1]) + this->get_normal (indices[i + 2]) ;
+                tn.renormalize();
 
                 // Compute trinorm as well and compare with the one from the mesh - perhaps it's
                 // different? We really want the right normal.
-                const sm::vec<float>& tv0 = navmesh->vertex[t[0]];
-                const sm::vec<float>& tv1 = navmesh->vertex[t[1]];
-                const sm::vec<float>& tv2 = navmesh->vertex[t[2]];
+                const sm::vec<float>& tv0 = navmesh->vertex[navmesh_idx[indices[i]]].p;
+                const sm::vec<float>& tv1 = navmesh->vertex[navmesh_idx[indices[i + 1]]].p;
+                const sm::vec<float>& tv2 = navmesh->vertex[navmesh_idx[indices[i + 2]]].p;
                 sm::vec<float> nx = (tv1 - tv0);
                 sm::vec<float> ny = (tv2 - tv0);
                 sm::vec<float> n = nx.cross (ny);
                 n.renormalize();
 
-                // Check rotational sense of triangles?
-                if (n.dot (trinorm) < 0.0f) {
-                    // need to swap order in t:
-                    uint32_t ti = t[2];
-                    t[2] = t[1];
-                    t[1] = ti;
-                    n = -n; // Also reverse n
+                // Check rotational sense of triangles
+                if (n.dot (tn) < 0.0f) {
+                    std::cout << "Swap order of triangle with he " << he0 << std::endl;
+                    // Swap first and last half edge
+                    navmesh->halfedge[he0].vi.rotate();
+                    navmesh->halfedge[he1].vi.rotate();
+                    navmesh->halfedge[he2].vi.rotate();
                 }
-
-                navmesh->triangles.push_back ({t, n, nx, ny}); // n is computed normal
+                navmesh->triangles.push_back (t);
             }
-            if constexpr (debug_mn) { std::cout << "make_navmesh: Created triangles" << std::endl; }
+            if constexpr (debug_mn) {
+                std::cout << "build_navmesh: Created triangles (" << navmesh->halfedge.size() << " halfedges)" << std::endl;
+            }
 
-            //navmesh->mark_edge_triangles();
-            //if constexpr (debug_mn) { std::cout << "make_navmesh: Marked edge triangles and done." << std::endl; }
+            navmesh->compute_neighbour_relations(); // finds the halfedge twins
+        }
+
+        /*!
+         * Post-process vertices to generate a neighbour relationship mesh suitable for navigation.
+         *
+         * \param navmesh_dir The directory into which to store/read the navmesh data file.
+         */
+        void make_navmesh (std::string navmesh_dir = "")
+        {
+            if (this->navmesh) { return; } // already made it
+
+            if (this->flags.test (vm_bools::compute_bb) == false) {
+                throw std::runtime_error ("make_navmesh requires compute_bb flag to be true");
+            }
+            this->update_bb();
+
+            // Create a new navmesh
+            this->navmesh = std::make_unique<mplot::NavMesh>();
+
+            // Have we got a pre-computed navmesh file for the halfedge twin relationships?
+            uint64_t h = this->hash();
+            if (navmesh_dir.empty()) {
+                navmesh_dir = mplot::tools::getTmpPath();
+            } else {
+                if (navmesh_dir.back() != '/') { navmesh_dir += "/"; }
+            }
+            std::string filename = navmesh_dir + std::string("navmesh_") + std::to_string (h);
+            std::string filename_pre_boundary = filename + ".pre";
+
+            constexpr bool just_mark = true;
+            if (mplot::tools::fileExists (filename)) {
+                this->navmesh->load (filename);
+                std::cout << "Full test...\n";
+                this->navmesh->test();
+
+            } else if (mplot::tools::fileExists (filename_pre_boundary)) {
+                std::cout << "Pre-boundary navmesh\n";
+                this->navmesh->load (filename_pre_boundary);
+                this->navmesh->add_boundary_halfedges();
+                this->navmesh->test (just_mark);
+                this->navmesh->save (filename);
+            } else {
+                std::cout << "Building NavMesh to save into file " << filename << std::endl;
+                this->build_navmesh();
+                this->navmesh->save (filename_pre_boundary);
+                this->navmesh->add_boundary_halfedges();
+                this->navmesh->test (just_mark);
+                this->navmesh->save (filename);
+            }
         }
 
         /**
@@ -1510,11 +1583,11 @@ namespace mplot
             size_t i0 = this->indices.size();
             this->indices.resize (i0 + 6, 0);
             this->indices[i0++] = this->idx;
+            this->indices[i0++] = this->idx + 2;
             this->indices[i0++] = this->idx + 1;
-            this->indices[i0++] = this->idx + 2;
             this->indices[i0++] = this->idx;
-            this->indices[i0++] = this->idx + 2;
             this->indices[i0++] = this->idx + 3;
+            this->indices[i0++] = this->idx + 2;
 
             this->idx += 4;
         }
