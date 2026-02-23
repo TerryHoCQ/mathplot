@@ -743,35 +743,29 @@ namespace mplot
 
             // Have we been passed a 'most likely triangle' to test first? If so, test it.
             if (ti_ml != std::numeric_limits<uint32_t>::max()) {
-
                 test_tri (tested, ti_ml, vstart, vdir, vdsos, isect_p, isect_ti, isect_d);
-
                 if (isect_d != std::numeric_limits<float>::max()) {
                     // we found it in the first triangle!
-                    //std::cout << "Got a first-tri hit!\n";
+                    if constexpr (debug_ftc) { std::cout << "Got a first-tri hit!\n"; }
                     return { isect_p, isect_ti };
                 }
 
                 // Next, test the neighbours of ti_ml
                 std::vector<uint32_t> nbs = this->find_neighbours (ti_ml);
-                //std::cout << "Testing " << nbs.size() << " neighbours of ti_ml for a hit\n";
+                if constexpr (debug_ftc) { std::cout << "Testing " << nbs.size() << " neighbours of ti_ml for a hit\n"; }
                 for (uint32_t nb : nbs) {
-
                     test_tri (tested, nb, vstart, vdir, vdsos, isect_p, isect_ti, isect_d);
-
                     if (isect_d != std::numeric_limits<float>::max()) {
-                        //std::cout << "Got a neighbour hit!\n";
+                        if constexpr (debug_ftc) { std::cout << "Got a neighbour hit!\n"; }
                         return { isect_p, isect_ti };
                     }
                 }
 
-                // Do neighbours of neighbours?
+                // Do neighbours of neighbours...
                 for (uint32_t nb : nbs) {
                     std::vector<uint32_t> nbs2 = this->find_neighbours (nb);
-
                     for (uint32_t nb2 : nbs2) {
                         test_tri (tested, nb2, vstart, vdir, vdsos, isect_p, isect_ti, isect_d);
-
                         if (isect_d != std::numeric_limits<float>::max()) {
                             std::cout << "Got a neighbour-neighbour hit!\n";
                             return { isect_p, isect_ti };
@@ -781,47 +775,30 @@ namespace mplot
             }
 
             // Fall back to testing ALL the triangles...
-            //std::cout << "Oh, no have to test ALL triangles now...\n";
+            if constexpr (debug_ftc) { std::cout << "Oh, no have to test ALL triangles now...\n"; }
             for (auto tri : this->triangles) {
-
-                if constexpr (debug_ftc) {
-                    std::cout << "this->halfedge["<< 0 << "] " << (&this->halfedge[0]) << " contains: vi:"
-                              <<  this->halfedge[0].vi
-                              << ", twin:" << this->halfedge[0].twin
-                              << ", next:" << this->halfedge[0].next
-                              << ", prev:" << this->halfedge[0].prev << std::endl;
-                    std::cout << "CF. Passing tri.he " << tri.hi << " to triangle_vertices(): with he->vi =  " << this->halfedge[tri.hi].vi << std::endl;
-                }
-
                 sm::vec<sm::vec<float>, 3> v = this->triangle_vertices (tri.hi);
-                auto [isect, p] = sm::geometry::ray_tri_intersection<float, float, true, false> (v[0], v[1], v[2], vstart, vdir);
-                // What if the triangle is one on the *other side of the model*?? Have to use
-                // vdir.sos() to exclude those that are too far and the distance^2 to find the
-                // closest one that isn't.
+                auto [isect, p] = sm::geometry::ray_tri_intersection<float> (v[0], v[1], v[2], vstart, vdir);
                 if (isect) {
-                    float d = (p - vstart).sos();
-                    if (d < isect_d && d < vdsos) {
-                        isect_p = p;
-                        isect_ti = tri.hi;
-                        isect_d = d;
-                    }
+                    isect_p = p;
+                    isect_ti = tri.hi;
+                    break;
                 }
             }
 
+
             if (isect_p[0] == fmax) {
                 // Found no triangle intersection; check vertices, in case vdir points perfectly at a vertex.
-                std::cout << "Finally, check vertices...\n";
-                for (uint32_t vi = 0; vi < this->vertex.size(); ++vi) {
-                    sm::vec<float> vertex_n = this->find_vertex_normal (this->vertex[vi].hi, model_to_scene);
-                    vertex_n.renormalize();
-                    vstart = coord_mf + (vertex_n / 2.0f);
-                    if (sm::geometry::ray_point_intersection (this->vertex[vi].p, vstart, -vertex_n)) {
-                        float d = (this->vertex[vi].p - vstart).sos();
-                        if (d < isect_d && d < vdir.sos()) {
-                            if constexpr (debug_ftc) { std::cout << "Register vertex triangle_crossing\n"; }
-                            isect_p = this->vertex[vi].p;
-                            isect_ti = this->vertex[vi].hi;
-                            isect_d = d;
+                if constexpr (debug_ftc) { std::cout << "Finally, check vertices...\n"; }
+
+                constexpr float dist_thresh = 2.0f * std::numeric_limits<float>::epsilon();
+                for (auto tri : this->triangles) {
+                    sm::vec<sm::vec<float>, 3> v = this->triangle_vertices (tri.hi);
+                    for (uint32_t vi = 0; vi < 3; ++vi) {
+                        if (sm::geometry::ray_point_intersection ((model_to_scene * v[vi]).less_one_dim(), vstart, vdir, dist_thresh)) {
+                            isect_p = v[vi];
+                            isect_ti = tri.hi;
+                            break;
                         }
                     }
                 }
