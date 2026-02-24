@@ -88,6 +88,7 @@ int main()
 
     sm::vvec<std::array<float, 3>> col = { mplot::colour::blue, mplot::colour::springgreen };
     sm::vvec<float> alph = { 0.5f, 1.0f };
+    // A scaling vector to make sequential instances have a different size
     sm::vvec<float> scl = { 1.0f, 1.2f };
 
     while (!v.readyToFinish()) {
@@ -102,6 +103,11 @@ int main()
         // Update all points/psz
         // Place data in SSBO. first call of set_data must occur after first call to v.render()
         isvp->set_instance_data (points, col, alph, scl);
+
+        // As well as scl, we have an applied-to-all instances scale (iscl) that is passed to the
+        // s_matrix in the instance shader
+        float iscl = 1.5f + 0.5f * std::sin (sm::mathconst<float>::two_pi * (static_cast<float>(i % 360) / 360.0f));
+        isvp->set_instance_scale (iscl);
 
         v.render();
         v.waitevents (0.018);
