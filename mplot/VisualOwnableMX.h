@@ -176,18 +176,6 @@ namespace mplot
                     this->active_gprog = mplot::visgl::graphics_shader_type::projection2d;
                 }
             } // else do nothing (all current shaders are 2D perspective)
-#if 0
-            // Here's how you'd switch shaders for an alternative type of projection such as
-            // cylindrical (find it up to commit 50770f7 or so)
-            else if (this->ptype == perspective_type::cylindrical) {
-                if (this->active_gprog != mplot::visgl::graphics_shader_type::cylindrical) {
-                    if (this->shaders.gprog) { this->glfn->DeleteProgram (this->shaders.gprog); }
-                    // cyl_shader_progs type: std::vector<mplot::gl::ShaderInfo>
-                    this->shaders.gprog = mplot::gl::LoadShadersMX (this->cyl_shader_progs, this->glfn);
-                    this->active_gprog = mplot::visgl::graphics_shader_type::cylindrical;
-                }
-            }
-#endif
 
             this->glfn->UseProgram (this->shaders.gprog);
             this->glfn->Viewport (0, 0, this->window_w * mplot::retinaScale, this->window_h * mplot::retinaScale);
