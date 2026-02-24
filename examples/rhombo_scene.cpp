@@ -6,8 +6,7 @@
 int main()
 {
     // Create a scene
-    mplot::Visual v(1024, 768, "Cylindrical projection of rhombohedrons");
-    v.ptype = mplot::perspective_type::cylindrical; // compute cyl. projection for this scene
+    mplot::Visual v(1024, 768, "Rhombohedrons");
     //v.coordArrowsInScene (true);
     v.fov = 40;
     v.lightingEffects(false);

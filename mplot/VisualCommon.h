@@ -64,7 +64,7 @@ namespace mplot::visgl
     {
         none,         // Unset/unknown graphics shader type
         projection2d, // both orthographic and perspective projections to a 2D surface
-        cylindrical,  // A cylindrical projection
+        cylindrical,  // cylindrical projections. Used to be implemented, but removed for code simplicity
         spherical     // not implemented, but we could have a spherical projection
     };
 
