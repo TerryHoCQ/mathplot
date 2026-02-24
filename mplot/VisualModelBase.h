@@ -917,6 +917,11 @@ namespace mplot
          */
         sm::mat<float, 4> instscale = {};
 
+        /*!
+         * The colour for all instances. This is used if you don't set colour in your instance params.
+         */
+        std::array<float, 3> instcolour = mplot::colour::yellow;
+
         //! Contains the positions within the vbo array of the different vertex buffer objects
         enum VBOPos { posnVBO, normVBO, colVBO, idxVBO, numVBO };
 

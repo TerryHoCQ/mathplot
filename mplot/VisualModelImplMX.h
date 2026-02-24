@@ -78,7 +78,7 @@ namespace mplot
 
         void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position) final
         {
-            sm::vvec<std::array<float, 3>> c = { mplot::colour::crimson };
+            sm::vvec<std::array<float, 3>> c = { this->instcolour };
             sm::vvec<float> a = { 1.0f };
             sm::vvec<float> s = { 1.0f };
             this->set_instance_data (position, c, a, s);
