@@ -111,7 +111,7 @@ int main()
 
         // Can set scale of the black spheres based on distance to rotation centre. As they get
         // further away, they get larger so you can still see them.
-        float iscl2 = v.get_d_to_rotation_centre() * 0.1f;
+        float iscl2 = 0.6f * std::log (2.0f + v.get_d_to_rotation_centre());
         isvp2->set_instance_scale (iscl2);
 
         v.render();
