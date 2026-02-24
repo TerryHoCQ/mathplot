@@ -109,6 +109,11 @@ int main()
         float iscl = 1.5f + 0.5f * std::sin (sm::mathconst<float>::two_pi * (static_cast<float>(i % 360) / 360.0f));
         isvp->set_instance_scale (iscl);
 
+        // Can set scale of the black spheres based on distance to rotation centre. As they get
+        // further away, they get larger so you can still see them.
+        float iscl2 = v.get_d_to_rotation_centre() * 0.1f;
+        isvp2->set_instance_scale (iscl2);
+
         v.render();
         v.waitevents (0.018);
 
