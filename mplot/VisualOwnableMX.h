@@ -175,13 +175,19 @@ namespace mplot
                     this->shaders.gprog = mplot::gl::LoadShadersMX (this->proj2d_shader_progs, this->glfn);
                     this->active_gprog = mplot::visgl::graphics_shader_type::projection2d;
                 }
-            } else if (this->ptype == perspective_type::cylindrical) {
+            } // else do nothing (all current shaders are 2D perspective)
+#if 0
+            // Here's how you'd switch shaders for an alternative type of projection such as
+            // cylindrical (find it up to commit 50770f7 or so)
+            else if (this->ptype == perspective_type::cylindrical) {
                 if (this->active_gprog != mplot::visgl::graphics_shader_type::cylindrical) {
                     if (this->shaders.gprog) { this->glfn->DeleteProgram (this->shaders.gprog); }
+                    // cyl_shader_progs type: std::vector<mplot::gl::ShaderInfo>
                     this->shaders.gprog = mplot::gl::LoadShadersMX (this->cyl_shader_progs, this->glfn);
                     this->active_gprog = mplot::visgl::graphics_shader_type::cylindrical;
                 }
             }
+#endif
 
             this->glfn->UseProgram (this->shaders.gprog);
             this->glfn->Viewport (0, 0, this->window_w * mplot::retinaScale, this->window_h * mplot::retinaScale);
@@ -191,14 +197,6 @@ namespace mplot
                 this->setOrthographic();
             } else if (this->ptype == perspective_type::perspective) {
                 this->setPerspective();
-            } else if (this->ptype == perspective_type::cylindrical) {
-                // Set cylindrical-specific uniforms
-                GLint loc_campos = this->glfn->GetUniformLocation (this->shaders.gprog, static_cast<const GLchar*>("cyl_cam_pos"));
-                if (loc_campos != -1) { this->glfn->Uniform4fv (loc_campos, 1, this->cyl_cam_pos.data()); }
-                GLint loc_cyl_radius = this->glfn->GetUniformLocation (this->shaders.gprog, static_cast<const GLchar*>("cyl_radius"));
-                if (loc_cyl_radius != -1) { this->glfn->Uniform1f (loc_cyl_radius, this->cyl_radius); }
-                GLint loc_cyl_height = this->glfn->GetUniformLocation (this->shaders.gprog, static_cast<const GLchar*>("cyl_height"));
-                if (loc_cyl_height != -1) { this->glfn->Uniform1f (loc_cyl_height, this->cyl_height); }
             } else {
                 // unknown projection
                 return;
@@ -444,12 +442,6 @@ namespace mplot
             };
             this->shaders.gprog = mplot::gl::LoadShadersMX (this->proj2d_shader_progs, this->glfn);
             this->active_gprog = mplot::visgl::graphics_shader_type::projection2d;
-
-            // Alternative cylindrical shader for possible later use. (NB: not loaded immediately)
-            this->cyl_shader_progs = {
-                {GL_VERTEX_SHADER, "VisCyl.vert.glsl", mplot::getDefaultCylVtxShader(glver), 0 },
-                {GL_FRAGMENT_SHADER, "Visual.frag.glsl", mplot::getDefaultFragShader(glver), 0 }
-            };
 
             // A specific text shader is loaded for text rendering
             this->text_shader_progs = {
