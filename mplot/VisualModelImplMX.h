@@ -70,9 +70,15 @@ namespace mplot
             model->releaseContext = &mplot::VisualBase<glver>::release_context;
         }
 
+        void set_instance_scale (const float scl) final
+        {
+            this->instscale.set_identity();
+            this->instscale.scale (scl);
+        }
+
         void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position) final
         {
-            sm::vvec<std::array<float, 3>> c = { mplot::colour::crimson };
+            sm::vvec<std::array<float, 3>> c = { this->instcolour };
             sm::vvec<float> a = { 1.0f };
             sm::vvec<float> s = { 1.0f };
             this->set_instance_data (position, c, a, s);
@@ -300,6 +306,10 @@ namespace mplot
                 // the model-view matrix
                 GLint loc_m = _glfn->GetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("m_matrix"));
                 if (loc_m != -1) { _glfn->UniformMatrix4fv (loc_m, 1, GL_FALSE, this->viewmatrix.arr.data()); }
+
+                // the instance scaling matrix (applied to all instances)
+                GLint loc_s = _glfn->GetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("s_matrix"));
+                if (loc_s != -1) { _glfn->UniformMatrix4fv (loc_s, 1, GL_FALSE, this->instscale.arr.data()); }
 
                 if constexpr (debug_render) {
                     std::cout << "VisualModel::render: scenematrix:\n" << this->scenematrix << std::endl;

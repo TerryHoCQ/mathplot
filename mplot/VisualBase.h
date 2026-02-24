@@ -990,6 +990,9 @@ namespace mplot
 
     public:
 
+        //! Getter for d_to_rotation_centre
+        float get_d_to_rotation_centre() const { return this->d_to_rotation_centre; }
+
         /*
          * Generic callback handlers
          */

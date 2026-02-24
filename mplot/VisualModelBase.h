@@ -828,6 +828,9 @@ namespace mplot
         std::function<void(const unsigned int, const std::array<float, 3>&, const float, const float)> insert_instparam_data;
         std::function<void(mplot::VisualBase<glver>*)> instanced_needs_update;
 
+        //! Set the scaling matrix for all instances
+        virtual void set_instance_scale (const float scl) = 0;
+
         //! Set up the instance positions (with default params for colour, rotn, scale)
         virtual void set_instance_data (const sm::vvec<sm::vec<float, 3>>& position) = 0;
 
@@ -907,6 +910,17 @@ namespace mplot
          * 'twodimensional' also have a different scenematrix).
          */
         sm::mat<float, 4> scenematrix = {};
+
+        /*!
+         * Instance scaling. This matrix can be used to control the scale of all instances of an
+         * instanced VisualModel
+         */
+        sm::mat<float, 4> instscale = {};
+
+        /*!
+         * The colour for all instances. This is used if you don't set colour in your instance params.
+         */
+        std::array<float, 3> instcolour = mplot::colour::yellow;
 
         //! Contains the positions within the vbo array of the different vertex buffer objects
         enum VBOPos { posnVBO, normVBO, colVBO, idxVBO, numVBO };

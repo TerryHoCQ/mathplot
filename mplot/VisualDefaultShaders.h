@@ -15,6 +15,7 @@ namespace mplot
     "uniform mat4 p_matrix;\n"
     "uniform float alpha;\n";
     const char* defaultVtxShader_instance_uniforms =
+    "uniform mat4 s_matrix;\n" // scaling matrix
     "uniform int instance_count = 0;\n"
     "uniform int instance_start = -1;\n"
     "uniform int instparam_count = 0;\n";
@@ -56,7 +57,7 @@ namespace mplot
     "            float s = iparam[ippos_i + idx * 5 + 4];\n"
     "            vec3 p_three = vec3(position) * s;\n"
     "            vec4 p_scaled = vec4(p_three, 1.0);\n"
-    "            gl_Position = (p_matrix * v_matrix * m_matrix * (p_scaled + iposv));\n"
+    "            gl_Position = (p_matrix * v_matrix * m_matrix * ((s_matrix * p_scaled) + iposv));\n"
     "            vertex.color = vec4(iparam[ippos_i + idx * 5], iparam[ippos_i + idx * 5 + 1], iparam[ippos_i + idx * 5 + 2], iparam[ippos_i + idx * 5 + 3]);\n"
     "            vertex.fragpos = vec3(m_matrix * p_scaled);\n"
     "        } else {\n"
