@@ -133,7 +133,7 @@ namespace mplot
         /*!
          * The view 'camera' rotates with the selected VM (followedModel)
          */
-        viewFollowsVMRotations,
+        viewFollowsVMBehind,
     };
 
     //! Whether to render with perspective or orthographic (or even a cylindrical projection)
@@ -833,6 +833,31 @@ namespace mplot
             this->sceneview_tr = sv_tr * this->savedSceneview_tr;
         }
 
+        // Get a camera movement that moves us nearer to target.
+        template<typename T>
+        sm::vec<T, 3> get_cam_movement (sm::mat<T, 4>& current, const sm::mat<T, 4>& target, sm::vec<T, 3>& vel, T time_90, T dt)
+        {
+            std::cout << " current sceneview location  " << current.translation() << std::endl;
+            std::cout << " target camera location  " << target.translation() << std::endl;
+            const T c0 = dt * T{3.75} / time_90;
+            if (c0 >= T{1}) { // here, constant is too small, spring too stiff.  so go the whole way to prevent oscillation.
+                std::cout << " ALL THE WAY\n\n";
+                current = target;
+                vel = sm::vec<T, 3>{};
+                return vel;
+            }
+            const sm::vec<T, 3> delta = target.translation() - current.translation();
+            std::cout << " delta = " << delta << std::endl;
+            const sm::vec<T, 3> force = delta - (vel * T{2});
+            // Compute translation and rotation.
+            //std::cout << " Translate camera by " << (vel * c0) << std::endl;
+
+            vel += force * c0;
+            std::cout << "new vel: " << vel << std::endl;
+
+            return (force * c0);
+        }
+
         // This is called every time render() is called
         void computeSceneview()
         {
@@ -861,6 +886,25 @@ namespace mplot
                 this->savedSceneview_tr.pretranslate (fol_screenframe);
 
                 this->followedLastViewMatrix = this->followedVM->getViewMatrix();
+
+            } else if (this->options.test (visual_options::viewFollowsVMBehind)
+                       && this->followedVM != nullptr
+                       && this->followedLastViewMatrix != this->followedVM->getViewMatrix()) {
+
+                sm::mat<float, 4> sv_copy = this->sceneview;
+                std::cout << "sceneview translation: " << sceneview.translation() << std::endl;
+                // Do a follow-me behind the followedVM. Spring-damper to
+                // update sceneview
+                const float dt = 1.0f;    // will need to be member
+                const float time_90 = 30.0f; // seconds
+
+                sm::vec<float> mvmt = this->get_cam_movement<float>(sv_copy, this->followedVM->getViewMatrix(), this->followedVM_vel, time_90, dt);
+                std::cout << "sceneview to move: " << mvmt  << std::endl;
+
+                this->sceneview.pretranslate (mvmt);
+                this->sceneview_tr.pretranslate (mvmt);
+                this->savedSceneview.pretranslate (mvmt);
+                this->savedSceneview_tr.pretranslate (mvmt);
             }
         }
 
@@ -870,6 +914,9 @@ namespace mplot
 
         //! If the view should follow a model (options viewFollowsVMTranslations and ...Rotations), this is the one.
         mplot::VisualModel<glver>* followedVM = nullptr;
+
+        //! Holds the current velocy of the followedVM follower
+        sm::vec<float> followedVM_vel = {};
 
         //! Holds the viewmatrix of the followedVM the last time we called render
         sm::mat<float, 4> followedLastViewMatrix;
