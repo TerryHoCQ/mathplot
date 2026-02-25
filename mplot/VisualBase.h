@@ -837,25 +837,16 @@ namespace mplot
         template<typename T>
         sm::vec<T, 3> get_cam_movement (sm::mat<T, 4>& current, const sm::mat<T, 4>& target, sm::vec<T, 3>& vel, T time_90, T dt)
         {
-            std::cout << " current sceneview location  " << current.translation() << std::endl;
-            std::cout << " target camera location  " << target.translation() << std::endl;
             const T c0 = dt * T{3.75} / time_90;
-            if (c0 >= T{1}) { // here, constant is too small, spring too stiff.  so go the whole way to prevent oscillation.
-                std::cout << " ALL THE WAY\n\n";
-                current = target;
-                vel = sm::vec<T, 3>{};
-                return vel;
+            if (c0 >= T{1}) { // here, constant is too small, spring too stiff.
+                throw std::runtime_error ("spring too stiff");
             }
             const sm::vec<T, 3> delta = target.translation() - current.translation();
-            std::cout << " delta = " << delta << std::endl;
+
             const sm::vec<T, 3> force = delta - (vel * T{2});
-            // Compute translation and rotation.
-            //std::cout << " Translate camera by " << (vel * c0) << std::endl;
-
+            sm::vec<T, 3> pos_shift = vel * c0;
             vel += force * c0;
-            std::cout << "new vel: " << vel << std::endl;
-
-            return (force * c0);
+            return pos_shift;
         }
 
         // This is called every time render() is called
@@ -891,20 +882,38 @@ namespace mplot
                        && this->followedVM != nullptr
                        && this->followedLastViewMatrix != this->followedVM->getViewMatrix()) {
 
-                sm::mat<float, 4> sv_copy = this->sceneview;
-                std::cout << "sceneview translation: " << sceneview.translation() << std::endl;
-                // Do a follow-me behind the followedVM. Spring-damper to
-                // update sceneview
-                const float dt = 1.0f;    // will need to be member
-                const float time_90 = 30.0f; // seconds
+                constexpr float time_90 = 1.0f; // s
+                constexpr float dt = 0.02f;
 
-                sm::vec<float> mvmt = this->get_cam_movement<float>(sv_copy, this->followedVM->getViewMatrix(), this->followedVM_vel, time_90, dt);
-                std::cout << "sceneview to move: " << mvmt  << std::endl;
+                sm::mat<float, 4> fol_targ = this->followedVM->getViewMatrix();
+                fol_targ.translate (sm::vec<float>{0, 0.4f, -0.5f}); // Always follow behind the camera
+                sm::mat<float, 4> cur_ = this->sceneview;
+                sm::mat<float, 4> fol_cur;
+                fol_cur.translate (cur_.translation());
+                cur_.translate (-cur_.translation());
+                sm::quaternion<float> r_cur0 = cur_.rotation();
+                sm::vec<float> pos_shift = this->get_cam_movement<float> (fol_cur, fol_targ, this->followedVM_vel, time_90, dt);
 
-                this->sceneview.pretranslate (mvmt);
-                this->sceneview_tr.pretranslate (mvmt);
-                this->savedSceneview.pretranslate (mvmt);
-                this->savedSceneview_tr.pretranslate (mvmt);
+                std::cout << "sceneview to move: " << pos_shift  << std::endl;
+
+                sm::mat<float, 4> fol_targ0 = fol_targ;
+                fol_targ0.translate (-fol_targ.translation());
+                sm::mat<float, 4> fol_cur0 = fol_cur;
+                fol_cur0.translate (-fol_cur.translation());
+                sm::quaternion<float> r_targ0 = fol_targ0.rotation();
+                r_targ0.renormalize();
+                r_cur0.renormalize();
+                sm::quaternion<float> cam_rotn = r_cur0.slerp (r_targ0, 0.1f);
+                std::cout << "r_cur0: " << r_cur0 << " cam_rotn " << cam_rotn << " r_targ0 " << r_targ0 << std::endl;
+                // set the translation/rotation into fol_cur
+
+                fol_cur.pretranslate (pos_shift);
+                fol_cur.rotate (cam_rotn);
+
+                this->sceneview = fol_cur;
+                this->sceneview_tr.pretranslate (pos_shift);
+                this->savedSceneview = fol_cur;
+                this->savedSceneview_tr = this->sceneview_tr;
             }
         }
 
