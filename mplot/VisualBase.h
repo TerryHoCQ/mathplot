@@ -828,13 +828,10 @@ namespace mplot
         }
 
         template<typename T>
-        sm::quaternion<T> get_cam_rotation (sm::mat<T, 4>& current, const sm::mat<T, 4>& target,
-                                            const sm::quaternion<float>& r_cur0, const T tc) const
+        sm::quaternion<T> get_cam_rotation (const sm::quaternion<float>& r_cur0, const sm::mat<T, 4>& target, const T tc) const
         {
             sm::mat<T, 4> target0 = target;
             target0.translate (-target.translation());
-            sm::mat<T, 4> current0 = current;
-            current0.translate (-current.translation());
             sm::quaternion<T> r_targ0 = target0.rotation();
             r_targ0.renormalize();
             return r_cur0.slerp (r_targ0, tc);
@@ -882,7 +879,7 @@ namespace mplot
             // get_cam_movement computes the positional shift
             sm::vec<float> pos_shift = this->get_cam_movement<float> (fol_cur, fol_targ, this->followedVM_vel, trans_tc);
             // get_cam_rotation computes the rotation for the next camera position
-            sm::quaternion<float> cam_rotn = this->get_cam_rotation<float> (fol_cur, fol_targ, r_cur0, rotn_tc);
+            sm::quaternion<float> cam_rotn = this->get_cam_rotation<float> (r_cur0, fol_targ, rotn_tc);
 
             // set the translation/rotation into fol_cur
             fol_cur.pretranslate (pos_shift);
