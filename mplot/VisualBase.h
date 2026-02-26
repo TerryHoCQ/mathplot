@@ -785,9 +785,6 @@ namespace mplot
             return cvm;
         }
 
-        //! Viewmatrix for following camera
-        sm::mat<float, 4> folcam_viewmatrix;
-
     protected:
 
         //! Set up a perspective projection based on window width and height. Not public.
@@ -838,97 +835,87 @@ namespace mplot
 
         // Get a camera movement that moves us nearer to target.
         template<typename T>
-        sm::vec<T, 3> get_cam_movement (sm::mat<T, 4>& current, const sm::mat<T, 4>& target, sm::vec<T, 3>& vel, T time_90, T dt)
+        sm::vec<T, 3> get_cam_movement (sm::mat<T, 4>& current, const sm::mat<T, 4>& target,
+                                        sm::vec<T, 3>& vel, const T tc) const
         {
-            const T c0 = dt * T{3.75} / time_90;
-            if (c0 >= T{1}) { // here, constant is too small, spring too stiff.
-                throw std::runtime_error ("spring too stiff");
-            }
             const sm::vec<T, 3> delta = target.translation() - current.translation();
-
             const sm::vec<T, 3> force = delta - (vel * T{2});
-            sm::vec<T, 3> pos_shift = vel * c0;
-            vel += force * c0;
+            sm::vec<T, 3> pos_shift = vel * tc;
+            vel += force * tc;
             return pos_shift;
         }
 
-        sm::vec<float> update_folcam_viewmatrix()
+        template<typename T>
+        sm::quaternion<T> get_cam_rotation (sm::mat<T, 4>& current, const sm::mat<T, 4>& target,
+                                            const sm::quaternion<float>& r_cur0, const T tc) const
         {
-            constexpr float time_90 = 1.0f; // s
-            constexpr float dt = 0.02f;
+            sm::mat<T, 4> target0 = target;
+            target0.translate (-target.translation());
+            sm::mat<T, 4> current0 = current;
+            current0.translate (-current.translation());
+            sm::quaternion<T> r_targ0 = target0.rotation();
+            r_targ0.renormalize();
+            return r_cur0.slerp (r_targ0, tc);
+        }
 
-            if (this->followedVM == nullptr) { return sm::vec<float>{}; }
+        // Compile-time function to create a rotate-about-y transform
+        static constexpr sm::mat<float, 4> rotate_about_y()
+        {
+            sm::mat<float, 4> r;
+            r.rotate (sm::vec<>::uy(), sm::mathconst<float>::pi);
+            return r;
+        }
+
+        // What's the offset between the followedVM and the camera? in camera frame with y up, z forwards.
+        sm::vec<float> folcam_offset = {0, 0.01f, -0.1f};
+
+        sm::mat<float, 4> update_folcam_viewmatrix()
+        {
+            // Time constants for the way the camera moves. One for translation, the other for rotation
+            constexpr float trans_tc = 0.075f;
+            constexpr float rotn_tc = 0.05f;
+
+            sm::mat<float, 4> fol_cur;
+
+            if (this->followedVM == nullptr) { return fol_cur; }
 
             // Target view from the followedVM
             sm::mat<float, 4> fol_targ = this->followedVM->getViewMatrix();
             // Add an offset to always follow behind/above the camera
-            fol_targ.translate (sm::vec<float>{0, 0.3f, -2.6f});
+            fol_targ.translate (folcam_offset);
 
-            // Current view is a copy of the sceneview, only its not. The sceneview is not the same
-            // as the viewmatrix for the imaginary camera object.
+            // Compute folcam_viewmatrix from sceneview (it's the inverse, along with a rotation)
+            constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
+            sm::mat<float, 4> folcam_viewmatrix = this->sceneview.inverse() * rotn_y;
 
-            // Can I set this from sceneview?
-            // std::cout << "Current folcam_viewmatrix\n" << folcam_viewmatrix << std::endl;
+            const sm::vec<float> folcam_vm_trans = folcam_viewmatrix.translation();
 
-            sm::mat<float, 4> fol_cur;
-            fol_cur.translate (folcam_viewmatrix.translation()); // fol_cur has the same location as scene view,
-                                                                 // but doesn't care about rotation.
-
-            folcam_viewmatrix.translate (-folcam_viewmatrix.translation());
+            fol_cur.translate (folcam_vm_trans); // encode just the location of the following camera
 
             // The current rotation of the scene view
+            folcam_viewmatrix.translate (-folcam_vm_trans);
             sm::quaternion<float> r_cur0 = folcam_viewmatrix.rotation();
-
-            //std::cout << "\nfol_cur\n" << fol_cur << "\nfol_targ:\n" << fol_targ << std::endl;
+            r_cur0.renormalize();
 
             // get_cam_movement computes the positional shift
-            sm::vec<float> pos_shift = this->get_cam_movement<float> (fol_cur, fol_targ, this->followedVM_vel, time_90, dt);
-
-            //std::cout << "\nsceneview to translate: " << pos_shift  << std::endl;
-
-            sm::mat<float, 4> fol_targ0 = fol_targ;
-            fol_targ0.translate (-fol_targ.translation());
-            sm::mat<float, 4> fol_cur0 = fol_cur;
-            fol_cur0.translate (-fol_cur.translation());
-            sm::quaternion<float> r_targ0 = fol_targ0.rotation();
-            r_targ0.renormalize();
-            r_cur0.renormalize();
-            sm::quaternion<float> cam_rotn = r_cur0.slerp (r_targ0, 0.1f);
-
-            //std::cout << "sceneview new cam_rotn: " << cam_rotn << std::endl;
+            sm::vec<float> pos_shift = this->get_cam_movement<float> (fol_cur, fol_targ, this->followedVM_vel, trans_tc);
+            // get_cam_rotation computes the rotation for the next camera position
+            sm::quaternion<float> cam_rotn = this->get_cam_rotation<float> (fol_cur, fol_targ, r_cur0, rotn_tc);
 
             // set the translation/rotation into fol_cur
             fol_cur.pretranslate (pos_shift);
             fol_cur.rotate (cam_rotn);
 
-            folcam_viewmatrix = fol_cur; // set the updated camera viewmatrix into memory
-
-            return pos_shift;
+            // fol_cur now contains the new position and orientation for the following camera
+            return fol_cur;
         }
 
         // A follow-me camera view
         void computeSceneview_for_follower()
         {
-            [[maybe_unused]] sm::vec<float> pos_shift = this->update_folcam_viewmatrix();
-
-            sm::mat<float, 4> fol_cur = folcam_viewmatrix;
-
-            // Transform a modelview to screen
-            // auto T = sm::mat<float, 4>::frombasis (sm::vec<>::ux(), sm::vec<>::uy(), sm::vec<>::uz());
-#if 0
-            // Now compute the sceneview from folcam_viewmatrix
-            fol_cur.translate (-folcam_viewmatrix.translation());
-            sm::quaternion<float> cam_rotn = fol_cur.rotation();
-
-            fol_cur.set_identity();
-            fol_cur.rotate (cam_rotn);
-            fol_cur.translate (-folcam_viewmatrix.translation());
-#endif
-            sm::mat<float, 4> extra_rotn;
-            extra_rotn.rotate (sm::vec<>::uy(), sm::mathconst<float>::pi);
-
-            this->sceneview = extra_rotn * fol_cur.inverse();
-
+            sm::mat<float, 4> folcam_viewmatrix = this->update_folcam_viewmatrix();
+            constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
+            this->sceneview = rotn_y * folcam_viewmatrix.inverse();
             this->savedSceneview = this->sceneview;
         }
 
@@ -938,10 +925,7 @@ namespace mplot
 
             if (this->options.test (visual_options::viewFollowsVMBehind) && this->followedVM != nullptr) {
                 this->computeSceneview_for_follower();
-                std::cout << "computed sceneview\n" << this->sceneview << "\n\n";
                 return;
-            } else {
-                this->update_folcam_viewmatrix(); // during debugging
             }
 
             if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
@@ -970,8 +954,6 @@ namespace mplot
 
                 this->followedLastViewMatrix = this->followedVM->getViewMatrix();
             }
-
-            std::cout << "computed sceneview\n" << this->sceneview << "\n\n";
         }
 
         //! A vector of pointers to all the mplot::VisualModels (HexGridVisual,
