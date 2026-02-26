@@ -885,6 +885,9 @@ namespace mplot
             fol_cur.pretranslate (pos_shift);
             fol_cur.rotate (cam_rotn);
 
+            // Distance to rotation centre should be the distance to the followedVM
+            this->d_to_rotation_centre = folcam_offset.length() / 4.0f;
+
             // fol_cur now contains the new position and orientation for the following camera
             return fol_cur;
         }
@@ -903,6 +906,19 @@ namespace mplot
         {
 
             if (this->options.test (visual_options::viewFollowsVMBehind) && this->followedVM != nullptr) {
+
+                if (this->state.test (visual_state::scrolling)) {
+                    // Use scenetrans_delta to shift the view with teh scrollwheel
+                    this->folcam_offset += this->scenetrans_delta;
+                    // Make a rotation delta in world frame about the followedVM
+                    //sm::mat<float, 4> sv_rot;
+                    //sv_rot.translate (this->rotation_centre);
+                    //sv_rot.rotate (this->rotation_delta);
+                    //sv_rot.translate (-this->rotation_centre);
+                    this->scenetrans_delta.zero();
+                    this->state.reset (visual_state::scrolling);
+                }
+
                 this->computeSceneview_for_follower();
                 return;
             }
