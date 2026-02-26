@@ -785,6 +785,9 @@ namespace mplot
             return cvm;
         }
 
+        //! Viewmatrix for following camera
+        sm::mat<float, 4> folcam_viewmatrix;
+
     protected:
 
         //! Set up a perspective projection based on window width and height. Not public.
@@ -849,9 +852,98 @@ namespace mplot
             return pos_shift;
         }
 
+        sm::vec<float> update_folcam_viewmatrix()
+        {
+            constexpr float time_90 = 1.0f; // s
+            constexpr float dt = 0.02f;
+
+            if (this->followedVM == nullptr) { return sm::vec<float>{}; }
+
+            // Target view from the followedVM
+            sm::mat<float, 4> fol_targ = this->followedVM->getViewMatrix();
+            // Add an offset to always follow behind/above the camera
+            fol_targ.translate (sm::vec<float>{0, 0.3f, -2.6f});
+
+            // Current view is a copy of the sceneview, only its not. The sceneview is not the same
+            // as the viewmatrix for the imaginary camera object.
+
+            // Can I set this from sceneview?
+            // std::cout << "Current folcam_viewmatrix\n" << folcam_viewmatrix << std::endl;
+
+            sm::mat<float, 4> fol_cur;
+            fol_cur.translate (folcam_viewmatrix.translation()); // fol_cur has the same location as scene view,
+                                                                 // but doesn't care about rotation.
+
+            folcam_viewmatrix.translate (-folcam_viewmatrix.translation());
+
+            // The current rotation of the scene view
+            sm::quaternion<float> r_cur0 = folcam_viewmatrix.rotation();
+
+            //std::cout << "\nfol_cur\n" << fol_cur << "\nfol_targ:\n" << fol_targ << std::endl;
+
+            // get_cam_movement computes the positional shift
+            sm::vec<float> pos_shift = this->get_cam_movement<float> (fol_cur, fol_targ, this->followedVM_vel, time_90, dt);
+
+            //std::cout << "\nsceneview to translate: " << pos_shift  << std::endl;
+
+            sm::mat<float, 4> fol_targ0 = fol_targ;
+            fol_targ0.translate (-fol_targ.translation());
+            sm::mat<float, 4> fol_cur0 = fol_cur;
+            fol_cur0.translate (-fol_cur.translation());
+            sm::quaternion<float> r_targ0 = fol_targ0.rotation();
+            r_targ0.renormalize();
+            r_cur0.renormalize();
+            sm::quaternion<float> cam_rotn = r_cur0.slerp (r_targ0, 0.1f);
+
+            //std::cout << "sceneview new cam_rotn: " << cam_rotn << std::endl;
+
+            // set the translation/rotation into fol_cur
+            fol_cur.pretranslate (pos_shift);
+            fol_cur.rotate (cam_rotn);
+
+            folcam_viewmatrix = fol_cur; // set the updated camera viewmatrix into memory
+
+            return pos_shift;
+        }
+
+        // A follow-me camera view
+        void computeSceneview_for_follower()
+        {
+            [[maybe_unused]] sm::vec<float> pos_shift = this->update_folcam_viewmatrix();
+
+            sm::mat<float, 4> fol_cur = folcam_viewmatrix;
+
+            // Transform a modelview to screen
+            // auto T = sm::mat<float, 4>::frombasis (sm::vec<>::ux(), sm::vec<>::uy(), sm::vec<>::uz());
+#if 0
+            // Now compute the sceneview from folcam_viewmatrix
+            fol_cur.translate (-folcam_viewmatrix.translation());
+            sm::quaternion<float> cam_rotn = fol_cur.rotation();
+
+            fol_cur.set_identity();
+            fol_cur.rotate (cam_rotn);
+            fol_cur.translate (-folcam_viewmatrix.translation());
+#endif
+            sm::mat<float, 4> extra_rotn;
+            extra_rotn.rotate (sm::vec<>::uy(), sm::mathconst<float>::pi);
+
+            this->sceneview = extra_rotn * fol_cur.inverse();
+
+            this->savedSceneview = this->sceneview;
+        }
+
         // This is called every time render() is called
         void computeSceneview()
         {
+
+            if (this->options.test (visual_options::viewFollowsVMBehind) && this->followedVM != nullptr) {
+                this->computeSceneview_for_follower();
+                std::cout << "computed sceneview\n" << this->sceneview << "\n\n";
+                return;
+            } else {
+                this->update_folcam_viewmatrix(); // during debugging
+            }
+
             if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
                 // Calculate model view transformation - transforming from "model space" to "worldspace".
                 this->computeSceneview_about_rotation_centre();
@@ -877,44 +969,9 @@ namespace mplot
                 this->savedSceneview_tr.pretranslate (fol_screenframe);
 
                 this->followedLastViewMatrix = this->followedVM->getViewMatrix();
-
-            } else if (this->options.test (visual_options::viewFollowsVMBehind)
-                       && this->followedVM != nullptr
-                       && this->followedLastViewMatrix != this->followedVM->getViewMatrix()) {
-
-                constexpr float time_90 = 1.0f; // s
-                constexpr float dt = 0.02f;
-
-                sm::mat<float, 4> fol_targ = this->followedVM->getViewMatrix();
-                fol_targ.translate (sm::vec<float>{0, 0.4f, -0.5f}); // Always follow behind the camera
-                sm::mat<float, 4> cur_ = this->sceneview;
-                sm::mat<float, 4> fol_cur;
-                fol_cur.translate (cur_.translation());
-                cur_.translate (-cur_.translation());
-                sm::quaternion<float> r_cur0 = cur_.rotation();
-                sm::vec<float> pos_shift = this->get_cam_movement<float> (fol_cur, fol_targ, this->followedVM_vel, time_90, dt);
-
-                std::cout << "sceneview to move: " << pos_shift  << std::endl;
-
-                sm::mat<float, 4> fol_targ0 = fol_targ;
-                fol_targ0.translate (-fol_targ.translation());
-                sm::mat<float, 4> fol_cur0 = fol_cur;
-                fol_cur0.translate (-fol_cur.translation());
-                sm::quaternion<float> r_targ0 = fol_targ0.rotation();
-                r_targ0.renormalize();
-                r_cur0.renormalize();
-                sm::quaternion<float> cam_rotn = r_cur0.slerp (r_targ0, 0.1f);
-                std::cout << "r_cur0: " << r_cur0 << " cam_rotn " << cam_rotn << " r_targ0 " << r_targ0 << std::endl;
-                // set the translation/rotation into fol_cur
-
-                fol_cur.pretranslate (pos_shift);
-                fol_cur.rotate (cam_rotn);
-
-                this->sceneview = fol_cur;
-                this->sceneview_tr.pretranslate (pos_shift);
-                this->savedSceneview = fol_cur;
-                this->savedSceneview_tr = this->sceneview_tr;
             }
+
+            std::cout << "computed sceneview\n" << this->sceneview << "\n\n";
         }
 
         //! A vector of pointers to all the mplot::VisualModels (HexGridVisual,
