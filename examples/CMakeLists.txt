@@ -534,6 +534,9 @@ add_executable(maketicks maketicks.cpp)
 add_executable(coordarrows coordarrows.cpp)
 target_link_libraries(coordarrows OpenGL::GL glfw Freetype::Freetype)
 
+add_executable(frames frames.cpp)
+target_link_libraries(frames OpenGL::GL glfw Freetype::Freetype)
+
 add_executable(sph_to_cart sph_to_cart.cpp)
 target_link_libraries(sph_to_cart OpenGL::GL glfw Freetype::Freetype)
 

@@ -136,12 +136,11 @@ namespace mplot
         viewFollowsVMBehind,
     };
 
-    //! Whether to render with perspective or orthographic (or even a cylindrical projection)
+    //! Whether to render with perspective or orthographic
     enum class perspective_type : uint32_t
     {
         perspective,
-        orthographic,
-        cylindrical
+        orthographic
     };
 
 #ifdef __APPLE__
@@ -359,24 +358,12 @@ namespace mplot
         //! one for graphical objects and a text shader program, which uses textures to draw text on
         //! quads.
         mplot::visgl::visual_shaderprogs shaders;
-        //! Which shader is active for graphics shading?
+        //! Which shader is active for graphics shading. In practice, this is always 'projection2d'
         mplot::visgl::graphics_shader_type active_gprog = mplot::visgl::graphics_shader_type::none;
         //! Stores the info required to load the 2D projection shader
         std::vector<mplot::gl::ShaderInfo> proj2d_shader_progs;
         //! Stores the info required to load the text shader
         std::vector<mplot::gl::ShaderInfo> text_shader_progs;
-
-        //! Stores the info required to load the cylindrical projection shader
-        std::vector<mplot::gl::ShaderInfo> cyl_shader_progs;
-        //! Passed to the cyl_shader_progs as a uniform to define the location of the cylindrical
-        //! projection camera
-        sm::vec<float, 4> cyl_cam_pos = { 0.0f, 0.0f, 0.0f, 1.0f };
-        //! Default cylindrical camera position
-        sm::vec<float, 4> cyl_cam_pos_default = { 0.0f, 0.0f, 0.0f, 1.0f };
-        //! The radius of the 'cylindrical projection screen' around the camera position
-        float cyl_radius = 0.005f;
-        //! The height of the 'cylindrical projection screen'
-        float cyl_height = 0.01f;
 
         // These static functions will be set as callbacks in each VisualModel object.
         static mplot::visgl::visual_shaderprogs get_shaderprogs (mplot::VisualBase<glver>* _v) { return _v->shaders; };
@@ -818,16 +805,11 @@ namespace mplot
         {
             sm::mat<float, 4> sv_tr;
             sm::mat<float, 4> sv_rot;
-            if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
-                sv_tr.translate (this->scenetrans_delta);
-                // A rotation delta in world frame about the 'screen centre'
-                sv_rot.translate (this->rotation_centre);
-                sv_rot.rotate (this->rotation_delta);
-                sv_rot.translate (-this->rotation_centre);
-            } else {
-                // Only rotate in cyl view
-                sv_rot.rotate (this->rotation_delta);
-            }
+            sv_tr.translate (this->scenetrans_delta);
+            // A rotation delta in world frame about the 'screen centre'
+            sv_rot.translate (this->rotation_centre);
+            sv_rot.rotate (this->rotation_delta);
+            sv_rot.translate (-this->rotation_centre);
 
             this->sceneview = sv_tr * sv_rot * this->savedSceneview;
             this->sceneview_tr = sv_tr * this->savedSceneview_tr;
@@ -1142,10 +1124,6 @@ namespace mplot
                           << "F1-F10: Select model index (with shift: toggle hide)\n"
                           << "Shift-Left: Decrease opacity of selected model\n"
                           << "Shift-Right: Increase opacity of selected model\n"
-                          << "Shift-Up: Double cyl proj radius\n"
-                          << "Shift-Down: Halve cyl proj radius\n"
-                          << "Ctrl-Up: Double cyl proj height\n"
-                          << "Ctrl-Down: Halve cyl proj height\n"
                           << std::flush;
             }
 
@@ -1279,33 +1257,10 @@ namespace mplot
                 if (!this->vm.empty()) { this->vm[this->selectedVisualModel]->incAlpha(); }
             }
 
-            // Cyl (and possibly spherical) projection radius
-            if (_key == key::up && (action == keyaction::press || action == keyaction::repeat) && (mods & keymod::shift)) {
-                this->cyl_radius *= 2.0f;
-                std::cout << "cyl_radius is now " << this->cyl_radius << std::endl;
-            }
-            if (_key == key::down && (action == keyaction::press || action == keyaction::repeat) && (mods & keymod::shift)) {
-                this->cyl_radius *= 0.5f;
-                std::cout << "cyl_radius is now " << this->cyl_radius << std::endl;
-            }
-
-            // Cyl projection view height
-            if (_key == key::up && (action == keyaction::press || action == keyaction::repeat) && (mods & keymod::control)) {
-                this->cyl_height *= 2.0f;
-                std::cout << "cyl_height is now " << this->cyl_height << std::endl;
-            }
-            if (_key == key::down && (action == keyaction::press || action == keyaction::repeat) && (mods & keymod::control)) {
-                this->cyl_height *= 0.5f;
-                std::cout << "cyl_height is now " << this->cyl_height << std::endl;
-            }
-
             // Reset view to default
             if (this->state.test (visual_state::sceneLocked) == false
                 && _key == key::a && (mods & keymod::control) && action == keyaction::press) {
                 std::cout << "Reset to default view\n";
-                // Reset translation
-                this->cyl_cam_pos = this->cyl_cam_pos_default;
-
                 this->sceneview.set_identity();
                 this->sceneview_tr.set_identity();
                 this->sceneview.translate (this->scenetrans_default);
@@ -1314,7 +1269,6 @@ namespace mplot
                 this->scenetrans_delta.zero();
                 this->rotation_delta.reset();
                 this->d_to_rotation_centre = -this->scenetrans_default[2];
-
                 needs_render = true;
             }
 
@@ -1372,8 +1326,6 @@ namespace mplot
                 if (this->ptype == mplot::perspective_type::perspective) {
                     this->ptype = mplot::perspective_type::orthographic;
                 } else if (this->ptype == mplot::perspective_type::orthographic) {
-                    this->ptype = mplot::perspective_type::cylindrical;
-                } else {
                     this->ptype = mplot::perspective_type::perspective;
                 }
                 needs_render = true;
@@ -1597,13 +1549,9 @@ namespace mplot
                 mouseMoveWorld[1] = (v1[1] / v1[3]) - (v0[1] / v0[3]);
                 // Note: mouseMoveWorld[2] is unmodified
 
-                // We "translate the whole scene" - used by 2D projection shaders (ignored by cyl shader)
+                // We "translate the whole scene" - used by 2D projection shaders
                 this->scenetrans_delta[0] += mouseMoveWorld[0];
                 this->scenetrans_delta[1] -= mouseMoveWorld[1];
-
-                // Also translate our cylindrical camera position (used in cyl shader, ignored in proj. shader)
-                this->cyl_cam_pos[0] -= mouseMoveWorld[0];
-                this->cyl_cam_pos[2] += mouseMoveWorld[1];
 
                 needs_render = true; // updates viewproj; uses this->scenetrans
             }
@@ -1669,8 +1617,7 @@ namespace mplot
             }
         }
 
-        //! When user scrolls, we translate the scene (applies to orthographic/projection) and the
-        //! cyl_cam_pos (applies to cylindrical projection).
+        //! When user scrolls, we translate the scene
         virtual bool scroll_callback (double xoffset, double yoffset)
         {
             // yoffset non-zero indicates that the most common scroll wheel is changing. If there's
@@ -1693,11 +1640,10 @@ namespace mplot
                     this->ortho_rt = _rt;
                 }
 
-            } else { // perspective_type::perspective or perspective_type::cylindrical
+            } else { // perspective_type::perspective
 
                 // xoffset does what mouse drag left/right in rotateModMode does (L/R scene trans)
                 this->scenetrans_delta[0] -= xoffset * this->scenetrans_stepsize;
-                this->cyl_cam_pos[0] += xoffset * this->scenetrans_stepsize;
 
                 // yoffset does the 'in-out zooming'
 
@@ -1714,10 +1660,6 @@ namespace mplot
                 }
 
                 this->d_to_rotation_centre -= this->scenetrans_delta[2];
-
-                // Translate scroll_move_y then add it to cyl_cam_pos here
-                sm::mat<float, 4> sceneview_rotn (this->sceneview.linear());
-                this->cyl_cam_pos += sceneview_rotn * scroll_move_y;
             }
             return true; // needs_render
         }
