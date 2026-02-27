@@ -845,8 +845,15 @@ namespace mplot
             return r;
         }
 
+        static constexpr sm::mat<float, 4> folcam_default()
+        {
+            sm::mat<float, 4> m;
+            m.translate (sm::vec<float>{0, 0.01f, -0.06f});
+            return m;
+        }
+
         // What's the offset between the followedVM and the camera? in camera frame with y up, z forwards.
-        sm::vec<float> folcam_offset = {0, 0.01f, -0.1f};
+        sm::mat<float, 4> folcam_offset = folcam_default();
 
         sm::mat<float, 4> update_folcam_viewmatrix()
         {
@@ -859,9 +866,7 @@ namespace mplot
             if (this->followedVM == nullptr) { return fol_cur; }
 
             // Target view from the followedVM
-            sm::mat<float, 4> fol_targ = this->followedVM->getViewMatrix();
-            // Add an offset to always follow behind/above the camera
-            fol_targ.translate (folcam_offset);
+            sm::mat<float, 4> fol_targ = this->followedVM->getViewMatrix() * this->folcam_offset;
 
             // Compute folcam_viewmatrix from sceneview (it's the inverse, along with a rotation)
             constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
@@ -886,7 +891,7 @@ namespace mplot
             fol_cur.rotate (cam_rotn);
 
             // Distance to rotation centre should be the distance to the followedVM
-            this->d_to_rotation_centre = folcam_offset.length() / 4.0f;
+            this->d_to_rotation_centre = folcam_offset.translation().length();
 
             // fol_cur now contains the new position and orientation for the following camera
             return fol_cur;
@@ -909,7 +914,7 @@ namespace mplot
 
                 if (this->state.test (visual_state::scrolling)) {
                     // Use scenetrans_delta to shift the view with teh scrollwheel
-                    this->folcam_offset += this->scenetrans_delta;
+                    this->folcam_offset.translate (this->scenetrans_delta);
                     // Make a rotation delta in world frame about the followedVM
                     //sm::mat<float, 4> sv_rot;
                     //sv_rot.translate (this->rotation_centre);
