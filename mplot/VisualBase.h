@@ -845,6 +845,7 @@ namespace mplot
             return r;
         }
 
+        // A default follower camera position. Above and behind
         static constexpr sm::mat<float, 4> folcam_default()
         {
             sm::mat<float, 4> m;
@@ -1287,6 +1288,7 @@ namespace mplot
                 this->scenetrans_delta.zero();
                 this->rotation_delta.reset();
                 this->d_to_rotation_centre = -this->scenetrans_default[2];
+                this->folcam_offset = folcam_default();
                 needs_render = true;
             }
 
@@ -1518,7 +1520,8 @@ namespace mplot
                 }
                 mouseMoveWorld *= mm_gain;
 
-                if (this->options.test (visual_options::rotateAboutVertical) == true) {
+                if (this->options.test (visual_options::rotateAboutVertical) == true
+                    && this->options.test (visual_options::viewFollowsVMBehind) == false) {
 
                     if (this->state.test (visual_state::rotateModMode)) {
                         // What to do about rotate mod mode in this rotation scheme? Rotate about the missing axis for now.
@@ -1530,6 +1533,25 @@ namespace mplot
                         sm::quaternion<float> r2 (this->scene_right, mouseMoveWorld[0] * -sm::mathconst<float>::deg2rad);
                         this->rotation_delta = r2 * r1;
                     }
+                } else if (this->options.test (visual_options::viewFollowsVMBehind) == true) {
+                    // Change folcam_offset
+                    // Want this to be a limited amount of movement. camera should rotate wrt to??
+                    //std::cout << "\nmouseMoveWorld[0]: " << mouseMoveWorld[0] << std::endl; // pitch
+                    //std::cout << "mouseMoveWorld[1]: " << mouseMoveWorld[1] << std::endl;   // about +- 40ish. leftright yaw
+
+                    float pitch = mouseMoveWorld[0];
+                    float yaw = mouseMoveWorld[1];
+                    pitch = pitch > 10.0f ? 10.0f : pitch;
+                    pitch = pitch < -10.0f ? -10.0f : pitch;
+                    yaw = yaw > 20.0f ? 20.0f : yaw;
+                    yaw = yaw < -20.0f ? -20.0f : yaw;
+
+                    sm::quaternion<float> r1 (this->scene_up, yaw * -sm::mathconst<float>::deg2rad);
+                    sm::quaternion<float> r2 (this->scene_right, pitch * -sm::mathconst<float>::deg2rad);
+                    sm::vec<float> fc_trans = this->folcam_offset.translation();
+                    this->folcam_offset.set_identity();
+                    this->folcam_offset.translate (fc_trans);
+                    this->folcam_offset.rotate (r2 * r1);
 
                 } else {
                     // rotation_delta is the mouse-commanded rotation in the scene frame of reference
