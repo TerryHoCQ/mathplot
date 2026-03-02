@@ -845,16 +845,10 @@ namespace mplot
             return r;
         }
 
-        // A default follower camera position. Above and behind
-        static constexpr sm::mat<float, 4> folcam_default()
-        {
-            sm::mat<float, 4> m;
-            m.translate (sm::vec<float>{0, 0.01f, -0.06f});
-            return m;
-        }
-
-        // What's the offset between the followedVM and the camera? in camera frame with y up, z forwards.
-        sm::mat<float, 4> folcam_offset = folcam_default();
+        // Hold an offset translation and rotation for the follow-me camera
+        static constexpr sm::vec<float> folcam_offset_tr_default = {0, 0.01f, -0.06f};
+        sm::vec<float> folcam_offset_tr = folcam_offset_tr_default;
+        sm::quaternion<float> folcam_offset_rot;
 
         sm::mat<float, 4> update_folcam_viewmatrix()
         {
@@ -867,7 +861,11 @@ namespace mplot
             if (this->followedVM == nullptr) { return fol_cur; }
 
             // Target view from the followedVM
-            sm::mat<float, 4> fol_targ = this->followedVM->getViewMatrix() * this->folcam_offset;
+            //sm::mat<float, 4> fol_targ = this->followedVM->getViewMatrix() * this->folcam_offset;
+            sm::mat<float, 4> rmat;
+            rmat.rotate (folcam_offset_rot);
+            sm::mat<float, 4> fol_targ = this->followedVM->getViewMatrix() * rmat;
+            fol_targ.translate (folcam_offset_tr);
 
             // Compute folcam_viewmatrix from sceneview (it's the inverse, along with a rotation)
             constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
@@ -892,7 +890,7 @@ namespace mplot
             fol_cur.rotate (cam_rotn);
 
             // Distance to rotation centre should be the distance to the followedVM
-            this->d_to_rotation_centre = folcam_offset.translation().length();
+            this->d_to_rotation_centre = folcam_offset_tr.length();
 
             // fol_cur now contains the new position and orientation for the following camera
             return fol_cur;
@@ -913,15 +911,16 @@ namespace mplot
 
             if (this->options.test (visual_options::viewFollowsVMBehind) && this->followedVM != nullptr) {
 
+                // Use scenetrans_delta to shift the view with the scrollwheel
+                this->folcam_offset_tr += this->scenetrans_delta;
+                //this->folcam_offset.translate (this->scenetrans_delta);
+                // Make a rotation delta in world frame about the followedVM
+                //sm::mat<float, 4> sv_rot;
+                //sv_rot.translate (this->rotation_centre);
+                //sv_rot.rotate (this->rotation_delta);
+                //sv_rot.translate (-this->rotation_centre);
+                this->scenetrans_delta.zero();
                 if (this->state.test (visual_state::scrolling)) {
-                    // Use scenetrans_delta to shift the view with teh scrollwheel
-                    this->folcam_offset.translate (this->scenetrans_delta);
-                    // Make a rotation delta in world frame about the followedVM
-                    //sm::mat<float, 4> sv_rot;
-                    //sv_rot.translate (this->rotation_centre);
-                    //sv_rot.rotate (this->rotation_delta);
-                    //sv_rot.translate (-this->rotation_centre);
-                    this->scenetrans_delta.zero();
                     this->state.reset (visual_state::scrolling);
                 }
 
@@ -1288,7 +1287,9 @@ namespace mplot
                 this->scenetrans_delta.zero();
                 this->rotation_delta.reset();
                 this->d_to_rotation_centre = -this->scenetrans_default[2];
-                this->folcam_offset = folcam_default();
+                //this->folcam_offset = folcam_default();
+                this->folcam_offset_tr = folcam_offset_tr_default;
+                this->folcam_offset_rot.reset();
                 needs_render = true;
             }
 
@@ -1534,24 +1535,18 @@ namespace mplot
                         this->rotation_delta = r2 * r1;
                     }
                 } else if (this->options.test (visual_options::viewFollowsVMBehind) == true) {
-                    // Change folcam_offset
-                    // Want this to be a limited amount of movement. camera should rotate wrt to??
                     //std::cout << "\nmouseMoveWorld[0]: " << mouseMoveWorld[0] << std::endl; // pitch
                     //std::cout << "mouseMoveWorld[1]: " << mouseMoveWorld[1] << std::endl;   // about +- 40ish. leftright yaw
-
                     float pitch = mouseMoveWorld[0];
                     float yaw = mouseMoveWorld[1];
                     pitch = pitch > 10.0f ? 10.0f : pitch;
-                    pitch = pitch < -10.0f ? -10.0f : pitch;
-                    yaw = yaw > 20.0f ? 20.0f : yaw;
-                    yaw = yaw < -20.0f ? -20.0f : yaw;
+                    pitch = pitch < -65.0f ? -65.0f : pitch; // negative pitch is 'looking down' on the agent
+                    yaw = yaw > 45.0f ? 45.0f : yaw;
+                    yaw = yaw < -45.0f ? -45.0f : yaw;
 
-                    sm::quaternion<float> r1 (this->scene_up, yaw * -sm::mathconst<float>::deg2rad);
+                    sm::quaternion<float> r1 (this->scene_up, yaw * sm::mathconst<float>::deg2rad);
                     sm::quaternion<float> r2 (this->scene_right, pitch * -sm::mathconst<float>::deg2rad);
-                    sm::vec<float> fc_trans = this->folcam_offset.translation();
-                    this->folcam_offset.set_identity();
-                    this->folcam_offset.translate (fc_trans);
-                    this->folcam_offset.rotate (r2 * r1);
+                    this->folcam_offset_rot = r2 * r1;
 
                 } else {
                     // rotation_delta is the mouse-commanded rotation in the scene frame of reference
@@ -1561,7 +1556,6 @@ namespace mplot
                 needs_render = true;
 
             } else if (this->state.test (visual_state::translateMode)) { // allow only rotate OR translate for a single mouse movement
-
                 // Convert mousepress/cursor positions (in pixels) to the range -1 -> 1:
                 sm::vec<float, 2> p0_coord = this->mousePressPosition;
                 p0_coord -= this->window_w * 0.5f;
