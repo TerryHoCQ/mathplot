@@ -479,9 +479,9 @@ namespace mplot
 
         //! Time constants for the way the camera moves between a follow-me view and a
         //! drone-view. One for translation, the other for rotation.
-        float trans_tc = 0.075f;
+        float trans_tc = 0.09f;
         //! Rotational time constant
-        float rotn_tc = 0.08f;
+        float rotn_tc = trans_tc;
 
         //! Which was is up in the scene? In OpenGL it's usually y, but may be changed to z in some cases
         sm::vec<float> scene_up = sm::vec<float>::uy();
@@ -922,9 +922,7 @@ namespace mplot
         // This is called every time render() is called
         void computeSceneview()
         {
-
             if (this->options.test (visual_options::viewFollowsVMBehind) && this->followedVM != nullptr) {
-
                 // Use scenetrans_delta to shift the view with the scrollwheel
                 this->folcam_offset_tr += this->scenetrans_delta;
                 this->scenetrans_delta.zero();
@@ -935,8 +933,12 @@ namespace mplot
 
             if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
                 // Calculate model view transformation - transforming from "model space" to "worldspace".
+                //std::cout << "standard view, call computeSceneview_about_rotation_centre\n";
                 this->computeSceneview_about_rotation_centre();
             } // else don't change sceneview
+            //else { std::cout << "No changing sceneview...\n"; }
+
+            //std::cout << "sceneview\n" << sceneview << std::endl;
 
             if (this->state.test (visual_state::scrolling)) {
                 this->scenetrans_delta.zero();
