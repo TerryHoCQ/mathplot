@@ -29,6 +29,8 @@
 #include <mplot/VisualFace.h>
 #include <mplot/VisualResources.h>
 
+import sm.vec;
+
 namespace mplot
 {
     //! Forward declaration of a VisualBase class

@@ -6,8 +6,8 @@
 #include <vector>
 #include <cmath>
 
-#include <sm/vec>
-#include <sm/grid>
+import sm.vec;
+import sm.grid;
 
 #include <mplot/Visual.h>
 #include <mplot/VisualDataModel.h>

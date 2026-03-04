@@ -5,12 +5,15 @@
 
 #include <vector>
 #include <cstdint>
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/scale>
-#include <sm/centroid>
+
+import sm.vec;
+import sm.vvec;
+import sm.scale;
+import sm.centroid;
+
 #include <mplot/VisualModel.h>
 #include <mplot/ColourMap.h>
+
 
 namespace mplot
 {

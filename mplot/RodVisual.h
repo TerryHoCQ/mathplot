@@ -2,8 +2,9 @@
 
 #include <array>
 #include <sm/mathconst>
-import sm.vec;
 #include <mplot/VisualModel.h>
+
+import sm.vec;
 
 namespace mplot
 {

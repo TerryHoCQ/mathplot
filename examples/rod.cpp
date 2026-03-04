@@ -8,11 +8,11 @@
 #include <stdexcept>
 #include <string>
 
-#include <sm/vec>
-
 #include <mplot/Visual.h>
 #include <mplot/ColourMap.h>
 #include <mplot/RodVisual.h>
+
+import sm.vec;
 
 int main()
 {

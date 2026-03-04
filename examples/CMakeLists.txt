@@ -47,7 +47,9 @@ set_source_files_properties (
   ${PROJECT_SOURCE_DIR}/maths/sm/geometry
   ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
   ${PROJECT_SOURCE_DIR}/maths/sm/flags
-  PROPERTIES LANGUAGE CXX)
+  ${PROJECT_SOURCE_DIR}/maths/sm/centroid
+  PROPERTIES LANGUAGE CXX
+)
 
 # Screenshots used in the documentation/reference website
 if(BUILD_DOC_SCREENSHOTS)
@@ -195,6 +197,21 @@ target_link_libraries(myvisual OpenGL::GL glfw Freetype::Freetype)
 
 # mplot::Grid is runtime-configured
 add_executable(grid_simple grid_simple.cpp)
+target_sources(grid_simple PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES
+  ${PROJECT_SOURCE_DIR}/maths/sm/flags
+  ${PROJECT_SOURCE_DIR}/maths/sm/range
+  ${PROJECT_SOURCE_DIR}/maths/sm/random
+  ${PROJECT_SOURCE_DIR}/maths/sm/vec
+  ${PROJECT_SOURCE_DIR}/maths/sm/algo
+  ${PROJECT_SOURCE_DIR}/maths/sm/vvec
+  ${PROJECT_SOURCE_DIR}/maths/sm/centroid
+  ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
+  ${PROJECT_SOURCE_DIR}/maths/sm/mat
+  ${PROJECT_SOURCE_DIR}/maths/sm/geometry
+  ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
+  ${PROJECT_SOURCE_DIR}/maths/sm/grid
+)
 target_link_libraries(grid_simple OpenGL::GL glfw Freetype::Freetype)
 
 add_executable(grid_flat_dynamic grid_flat_dynamic.cpp)
@@ -373,6 +390,17 @@ add_executable(threewindows threewindows.cpp)
 target_link_libraries(threewindows OpenGL::GL glfw Freetype::Freetype)
 
 add_executable(rod rod.cpp)
+target_sources(rod PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES
+  ${PROJECT_SOURCE_DIR}/maths/sm/flags
+  ${PROJECT_SOURCE_DIR}/maths/sm/algo
+  ${PROJECT_SOURCE_DIR}/maths/sm/range
+  ${PROJECT_SOURCE_DIR}/maths/sm/random
+  ${PROJECT_SOURCE_DIR}/maths/sm/vec
+  ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
+  ${PROJECT_SOURCE_DIR}/maths/sm/mat
+  ${PROJECT_SOURCE_DIR}/maths/sm/geometry
+  ${PROJECT_SOURCE_DIR}/maths/sm/vvec)
 target_link_libraries(rod OpenGL::GL glfw Freetype::Freetype)
 
 add_executable(rod_with_normals rod_with_normals.cpp)

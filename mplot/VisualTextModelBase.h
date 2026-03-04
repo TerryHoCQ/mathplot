@@ -17,16 +17,16 @@
 
 #include <mplot/gl/version.h>
 
-import sm.quaternion;
-import sm.mat;
-import sm.vec;
-#include <sm/mathconst>
-
 #include <mplot/VisualCommon.h>
 #include <mplot/unicode.h>
 #include <mplot/TextGeometry.h>
 #include <mplot/TextFeatures.h>
 #include <mplot/colour.h>
+
+#include <sm/mathconst>
+import sm.quaternion;
+import sm.mat;
+import sm.vec;
 
 namespace mplot
 {

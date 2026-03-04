@@ -5,9 +5,9 @@
 #include <array>
 #include <unordered_map>
 
-#include <sm/grid>
-#include <sm/vec>
-#include <sm/flags>
+import sm.grid;
+import sm.vec;
+import sm.flags;
 
 #include <mplot/ColourMap.h>
 #include <mplot/VisualDataModel.h>

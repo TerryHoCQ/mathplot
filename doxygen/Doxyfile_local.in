@@ -3,7 +3,7 @@
 #---------------------------------------------------------------------------
 # Project related configuration options
 #---------------------------------------------------------------------------
-PROJECT_NAME           = morphologica
+PROJECT_NAME           = mathplot
 PROJECT_NUMBER         = @VERSION@
 OUTPUT_DIRECTORY       = @CMAKE_CURRENT_BINARY_DIR@/doc_doxygen/
 OUTPUT_LANGUAGE        = English
@@ -63,7 +63,7 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = @CMAKE_CURRENT_SOURCE_DIR@/morph/ @CMAKE_CURRENT_SOURCE_DIR@/tests @CMAKE_CURRENT_SOURCE_DIR@/README.md
+INPUT                  = @CMAKE_CURRENT_SOURCE_DIR@/mplot/ @CMAKE_CURRENT_SOURCE_DIR@/tests @CMAKE_CURRENT_SOURCE_DIR@/README.md
 USE_MDFILE_AS_MAINPAGE = @CMAKE_CURRENT_SOURCE_DIR@/README.md
 FILE_PATTERNS          = *.h
 RECURSIVE              = NO

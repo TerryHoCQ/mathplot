@@ -18,6 +18,7 @@
 #include <functional>
 #include <cstddef>
 
+import sm.range;
 import sm.flags;
 import sm.quaternion;
 import sm.mat;

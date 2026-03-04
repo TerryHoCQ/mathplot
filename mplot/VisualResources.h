@@ -22,6 +22,8 @@
 #include <mplot/gl/util_mx.h>
 #include <mplot/gl/ssbo_mx.h>
 
+import sm.vec;
+
 namespace mplot
 {
     // Pointers to mplot::VisualBase are used to index font faces
