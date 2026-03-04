@@ -5,7 +5,7 @@
 #include <sm/vvec>
 #include <sm/hexgrid>
 
-#include <mplot/qt/viswidget.h>
+#include <mplot/qt/viswidget_mx.h>
 #include <mplot/GraphVisual.h>
 #include <mplot/TriangleVisual.h>
 #include <mplot/HexGridVisual.h>
@@ -48,7 +48,7 @@ void MainWindow::setupHexGridVisual()
     // VisualModels that do text, like a GraphVisual). This gives the VisualModel access
     // to shader progs from the Visual environment, and allows the VisualModel to know
     // its parent Visual.
-    static_cast<mplot::qt::viswidget*>(this->p_vw)->v.bindmodel (hgv);
+    static_cast<mplot::qt::viswidget_mx<0>*>(this->p_vw)->v.bindmodel (hgv);
 
     // Give the HexGridVisual access to the scalar data for the surface
     hgv->setScalarData (&this->data);
@@ -56,13 +56,13 @@ void MainWindow::setupHexGridVisual()
     // Now add the HexGridVisual model to newvisualmodels. It has to be cast to a plain mplot::VisualModel first:
     std::unique_ptr<mplot::VisualModel<mplot::qt::gl_version>> vmp = std::move (hgv);
     // The vector of VisualModels lives in viswidget, accessible via p_vw:
-    static_cast<mplot::qt::viswidget*>(this->p_vw)->newvisualmodels.push_back (std::move(vmp));
+    static_cast<mplot::qt::viswidget_mx<0>*>(this->p_vw)->newvisualmodels.push_back (std::move(vmp));
 }
 
 void MainWindow::viswidget_init()
 {
     // Create widget. Seems to open in its own window with a new context.
-    mplot::qt::viswidget* vw = new mplot::qt::viswidget (this->parentWidget());
+    mplot::qt::viswidget_mx<0>* vw = new mplot::qt::viswidget_mx<0> (this->parentWidget());
     // Choose lighting effects if you want
     vw->v.lightingEffects();
     // Add the OpenGL widget to the UI.
@@ -77,7 +77,7 @@ void MainWindow::on_pushButton_clicked()
 
     auto gv = std::make_unique<mplot::GraphVisual<double, mplot::qt::gl_version>> (this->graphlocn);
     // Bind the new (Graph)VisualModel to the mplot::Visual associated with the viswidget
-    static_cast<mplot::qt::viswidget*>(this->p_vw)->v.bindmodel (gv);
+    static_cast<mplot::qt::viswidget_mx<0>*>(this->p_vw)->v.bindmodel (gv);
 
     gv->twodimensional (false);
     sm::vvec<double> x;
@@ -86,7 +86,7 @@ void MainWindow::on_pushButton_clicked()
 
     // Cast and add
     std::unique_ptr<mplot::VisualModel<mplot::qt::gl_version>> vmp = std::move (gv);
-    static_cast<mplot::qt::viswidget*>(this->p_vw)->newvisualmodels.push_back (std::move(vmp));
+    static_cast<mplot::qt::viswidget_mx<0>*>(this->p_vw)->newvisualmodels.push_back (std::move(vmp));
 
     // request a render, otherwise it won't appear until user interacts with window
     this->p_vw->update();

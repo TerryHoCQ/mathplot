@@ -148,9 +148,6 @@ endif(ARMADILLO_FOUND)
 add_executable(helloworld helloworld.cpp)
 target_link_libraries(helloworld OpenGL::GL glfw Freetype::Freetype)
 
-add_executable(helloworld_nomx helloworld_nomx.cpp)
-target_link_libraries(helloworld_nomx OpenGL::GL glfw Freetype::Freetype)
-
 add_executable(helloversion helloversion.cpp)
 target_link_libraries(helloversion OpenGL::GL glfw Freetype::Freetype)
 
@@ -270,10 +267,6 @@ target_link_libraries(duochrome OpenGL::GL glfw Freetype::Freetype)
 add_executable(graph1 graph1.cpp)
 target_link_libraries(graph1 OpenGL::GL glfw Freetype::Freetype)
 
-# Shows how to write a program that uses non-multicontext aware, globally aliased GL functions:
-add_executable(graph1_nomx graph1_nomx.cpp)
-target_link_libraries(graph1_nomx OpenGL::GL glfw Freetype::Freetype)
-
 if(HAVE_STD_FORMAT)
   add_executable(graph_line graph_line.cpp)
   target_link_libraries(graph_line OpenGL::GL glfw Freetype::Freetype)
@@ -333,11 +326,6 @@ target_link_libraries(linregr OpenGL::GL glfw Freetype::Freetype)
 # By default, the multi-context aware GLAD headers are used, so multiple windows is guaranteed to work.
 add_executable(twowindows twowindows.cpp)
 target_link_libraries(twowindows OpenGL::GL glfw Freetype::Freetype)
-
-# In practice, the non-multicontext headers will work for two windows on the same graphics device.
-add_executable(twowindows_nomx twowindows_nomx.cpp)
-target_compile_definitions(twowindows_nomx PUBLIC GLAD_OPTION_MX=1)
-target_link_libraries(twowindows_nomx OpenGL::GL glfw Freetype::Freetype)
 
 add_executable(twowindows_mutex twowindows_mutex.cpp)
 target_link_libraries(twowindows_mutex OpenGL::GL glfw Freetype::Freetype)
