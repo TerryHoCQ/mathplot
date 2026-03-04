@@ -5,7 +5,7 @@
 #include <sm/vvec>
 #include <sm/hexgrid>
 
-#include <mplot/qt/viswidget_mx.h>
+#include <mplot/qt/viswidget.h>
 #include <mplot/GraphVisual.h>
 #include <mplot/TriangleVisual.h>
 #include <mplot/HexGridVisual.h>
@@ -40,7 +40,7 @@ MainWindow::MainWindow(QWidget *parent)
                                          // reinitialization. When paintGL is called (and a GL
                                          // context is available) the mathplot OpenGL model will
                                          // be rebuilt.
-                                         static_cast<mplot::qt::viswidget_mx<0>*>(this->p_vw)->set_model_needs_reinit (0);
+                                         static_cast<mplot::qt::viswidget<0>*>(this->p_vw)->set_model_needs_reinit (0);
                                          // Call the OpenGLWidget's update method. This will cause a
                                          // call to viswidget::paintGL()
                                          this->p_vw->update();
@@ -73,7 +73,7 @@ void MainWindow::setupHexGridVisual()
     // VisualModels that do text, like a GraphVisual). This gives the VisualModel access
     // to shader progs from the Visual environment, and allows the VisualModel to know
     // its parent Visual.
-    static_cast<mplot::qt::viswidget_mx<0>*>(this->p_vw)->v.bindmodel (hgv);
+    static_cast<mplot::qt::viswidget<0>*>(this->p_vw)->v.bindmodel (hgv);
 
     // Give the HexGridVisual access to the scalar data for the surface
     hgv->setScalarData (&this->data);
@@ -81,13 +81,13 @@ void MainWindow::setupHexGridVisual()
     // Now add the HexGridVisual model to newvisualmodels. It has to be cast to a plain mplot::VisualModel first:
     std::unique_ptr<mplot::VisualModel<mplot::qt::gl_version>> vmp = std::move (hgv);
     // The vector of VisualModels lives in viswidget, accessible via p_vw:
-    static_cast<mplot::qt::viswidget_mx<0>*>(this->p_vw)->newvisualmodels.push_back (std::move(vmp));
+    static_cast<mplot::qt::viswidget<0>*>(this->p_vw)->newvisualmodels.push_back (std::move(vmp));
 }
 
 void MainWindow::viswidget_init()
 {
     // Create widget. Seems to open in its own window with a new context.
-    mplot::qt::viswidget_mx<0>* vw = new mplot::qt::viswidget_mx<0> (this->parentWidget());
+    mplot::qt::viswidget<0>* vw = new mplot::qt::viswidget<0> (this->parentWidget());
     // Choose lighting effects if you want
     vw->v.lightingEffects();
     // Add the OpenGL widget to the UI.

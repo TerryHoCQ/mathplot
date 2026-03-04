@@ -31,7 +31,7 @@ namespace mplot
     using win_t = GLFWwindow;
 }
 
-#include <mplot/VisualOwnableMX.h>
+#include <mplot/VisualOwnable.h>
 #include <mplot/VisualGlfw.h>
 
 namespace mplot
@@ -54,7 +54,7 @@ namespace mplot
      * \tparam glver The OpenGL version, encoded as a single int (see mplot::gl::version)
      */
     template <int glver = mplot::gl::version_4_1>
-    class Visual : public mplot::VisualOwnableMX<glver>
+    class Visual : public mplot::VisualOwnable<glver>
     {
     public:
         /*!
@@ -174,10 +174,10 @@ namespace mplot
         {
             model->setContext = &mplot::VisualBase<glver>::set_context;
             model->releaseContext = &mplot::VisualBase<glver>::release_context;
-            model->get_glfn = &mplot::VisualOwnableMX<glver>::get_glfn;
-            model->init_instance_data = &mplot::VisualOwnableMX<glver>::init_instance_data;
-            model->insert_instance_data = &mplot::VisualOwnableMX<glver>::insert_instance_data;
-            model->insert_instparam_data = &mplot::VisualOwnableMX<glver>::insert_instparam_data;
+            model->get_glfn = &mplot::VisualOwnable<glver>::get_glfn;
+            model->init_instance_data = &mplot::VisualOwnable<glver>::init_instance_data;
+            model->insert_instance_data = &mplot::VisualOwnable<glver>::insert_instance_data;
+            model->insert_instparam_data = &mplot::VisualOwnable<glver>::insert_instparam_data;
         }
 
         /*
@@ -311,7 +311,7 @@ namespace mplot
          */
         virtual bool key_callback (int _key, int scancode, int action, int mods)
         {
-            return mplot::VisualOwnableMX<glver>::template key_callback<true> (_key, scancode, action, mods);
+            return mplot::VisualOwnable<glver>::template key_callback<true> (_key, scancode, action, mods);
         }
     };
 

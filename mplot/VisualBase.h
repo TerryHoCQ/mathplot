@@ -156,19 +156,15 @@ namespace mplot
      * A base class for visualising computational models on an OpenGL screen.
      *
      * This contains code that is not OpenGL dependent. OpenGL dependent code is in
-     * VisualOwnable or VisualOwnableMX.
+     * VisualOwnable
      *
      * For mathplot program using GLFW windows, Inheritance chain will either be:
      *
-     *   VisualBase -> VisualOwnable -> VisualNoMX            for single context GL, global fn aliases
-     *
-     *   VisualBase -> VisualOwnableMX -> VisualMX -> Visual  for multi context, GL fn pointers (GLAD only)
+     *   VisualBase -> VisualOwnable -> Visual
      *
      * mathplot based widgets, such as the Qt compatible mplot::qt::viswidget have this:
      *
-     *   VisualBase -> VisualOwnable -> viswidget             for single context GL, global fn aliases
-     *
-     *   VisualBase -> VisualOwnableMX -> viswidget_mx        for single context GL, global fn aliases
+     *   VisualBase -> VisualOwnable -> viswidget
      *
      * \tparam glver The OpenGL version, encoded as a single int (see mplot::gl::version)
      */
@@ -1080,7 +1076,7 @@ namespace mplot
         sm::mat<float, 4> invproj;
 
         //! The sceneview matrix, which changes as the user moves the view with mouse
-        //! movements. Initialized in VisualOwnable(No)MX constructor.
+        //! movements. Initialized in VisualOwnable constructor.
         sm::mat<float, 4> sceneview;
 
         //! The non-rotating sceneview matrix, updated only from mouse translations (avoiding rotations)

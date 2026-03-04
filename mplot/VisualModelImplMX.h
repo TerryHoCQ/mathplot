@@ -27,11 +27,26 @@ namespace mplot
 {
     //! Forward declaration of base classes
     template <int> class VisualBase;
-    template <int> class VisualOwnableMX;
+    template <int> class VisualOwnable;
 
     /*!
-     * Multiple context safe implementation (mplot::gl::multicontext == 1)
+     * An OpenGL model class
+     *
+     * This class is the 'OpenGL model' class. It has the common code to create the vertices for
+     * some individual OpenGL model which is to be rendered in a 3-D scene.
+     *
+     * Some OpenGL models are derived directly from VisualModel; see for example mplot::CoordArrows.
+     *
+     * Other models in mathplot are derived via mplot::VisualDataModel, which adds a common
+     * mechanism for managing the data which is to be visualised by the final 'Visual' object (such
+     * as mplot::HexGridVisual or mplot::ScatterVisual)
+     *
+     * The base and implementation classes underlying class VisualModel contain some common 'object
+     * primitives' code, such as computeSphere and computeCone, which compute the vertices that will
+     * make up sphere and cone, respectively. If you need to see the primitives, look at
+     * mplot/VisualModelBase.h
      */
+    // To become just VisualModel with no multicontext complexity
     template <int glver = mplot::gl::version_4_1, int mx = mplot::gl::multicontext> requires (mx == 1)
     struct VisualModelImpl : public mplot::VisualModelBase<glver>
     {
@@ -64,7 +79,7 @@ namespace mplot
             model->get_gprog = &mplot::VisualBase<glver>::get_gprog;
             model->get_tprog = &mplot::VisualBase<glver>::get_tprog;
 
-            model->get_glfn = &mplot::VisualOwnableMX<glver>::get_glfn;
+            model->get_glfn = &mplot::VisualOwnable<glver>::get_glfn;
 
             model->setContext = &mplot::VisualBase<glver>::set_context;
             model->releaseContext = &mplot::VisualBase<glver>::release_context;

@@ -32,31 +32,24 @@ install(
   VisualDefaultShaders.h
 
   VisualFaceBase.h
-  VisualFaceNoMX.h
   VisualFaceMX.h
 
   VisualResourcesBase.h
-  VisualResourcesNoMX.h
   VisualResourcesMX.h
 
   VisualGlfw.h
 
   VisualBase.h
-  VisualOwnableNoMX.h
-  VisualOwnableMX.h
-  VisualNoMX.h
-  VisualMX.h
+  VisualOwnable.h
   Visual.h
 
   VisualModelBase.h
-  VisualModelImplNoMX.h
   VisualModelImplMX.h
   VisualModel.h
 
   VisualDataModel.h
 
   VisualTextModelBase.h
-  VisualTextModelImplNoMX.h
   VisualTextModelImplMX.h
   VisualTextModel.h
 

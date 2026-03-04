@@ -5,10 +5,10 @@
 
 struct QOpenGLWidget; // fwd decl
 
-// VisualOwnableMX is going to be owned by the QOpenGLWidget
-// Define mplot::win_t before #including mplot/VisualOwnableMX.h
+// VisualOwnable is going to be owned by the QOpenGLWidget
+// Define mplot::win_t before #including mplot/VisualOwnable.h
 namespace mplot { using win_t = QOpenGLWidget; }
-#include <mplot/VisualOwnableMX.h> // Glad multi OpenGL context class
+#include <mplot/VisualOwnable.h>
 
 #include <QtWidgets/QOpenGLWidget>
 #include <QOpenGLContext>
@@ -24,10 +24,10 @@ namespace mplot::qt
 {
     constexpr int gl_version = mplot::gl::version_4_1;
 
-    // How many separate OpenGL contexts (i.e. how many viswidget_mxs) to support in one Qt program?
+    // How many separate OpenGL contexts (i.e. how many viswidgets) to support in one Qt program?
     constexpr int max_contexts = 32; // with 32 we use 32 * 8 bytes of memory = 256 bytes.
 
-    // A container class to manage a getProcAddress function from each viswidget_mx/QOpenGLWidget context
+    // A container class to manage a getProcAddress function from each viswidget/QOpenGLWidget context
     struct gl_contexts
     {
         static auto& i() // The instance public function.
@@ -62,11 +62,11 @@ namespace mplot::qt
     // A mplot::Visual widget. You have to choose and provide a widget_index in the range [0,
     // mplot::gl::max_contexts)
     template<int widget_index>
-    struct viswidget_mx : public QOpenGLWidget //, protected QOpenGLFunctions_4_1_Core
+    struct viswidget : public QOpenGLWidget //, protected QOpenGLFunctions_4_1_Core
     {
-        // Unlike the GLFW or mplot-in-a-QWindow schemes, we hold the mplot::VisualOwnableMX
+        // Unlike the GLFW or mplot-in-a-QWindow schemes, we hold the mplot::VisualOwnable
         // inside the widget.
-        mplot::VisualOwnableMX<gl_version> v;
+        mplot::VisualOwnable<gl_version> v;
 
         // In your Qt code, build VisualModels that should be added to the scene and add them to this.
         std::vector<std::unique_ptr<mplot::VisualModel<gl_version>>> newvisualmodels;
@@ -79,7 +79,7 @@ namespace mplot::qt
             this->needs_reinit = reinit_required ? model_idx : -1;
         }
 
-        viswidget_mx (QWidget* parent = 0) : QOpenGLWidget(parent)
+        viswidget (QWidget* parent = 0) : QOpenGLWidget(parent)
         {
             static_assert (widget_index < mplot::qt::max_contexts);
             // You have to set the format in the constructor

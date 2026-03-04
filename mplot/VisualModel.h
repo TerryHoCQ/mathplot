@@ -34,10 +34,6 @@ namespace mplot
      * primitives' code, such as computeSphere and computeCone, which compute the vertices that will
      * make up sphere and cone, respectively. If you need to see the primitives, look at
      * mplot/VisualModelBase.h
-     *
-     * Note on mplot::gl::multicontext. This is defined as a static constexpr int with the value 1
-     * or 0 in <mplot/VisualOwnableNoMX.h> or <mplot/VisualOwnableMX.h>, one or other of which must have
-     * been #included before you include <mplot/VisualModel.h>
      */
     template <int glver = mplot::gl::version_4_1>
     struct VisualModel : public mplot::VisualModelImpl<glver, mplot::gl::multicontext> {
