@@ -23,7 +23,7 @@
 
 namespace mplot::visgl
 {
-    struct VisualFaceMX : public mplot::visgl::VisualFaceBase
+    struct VisualFace : public mplot::visgl::VisualFaceBase
     {
         /*!
          * Construct with a mplot::VisualFont \a _font, which specifies a supported
@@ -38,8 +38,8 @@ namespace mplot::visgl
          * of font textures for separate VisualTextModel instances which might have
          * the same pixel size.
          */
-        VisualFaceMX (const mplot::VisualFont _font, unsigned int fontpixels, FT_Library& ft_freetype,
-                      GladGLContext* glfn = nullptr)
+        VisualFace (const mplot::VisualFont _font, unsigned int fontpixels, FT_Library& ft_freetype,
+                    GladGLContext* glfn = nullptr)
         {
             this->init_common (_font, fontpixels, ft_freetype);
 
@@ -99,6 +99,6 @@ namespace mplot::visgl
             FT_Done_Face (this->face);
         }
 
-        ~VisualFaceMX() {}
+        ~VisualFace() {}
     };
 } // namespace mplot::visgl

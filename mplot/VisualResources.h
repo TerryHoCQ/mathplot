@@ -10,7 +10,14 @@
 
 #pragma once
 
-#include <mplot/VisualFaceMX.h>
+#include <tuple>
+#include <memory>
+#include <stdexcept>
+#include <array>
+#include <map>
+#include <limits>
+
+#include <mplot/VisualFace.h>
 #include <mplot/VisualResourcesBase.h>
 #include <mplot/gl/util_mx.h>
 #include <mplot/gl/ssbo_mx.h>
@@ -23,22 +30,22 @@ namespace mplot
 
     //! Singleton resource class for mplot::Visual scenes.
     template <int glver>
-    class VisualResourcesMX : public VisualResourcesBase<glver>
+    class VisualResources : public VisualResourcesBase<glver>
     {
     private:
-        VisualResourcesMX(){}
-        ~VisualResourcesMX() { this->faces.clear(); }
+        VisualResources(){}
+        ~VisualResources() { this->faces.clear(); }
 
         //! The collection of VisualFaces generated for this instance of the
         //! application. Create one VisualFace for each unique combination of VisualFont
         //! and fontpixels (the texture resolution)
         std::map<std::tuple<mplot::VisualFont, unsigned int, mplot::VisualBase<glver>*>,
-                 std::unique_ptr<mplot::visgl::VisualFaceMX>> faces;
+                 std::unique_ptr<mplot::visgl::VisualFace>> faces;
     public:
-        VisualResourcesMX(const VisualResourcesMX<glver>&) = delete;
-        VisualResourcesMX& operator=(const VisualResourcesMX<glver> &) = delete;
-        VisualResourcesMX(VisualResourcesMX<glver> &&) = delete;
-        VisualResourcesMX & operator=(VisualResourcesMX<glver> &&) = delete;
+        VisualResources(const VisualResources<glver>&) = delete;
+        VisualResources& operator=(const VisualResources<glver> &) = delete;
+        VisualResources(VisualResources<glver> &&) = delete;
+        VisualResources & operator=(VisualResources<glver> &&) = delete;
 
         //! Initialize a freetype library instance and add to this->freetypes. I wanted
         //! to have only a single freetype library instance, but this didn't work, so I
@@ -69,7 +76,7 @@ namespace mplot
         //! This relies on C++11 magic statics (N2660).
         static auto& i()
         {
-            static VisualResourcesMX<glver> instance;
+            static VisualResources<glver> instance;
             return instance;
         }
 
@@ -78,22 +85,22 @@ namespace mplot
 
         //! Return a pointer to a VisualFace for the given \a font at the given texture
         //! resolution, \a fontpixels and the given window (i.e. OpenGL context) \a _win.
-        mplot::visgl::VisualFaceMX* getVisualFace (mplot::VisualFont font, unsigned int fontpixels,
-                                                   mplot::VisualBase<glver>* _vis, GladGLContext* glfn)
+        mplot::visgl::VisualFace* getVisualFace (mplot::VisualFont font, unsigned int fontpixels,
+                                                 mplot::VisualBase<glver>* _vis, GladGLContext* glfn)
         {
-            mplot::visgl::VisualFaceMX* rtn = nullptr;
+            mplot::visgl::VisualFace* rtn = nullptr;
             auto key = std::make_tuple(font, fontpixels, _vis);
             try {
                 rtn = this->faces.at(key).get();
             } catch (const std::out_of_range&) {
-                this->faces[key] = std::make_unique<mplot::visgl::VisualFaceMX> (font, fontpixels, this->freetypes.at(_vis), glfn);
+                this->faces[key] = std::make_unique<mplot::visgl::VisualFace> (font, fontpixels, this->freetypes.at(_vis), glfn);
                 rtn = this->faces.at(key).get();
             }
             return rtn;
         }
 
-        mplot::visgl::VisualFaceMX* getVisualFace (const mplot::TextFeatures& tf,
-                                                   mplot::VisualBase<glver>* _vis, GladGLContext* glfn)
+        mplot::visgl::VisualFace* getVisualFace (const mplot::TextFeatures& tf,
+                                                 mplot::VisualBase<glver>* _vis, GladGLContext* glfn)
         {
             return this->getVisualFace (tf.font, tf.fontres, _vis, glfn);
         }

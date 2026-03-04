@@ -91,7 +91,7 @@ namespace mplot
         {
             mplot::VisualGlfw<glver>::i().init(); // Init GLFW windows system
             // VisualResources provides font management. Ensure it exists in memory.
-            mplot::VisualResourcesMX<glver>::i().create();
+            mplot::VisualResources<glver>::i().create();
             // Set up the window that will present the OpenGL graphics.  This has to
             // happen BEFORE the call to VisualResources::freetype_init()
             this->init_window();

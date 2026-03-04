@@ -83,8 +83,7 @@ namespace mplot
      * This class contains some common 'object primitives' code, such as computeSphere and
      * computeCone, which compute the vertices that will make up sphere and cone, respectively.
      *
-     * It contains no GL function calls, these are added in the derived classes VisualModelImplNoMX and
-     * VisualModelImplMX.
+     * It contains no GL function calls, these are added in the derived classes VisualModel.
      */
     template <int glver = mplot::gl::version_4_1>
     struct VisualModelBase

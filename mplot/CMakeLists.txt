@@ -32,10 +32,10 @@ install(
   VisualDefaultShaders.h
 
   VisualFaceBase.h
-  VisualFaceMX.h
+  VisualFace.h
 
   VisualResourcesBase.h
-  VisualResourcesMX.h
+  VisualResources.h
 
   VisualGlfw.h
 
@@ -44,13 +44,11 @@ install(
   Visual.h
 
   VisualModelBase.h
-  VisualModelImplMX.h
   VisualModel.h
 
   VisualDataModel.h
 
   VisualTextModelBase.h
-  VisualTextModelImplMX.h
   VisualTextModel.h
 
   CartGridVisual.h
