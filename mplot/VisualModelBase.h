@@ -4,7 +4,7 @@
  * Declares a VisualModel base class to hold the vertices that make up some individual model object
  * that can be part of an OpenGL scene.
  *
- * GL function calls are added in VisualModelImplNoMX.h and VisualModelImplMX.h
+ * GL function calls are added in VisualModel.h
  *
  * \author Seb James
  * \date March 2025
@@ -83,8 +83,7 @@ namespace mplot
      * This class contains some common 'object primitives' code, such as computeSphere and
      * computeCone, which compute the vertices that will make up sphere and cone, respectively.
      *
-     * It contains no GL function calls, these are added in the derived classes VisualModelImplNoMX and
-     * VisualModelImplMX.
+     * It contains no GL function calls, these are added in the derived classes VisualModel.
      */
     template <int glver = mplot::gl::version_4_1>
     struct VisualModelBase

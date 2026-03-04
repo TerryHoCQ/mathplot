@@ -4,10 +4,10 @@
  * Awesome graphics code for high performance graphing and visualisation.
  *
  * This is intermediate class that sets up (multicontext aware) GL, leaving choice of window system
- * (GLFW3/Qt/wx/etc) to a derived class such as mplot::VisualMX or mplot::qt::viswidget_mx.
+ * (GLFW3/Qt/wx/etc) to a derived class such as mplot::Visual or mplot::qt::viswidget.
  *
  * This class is 'ownable', and can be used in other window drawing system such as Qt and wx, as
- * well as within mplot::Visual[NoMx], which marries it with the GLFW3 windowing system.
+ * well as within mplot::Visual, which marries it with the GLFW3 windowing system.
  *
  * Created by Seb James on 2025/03/01, from mplot::Visual.h
  *
@@ -25,10 +25,11 @@
 #endif // GL headers
 
 // By including this header, you take out a contract that you ARE using multicontext (MX) GLAD
-// headers. This must appear BEFORE the rest of the mplot headers.
-namespace mplot::gl { static constexpr int multicontext = 1; }
+// headers. This must appear BEFORE the rest of the mplot headers. No longer used as we ALWAYS use
+// MX and never NoMX now.
+// namespace mplot::gl { static constexpr int multicontext = 1; }
 
-#include <mplot/VisualResourcesMX.h>
+#include <mplot/VisualResources.h>
 #include <mplot/VisualTextModel.h>
 #include <mplot/VisualBase.h>
 #include <mplot/gl/loadshaders_mx.h>
@@ -37,7 +38,7 @@ namespace mplot::gl { static constexpr int multicontext = 1; }
 namespace mplot
 {
     /*!
-     * VisualOwnableMX - adds multi-context-safe GL calls to the 'scene' base class, VisualBase
+     * VisualOwnable - adds multi-context-safe GL calls to the 'scene' base class, VisualBase
      *
      * This class assumes that GL functions have been loaded by the GLAD header system as a
      * GladGLContext pointer, which is called glfn here. GL function calls are glfn->Clear for
@@ -46,7 +47,7 @@ namespace mplot
      * \tparam glver The OpenGL version, encoded as a single int (see mplot::gl::version)
      */
     template <int glver = mplot::gl::version_4_1>
-    class VisualOwnableMX : public mplot::VisualBase<glver>
+    class VisualOwnable : public mplot::VisualBase<glver>
     {
     public:
         /*!
@@ -54,13 +55,13 @@ namespace mplot
          * such as a QWidget.  We have to wait on calling init functions until an OpenGL
          * environment is guaranteed to exist.
          */
-        VisualOwnableMX() { }
+        VisualOwnable() { }
 
         /*!
          * Construct a new visualiser. The rule is 1 window to one Visual object. So, this creates a
          * new window and a new OpenGL context.
          */
-        VisualOwnableMX (const int _width, const int _height, const std::string& _title, const bool _version_stdout = true)
+        VisualOwnable (const int _width, const int _height, const std::string& _title, const bool _version_stdout = true)
         {
             this->window_w = _width;
             this->window_h = _height;
@@ -93,24 +94,24 @@ namespace mplot
             this->free_gladgl_context (this->glfn);
 
             // Free up the Fonts associated with this mplot::Visual
-            mplot::VisualResourcesMX<glver>::i().freetype_deinit (this);
+            mplot::VisualResources<glver>::i().freetype_deinit (this);
         }
 
     protected:
         void freetype_init() final
         {
             // Now make sure that Freetype is set up (we assume that caller code has set the correct OpenGL context)
-            mplot::VisualResourcesMX<glver>::i().freetype_init (this, this->glfn);
+            mplot::VisualResources<glver>::i().freetype_init (this, this->glfn);
         }
 
     public:
-        // Do one-time init of the Visual's resources. This gets/creates the VisualResourcesMX,
+        // Do one-time init of the Visual's resources. This gets/creates the VisualResources,
         // registers this visual with resources, calls init_window for any glfw stuff that needs to
         // happen, and lastly initializes the freetype code.
         void init_resources()
         {
             // VisualResources provides font management and GLFW management. Ensure it exists in memory.
-            mplot::VisualResourcesMX<glver>::i().create();
+            mplot::VisualResources<glver>::i().create();
             this->freetype_init();
         }
 
@@ -286,7 +287,7 @@ namespace mplot
         //! Glad MX specific callback
         static GladGLContext* get_glfn (mplot::VisualBase<glver>* _v)
         {
-            return reinterpret_cast<mplot::VisualOwnableMX<glver>*>(_v)->glfn;
+            return reinterpret_cast<mplot::VisualOwnable<glver>*>(_v)->glfn;
         };
 
     protected:
@@ -318,7 +319,7 @@ namespace mplot
             }
         }
 
-        // Note: We have to have both VisualOwnableMX::bindmodel AND VisualMX::bindmodel (which calls VisualBase::bindmodel)
+        // Note: We have to have both VisualOwnable::bindmodel AND Visual::bindmodel (which calls VisualBase::bindmodel)
         template <typename T>
         void bindmodel (std::unique_ptr<T>& model)
         {
@@ -327,10 +328,10 @@ namespace mplot
             model->get_gprog = &mplot::VisualBase<glver>::get_gprog;
             model->get_tprog = &mplot::VisualBase<glver>::get_tprog;
             model->instanced_needs_update = &mplot::VisualBase<glver>::instanced_needs_update;
-            model->get_glfn = &mplot::VisualOwnableMX<glver>::get_glfn;
-            model->init_instance_data = &mplot::VisualOwnableMX<glver>::init_instance_data;
-            model->insert_instance_data = &mplot::VisualOwnableMX<glver>::insert_instance_data;
-            model->insert_instparam_data = &mplot::VisualOwnableMX<glver>::insert_instparam_data;
+            model->get_glfn = &mplot::VisualOwnable<glver>::get_glfn;
+            model->init_instance_data = &mplot::VisualOwnable<glver>::init_instance_data;
+            model->insert_instance_data = &mplot::VisualOwnable<glver>::insert_instance_data;
+            model->insert_instparam_data = &mplot::VisualOwnable<glver>::insert_instparam_data;
         }
 
         //! Add a label _text to the scene at position _toffset. Font features are
@@ -385,25 +386,25 @@ namespace mplot
 
         static unsigned int init_instance_data (mplot::VisualBase<glver>* _v, const unsigned int n_to_reserve)
         {
-            auto __v = reinterpret_cast<mplot::VisualOwnableMX<glver>*>(_v);
-            unsigned int reservation = mplot::VisualResourcesMX<glver>::i().init_instance_ssbo (__v->glfn, n_to_reserve);
+            auto __v = reinterpret_cast<mplot::VisualOwnable<glver>*>(_v);
+            unsigned int reservation = mplot::VisualResources<glver>::i().init_instance_ssbo (__v->glfn, n_to_reserve);
             return reservation;
         }
 
         static void insert_instance_data (const unsigned int instance_idx, const sm::vec<float, 3>& coord)
         {
-            mplot::VisualResourcesMX<glver>::i().insert_instance_data (instance_idx, coord);
+            mplot::VisualResources<glver>::i().insert_instance_data (instance_idx, coord);
         }
 
         static void insert_instparam_data (const unsigned int instance_idx,
                                            const std::array<float, 3>& colour, const float& alpha, const float& scale)
         {
-            mplot::VisualResourcesMX<glver>::i().insert_instparam_data (instance_idx, colour, alpha, scale);
+            mplot::VisualResources<glver>::i().insert_instparam_data (instance_idx, colour, alpha, scale);
         }
 
         static void copy_instance_data_to_gpu()
         {
-            mplot::VisualResourcesMX<glver>::i().copy_instance_ssbo_to_gpu();
+            mplot::VisualResources<glver>::i().copy_instance_ssbo_to_gpu();
         }
 
     protected:

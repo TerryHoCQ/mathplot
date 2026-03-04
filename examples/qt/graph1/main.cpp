@@ -9,8 +9,8 @@ int main (int argc, char **argv)
     QApplication app(argc, argv);
 
     // Create widget. The GL version to be used is set inside viswidget. It's accessible as
-    // mplot::qt::gl_version.
-    mplot::qt::viswidget widget;
+    // mplot::qt::gl_version. You have to give an index to your widget (0 for the first, 1 for the next one, etc)
+    mplot::qt::viswidget<0> widget;
     // Calling show ensures initializeGL() method gets called. The alternative to
     // calling show() at the start of the main() function, is to set viswidget's
     // buildmodels callback (see app2).

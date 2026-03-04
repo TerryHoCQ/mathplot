@@ -3,12 +3,12 @@
 #include <iostream>
 #include <functional>
 
-class QOpenGLWidget;
+struct QOpenGLWidget; // fwd decl
 
 // VisualOwnable is going to be owned by the QOpenGLWidget
-// Define mplot::win_t before #including mplot/VisualOwnableNoMX.h
+// Define mplot::win_t before #including mplot/VisualOwnable.h
 namespace mplot { using win_t = QOpenGLWidget; }
-#include <mplot/VisualOwnableNoMX.h>
+#include <mplot/VisualOwnable.h>
 
 #include <QtWidgets/QOpenGLWidget>
 #include <QOpenGLContext>
@@ -19,25 +19,54 @@ namespace mplot { using win_t = QOpenGLWidget; }
 // We need to be able to convert from Qt keycodes to mplot keycodes
 #include <mplot/qt/keycodes.h>
 
+
 namespace mplot::qt
 {
-    // This must match the QOpenGLFunctions_4_1_Core class you derive from
     constexpr int gl_version = mplot::gl::version_4_1;
 
-    struct OpenGLProcAddressHelper {
-        inline static QOpenGLContext *ctx;
+    // How many separate OpenGL contexts (i.e. how many viswidgets) to support in one Qt program?
+    constexpr int max_contexts = 32; // with 32 we use 32 * 8 bytes of memory = 256 bytes.
 
-        static QFunctionPointer getProcAddress(const char *name) {
-            return ctx->getProcAddress(name);
+    // A container class to manage a getProcAddress function from each viswidget/QOpenGLWidget context
+    struct gl_contexts
+    {
+        static auto& i() // The instance public function.
+        {
+            static gl_contexts instance;
+            return instance;
         }
+
+        // Set the context. Store the QOpenGLContext pointer into ctx_ptrs[widget_index].
+        template<int widget_index>
+        void set_context (QOpenGLContext* _ctx)
+        {
+            static_assert (widget_index < mplot::qt::max_contexts);
+            ctx_ptrs[widget_index] = _ctx;
+        }
+
+        // The static getProcAddress function for the index widget_index.
+        template<int widget_index>
+        static QFunctionPointer getProcAddress (const char* name)
+        {
+            static_assert (widget_index < mplot::qt::max_contexts);
+            if (mplot::qt::gl_contexts::i().ctx_ptrs[widget_index] == nullptr) { return nullptr; }
+            return mplot::qt::gl_contexts::i().ctx_ptrs[widget_index]->getProcAddress (name);
+        }
+
+    private:
+        gl_contexts() { ctx_ptrs = { nullptr }; }
+        ~gl_contexts() {}
+        std::array<QOpenGLContext*, mplot::qt::max_contexts> ctx_ptrs;
     };
 
-    // A mplot::VisualOwnable-based widget
-    struct viswidget : public QOpenGLWidget
+    // A mplot::Visual widget. You have to choose and provide a widget_index in the range [0,
+    // mplot::gl::max_contexts)
+    template<int widget_index>
+    struct viswidget : public QOpenGLWidget //, protected QOpenGLFunctions_4_1_Core
     {
         // Unlike the GLFW or mplot-in-a-QWindow schemes, we hold the mplot::VisualOwnable
         // inside the widget.
-        mplot::VisualOwnableNoMX<gl_version> v;
+        mplot::VisualOwnable<gl_version> v;
 
         // In your Qt code, build VisualModels that should be added to the scene and add them to this.
         std::vector<std::unique_ptr<mplot::VisualModel<gl_version>>> newvisualmodels;
@@ -52,6 +81,7 @@ namespace mplot::qt
 
         viswidget (QWidget* parent = 0) : QOpenGLWidget(parent)
         {
+            static_assert (widget_index < mplot::qt::max_contexts);
             // You have to set the format in the constructor
             QSurfaceFormat format;
             format.setDepthBufferSize (4);
@@ -68,20 +98,19 @@ namespace mplot::qt
 
         void initializeGL() override
         {
-            // Make sure we can call gl functions
-            OpenGLProcAddressHelper::ctx = context();
-            v.init_glad(OpenGLProcAddressHelper::getProcAddress);
-            // Switch on multisampling anti-aliasing (with the num samples set in constructor)
-            glEnable (GL_MULTISAMPLE);
-            // Initialise mplot::VisualOwnable
+            // Initialise mplot::Visual, which must set up GLAD's access to the OpenGL context
+            mplot::qt::gl_contexts::i().set_context<widget_index> (this->context());
+            v.init_glad (mplot::qt::gl_contexts::getProcAddress<widget_index>);
             v.init (this);
+
+            // Switch on multisampling anti-aliasing (with the num samples set in constructor)
+            v.glfn->Enable (GL_MULTISAMPLE);
         }
 
         void resizeGL (int w, int h) override
         {
             double dpr = this->devicePixelRatio();
-            v.set_winsize (static_cast<int>(std::round(w * dpr)),
-                           static_cast<int>(std::round(h * dpr)));
+            v.set_winsize (static_cast<int>(std::round(w * dpr)), static_cast<int>(std::round(h * dpr)));
             this->update();
         }
 

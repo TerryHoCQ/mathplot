@@ -11,7 +11,7 @@ QT_END_NAMESPACE
 #include <sm/vvec>
 #include <sm/hexgrid>
 
-class QOpenGLWidget;
+struct QOpenGLWidget;
 
 class MainWindow : public QMainWindow
 {
