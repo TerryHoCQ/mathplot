@@ -37,7 +37,7 @@ namespace mplot::gl { static constexpr int multicontext = 1; }
 namespace mplot
 {
     /*!
-     * VisualOwnableMX - adds multi-context-safe GL calls to the 'scene' base class, VisualBase
+     * VisualOwnable - adds multi-context-safe GL calls to the 'scene' base class, VisualBase
      *
      * This class assumes that GL functions have been loaded by the GLAD header system as a
      * GladGLContext pointer, which is called glfn here. GL function calls are glfn->Clear for
@@ -46,7 +46,7 @@ namespace mplot
      * \tparam glver The OpenGL version, encoded as a single int (see mplot::gl::version)
      */
     template <int glver = mplot::gl::version_4_1>
-    class VisualOwnableMX : public mplot::VisualBase<glver>
+    class VisualOwnable : public mplot::VisualBase<glver>
     {
     public:
         /*!
@@ -54,13 +54,13 @@ namespace mplot
          * such as a QWidget.  We have to wait on calling init functions until an OpenGL
          * environment is guaranteed to exist.
          */
-        VisualOwnableMX() { }
+        VisualOwnable() { }
 
         /*!
          * Construct a new visualiser. The rule is 1 window to one Visual object. So, this creates a
          * new window and a new OpenGL context.
          */
-        VisualOwnableMX (const int _width, const int _height, const std::string& _title, const bool _version_stdout = true)
+        VisualOwnable (const int _width, const int _height, const std::string& _title, const bool _version_stdout = true)
         {
             this->window_w = _width;
             this->window_h = _height;
@@ -286,7 +286,7 @@ namespace mplot
         //! Glad MX specific callback
         static GladGLContext* get_glfn (mplot::VisualBase<glver>* _v)
         {
-            return reinterpret_cast<mplot::VisualOwnableMX<glver>*>(_v)->glfn;
+            return reinterpret_cast<mplot::VisualOwnable<glver>*>(_v)->glfn;
         };
 
     protected:
@@ -318,7 +318,7 @@ namespace mplot
             }
         }
 
-        // Note: We have to have both VisualOwnableMX::bindmodel AND VisualMX::bindmodel (which calls VisualBase::bindmodel)
+        // Note: We have to have both VisualOwnable::bindmodel AND VisualMX::bindmodel (which calls VisualBase::bindmodel)
         template <typename T>
         void bindmodel (std::unique_ptr<T>& model)
         {
@@ -327,10 +327,10 @@ namespace mplot
             model->get_gprog = &mplot::VisualBase<glver>::get_gprog;
             model->get_tprog = &mplot::VisualBase<glver>::get_tprog;
             model->instanced_needs_update = &mplot::VisualBase<glver>::instanced_needs_update;
-            model->get_glfn = &mplot::VisualOwnableMX<glver>::get_glfn;
-            model->init_instance_data = &mplot::VisualOwnableMX<glver>::init_instance_data;
-            model->insert_instance_data = &mplot::VisualOwnableMX<glver>::insert_instance_data;
-            model->insert_instparam_data = &mplot::VisualOwnableMX<glver>::insert_instparam_data;
+            model->get_glfn = &mplot::VisualOwnable<glver>::get_glfn;
+            model->init_instance_data = &mplot::VisualOwnable<glver>::init_instance_data;
+            model->insert_instance_data = &mplot::VisualOwnable<glver>::insert_instance_data;
+            model->insert_instparam_data = &mplot::VisualOwnable<glver>::insert_instparam_data;
         }
 
         //! Add a label _text to the scene at position _toffset. Font features are
@@ -385,7 +385,7 @@ namespace mplot
 
         static unsigned int init_instance_data (mplot::VisualBase<glver>* _v, const unsigned int n_to_reserve)
         {
-            auto __v = reinterpret_cast<mplot::VisualOwnableMX<glver>*>(_v);
+            auto __v = reinterpret_cast<mplot::VisualOwnable<glver>*>(_v);
             unsigned int reservation = mplot::VisualResourcesMX<glver>::i().init_instance_ssbo (__v->glfn, n_to_reserve);
             return reservation;
         }
