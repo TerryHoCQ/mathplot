@@ -1,7 +1,7 @@
 #include <wx/wx.h>
 
 #define GLAD_GL_IMPLEMENTATION
-#include <mplot/glad/gl.h> // must be included before glcanvas.h
+#include <mplot/glad/gl_mx.h> // must be included before glcanvas.h
 
 #include <wx/glcanvas.h>
 

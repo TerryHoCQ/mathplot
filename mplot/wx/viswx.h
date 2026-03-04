@@ -16,7 +16,7 @@
 namespace mplot { using win_t = wxGLCanvas; }
 
 #include <mplot/gl/version.h>
-// In the wx examples, we include <mplot/glad/gl.h> early in the main.cpp file
+// In the wx examples, we include <mplot/glad/gl(_mx).h> early in the main.cpp file
 #include <mplot/VisualOwnable.h>
 // We need to be able to convert from wxWidgets keycodes to mplot keycodes
 #include <mplot/wx/keycodes.h>
@@ -39,7 +39,7 @@ namespace mplot::wx
 
         // Set the context. Store the context pointer into ctx_ptrs[widget_index].
         template<int widget_index>
-        void set_context (WXequiv_QOpenGLContext* _ctx) // whats a WX opengl context?
+        void set_context (wxGLContext* _ctx) // whats a WX opengl context?
         {
             static_assert (widget_index < mplot::wx::max_contexts);
             ctx_ptrs[widget_index] = _ctx;
@@ -47,7 +47,7 @@ namespace mplot::wx
 
         // The static getProcAddress function for the index widget_index.
         template<int widget_index>
-        static WXequiv_QFunctionPointer getProcAddress (const char* name)
+        static void* getProcAddress (const char* name)
         {
             static_assert (widget_index < mplot::qt::max_contexts);
             if (mplot::wx::gl_contexts::i().ctx_ptrs[widget_index] == nullptr) { return nullptr; }
@@ -57,7 +57,7 @@ namespace mplot::wx
     private:
         gl_contexts() { ctx_ptrs = { nullptr }; }
         ~gl_contexts() {}
-        std::array<WXequiv_QOpenGLContext*, mplot::wx::max_contexts> ctx_ptrs;
+        std::array<wxGLContext*, mplot::wx::max_contexts> ctx_ptrs;
     };
 
 
@@ -97,7 +97,7 @@ namespace mplot::wx
         {
 #ifdef GLAD_OPTION_GL_MX
             //[]<bool flag = false>() { static_assert(flag, "multi-context glad header is not supported in viswx"); }();
-            mplot::wx::gl_contexts::i().set_context<widget_index> (this->context());
+            mplot::wx::gl_contexts::i().set_context<widget_index> (this->glContext.get()); // this->glContext.get()
             v.init_glad (mplot::qt::gl_contexts::getProcAddress<widget_index>); // arg (GLADloadfunc procaddressfn)
             v.init (this); // this is win_t* context
 
