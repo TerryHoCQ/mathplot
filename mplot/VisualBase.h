@@ -133,7 +133,7 @@ namespace mplot
         /*!
          * The view 'camera' rotates with the selected VM (followedModel)
          */
-        viewFollowsVMRotations,
+        viewFollowsVMBehind,
     };
 
     //! Whether to render with perspective or orthographic
@@ -477,6 +477,12 @@ namespace mplot
         float zFar = 300.0f;
         float fov = 30.0f;
 
+        //! Time constants for the way the camera moves between a follow-me view and a
+        //! drone-view. One for translation, the other for rotation.
+        float trans_tc = 0.09f;
+        //! Rotational time constant
+        float rotn_tc = trans_tc;
+
         //! Which was is up in the scene? In OpenGL it's usually y, but may be changed to z in some cases
         sm::vec<float> scene_up = sm::vec<float>::uy();
         //! Which way goes to the 'right' across the screen? Usually x
@@ -815,13 +821,124 @@ namespace mplot
             this->sceneview_tr = sv_tr * this->savedSceneview_tr;
         }
 
+        // Get a camera movement that moves us nearer to target.
+        template<typename T>
+        sm::vec<T, 3> get_cam_movement (sm::mat<T, 4>& current, const sm::mat<T, 4>& target,
+                                        sm::vec<T, 3>& vel, const T tc) const
+        {
+            const sm::vec<T, 3> delta = target.translation() - current.translation();
+            const sm::vec<T, 3> force = delta - (vel * T{2});
+            sm::vec<T, 3> pos_shift = vel * tc;
+            vel += force * tc;
+            return pos_shift;
+        }
+
+        template<typename T>
+        sm::quaternion<T> get_cam_rotation (const sm::quaternion<float>& r_cur0, const sm::mat<T, 4>& target,
+                                            T& rvel, const T tc) const
+        {
+            sm::mat<T, 4> target0 = target;
+            target0.translate (-target.translation());
+            sm::quaternion<T> r_targ0 = target0.rotation();
+            r_targ0.renormalize();
+
+            sm::quaternion<T> r_sz = r_targ0 * r_cur0.inverse();
+            sm::vec<T, 4> aa = r_sz.axis_angle();
+            T delta = aa[3]; // The angle subtended by the rotation
+            T force = delta - (rvel * T{2});
+            // rvel is radpersec delta/tc
+            T prop = rvel * tc;
+            rvel += force * tc;
+            sm::quaternion<T> newpos = r_cur0.slerp (r_targ0, prop);
+            return newpos; // rather than prop, as in get_cam_movement
+        }
+
+        // Compile-time function to create a rotate-about-y transform
+        static constexpr sm::mat<float, 4> rotate_about_y()
+        {
+            sm::mat<float, 4> r;
+            r.rotate (sm::vec<>::uy(), sm::mathconst<float>::pi);
+            return r;
+        }
+
+        // Hold an offset translation and rotation for the follow-me camera
+        static constexpr sm::vec<float> folcam_offset_tr_default = {0, 0.01f, -0.06f};
+        sm::vec<float> folcam_offset_tr = folcam_offset_tr_default;
+        sm::quaternion<float> folcam_offset_rot;
+
+        sm::mat<float, 4> update_folcam_viewmatrix()
+        {
+            sm::mat<float, 4> fol_cur;
+
+            if (this->followedVM == nullptr) { return fol_cur; }
+
+            // Target view from the followedVM
+            //sm::mat<float, 4> fol_targ = this->followedVM->getViewMatrix() * this->folcam_offset;
+            sm::mat<float, 4> rmat;
+            rmat.rotate (folcam_offset_rot);
+            sm::mat<float, 4> fol_targ = this->followedVM->getViewMatrix() * rmat;
+            fol_targ.translate (folcam_offset_tr);
+
+            // Compute folcam_viewmatrix from sceneview (it's the inverse, along with a rotation)
+            constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
+            sm::mat<float, 4> folcam_viewmatrix = this->sceneview.inverse() * rotn_y;
+
+            const sm::vec<float> folcam_vm_trans = folcam_viewmatrix.translation();
+
+            fol_cur.translate (folcam_vm_trans); // encode just the location of the following camera
+
+            // The current rotation of the scene view
+            folcam_viewmatrix.translate (-folcam_vm_trans);
+            sm::quaternion<float> r_cur0 = folcam_viewmatrix.rotation();
+            r_cur0.renormalize();
+
+            // get_cam_movement computes the positional shift
+            sm::vec<float> pos_shift = this->get_cam_movement<float> (fol_cur, fol_targ,
+                                                                      this->followedVM_vel, this->trans_tc);
+            // get_cam_rotation computes the rotation for the next camera position
+            sm::quaternion<float> cam_rotn = this->get_cam_rotation<float> (r_cur0, fol_targ,
+                                                                            this->followedVM_rvel, this->rotn_tc);
+
+            // set the translation/rotation into fol_cur
+            fol_cur.pretranslate (pos_shift);
+            fol_cur.rotate (cam_rotn);
+
+            // Distance to rotation centre should be the distance to the followedVM
+            this->d_to_rotation_centre = folcam_offset_tr.length();
+
+            // fol_cur now contains the new position and orientation for the following camera
+            return fol_cur;
+        }
+
+        // A follow-me camera view
+        void computeSceneview_for_follower()
+        {
+            sm::mat<float, 4> folcam_viewmatrix = this->update_folcam_viewmatrix();
+            constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
+            this->sceneview = rotn_y * folcam_viewmatrix.inverse();
+            this->savedSceneview = this->sceneview;
+        }
+
         // This is called every time render() is called
         void computeSceneview()
         {
+            if (this->options.test (visual_options::viewFollowsVMBehind) && this->followedVM != nullptr) {
+                // Use scenetrans_delta to shift the view with the scrollwheel
+                this->folcam_offset_tr += this->scenetrans_delta;
+                this->scenetrans_delta.zero();
+                if (this->state.test (visual_state::scrolling)) { this->state.reset (visual_state::scrolling); }
+                this->computeSceneview_for_follower();
+                return;
+            }
+
             if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
                 // Calculate model view transformation - transforming from "model space" to "worldspace".
+                //std::cout << "standard view, call computeSceneview_about_rotation_centre\n";
                 this->computeSceneview_about_rotation_centre();
             } // else don't change sceneview
+            //else { std::cout << "No changing sceneview...\n"; }
+
+            //std::cout << "sceneview\n" << sceneview << std::endl;
 
             if (this->state.test (visual_state::scrolling)) {
                 this->scenetrans_delta.zero();
@@ -852,6 +969,11 @@ namespace mplot
 
         //! If the view should follow a model (options viewFollowsVMTranslations and ...Rotations), this is the one.
         mplot::VisualModel<glver>* followedVM = nullptr;
+
+        //! Holds the current velocy of the followedVM follower
+        sm::vec<float> followedVM_vel = {};
+        //! Current rotational speed (how fast we slerp)
+        float followedVM_rvel = 0.0f;
 
         //! Holds the viewmatrix of the followedVM the last time we called render
         sm::mat<float, 4> followedLastViewMatrix;
@@ -1174,6 +1296,9 @@ namespace mplot
                 this->scenetrans_delta.zero();
                 this->rotation_delta.reset();
                 this->d_to_rotation_centre = -this->scenetrans_default[2];
+                //this->folcam_offset = folcam_default();
+                this->folcam_offset_tr = folcam_offset_tr_default;
+                this->folcam_offset_rot.reset();
                 needs_render = true;
             }
 
@@ -1405,7 +1530,8 @@ namespace mplot
                 }
                 mouseMoveWorld *= mm_gain;
 
-                if (this->options.test (visual_options::rotateAboutVertical) == true) {
+                if (this->options.test (visual_options::rotateAboutVertical) == true
+                    && this->options.test (visual_options::viewFollowsVMBehind) == false) {
 
                     if (this->state.test (visual_state::rotateModMode)) {
                         // What to do about rotate mod mode in this rotation scheme? Rotate about the missing axis for now.
@@ -1417,6 +1543,19 @@ namespace mplot
                         sm::quaternion<float> r2 (this->scene_right, mouseMoveWorld[0] * -sm::mathconst<float>::deg2rad);
                         this->rotation_delta = r2 * r1;
                     }
+                } else if (this->options.test (visual_options::viewFollowsVMBehind) == true) {
+                    //std::cout << "\nmouseMoveWorld[0]: " << mouseMoveWorld[0] << std::endl; // pitch
+                    //std::cout << "mouseMoveWorld[1]: " << mouseMoveWorld[1] << std::endl;   // about +- 40ish. leftright yaw
+                    float pitch = mouseMoveWorld[0];
+                    float yaw = mouseMoveWorld[1];
+                    pitch = pitch > 10.0f ? 10.0f : pitch;
+                    pitch = pitch < -65.0f ? -65.0f : pitch; // negative pitch is 'looking down' on the agent
+                    yaw = yaw > 45.0f ? 45.0f : yaw;
+                    yaw = yaw < -45.0f ? -45.0f : yaw;
+
+                    sm::quaternion<float> r1 (this->scene_up, yaw * sm::mathconst<float>::deg2rad);
+                    sm::quaternion<float> r2 (this->scene_right, pitch * -sm::mathconst<float>::deg2rad);
+                    this->folcam_offset_rot = r2 * r1;
 
                 } else {
                     // rotation_delta is the mouse-commanded rotation in the scene frame of reference
@@ -1426,7 +1565,6 @@ namespace mplot
                 needs_render = true;
 
             } else if (this->state.test (visual_state::translateMode)) { // allow only rotate OR translate for a single mouse movement
-
                 // Convert mousepress/cursor positions (in pixels) to the range -1 -> 1:
                 sm::vec<float, 2> p0_coord = this->mousePressPosition;
                 p0_coord -= this->window_w * 0.5f;
@@ -1456,7 +1594,12 @@ namespace mplot
 
                 // We "translate the whole scene" - used by 2D projection shaders
                 this->scenetrans_delta[0] += mouseMoveWorld[0];
-                this->scenetrans_delta[1] -= mouseMoveWorld[1];
+
+                if (this->options.test (visual_options::viewFollowsVMBehind) == true) {
+                    this->scenetrans_delta[1] += mouseMoveWorld[1]; // opp. sense in follow-me
+                } else {
+                    this->scenetrans_delta[1] -= mouseMoveWorld[1];
+                }
 
                 needs_render = true; // updates viewproj; uses this->scenetrans
             }
