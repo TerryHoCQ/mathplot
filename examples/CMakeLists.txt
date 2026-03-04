@@ -11,9 +11,10 @@ if(Qt5_FOUND)
   add_subdirectory(qt)
 endif()
 
-if(wxWidgets_FOUND)
-  add_subdirectory(wx)
-endif()
+# Disabled as haven't figured out a GL multi-context scheme for wx windows
+#if(wxWidgets_FOUND)
+#  add_subdirectory(wx)
+#endif()
 
 if (OpenGL_EGL_FOUND)
   add_subdirectory(pi)

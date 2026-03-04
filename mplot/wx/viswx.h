@@ -11,23 +11,59 @@
 #include <wx/glcanvas.h>
 #include <wx/colordlg.h>
 
-// VisualOwnableNoMX is going to be owned either by the mplot::wx::canvas or by the mplot::wx::frame
-// Define mplot::win_t before #including mplot/VisualOwnableNoMX.h
+// VisualOwnable is going to be owned either by the mplot::wx::canvas or by the mplot::wx::frame
+// Define mplot::win_t before #including mplot/VisualOwnable.h
 namespace mplot { using win_t = wxGLCanvas; }
 
 #include <mplot/gl/version.h>
 // In the wx examples, we include <mplot/glad/gl.h> early in the main.cpp file
-#include <mplot/VisualOwnableNoMX.h>
+#include <mplot/VisualOwnable.h>
 // We need to be able to convert from wxWidgets keycodes to mplot keycodes
 #include <mplot/wx/keycodes.h>
 
-#include <mplot/wx/mygetprocaddress.h>
+#include <mplot/wx/mygetprocaddress.h> // This to be replaced by mplot::wx::gl_contexts
 
 namespace mplot::wx
 {
+    // How many separate OpenGL contexts (i.e. how many viswidgets) to support in one wx program?
+    constexpr int max_contexts = 32;
+
+    // A container class to manage a getProcAddress function from each viswx (wxCanvas) context
+    struct gl_contexts
+    {
+        static auto& i() // The instance public function.
+        {
+            static gl_contexts instance;
+            return instance;
+        }
+
+        // Set the context. Store the context pointer into ctx_ptrs[widget_index].
+        template<int widget_index>
+        void set_context (WXequiv_QOpenGLContext* _ctx) // whats a WX opengl context?
+        {
+            static_assert (widget_index < mplot::wx::max_contexts);
+            ctx_ptrs[widget_index] = _ctx;
+        }
+
+        // The static getProcAddress function for the index widget_index.
+        template<int widget_index>
+        static WXequiv_QFunctionPointer getProcAddress (const char* name)
+        {
+            static_assert (widget_index < mplot::qt::max_contexts);
+            if (mplot::wx::gl_contexts::i().ctx_ptrs[widget_index] == nullptr) { return nullptr; }
+            return mplot::wx::gl_contexts::i().ctx_ptrs[widget_index]->getProcAddress (name);
+        }
+
+    private:
+        gl_contexts() { ctx_ptrs = { nullptr }; }
+        ~gl_contexts() {}
+        std::array<WXequiv_QOpenGLContext*, mplot::wx::max_contexts> ctx_ptrs;
+    };
+
+
     // This is the OpenGL version you will attempt to create a context for. Example version:
     // mplot::gl::version_4_1
-    template<int glver>
+    template<int widget_index, int glver>
     class Canvas : public wxGLCanvas
     {
     public:
@@ -46,21 +82,25 @@ namespace mplot::wx
             }
 
             // Bind events to functions in the Canvas constructor
-            Bind (wxEVT_PAINT, &mplot::wx::Canvas<glver>::OnPaint, this);
-            Bind (wxEVT_SIZE, &mplot::wx::Canvas<glver>::OnSize, this);
-            Bind (wxEVT_MOTION, &mplot::wx::Canvas<glver>::OnMouseMove, this);
-            Bind (wxEVT_LEFT_DOWN, &mplot::wx::Canvas<glver>::OnMousePress, this);
-            Bind (wxEVT_RIGHT_DOWN, &mplot::wx::Canvas<glver>::OnMousePress, this);
-            Bind (wxEVT_LEFT_UP, &mplot::wx::Canvas<glver>::OnMouseRelease, this);
-            Bind (wxEVT_RIGHT_UP, &mplot::wx::Canvas<glver>::OnMouseRelease, this);
-            Bind (wxEVT_MOUSEWHEEL, &mplot::wx::Canvas<glver>::OnMouseWheel, this);
-            Bind (wxEVT_KEY_DOWN, &mplot::wx::Canvas<glver>::OnKeyPress, this);
+            Bind (wxEVT_PAINT, &mplot::wx::Canvas<widget_index, glver>::OnPaint, this);
+            Bind (wxEVT_SIZE, &mplot::wx::Canvas<widget_index, glver>::OnSize, this);
+            Bind (wxEVT_MOTION, &mplot::wx::Canvas<widget_index, glver>::OnMouseMove, this);
+            Bind (wxEVT_LEFT_DOWN, &mplot::wx::Canvas<widget_index, glver>::OnMousePress, this);
+            Bind (wxEVT_RIGHT_DOWN, &mplot::wx::Canvas<widget_index, glver>::OnMousePress, this);
+            Bind (wxEVT_LEFT_UP, &mplot::wx::Canvas<widget_index, glver>::OnMouseRelease, this);
+            Bind (wxEVT_RIGHT_UP, &mplot::wx::Canvas<widget_index, glver>::OnMouseRelease, this);
+            Bind (wxEVT_MOUSEWHEEL, &mplot::wx::Canvas<widget_index, glver>::OnMouseWheel, this);
+            Bind (wxEVT_KEY_DOWN, &mplot::wx::Canvas<widget_index, glver>::OnKeyPress, this);
         }
 
         bool InitializeOpenGLFunctions()
         {
 #ifdef GLAD_OPTION_GL_MX
-            []<bool flag = false>() { static_assert(flag, "multi-context glad header is not supported in viswx"); }();
+            //[]<bool flag = false>() { static_assert(flag, "multi-context glad header is not supported in viswx"); }();
+            mplot::wx::gl_contexts::i().set_context<widget_index> (this->context());
+            v.init_glad (mplot::qt::gl_contexts::getProcAddress<widget_index>); // arg (GLADloadfunc procaddressfn)
+            v.init (this); // this is win_t* context
+
 #else
             // Can we get GLADloadfunc from wx? Maybe need the internal loader version of glad?
             int version = gladLoadGL (mygetprocaddress);
@@ -201,14 +241,14 @@ namespace mplot::wx
         }
 
         // In your wx code, build VisualModels that should be added to the scene and add them to this.
-        std::vector<std::unique_ptr<mplot::VisualModel<glver>>> newvisualmodels;
-        std::vector<mplot::VisualModel<glver>*> model_ptrs;
+        std::vector<std::unique_ptr<mplot::VisualModel<widget_index, glver>>> newvisualmodels;
+        std::vector<mplot::VisualModel<widget_index, glver>*> model_ptrs;
         // if >-1, then that model needs a reinit.
         int needs_reinit = -1;
 
         bool ready() { return this->glInitialized; }
 
-        mplot::VisualOwnableNoMX<glver> v;
+        mplot::VisualOwnableNoMX<widget_index, glver> v;
 
     private:
         std::unique_ptr<wxGLContext> glContext;
@@ -216,7 +256,7 @@ namespace mplot::wx
     };
 
     // mplot::wx::Frame is to be extended. Note that a default GL version of 4.1 is given here.
-    template <int glver = mplot::gl::version_4_1>
+    template <int widget_index, int glver = mplot::gl::version_4_1>
     class Frame : public wxFrame
     {
     public:
@@ -227,7 +267,7 @@ namespace mplot::wx
             vAttrs.PlatformDefaults().Defaults().EndList();
             if (wxGLCanvas::IsDisplaySupported(vAttrs)) {
                 // canvas becomes a child of this wxFrame which is responsible for deallocation
-                this->canvas = new mplot::wx::Canvas<glver>(this, vAttrs);
+                this->canvas = new mplot::wx::Canvas<widget_index, glver>(this, vAttrs);
                 this->canvas->SetMinSize (FromDIP (wxSize(640, 480)));
             } else {
                 throw std::runtime_error ("wxGLCanvas::IsDisplaySupported(vAttrs) returned false");
@@ -236,7 +276,7 @@ namespace mplot::wx
 
     protected:
         // A mplot::wx::Frame contains a mplot::wx::Canvas
-        mplot::wx::Canvas<glver>* canvas;
+        mplot::wx::Canvas<widget_index, glver>* canvas;
     };
 
 } // mplot::wx
