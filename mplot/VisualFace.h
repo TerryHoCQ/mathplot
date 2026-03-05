@@ -29,6 +29,9 @@ module;
 export module mplot.core:visualface;
 
 import :visualfacebase;
+export import :visualfont;
+import mplot.visualcommon;
+import sm.vec;
 
 export namespace mplot::visgl
 {
@@ -90,7 +93,8 @@ export namespace mplot::visgl
                 // now store character for later use
                 mplot::visgl::CharInfo glchar = {
                     texture,
-                    {static_cast<int>(this->face->glyph->bitmap.width), static_cast<int>(this->face->glyph->bitmap.rows)}, // size
+                    {static_cast<int>(this->face->glyph->bitmap.width),
+                     static_cast<int>(this->face->glyph->bitmap.rows)}, // size
                     {this->face->glyph->bitmap_left, this->face->glyph->bitmap_top}, // bearing
                     static_cast<unsigned int>(this->face->glyph->advance.x)          // advance
                 };

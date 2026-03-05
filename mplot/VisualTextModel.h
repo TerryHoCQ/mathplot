@@ -31,18 +31,24 @@ module;
 #include <mplot/gl/util_mx.h>
 #include <mplot/unicode.h>
 
-export module mplot.core:visualtextmodel;
+export module mplot.visualtextmodel;
 
-import :visualtextmodelbase;
+import mplot.visualtextmodelbase;
+import mplot.visualcommon;
+
+// Need these here, they're from core, so will have to be extracted from core.
 import :visualface;
 import :visualresources;
+import :textfeatures;
+import :textgeometry;
 
+import sm.quaternion;
 import sm.vec;
 
 export namespace mplot
 {
     //! Forward declaration of a VisualBase class
-    template <int> class VisualBase;
+    //template <int> class VisualBase;
 
     /*!
      * Implementation of a separate data-containing model which is used to render text. It is
@@ -305,9 +311,10 @@ export namespace mplot
         }
 
     public:
+#if 0
         //! Get the GladGLContext function pointer
         std::function<GladGLContext*(mplot::VisualBase<glver>*)> get_glfn;
-
+#endif
     protected:
         //! A face for this text. The face is specfied by tfeatures.font
         mplot::visgl::VisualFace* face = nullptr;

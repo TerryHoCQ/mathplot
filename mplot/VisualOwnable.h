@@ -39,9 +39,15 @@ module;
 
 export module mplot.core:visualownable;
 
+import :visualcommon;
 import :visualresources;
 import :visualtextmodel;
+import :textgeometry;
+import :textfeatures;
 import :visualbase;
+import :coordarrows;
+
+import sm.vec;
 
 export namespace mplot
 {
@@ -128,6 +134,7 @@ export namespace mplot
             // VisualResources provides font management and GLFW management. Ensure it exists in memory.
             mplot::VisualResources<glver>::i().create();
             this->freetype_init();
+            this->visual_id = mplot::VisualResources<glver>::i().register_visual (this->glfn);
         }
 
         //! GLAD OpenGL function context pointer

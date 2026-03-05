@@ -25,14 +25,8 @@
 
 #include <mplot/gl/util_mx.h>
 
-import mplot.core; // To know about VisualBase and VisualOwnable static methods
-
 namespace mplot
 {
-    //! Forward declaration of base classes
-    //template <int> class VisualBase;
-    //template <int> class VisualOwnable;
-
     /*!
      * An OpenGL model class
      *
@@ -81,6 +75,7 @@ namespace mplot
                 throw std::runtime_error ("Can't bind a model, because I am not bound");
             }
             model->set_parent (this->parentVis);
+#if 0
             model->get_shaderprogs = &mplot::VisualBase<glver>::get_shaderprogs;
             model->get_gprog = &mplot::VisualBase<glver>::get_gprog;
             model->get_tprog = &mplot::VisualBase<glver>::get_tprog;
@@ -89,6 +84,7 @@ namespace mplot
 
             model->setContext = &mplot::VisualBase<glver>::set_context;
             model->releaseContext = &mplot::VisualBase<glver>::release_context;
+#endif
         }
 
         void set_instance_scale (const float scl) final

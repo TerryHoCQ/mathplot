@@ -34,8 +34,9 @@ module;
 
 export module mplot.core:visualresources;
 import :visualface;
+import :visualfont;
 import :visualresourcesbase;
-import :visualbase;
+import :textfeatures;
 
 import sm.vec;
 
@@ -134,24 +135,24 @@ export namespace mplot
             }
         }
 
-        uint32_t register_visual (mplot::VisualBase<glver>* vp)
+        uint32_t register_visual (GladGLContext* glfn)
         {
-            uint32_t visual_id = next_visual_id++;
-            visual_pointers[visual_id] = vp;
+            uint32_t visual_id = this->next_visual_id++;
+            visual_gladglcontexts[visual_id] = glfn;
             return visual_id;
         }
 
         uint32_t next_visual_id = 0;
 
         // Pointers to Visuals in the program, keyed by a uint32_t ID
-        std::map<uint32_t, mplot::VisualBase<glver>*> visual_pointers;
+        std::map<uint32_t, GladGLContext*> visual_gladglcontexts;
 
         // A VisualModel can call this, passing in the numeric ID of the context it belongs to and
         // this will pass back the correct GL context pointer.
         GladGLContext* get_glfn (uint32_t visual_id)
         {
-            visual_pointers[visual_id]->setContext();
-            GladGLContext* glfn = visual_pointers[visual_id]->get_glfn (visual_pointers[visual_id]);
+            // somehow set context from visual_pointers[visual_id]->setContext();
+            GladGLContext* glfn = visual_gladglcontexts[visual_id];
             return glfn;
         }
 

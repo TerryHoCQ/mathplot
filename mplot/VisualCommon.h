@@ -13,7 +13,7 @@ module;
 #include <mplot/tools.h>
 #include <mplot/colour.h>
 
-export module mplot.core:visualcommon;
+export module mplot.visualcommon;
 
 import sm.vec;
 import sm.range;

@@ -163,7 +163,7 @@ extern const char __stop_dvsansbi_ttf[];
 
 export module mplot.core:visualfacebase;
 
-import :visualcommon;
+import mplot.visualcommon;
 import :visualfont;
 import :textfeatures;
 

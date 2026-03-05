@@ -29,7 +29,9 @@ module;
 
 export module mplot.core:coordarrows;
 
-import :visualtextmodel;
+import mplot.visualtextmodel;
+import :textfeatures;
+import :visualfont;
 import sm.vec;
 import sm.mat;
 import sm.flags;

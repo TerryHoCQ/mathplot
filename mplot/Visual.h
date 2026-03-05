@@ -30,17 +30,10 @@ module;
 export module mplot.core:visual;
 
 export import :win_t;
-
 export import :visualglfw;
-
 export import :visualownable;
-
-// Has to be a module partition?
-//namespace mplot
-//{
-//    // With mplot::Visual, we use a GLFW window which is owned by mplot::Visual.
-//    using win_t = GLFWwindow;
-//}
+import :visualbase;
+import :visualresources;
 
 export namespace mplot
 {
@@ -105,9 +98,7 @@ export namespace mplot
             this->init_window();
             this->setContext(); // For freetype_init
             this->freetype_init();
-
-            uint32_t my_id = mplot::VisualResources<glver>::i().register_visual (this);
-
+            this->visual_id = mplot::VisualResources<glver>::i().register_visual (this->glfn);
             this->releaseContext();
         }
 

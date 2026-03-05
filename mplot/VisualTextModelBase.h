@@ -23,9 +23,9 @@ module;
 #include <mplot/unicode.h>
 #include <mplot/colour.h>
 
-export module mplot.core:visualtextmodelbase;
+export module mplot.visualtextmodelbase;
 
-import :visualcommon;
+import mplot.visualcommon;
 import :textgeometry;
 import :textfeatures;
 
@@ -207,11 +207,15 @@ export namespace mplot
         // A VisualTextModel may be given a name
         std::string name = "VisualTextModel";
 
+        // The mplot::Visual ID to which I belong. max means unset.
+        uint32_t visual_id = std::numeric_limits<uint32_t>::max();
+
         //! The colour of the text
         std::array<float, 3> clr_text = {0.0f, 0.0f, 0.0f};
         //! Line spacing, in multiples of the height of an 'h'
         float line_spacing = 1.4f;
-        //! Parent Visual
+#if 0
+        //! Parent Visual (to be replaced with a uint32_t visual_id)
         mplot::VisualBase<glver>* parentVis = nullptr;
 
         /*!
@@ -233,7 +237,7 @@ export namespace mplot
         std::function<void(const unsigned int, const sm::vec<float, 3>&)> insert_instance_data;
         std::function<void(const unsigned int, const std::array<float, 3>&, const float, const float)> insert_instparam_data;
         std::function<void(mplot::VisualBase<glver>*)> instanced_needs_update;
-
+#endif
         //! Setter for the parent pointer, parentVis
         void set_parent (mplot::VisualBase<glver>* _vis)
         {

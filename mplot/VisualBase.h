@@ -40,6 +40,8 @@ module;
 
 #include <mplot/VisualDefaultShaders.h>
 
+#include <mplot/VisualModel.h>
+
 export module mplot.core:visualbase;
 
 import sm.range;
@@ -152,9 +154,6 @@ export namespace mplot
         perspective,
         orthographic
     };
-
-    // Forward declare VisualModels
-    template <int> class VisualModel;
 
     /*!
      * VisualBase, the mplot::Visual 'scene' base class

@@ -49,6 +49,9 @@ import sm.range;
 import sm.algo;
 import sm.flags;
 
+// Need to import common here
+import mplot.visualcommon;
+
 //import mplot.core;// Can I avoid use of this in VisualModelBase?
 
 #include <mplot/colour.h>
@@ -100,11 +103,13 @@ namespace mplot
                 throw std::runtime_error ("Can't bind a model, because I am not bound");
             }
             model->set_parent (this->parentVis);
+#if 0
             model->get_shaderprogs = &mplot::VisualBase<glver>::get_shaderprogs;
             model->get_gprog = &mplot::VisualBase<glver>::get_gprog;
             model->get_tprog = &mplot::VisualBase<glver>::get_tprog;
             model->setContext = &mplot::VisualBase<glver>::set_context;
             model->releaseContext = &mplot::VisualBase<glver>::release_context;
+#endif
         }
 
         //! Common code to call after the vertices have been set up. GL has to have been initialised.
@@ -808,7 +813,7 @@ namespace mplot
         //! If drawing with instancing, how many params will be used (these will be cycled through
         //! per-instance and there may be fewer than instance_count parameters)
         unsigned int instparam_count = 0;
-
+#if 0
         /*!
          * A function that will be runtime defined to get_shaderprogs from a pointer to
          * Visual (saving a boilerplate argument and avoiding that killer circular
@@ -830,7 +835,7 @@ namespace mplot
         std::function<void(const unsigned int, const sm::vec<float, 3>&)> insert_instance_data;
         std::function<void(const unsigned int, const std::array<float, 3>&, const float, const float)> insert_instparam_data;
         std::function<void(mplot::VisualBase<glver>*)> instanced_needs_update;
-
+#endif
         //! Set the scaling matrix for all instances
         virtual void set_instance_scale (const float scl) = 0;
 
