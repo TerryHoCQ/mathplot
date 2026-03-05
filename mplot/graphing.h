@@ -21,9 +21,9 @@
 # include <ios>
 #endif
 
-#include <sm/range>
-#include <sm/algo>
-#include <sm/vvec>
+import sm.range;
+import sm.algo;
+import sm.vvec;
 
 namespace mplot::graphing
 {

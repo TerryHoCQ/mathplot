@@ -16,13 +16,13 @@
 #include <cstdint>
 
 #include <sm/mathconst>
-#include <sm/scale>
-#include <sm/range>
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/quaternion>
-#include <sm/histo>
-#include <sm/grid>
+import sm.scale;
+import sm.range;
+import sm.vec;
+import sm.vvec;
+import sm.quaternion;
+import sm.histo;
+import sm.grid;
 
 #include <mplot/tools.h>
 #include <mplot/colour.h>

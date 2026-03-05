@@ -3,10 +3,10 @@
 #include <iostream>
 #include <vector>
 #include <array>
-#include <sm/vec>
-#include <sm/vvec>
+import sm.vec;
+import sm.vvec;
 #include <sm/hexgrid>
-#include <sm/scale>
+import sm.scale;
 #include <mplot/gl/version.h>
 #include <mplot/tools.h>
 #include <mplot/VisualDataModel.h>

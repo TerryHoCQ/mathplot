@@ -10,9 +10,9 @@
  */
 
 #include <cstddef>
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/range>
+import sm.vec;
+import sm.vvec;
+import sm.range;
 #include <mplot/gl/util_nomx.h>
 
 namespace mplot::gl

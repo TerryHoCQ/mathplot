@@ -6,9 +6,9 @@
 #include <algorithm>
 #include <functional>
 
-#include <sm/scale>
-#include <sm/vec>
-#include <sm/vvec>
+import sm.scale;
+import sm.vec;
+import sm.vvec;
 
 #include <mplot/tools.h>
 #include <mplot/VisualDataModel.h>

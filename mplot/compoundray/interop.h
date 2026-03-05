@@ -13,8 +13,8 @@
 #include <sutil/Matrix.h>
 
 // maths and mathplot includes
-#include <sm/vec>
-#include <sm/mat>
+import sm.vec;
+import sm.mat;
 #include <mplot/Visual.h>
 #include <mplot/VerticesVisual.h>
 

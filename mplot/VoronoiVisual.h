@@ -18,11 +18,11 @@
 #include <map>
 #include <set>
 
-#include <sm/vec>
-#include <sm/range>
-#include <sm/quaternion>
-#include <sm/geometry>
-#include <sm/centroid>
+import sm.vec;
+import sm.range;
+import sm.quaternion;
+import sm.geometry;
+import sm.centroid;
 
 #include <mplot/tools.h>
 #include <mplot/VisualDataModel.h>

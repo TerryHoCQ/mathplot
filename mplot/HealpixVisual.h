@@ -1,9 +1,9 @@
 #pragma once
 
 #include <cstdint>
-#include <sm/scale>
-#include <sm/vec>
-#include <sm/vvec>
+import sm.scale;
+import sm.vec;
+import sm.vvec;
 #include <mplot/healpix/healpix_bare.hpp>
 #include <mplot/VisualModel.h>
 #include <mplot/ColourMap.h>

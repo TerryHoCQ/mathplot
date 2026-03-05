@@ -11,9 +11,9 @@
 #include <cstdint>
 #include <mplot/tools.h>
 
-#include <sm/vec>
+import sm.vec;
 #include <sm/mathconst>
-#include <sm/flags>
+import sm.flags;
 #include <sm/crc32>
 
 namespace mplot

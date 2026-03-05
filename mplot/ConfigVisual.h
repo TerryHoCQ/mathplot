@@ -10,7 +10,7 @@
 #include <array>
 #include <stdexcept>
 
-#include <sm/vec>
+import sm.vec;
 #include <sm/config>
 
 #include <mplot/VisualModel.h>

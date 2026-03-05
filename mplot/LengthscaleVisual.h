@@ -7,9 +7,9 @@
 #include <array>
 
 #include <sm/mathconst>
-#include <sm/vec>
-#include <sm/scale>
-#include <sm/quaternion>
+import sm.vec;
+import sm.scale;
+import sm.quaternion;
 
 #include <mplot/VisualModel.h>
 

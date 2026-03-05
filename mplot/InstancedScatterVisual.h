@@ -9,7 +9,7 @@
 #include <iostream>
 #include <vector>
 #include <array>
-#include <sm/vec>
+import sm.vec;
 #include <mplot/tools.h>
 #include <mplot/VisualModel.h>
 #include <mplot/graphstyles.h>

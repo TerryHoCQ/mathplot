@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include <sm/range>
-#include <sm/scale>
-#include <sm/vec>
+import sm.range;
+import sm.scale;
+import sm.vec;
 
 #include <mplot/VisualModel.h>
 #include <mplot/ColourMap.h>

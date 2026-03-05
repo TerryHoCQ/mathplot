@@ -21,9 +21,9 @@
 #include <cstdint>  // uintptr_t etc
 #include <functional>
 #include <sm/mathconst>
-#include <sm/vec>
-#include <sm/geometry>
-#include <sm/winder>
+import sm.vec;
+import sm.geometry;
+import sm.winder;
 
 #ifndef JCV_EDGE_INTERSECT_THRESHOLD
     // Fix for Issue #40

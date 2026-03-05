@@ -7,11 +7,11 @@
 #include <array>
 #include <vector>
 #include <sm/mathconst>
-#include <sm/vec>
-#include <sm/mat>
-#include <sm/range>
-#include <sm/geometry>
-#include <sm/centroid>
+import sm.vec;
+import sm.mat;
+import sm.range;
+import sm.geometry;
+import sm.centroid;
 #include <mplot/VisualModel.h>
 #include <mplot/gl/version.h>
 #include <mplot/jcvoronoi/jc_voronoi.h>

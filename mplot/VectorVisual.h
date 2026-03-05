@@ -5,7 +5,7 @@
  */
 
 #include <array>
-#include <sm/vec>
+import sm.vec;
 #include <mplot/colour.h>
 #include <mplot/ColourMap.h>
 #include <mplot/VisualModel.h>

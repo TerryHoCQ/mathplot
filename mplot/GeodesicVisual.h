@@ -1,10 +1,10 @@
 #pragma once
 
 #include <array>
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/scale>
-#include <sm/geometry>
+import sm.vec;
+import sm.vvec;
+import sm.scale;
+import sm.geometry;
 #include <mplot/VisualModel.h>
 #include <mplot/ColourMap.h>
 

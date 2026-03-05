@@ -4,7 +4,7 @@
 #pragma once
 
 #include <array>
-#include <sm/vec>
+import sm.vec;
 #include <mplot/VisualModel.h>
 
 namespace mplot

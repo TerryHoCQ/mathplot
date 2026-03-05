@@ -8,7 +8,7 @@
 #include <array>
 #include <stdexcept>
 
-#include <sm/vec>
+import sm.vec;
 
 #include <mplot/VisualModel.h>
 #include <mplot/tools.h>

@@ -5,9 +5,9 @@
  */
 
 #include <array>
-#include <sm/vec>
-#include <sm/mat>
-#include <sm/flags>
+import sm.vec;
+import sm.mat;
+import sm.flags;
 #include <mplot/colour.h>
 #include <mplot/VisualModel.h>
 

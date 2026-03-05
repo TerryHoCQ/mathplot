@@ -13,8 +13,8 @@
 #include <map>
 
 #include <sm/mathconst>
-#include <sm/vec>
-#include <sm/geometry>
+import sm.vec;
+import sm.geometry;
 
 #include <mplot/colour.h>
 #include <mplot/VisualModel.h>

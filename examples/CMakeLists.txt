@@ -21,7 +21,6 @@ set_source_files_properties (
   ${PROJECT_SOURCE_DIR}/maths/sm/nm_simplex
   ${PROJECT_SOURCE_DIR}/maths/sm/histo
   ${PROJECT_SOURCE_DIR}/maths/sm/boxfilter
-  ${PROJECT_SOURCE_DIR}/maths/sm/config
   ${PROJECT_SOURCE_DIR}/maths/sm/geometry
   ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
   ${PROJECT_SOURCE_DIR}/maths/sm/flags

@@ -6,9 +6,9 @@
 #pragma once
 
 #include <sm/mathconst>
-#include <sm/scale>
-#include <sm/vec>
-#include <sm/quaternion>
+import sm.scale;
+import sm.vec;
+import sm.quaternion;
 #include <mplot/VisualModel.h>
 #include <mplot/graphing.h>
 #include <mplot/graphstyles.h> // Share tickstyle, axestyle

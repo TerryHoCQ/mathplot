@@ -5,7 +5,7 @@
 #include <array>
 
 #include <sm/cartgrid>
-#include <sm/vec>
+import sm.vec;
 
 #include <mplot/tools.h>
 #include <mplot/VisualDataModel.h>

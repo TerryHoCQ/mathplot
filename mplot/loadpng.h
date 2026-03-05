@@ -14,8 +14,8 @@
 #include <cstddef>
 #include <stdexcept>
 
-#include <sm/vec>
-#include <sm/vvec>
+import sm.vec;
+import sm.vvec;
 
 namespace mplot
 {

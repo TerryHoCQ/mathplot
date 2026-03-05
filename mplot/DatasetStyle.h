@@ -2,8 +2,8 @@
 
 #include <array>
 #include <string>
-#include <sm/vec>
-#include <sm/flags>
+import sm.vec;
+import sm.flags;
 #include <mplot/graphstyles.h>
 #include <mplot/ColourMap.h>
 #include <mplot/colour.h>

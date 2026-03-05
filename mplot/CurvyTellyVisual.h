@@ -2,8 +2,8 @@
 
 #include <array>
 #include <sm/mathconst>
-#include <sm/vec>
-#include <sm/grid>
+import sm.vec;
+import sm.grid;
 #include <mplot/GridVisual.h>
 
 namespace mplot

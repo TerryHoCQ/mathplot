@@ -7,9 +7,9 @@
 #include <array>
 #include <stdexcept>
 
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/mat>
+import sm.vec;
+import sm.vvec;
+import sm.mat;
 
 #include <mplot/VisualModel.h>
 

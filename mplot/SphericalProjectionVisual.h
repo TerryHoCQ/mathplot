@@ -3,9 +3,9 @@
 #include <array>
 #include <vector>
 #include <sm/mathconst>
-#include <sm/vec>
-#include <sm/range>
-#include <sm/geometry>
+import sm.vec;
+import sm.range;
+import sm.geometry;
 #include <mplot/VisualModel.h>
 #include <mplot/gl/version.h>
 #include <mplot/jcvoronoi/jc_voronoi.h>

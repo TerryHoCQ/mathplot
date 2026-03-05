@@ -7,7 +7,7 @@
 #include <deque>
 
 #include <sm/mathconst>
-#include <sm/vec>
+import sm.vec;
 
 #include <mplot/VisualModel.h>
 #include <mplot/unicode.h>

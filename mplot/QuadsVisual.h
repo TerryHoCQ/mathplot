@@ -6,8 +6,8 @@
 #include <array>
 #include <stdexcept>
 
-#include <sm/scale>
-#include <sm/vec>
+import sm.scale;
+import sm.vec;
 
 #include <mplot/tools.h>
 #include <mplot/VisualDataModel.h>

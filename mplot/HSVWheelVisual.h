@@ -5,7 +5,7 @@
 #pragma once
 
 #include <sm/mathconst>
-#include <sm/vec>
+import sm.vec;
 
 #include <mplot/VisualModel.h>
 #include <mplot/GraphVisual.h>

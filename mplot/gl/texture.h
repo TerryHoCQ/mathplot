@@ -11,7 +11,7 @@
 
 #include <iostream>
 #include <stdexcept>
-#include <sm/vec>
+import sm.vec;
 #include <mplot/gl/util_nomx.h>
 
 namespace mplot::gl
