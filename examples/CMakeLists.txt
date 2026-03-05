@@ -99,6 +99,10 @@ if(ARMADILLO_FOUND)
     ${PROJECT_SOURCE_DIR}/maths/sm/geometry
     ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
     ${PROJECT_SOURCE_DIR}/maths/sm/grid
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo
+    ${PROJECT_SOURCE_DIR}/maths/sm/nm_simplex
+    ${PROJECT_SOURCE_DIR}/maths/sm/bezcoord
+    ${PROJECT_SOURCE_DIR}/maths/sm/hex
   )
   target_link_libraries(showcase OpenGL::GL glfw Freetype::Freetype)
 endif(ARMADILLO_FOUND)

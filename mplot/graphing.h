@@ -21,6 +21,7 @@
 # include <ios>
 #endif
 
+#include <sm/constexpr_math>
 import sm.range;
 import sm.algo;
 import sm.vvec;
