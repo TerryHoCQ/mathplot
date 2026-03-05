@@ -468,6 +468,7 @@ export namespace mplot
             // For CoordArrows, because we don't add via Visual::addVisualModel(), we
             // have to set the get_shaderprogs function here:
             this->bindmodel (this->coordArrows); // Won't need bindmodel
+            this->coordArrows->glfn = this->glfn; // Just copy in
             // And NOW we can proceed to init (lengths, thickness, em size for labels):
             this->coordArrows->init (sm::vec<>{0.1f, 0.1f, 0.1f}, 1.0f, 0.01f);
 

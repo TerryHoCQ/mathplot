@@ -64,6 +64,13 @@ namespace mplot
     };
 
     //! Forward declaration of a Visual class
+    // Right now, models need to know about VisualBase to:
+    // get shader progs
+    // set/get context
+    //
+    // Could I have a singleton that can do the work and is a separate class so taht VisualModel no
+    // longer needs to know about VisualBase?  Visual registers its identity and the shader programs
+    // and the singleton could set context based on an id that the VisualModel contains?
     template <int> class VisualBase;
 
     /*!

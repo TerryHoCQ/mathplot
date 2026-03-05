@@ -155,7 +155,6 @@ export namespace mplot
 
     // Forward declare VisualModels
     template <int> class VisualModel;
-    //template <int> class CoordArrows; // shouldn't need to now
 
     /*!
      * VisualBase, the mplot::Visual 'scene' base class
@@ -298,7 +297,7 @@ export namespace mplot
             for (unsigned int modelId = 0; modelId < this->vm.size(); ++modelId) {
                 if (this->vm[modelId].get() == vm_to_follow) {
                     this->followedVM = this->vm[modelId].get();
-                    this->followedLastViewMatrix = this->followedVM->getViewMatrix();
+                    this->followedLastViewMatrix = this->followedVM->getViewMatrix(); // COULD pass mat4
                     break;
                 }
             }
@@ -950,7 +949,7 @@ export namespace mplot
 
             if (this->options.test (visual_options::viewFollowsVMTranslations)
                 && this->followedVM != nullptr
-                && this->followedLastViewMatrix != this->followedVM->getViewMatrix()) {
+                && this->followedLastViewMatrix != this->followedVM->getViewMatrix()) { // NEED KNOWLEDGE OF VISUALMODEL
 
                 // Move camera the difference between followedLastViewMatrix and
                 // followedVM->getViewMatrix() in the screen frame of reference.
@@ -962,7 +961,7 @@ export namespace mplot
                 this->savedSceneview.pretranslate (fol_screenframe);
                 this->savedSceneview_tr.pretranslate (fol_screenframe);
 
-                this->followedLastViewMatrix = this->followedVM->getViewMatrix();
+                this->followedLastViewMatrix = this->followedVM->getViewMatrix(); // NEED KNOWLEDGE OF VISUALMODEL
             }
         }
 
