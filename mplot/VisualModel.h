@@ -25,7 +25,7 @@
 
 #include <mplot/gl/util_mx.h>
 
-import mplot.core;
+import mplot.core; // To know about VisualBase and VisualOwnable static methods
 
 namespace mplot
 {

@@ -39,21 +39,21 @@ namespace mplot::gl
         unsigned int type; // rather than GLenum
         std::string filename;
         std::string compiledIn;
-        GLuint shader;
+        uint32_t shader;
     };
 
     // To enable debugging, set true.
     const bool debug_shaders = false;
 
     //! Read a shader from a file.
-    std::unique_ptr<GLchar[]> ReadShader (const std::string& filename)
+    std::unique_ptr<char[]> ReadShader (const std::string& filename)
     {
         if (!std::filesystem::is_regular_file (filename)) { // restrict to regular files
             std::cerr << "'" << filename << "' is not a regular file\n";
             return nullptr;
         }
         size_t len = std::filesystem::file_size (filename);
-        std::unique_ptr<GLchar[]> source = std::make_unique<GLchar[]>(len + 1);
+        std::unique_ptr<char[]> source = std::make_unique<char[]>(len + 1);
         std::ifstream fin (filename.c_str(), std::ios::in);
         if (!fin.is_open()) {
             std::cerr << "Unable to open file '" << filename << "'\n";
@@ -67,18 +67,18 @@ namespace mplot::gl
     /*!
      * Read a default shader, stored as a const char*. ReadDefaultShader reads a
      * file: allocates some memory, copies the text into the new memory and then
-     * returns a GLchar* pointer to the memory.
+     * returns a char* pointer to the memory.
      */
-    std::unique_ptr<GLchar[]> ReadDefaultShader (const std::string& shadercontent)
+    std::unique_ptr<char[]> ReadDefaultShader (const std::string& shadercontent)
     {
         std::size_t len = shadercontent.size();
-        std::unique_ptr<GLchar[]> source = std::make_unique<GLchar[]>(len + 1);
+        std::unique_ptr<char[]> source = std::make_unique<char[]>(len + 1);
         std::memcpy (static_cast<void*>(source.get()), static_cast<const void*>(shadercontent.c_str()), len);
         source[len] = 0;
         return source;
     }
 
-    std::string shader_type_str (GLuint shader_type)
+    std::string shader_type_str (uint32_t shader_type)
     {
         std::string type("unknown");
         if (shader_type == GL_VERTEX_SHADER) {

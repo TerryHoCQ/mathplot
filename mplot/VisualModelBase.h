@@ -49,7 +49,7 @@ import sm.range;
 import sm.algo;
 import sm.flags;
 
-import mplot.core;
+//import mplot.core;// Can I avoid use of this in VisualModelBase?
 
 #include <mplot/colour.h>
 #include <mplot/tools.h>

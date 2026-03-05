@@ -7,6 +7,7 @@
 #include <mplot/gl/shaders.h>
 
 #include <mplot/tools.h>
+#include <cstdint>
 #include <vector>
 #include <iostream>
 #include <cstring>
@@ -15,14 +16,14 @@
 namespace mplot::gl
 {
     //! Shader loading code.
-    GLuint LoadShadersMX (const std::vector<mplot::gl::ShaderInfo>& shader_info, GladGLContext* glfn)
+    uint32_t LoadShadersMX (const std::vector<mplot::gl::ShaderInfo>& shader_info, GladGLContext* glfn)
     {
         if (shader_info.empty()) { return 0; }
 
-        GLuint program = glfn->CreateProgram();
+        uint32_t program = glfn->CreateProgram();
 
 #ifdef GL_SHADER_COMPILER
-        GLboolean shaderCompilerPresent = GL_FALSE;
+        uint8_t shaderCompilerPresent = GL_FALSE;
         glfn->GetBooleanv (GL_SHADER_COMPILER, &shaderCompilerPresent);
         if (shaderCompilerPresent == GL_FALSE) {
             std::cerr << "Shader compiler NOT present!\n";
@@ -33,11 +34,11 @@ namespace mplot::gl
         }
 #endif
         for (auto entry : shader_info) {
-            GLuint shader = glfn->CreateShader (entry.type);
+            uint32_t shader = glfn->CreateShader (entry.type);
             entry.shader = shader;
             // Test entry.filename. If this GLSL file can be read, then do so, otherwise,
             // compile the default version specified in the ShaderInfo
-            std::unique_ptr<GLchar[]> source;
+            std::unique_ptr<char[]> source;
             if constexpr (debug_shaders == true) {
                 std::cout << "Check file exists for " << entry.filename << std::endl;
             }
@@ -64,11 +65,11 @@ namespace mplot::gl
                     std::cout << source.get() << "-----\n";
                 }
             }
-            GLint slen = (GLint)std::strlen (source.get());
-            const GLchar* sptr = source.get();
+            int32_t slen = (int32_t)std::strlen (source.get());
+            const char* sptr = source.get();
             glfn->ShaderSource (shader, 1, &sptr, &slen);
             glfn->CompileShader (shader);
-            GLint shaderCompileSuccess = GL_FALSE;
+            int32_t shaderCompileSuccess = GL_FALSE;
             char infoLog[512];
             glfn->GetShaderiv(shader, GL_COMPILE_STATUS, &shaderCompileSuccess);
             if (!shaderCompileSuccess) {
@@ -99,14 +100,14 @@ namespace mplot::gl
             glfn->DeleteShader (shader); // Note it's correct to glDeleteShader after attaching it to program
         }
 
-        GLint linked = 0;
+        int32_t linked = 0;
         glfn->LinkProgram (program);
         glfn->GetProgramiv (program, GL_LINK_STATUS, &linked);
         if (!linked) {
-            GLsizei len = 0;
+            int32_t len = 0;
             glfn->GetProgramiv (program, GL_INFO_LOG_LENGTH, &len);
             {
-                std::unique_ptr<GLchar[]> log = std::make_unique<GLchar[]>(len+1);
+                std::unique_ptr<char[]> log = std::make_unique<char[]>(len+1);
                 glfn->GetProgramInfoLog (program, len, &len, log.get());
                 std::cerr << "Shader linking failed: " << log.get() << std::endl << "Exiting.\n";
             }

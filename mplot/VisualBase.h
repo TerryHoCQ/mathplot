@@ -19,15 +19,27 @@ module;
 #include <cstddef>
 
 #include <mplot/gl/version.h>
-#include <mplot/VisualModel.h>
+
+#if defined __gl3_h_ || defined __gl_h_
+// GL headers have been externally included
+#else
+// Include GLAD header
+# define GLAD_GL_IMPLEMENTATION
+#  include <mplot/glad/gl_mx.h>
+#endif
+
+// THIS include is the issue
+// #include <mplot/VisualModel.h>
+
 #include <mplot/gl/shaders.h>
 #include <mplot/keys.h>
 #include <mplot/version.h>
 
 #include <nlohmann/json.hpp>
 
-#include <mplot/CoordArrows.h>
-#include <mplot/RodVisual.h>
+// And these
+//#include <mplot/CoordArrows.h>
+//#include <mplot/RodVisual.h>
 #include <mplot/tools.h>
 
 #include <mplot/VisualDefaultShaders.h>
@@ -45,6 +57,7 @@ import sm.quaternion;
 import sm.mat;
 import sm.vec;
 
+import :win_t;
 import :textfeatures;
 import :textgeometry;
 import :visualcommon;
@@ -154,6 +167,11 @@ export namespace mplot
 #else
     static constexpr double retinaScale = 1; // Qt has devicePixelRatio() to get retinaScale.
 #endif
+
+    // Forward declare VisualModels
+    template <int> class VisualModel;
+    template <int> class CoordArrows;
+    template <int> class RodVisual;
 
     /*!
      * VisualBase, the mplot::Visual 'scene' base class
@@ -385,6 +403,7 @@ export namespace mplot
         //! Compute position and rotation of coordinate arrows in the bottom left of the screen
         void positionCoordArrows()
         {
+#if 0
             // Find out the location of the bottom left of the screen and make the coord
             // arrows stay put there.
 
@@ -401,32 +420,37 @@ export namespace mplot
             v0.set_from ((this->invproj * p0));
             // Translate the scene for the CoordArrows such that they sit in a single position on
             // the screen
-            this->coordArrows->setSceneTranslation (v0);
+            this->coordArrows->setSceneTranslation (v0); // argh. method.
             // Apply rotation to the coordArrows model
             sm::quaternion<float> svrq = this->sceneview.rotation();
             svrq.renormalize();
             this->coordArrows->setViewRotation (svrq);
+#endif
         }
 
         // Update the coordinate axes labels
         void updateCoordLabels (const std::string& x_lbl, const std::string& y_lbl, const std::string& z_lbl)
         {
+#if 0
             this->coordArrows->clear();
             this->coordArrows->x_label = x_lbl;
             this->coordArrows->y_label = y_lbl;
             this->coordArrows->z_label = z_lbl;
             this->coordArrows->initAxisLabels();
             this->coordArrows->reinit();
+#endif
         }
 
         // Update the lengths of the CoordArrows that (usually) appear in the corner of the screen
         void updateCoordLengths (const sm::vec<float, 3>& _lengths, const float _thickness = 1.0f)
         {
+#if 0
             this->coordArrows->lengths = _lengths;
             this->coordArrows->thickness = _thickness;
             this->coordArrows->clear();
             this->coordArrows->initAxisLabels();
             this->coordArrows->reinit();
+#endif
         }
 
         // state defaults. All state is false by default
