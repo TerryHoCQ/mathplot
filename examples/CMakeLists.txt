@@ -1,25 +1,3 @@
-# Shader compute examples. Not supported on Apple, which is limited to
-# OpenGL 4.1 or Windows because I want to keep the GL header inclusion
-# simple on these examples.
-if(NOT APPLE AND NOT WIN32)
-  add_subdirectory(gl_compute)
-endif()
-
-# Examples showing how to use mathplot with Qt. Compiled only if
-# find_package found Qt5
-if(Qt5_FOUND)
-  add_subdirectory(qt)
-endif()
-
-# Disabled as haven't figured out a GL multi-context scheme for wx windows
-#if(wxWidgets_FOUND)
-#  add_subdirectory(wx)
-#endif()
-
-if (OpenGL_EGL_FOUND)
-  add_subdirectory(pi)
-endif()
-
 # All #includes in test programs have to be #include <mplot/header.h>
 include_directories(BEFORE ${PROJECT_SOURCE_DIR})
 
@@ -51,10 +29,82 @@ set_source_files_properties (
   PROPERTIES LANGUAGE CXX
 )
 
-# Screenshots used in the documentation/reference website
-if(BUILD_DOC_SCREENSHOTS)
-  add_subdirectory(docs)
-endif()
+add_executable(helloworld helloworld.cpp)
+target_sources(helloworld PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES
+  ${PROJECT_SOURCE_DIR}/maths/sm/flags
+  ${PROJECT_SOURCE_DIR}/maths/sm/algo
+  ${PROJECT_SOURCE_DIR}/maths/sm/range
+  ${PROJECT_SOURCE_DIR}/maths/sm/random
+  ${PROJECT_SOURCE_DIR}/maths/sm/vec
+  ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
+  ${PROJECT_SOURCE_DIR}/maths/sm/mat
+  ${PROJECT_SOURCE_DIR}/maths/sm/geometry
+  ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
+  ${PROJECT_SOURCE_DIR}/maths/sm/vvec)
+target_link_libraries(helloworld OpenGL::GL glfw Freetype::Freetype)
+
+add_executable(rod rod.cpp)
+target_sources(rod PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES
+  ${PROJECT_SOURCE_DIR}/maths/sm/flags
+  ${PROJECT_SOURCE_DIR}/maths/sm/algo
+  ${PROJECT_SOURCE_DIR}/maths/sm/range
+  ${PROJECT_SOURCE_DIR}/maths/sm/random
+  ${PROJECT_SOURCE_DIR}/maths/sm/vec
+  ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
+  ${PROJECT_SOURCE_DIR}/maths/sm/mat
+  ${PROJECT_SOURCE_DIR}/maths/sm/geometry
+  ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
+  ${PROJECT_SOURCE_DIR}/maths/sm/vvec)
+target_link_libraries(rod OpenGL::GL glfw Freetype::Freetype)
+
+# mplot::Grid is runtime-configured
+add_executable(grid_simple grid_simple.cpp)
+target_sources(grid_simple PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES
+  ${PROJECT_SOURCE_DIR}/maths/sm/flags
+  ${PROJECT_SOURCE_DIR}/maths/sm/scale
+  ${PROJECT_SOURCE_DIR}/maths/sm/range
+  ${PROJECT_SOURCE_DIR}/maths/sm/random
+  ${PROJECT_SOURCE_DIR}/maths/sm/vec
+  ${PROJECT_SOURCE_DIR}/maths/sm/algo
+  ${PROJECT_SOURCE_DIR}/maths/sm/vvec
+  ${PROJECT_SOURCE_DIR}/maths/sm/centroid
+  ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
+  ${PROJECT_SOURCE_DIR}/maths/sm/mat
+  ${PROJECT_SOURCE_DIR}/maths/sm/geometry
+  ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
+  ${PROJECT_SOURCE_DIR}/maths/sm/grid
+)
+target_link_libraries(grid_simple OpenGL::GL glfw Freetype::Freetype)
+
+#
+# Any example that uses sm::hexgrid or sm::cartgrid requires
+# libarmadillo (because the classes use sm::BezCurve).
+#
+if(ARMADILLO_FOUND)
+  add_executable(showcase showcase.cpp)
+  target_sources(showcase PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES
+    ${PROJECT_SOURCE_DIR}/maths/sm/flags
+    ${PROJECT_SOURCE_DIR}/maths/sm/scale
+    ${PROJECT_SOURCE_DIR}/maths/sm/range
+    ${PROJECT_SOURCE_DIR}/maths/sm/random
+    ${PROJECT_SOURCE_DIR}/maths/sm/vec
+    ${PROJECT_SOURCE_DIR}/maths/sm/algo
+    ${PROJECT_SOURCE_DIR}/maths/sm/vvec
+    ${PROJECT_SOURCE_DIR}/maths/sm/centroid
+    ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
+    ${PROJECT_SOURCE_DIR}/maths/sm/mat
+    ${PROJECT_SOURCE_DIR}/maths/sm/geometry
+    ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid
+  )
+  target_link_libraries(showcase OpenGL::GL glfw Freetype::Freetype)
+endif(ARMADILLO_FOUND)
+
+if(0) # During development
 
 #
 # Any example that uses sm::hexgrid or sm::cartgrid requires
@@ -169,50 +219,13 @@ if(ARMADILLO_FOUND)
     endif()
   endif(NOT APPLE)
 
-  add_executable(showcase showcase.cpp)
-  target_link_libraries(showcase OpenGL::GL glfw Freetype::Freetype)
-
 endif(ARMADILLO_FOUND)
-
-add_executable(helloworld helloworld.cpp)
-target_sources(helloworld PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES
-  ${PROJECT_SOURCE_DIR}/maths/sm/flags
-  ${PROJECT_SOURCE_DIR}/maths/sm/algo
-  ${PROJECT_SOURCE_DIR}/maths/sm/range
-  ${PROJECT_SOURCE_DIR}/maths/sm/random
-  ${PROJECT_SOURCE_DIR}/maths/sm/vec
-  ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
-  ${PROJECT_SOURCE_DIR}/maths/sm/mat
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
-  ${PROJECT_SOURCE_DIR}/maths/sm/vvec)
-target_link_libraries(helloworld OpenGL::GL glfw Freetype::Freetype)
 
 add_executable(helloversion helloversion.cpp)
 target_link_libraries(helloversion OpenGL::GL glfw Freetype::Freetype)
 
 add_executable(myvisual myvisual.cpp)
 target_link_libraries(myvisual OpenGL::GL glfw Freetype::Freetype)
-
-# mplot::Grid is runtime-configured
-add_executable(grid_simple grid_simple.cpp)
-target_sources(grid_simple PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES
-  ${PROJECT_SOURCE_DIR}/maths/sm/flags
-  ${PROJECT_SOURCE_DIR}/maths/sm/range
-  ${PROJECT_SOURCE_DIR}/maths/sm/random
-  ${PROJECT_SOURCE_DIR}/maths/sm/vec
-  ${PROJECT_SOURCE_DIR}/maths/sm/algo
-  ${PROJECT_SOURCE_DIR}/maths/sm/vvec
-  ${PROJECT_SOURCE_DIR}/maths/sm/centroid
-  ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
-  ${PROJECT_SOURCE_DIR}/maths/sm/mat
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
-  ${PROJECT_SOURCE_DIR}/maths/sm/grid
-)
-target_link_libraries(grid_simple OpenGL::GL glfw Freetype::Freetype)
 
 add_executable(grid_flat_dynamic grid_flat_dynamic.cpp)
 target_link_libraries(grid_flat_dynamic OpenGL::GL glfw Freetype::Freetype)
@@ -388,20 +401,6 @@ target_link_libraries(twowindows_mutex OpenGL::GL glfw Freetype::Freetype)
 
 add_executable(threewindows threewindows.cpp)
 target_link_libraries(threewindows OpenGL::GL glfw Freetype::Freetype)
-
-add_executable(rod rod.cpp)
-target_sources(rod PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES
-  ${PROJECT_SOURCE_DIR}/maths/sm/flags
-  ${PROJECT_SOURCE_DIR}/maths/sm/algo
-  ${PROJECT_SOURCE_DIR}/maths/sm/range
-  ${PROJECT_SOURCE_DIR}/maths/sm/random
-  ${PROJECT_SOURCE_DIR}/maths/sm/vec
-  ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
-  ${PROJECT_SOURCE_DIR}/maths/sm/mat
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry
-  ${PROJECT_SOURCE_DIR}/maths/sm/vvec)
-target_link_libraries(rod OpenGL::GL glfw Freetype::Freetype)
 
 add_executable(rod_with_normals rod_with_normals.cpp)
 target_link_libraries(rod_with_normals OpenGL::GL glfw Freetype::Freetype)
@@ -624,3 +623,33 @@ endif()
 
 add_executable(trace_boundary trace_boundary.cpp)
 target_link_libraries(trace_boundary OpenGL::GL glfw Freetype::Freetype)
+
+# Shader compute examples. Not supported on Apple, which is limited to
+# OpenGL 4.1 or Windows because I want to keep the GL header inclusion
+# simple on these examples.
+if(NOT APPLE AND NOT WIN32)
+  add_subdirectory(gl_compute)
+endif()
+
+# Examples showing how to use mathplot with Qt. Compiled only if
+# find_package found Qt5
+if(Qt5_FOUND)
+  add_subdirectory(qt)
+endif()
+
+# Disabled as haven't figured out a GL multi-context scheme for wx windows
+#if(wxWidgets_FOUND)
+#  add_subdirectory(wx)
+#endif()
+
+if (OpenGL_EGL_FOUND)
+  add_subdirectory(pi)
+endif()
+
+
+# Screenshots used in the documentation/reference website
+if(BUILD_DOC_SCREENSHOTS)
+  add_subdirectory(docs)
+endif()
+
+endif(0)

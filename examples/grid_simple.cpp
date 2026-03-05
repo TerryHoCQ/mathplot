@@ -10,8 +10,8 @@ import sm.vec;
 import sm.grid;
 
 #include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/GridVisual.h>
+#include <mplot/VisualDataModel.h> // import mplot.core;
+#include <mplot/GridVisual.h>      // import mplot.gridvisual;
 
 int main()
 {

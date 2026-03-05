@@ -9,6 +9,7 @@
 #include <string>
 
 #include <mplot/Visual.h>
+
 #include <mplot/ColourMap.h>
 #include <mplot/RodVisual.h>
 

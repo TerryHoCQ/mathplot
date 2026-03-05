@@ -1,9 +1,10 @@
 // A showcase of different visual models
 
-#include <sm/vvec>
+import sm.vvec;
+import sm.grid;
+
 #include <sm/mathconst>
 #include <sm/hexgrid>
-#include <sm/grid>
 
 #include <mplot/loadpng.h>
 #include <mplot/Visual.h>
