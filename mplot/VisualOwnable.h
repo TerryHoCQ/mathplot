@@ -14,7 +14,7 @@
  * \author Seb James
  * \date March 2025
  */
-#pragma once
+module;
 
 #if defined __gl3_h_ || defined __gl_h_ // could get a fuller list from glfw.h
 // GL headers appear to have been externally included.
@@ -24,18 +24,17 @@
 #  include <mplot/glad/gl_mx.h>
 #endif // GL headers
 
-// By including this header, you take out a contract that you ARE using multicontext (MX) GLAD
-// headers. This must appear BEFORE the rest of the mplot headers. No longer used as we ALWAYS use
-// MX and never NoMX now.
-// namespace mplot::gl { static constexpr int multicontext = 1; }
-
-#include <mplot/VisualResources.h>
-#include <mplot/VisualTextModel.h>
-#include <mplot/VisualBase.h>
 #include <mplot/gl/loadshaders_mx.h>
 #include <mplot/gl/util_mx.h>
+#include <mplot/gl/version.h>
 
-namespace mplot
+export module mplot.core:visualownable;
+
+import :visualresources;
+import :visualtextmodel;
+import :visualbase;
+
+export namespace mplot
 {
     /*!
      * VisualOwnable - adds multi-context-safe GL calls to the 'scene' base class, VisualBase

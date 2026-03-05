@@ -14,7 +14,9 @@
 #if defined __gl3_h_ || defined __gl_h_
 // GL headers have been externally included
 #else
-# error "GL headers should have been included already"
+// Include GLAD header
+# define GLAD_GL_IMPLEMENTATION
+#  include <mplot/glad/gl_mx.h>
 #endif
 
 #include <type_traits>
@@ -22,8 +24,8 @@
 #include <mplot/VisualModelBase.h>
 
 #include <mplot/gl/util_mx.h>
-#include <mplot/VisualTextModel.h>
-#include <mplot/TextGeometry.h>
+
+import mplot.core;
 
 namespace mplot
 {

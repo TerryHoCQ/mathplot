@@ -6,29 +6,34 @@
  * \author Seb James
  * \date March 2025
  */
+module;
 
-#pragma once
-
+#include <iostream>
+#include <cstdint>
 #include <string>
 #include <sstream>
 #include <vector>
 #include <array>
 #include <functional>
-
-#include <mplot/gl/version.h>
-
-#include <mplot/VisualCommon.h>
-#include <mplot/unicode.h>
-#include <mplot/TextGeometry.h>
-#include <mplot/TextFeatures.h>
-#include <mplot/colour.h>
+#include <memory>
 
 #include <sm/mathconst>
+
+#include <mplot/gl/version.h>
+#include <mplot/unicode.h>
+#include <mplot/colour.h>
+
+export module mplot.core:visualtextmodelbase;
+
+import :visualcommon;
+import :textgeometry;
+import :textfeatures;
+
 import sm.quaternion;
 import sm.mat;
 import sm.vec;
 
-namespace mplot
+export namespace mplot
 {
     //! Forward declaration of a VisualBase class
     template <int> class VisualBase;
@@ -183,7 +188,7 @@ namespace mplot
 
                 // Two triangles per quad
                 // qi * 4 + 1, 2 3 or 4
-                GLuint ib = (GLuint)qi*4;
+                uint32_t ib = (uint32_t)qi*4;
                 this->indices.push_back (ib++); // 0
                 this->indices.push_back (ib++); // 1
                 this->indices.push_back (ib);   // 2
@@ -214,9 +219,9 @@ namespace mplot
          */
         std::function<mplot::visgl::visual_shaderprogs(mplot::VisualBase<glver>*)> get_shaderprogs;
         //! Get the graphics shader prog id
-        std::function<GLuint(mplot::VisualBase<glver>*)> get_gprog;
+        std::function<uint32_t(mplot::VisualBase<glver>*)> get_gprog;
         //! Get the text shader prog id
-        std::function<GLuint(mplot::VisualBase<glver>*)> get_tprog;
+        std::function<uint32_t(mplot::VisualBase<glver>*)> get_tprog;
 
         //! Set OpenGL context. Should call parentVis->setContext().
         std::function<void(mplot::VisualBase<glver>*)> setContext;
@@ -272,13 +277,13 @@ namespace mplot
         //! Position within vertex buffer object (if I use an array of VBO)
         enum VBOPos { posnVBO, normVBO, colVBO, idxVBO, textureVBO, numVBO };
         //! The OpenGL Vertex Array Object
-        GLuint vao = 0;
+        uint32_t vao = 0;
         //! Single vbo to use as in example
-        GLuint vbo = 0;
+        uint32_t vbo = 0;
         //! Vertex Buffer Objects stored in an array
-        std::unique_ptr<GLuint[]> vbos;
+        std::unique_ptr<uint32_t[]> vbos;
         //! CPU-side data for indices
-        std::vector<GLuint> indices = {};
+        std::vector<uint32_t> indices = {};
         //! CPU-side data for quad vertex positions
         std::vector<float> vertexPositions = {};
         //! CPU-side data for quad vertex normals
@@ -293,7 +298,7 @@ namespace mplot
         bool hide = false;
 
         //! Set up a vertex buffer object - bind, buffer and set vertex array object attribute
-        virtual void setupVBO (GLuint& buf, std::vector<float>& dat, unsigned int bufferAttribPosition) = 0;
+        virtual void setupVBO (uint32_t& buf, std::vector<float>& dat, unsigned int bufferAttribPosition) = 0;
 
         //! Push three floats onto the vector of floats \a vp
         void vertex_push (const float& x, const float& y, const float& z, std::vector<float>& vp)

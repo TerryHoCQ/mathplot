@@ -9,9 +9,9 @@
 #include <string>
 
 #include <mplot/Visual.h>
+#include <mplot/ColourMap.h>  // import mplot.core;
 
-#include <mplot/ColourMap.h>
-#include <mplot/RodVisual.h>
+#include <mplot/RodVisual.h>// import mplot.gridvisual;
 
 import sm.vec;
 

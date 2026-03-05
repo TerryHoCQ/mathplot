@@ -7,17 +7,20 @@
  * \author Seb James
  * \date November 2020
  */
-
-#pragma once
+module;
 
 #include <iostream>
+#include <map>
 #include <mplot/gl/version.h>
-#include <mplot/VisualFont.h>
 // FreeType for text rendering
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-namespace mplot
+export module mplot.core:visualresourcesbase;
+
+import :visualfont;
+
+export namespace mplot
 {
     // Pointers to mplot::VisualBase are used to index font faces
     template<int>

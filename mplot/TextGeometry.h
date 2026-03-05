@@ -1,6 +1,6 @@
-#pragma once
+export module mplot.core:textgeometry;
 
-namespace mplot
+export namespace mplot
 {
     /*!
      * A class containing information about a text string, as it would be displayed on

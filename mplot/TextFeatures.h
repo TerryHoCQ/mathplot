@@ -1,10 +1,13 @@
-#pragma once
+module;
 
 #include <array>
 #include <mplot/colour.h>
-#include <mplot/VisualFont.h>
 
-namespace mplot
+export module mplot.core:textfeatures;
+
+import :visualfont;
+
+export namespace mplot
 {
     // A way to bundle up font size, colour, etc into a single object. Constructors chosen for max convenience.
     struct TextFeatures

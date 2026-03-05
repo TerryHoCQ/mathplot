@@ -10,18 +10,27 @@
  * \author Seb James
  * \date November 2020
  */
-
-#pragma once
-
-#include <mplot/VisualFaceBase.h>
+module;
 
 #if defined __gl3_h_ || defined __gl_h_
 // GL headers have been externally included
 #else
-# error "GL headers should have been included already"
+// Include GLAD header
+# define GLAD_GL_IMPLEMENTATION
+#  include <mplot/glad/gl_mx.h>
 #endif
 
-namespace mplot::visgl
+// FreeType for text rendering
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
+#include <iostream>
+
+export module mplot.core:visualface;
+
+import :visualfacebase;
+
+export namespace mplot::visgl
 {
     struct VisualFace : public mplot::visgl::VisualFaceBase
     {

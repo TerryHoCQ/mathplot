@@ -25,12 +25,42 @@ set_source_files_properties (
   ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
   ${PROJECT_SOURCE_DIR}/maths/sm/flags
   ${PROJECT_SOURCE_DIR}/maths/sm/centroid
+  ${PROJECT_SOURCE_DIR}/mplot/VisualBase.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
+  ${PROJECT_SOURCE_DIR}/mplot/Visual.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualFaceBase.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualFace.h
+  ${PROJECT_SOURCE_DIR}/mplot/TextFeatures.h
+  ${PROJECT_SOURCE_DIR}/mplot/TextGeometry.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualResourcesBase.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualResources.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualTextModelBase.h
+  ${PROJECT_SOURCE_DIR}/mplot/core.ixx
   PROPERTIES LANGUAGE CXX
 )
 
 add_executable(helloworld helloworld.cpp)
 target_sources(helloworld PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES
+  ${PROJECT_SOURCE_DIR}/mplot/core.ixx
+  ${PROJECT_SOURCE_DIR}/mplot/VisualBase.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
+  ${PROJECT_SOURCE_DIR}/mplot/Visual.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualFaceBase.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualFace.h
+  ${PROJECT_SOURCE_DIR}/mplot/TextFeatures.h
+  ${PROJECT_SOURCE_DIR}/mplot/TextGeometry.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualResourcesBase.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualResources.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualTextModelBase.h
   ${PROJECT_SOURCE_DIR}/maths/sm/flags
   ${PROJECT_SOURCE_DIR}/maths/sm/algo
   ${PROJECT_SOURCE_DIR}/maths/sm/range

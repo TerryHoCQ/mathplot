@@ -7,7 +7,7 @@
  * \author Seb James
  * \date March 2025
  */
-#pragma once
+module;
 
 #include <string>
 #include <array>
@@ -18,22 +18,14 @@
 #include <functional>
 #include <cstddef>
 
-import sm.range;
-import sm.flags;
-import sm.quaternion;
-import sm.mat;
-import sm.vec;
-
 #include <mplot/gl/version.h>
 #include <mplot/VisualModel.h>
-#include <mplot/TextFeatures.h>
-#include <mplot/TextGeometry.h>
-#include <mplot/VisualCommon.h>
 #include <mplot/gl/shaders.h>
 #include <mplot/keys.h>
 #include <mplot/version.h>
 
 #include <nlohmann/json.hpp>
+
 #include <mplot/CoordArrows.h>
 #include <mplot/RodVisual.h>
 #include <mplot/tools.h>
@@ -45,7 +37,19 @@ import sm.vec;
 #define LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS 1
 #include <mplot/lodepng.h>
 
-namespace mplot
+export module mplot.core:visualbase;
+
+import sm.range;
+import sm.flags;
+import sm.quaternion;
+import sm.mat;
+import sm.vec;
+
+import :textfeatures;
+import :textgeometry;
+import :visualcommon;
+
+export namespace mplot
 {
     //! Here are our boolean state flags
     enum class visual_state : uint32_t

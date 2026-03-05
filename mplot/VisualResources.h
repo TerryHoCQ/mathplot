@@ -7,8 +7,7 @@
  * \author Seb James
  * \date November 2020
  */
-
-#pragma once
+module;
 
 #include <tuple>
 #include <memory>
@@ -17,14 +16,29 @@
 #include <map>
 #include <limits>
 
-#include <mplot/VisualFace.h>
-#include <mplot/VisualResourcesBase.h>
+#if defined __gl3_h_ || defined __gl_h_
+// GL headers have been externally included
+#else
+// Include GLAD header
+# define GLAD_GL_IMPLEMENTATION
+#  include <mplot/glad/gl_mx.h>
+#endif
+
+#include <mplot/gl/version.h>
 #include <mplot/gl/util_mx.h>
 #include <mplot/gl/ssbo_mx.h>
 
+// FreeType for text rendering
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
+export module mplot.core:visualresources;
+import :visualface;
+import :visualresourcesbase;
+
 import sm.vec;
 
-namespace mplot
+export namespace mplot
 {
     // Pointers to mplot::VisualBase are used to index font faces
     template<int>

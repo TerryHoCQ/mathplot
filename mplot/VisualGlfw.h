@@ -6,8 +6,7 @@
  * \author Seb James
  * \date March 2025
  */
-
-#pragma once
+module;
 
 #ifndef _glfw3_h_
 # define GLFW_INCLUDE_NONE
@@ -16,8 +15,11 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <mplot/gl/version.h>
 
-namespace mplot
+export module mplot.core:visualglfw;
+
+export namespace mplot
 {
     //! Singleton resource class for mplot::Visual scenes.
     template<int glver>

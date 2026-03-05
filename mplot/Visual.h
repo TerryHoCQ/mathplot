@@ -15,7 +15,7 @@
  * \author Seb James
  * \date May 2025
  */
-#pragma once
+module;
 
 #ifndef _glfw3_h_ // glfw3 has not yet been externally included
 # define GLFW_INCLUDE_NONE // Here, we tell GLFW that we will explicitly include GL3/gl3.h and GL/glext.h
@@ -25,16 +25,19 @@
 #include <mutex>
 #include <chrono>
 
-namespace mplot
+export module mplot.core:visual;
+
+export import :visualglfw;
+
+export import :visualownable;
+
+export namespace mplot
 {
     // With mplot::Visual, we use a GLFW window which is owned by mplot::Visual.
     using win_t = GLFWwindow;
 }
 
-#include <mplot/VisualOwnable.h>
-#include <mplot/VisualGlfw.h>
-
-namespace mplot
+export namespace mplot
 {
     /*!
      * Visual 'scene' class

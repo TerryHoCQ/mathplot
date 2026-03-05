@@ -9,8 +9,7 @@
  * \author Seb James
  * \date November 2020
  */
-
-#pragma once
+module;
 
 #include <map>
 #include <iostream>
@@ -18,9 +17,6 @@
 #include <fstream>
 
 #include <mplot/tools.h>
-#include <mplot/VisualCommon.h> // for visgl::CharInfo
-#include <mplot/VisualFont.h>
-#include <mplot/TextFeatures.h>
 
 // FreeType for text rendering
 #include <ft2build.h>
@@ -160,6 +156,16 @@ extern const char __stop_dvsansbd_ttf[];
 extern const char __start_dvsansbi_ttf[];
 extern const char __stop_dvsansbi_ttf[];
 #endif
+
+/*
+ * Module starts here
+ */
+
+export module mplot.core:visualfacebase;
+
+import :visualcommon;
+import :visualfont;
+import :textfeatures;
 
 namespace mplot::visgl
 {

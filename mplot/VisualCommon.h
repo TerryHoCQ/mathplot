@@ -1,26 +1,26 @@
-#pragma once
-
 /*
  * Common code for GL functionality in mathplot programs.
  *
  * Author: Seb James.
  */
+module;
 
 #include <stdexcept>
 #include <iostream>
 #include <cstring>
 #include <string>
 #include <array>
+#include <mplot/tools.h>
+#include <mplot/colour.h>
+
+export module mplot.core:visualcommon;
 
 import sm.vec;
 import sm.range;
 import sm.vvec;
 import sm.mat;
 
-#include <mplot/tools.h>
-#include <mplot/colour.h>
-
-namespace mplot
+export namespace mplot
 {
     // A very simple mesh struct. No textures, materials or owt
     struct meshgroup
@@ -47,7 +47,7 @@ namespace mplot
     };
 }
 
-namespace mplot::visgl
+export namespace mplot::visgl
 {
     // A container struct for the shader program identifiers used in a mplot::Visual. Separate
     // from mplot::Visual so that it can be used in mplot::VisualModel as well, which does not

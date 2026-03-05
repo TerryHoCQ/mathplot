@@ -1,10 +1,10 @@
-#pragma once
+export module mplot.core:visualfont;
 
 /*
  * This is just an enumerated class that defines the fonts we pack into a mplot binary
  */
 
-namespace mplot
+export namespace mplot
 {
     //! The fonts supported (i.e. compiled in) to mplot::Visual
     enum class VisualFont

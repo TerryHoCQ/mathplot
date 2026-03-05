@@ -14,20 +14,28 @@
  * \author Seb James
  * \date Oct 2020 - Mar 2026
  */
+module;
 
-#pragma once
-
-#include <mplot/VisualTextModelBase.h>
+#include <memory>
+#include <functional>
 
 #if defined __gl3_h_ || defined __gl_h_
 // GL headers have been externally included
 #else
-# error "GL headers should have been included already"
+// Include GLAD header
+# define GLAD_GL_IMPLEMENTATION
+#  include <mplot/glad/gl_mx.h>
 #endif
 
+#include <mplot/gl/version.h>
 #include <mplot/gl/util_mx.h>
-#include <mplot/VisualFace.h>
-#include <mplot/VisualResources.h>
+#include <mplot/unicode.h>
+
+export module mplot.core:visualtextmodel;
+
+import :visualtextmodelbase;
+import :visualface;
+import :visualresources;
 
 import sm.vec;
 

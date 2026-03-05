@@ -15,7 +15,9 @@
 #if defined __gl3_h_ || defined __gl_h_
 // GL headers have been externally included
 #else
-# error "GL headers should have been included already"
+// Include GLAD header
+# define GLAD_GL_IMPLEMENTATION
+#  include <mplot/glad/gl_mx.h>
 #endif
 
 #include <iostream>
@@ -47,7 +49,8 @@ import sm.range;
 import sm.algo;
 import sm.flags;
 
-#include <mplot/VisualCommon.h>
+import mplot.core;
+
 #include <mplot/colour.h>
 #include <mplot/tools.h>
 #include <mplot/NavMesh.h>
