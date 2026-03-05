@@ -28,8 +28,7 @@ module;
 #  include <mplot/glad/gl_mx.h>
 #endif
 
-// THIS include is the issue
-// #include <mplot/VisualModel.h>
+#include <sm/mathconst>
 
 #include <mplot/gl/shaders.h>
 #include <mplot/keys.h>
@@ -37,17 +36,9 @@ module;
 
 #include <nlohmann/json.hpp>
 
-// And these
-//#include <mplot/CoordArrows.h>
-//#include <mplot/RodVisual.h>
 #include <mplot/tools.h>
 
 #include <mplot/VisualDefaultShaders.h>
-
-// Use Lode Vandevenne's PNG encoder
-#define LODEPNG_NO_COMPILE_DECODER 1
-#define LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS 1
-#include <mplot/lodepng.h>
 
 export module mplot.core:visualbase;
 
@@ -61,6 +52,7 @@ import :win_t;
 import :textfeatures;
 import :textgeometry;
 import :visualcommon;
+import :coordarrows;
 
 export namespace mplot
 {
@@ -161,17 +153,9 @@ export namespace mplot
         orthographic
     };
 
-#ifdef __APPLE__
-    // https://stackoverflow.com/questions/35715579/opengl-created-window-size-twice-as-large
-    static constexpr double retinaScale = 2; // deals with quadrant issue on osx
-#else
-    static constexpr double retinaScale = 1; // Qt has devicePixelRatio() to get retinaScale.
-#endif
-
     // Forward declare VisualModels
     template <int> class VisualModel;
-    template <int> class CoordArrows;
-    template <int> class RodVisual;
+    //template <int> class CoordArrows; // shouldn't need to now
 
     /*!
      * VisualBase, the mplot::Visual 'scene' base class
@@ -403,7 +387,6 @@ export namespace mplot
         //! Compute position and rotation of coordinate arrows in the bottom left of the screen
         void positionCoordArrows()
         {
-#if 0
             // Find out the location of the bottom left of the screen and make the coord
             // arrows stay put there.
 
@@ -420,37 +403,32 @@ export namespace mplot
             v0.set_from ((this->invproj * p0));
             // Translate the scene for the CoordArrows such that they sit in a single position on
             // the screen
-            this->coordArrows->setSceneTranslation (v0); // argh. method.
+            this->coordArrows->setSceneTranslation (v0);
             // Apply rotation to the coordArrows model
             sm::quaternion<float> svrq = this->sceneview.rotation();
             svrq.renormalize();
             this->coordArrows->setViewRotation (svrq);
-#endif
         }
 
         // Update the coordinate axes labels
         void updateCoordLabels (const std::string& x_lbl, const std::string& y_lbl, const std::string& z_lbl)
         {
-#if 0
             this->coordArrows->clear();
             this->coordArrows->x_label = x_lbl;
             this->coordArrows->y_label = y_lbl;
             this->coordArrows->z_label = z_lbl;
             this->coordArrows->initAxisLabels();
             this->coordArrows->reinit();
-#endif
         }
 
         // Update the lengths of the CoordArrows that (usually) appear in the corner of the screen
         void updateCoordLengths (const sm::vec<float, 3>& _lengths, const float _thickness = 1.0f)
         {
-#if 0
             this->coordArrows->lengths = _lengths;
             this->coordArrows->thickness = _thickness;
             this->coordArrows->clear();
             this->coordArrows->initAxisLabels();
             this->coordArrows->reinit();
-#endif
         }
 
         // state defaults. All state is false by default
@@ -1059,9 +1037,6 @@ export namespace mplot
         //! Position coordinate arrows on screen. Configurable at mplot::Visual construction.
         sm::vec<float, 2> coordArrowsOffset = { -0.8f, -0.8f };
 
-        //! Show the user's frame of reference as a model in the scene coords (for debug)
-        std::unique_ptr<mplot::RodVisual<glver>> userFrame;
-
         /*
          * Variables to manage projection and rotation of the scene
          */
@@ -1461,6 +1436,7 @@ export namespace mplot
             auto vmi = this->vm.begin();
             while (vmi != this->vm.end()) {
 
+                // vm_bools comes from VisualModel and would need to be shared
                 if ((*vmi)->flags.test (mplot::vm_bools::compute_bb) && !(*vmi)->flags.test (mplot::vm_bools::twodimensional)) {
 
                     sm::vec<float> tr_bb_centre = (this->savedSceneview * (*vmi)->get_viewmatrix_bb_centre()).less_one_dim();

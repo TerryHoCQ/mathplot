@@ -17,8 +17,15 @@
  */
 module;
 
+#ifndef _glfw3_h_ // glfw3 has not yet been externally included
+# define GLFW_INCLUDE_NONE // Here, we tell GLFW that we will explicitly include GL3/gl3.h and GL/glext.h
+# include <GLFW/glfw3.h>
+#endif // _glfw3_h_
+
 #include <mutex>
 #include <chrono>
+
+#include <mplot/gl/version.h>
 
 export module mplot.core:visual;
 

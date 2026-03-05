@@ -39,6 +39,8 @@ set_source_files_properties (
   ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualTextModelBase.h
+  ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
+  ${PROJECT_SOURCE_DIR}/mplot/win_t.h
   ${PROJECT_SOURCE_DIR}/mplot/core.ixx
   PROPERTIES LANGUAGE CXX
 )
@@ -47,6 +49,8 @@ add_executable(helloworld helloworld.cpp)
 target_sources(helloworld PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES
   ${PROJECT_SOURCE_DIR}/mplot/core.ixx
+  ${PROJECT_SOURCE_DIR}/mplot/win_t.h
+  ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualBase.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
   ${PROJECT_SOURCE_DIR}/mplot/Visual.h

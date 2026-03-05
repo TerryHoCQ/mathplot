@@ -28,6 +28,15 @@ module;
 #include <mplot/gl/util_mx.h>
 #include <mplot/gl/version.h>
 
+#include <mplot/version.h>
+
+// Use Lode Vandevenne's PNG encoder
+#define LODEPNG_NO_COMPILE_DECODER 1
+#define LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS 1
+#include <mplot/lodepng.h>
+
+#include <mplot/VisualDefaultShaders.h>
+
 export module mplot.core:visualownable;
 
 import :visualresources;
@@ -36,6 +45,13 @@ import :visualbase;
 
 export namespace mplot
 {
+#ifdef __APPLE__
+    // https://stackoverflow.com/questions/35715579/opengl-created-window-size-twice-as-large
+    constexpr double retinaScale = 2; // deals with quadrant issue on osx
+#else
+    constexpr double retinaScale = 1; // Qt has devicePixelRatio() to get retinaScale.
+#endif
+
     /*!
      * VisualOwnable - adds multi-context-safe GL calls to the 'scene' base class, VisualBase
      *
@@ -451,22 +467,13 @@ export namespace mplot
             this->coordArrows = std::make_unique<mplot::CoordArrows<glver>>();
             // For CoordArrows, because we don't add via Visual::addVisualModel(), we
             // have to set the get_shaderprogs function here:
-            this->bindmodel (this->coordArrows);
+            this->bindmodel (this->coordArrows); // Won't need bindmodel
             // And NOW we can proceed to init (lengths, thickness, em size for labels):
             this->coordArrows->init (sm::vec<>{0.1f, 0.1f, 0.1f}, 1.0f, 0.01f);
+
+            // Prolly don't need the finalize scheme with CoordArrows
             this->coordArrows->finalize(); // VisualModel::finalize releases context (normally this is the right thing)...
             this->setContext();            // ...but we've got more work to do, so re-acquire context (if we're managing it)
-
-            // Create 'user frame of reference object'
-            this->userFrame = std::make_unique<mplot::RodVisual<glver>>();
-            this->bindmodel (this->userFrame);
-            this->userFrame->init (sm::vec<float, 3>{},
-                                   sm::vec<float, 3>{0.0f, 0.0f, -100.0f}, sm::vec<float, 3>{0.1f, 0.1f, 1.0f}, 0.05f,
-                                   mplot::colour::turquoise2, mplot::colour::turquoise4);
-            this->userFrame->face_uy = sm::vec<>::ux();
-            this->userFrame->face_uz = sm::vec<>::uy();
-            this->userFrame->finalize();
-            this->setContext(); // see createCoordArrows() for comments
 
             mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
 

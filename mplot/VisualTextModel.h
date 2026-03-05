@@ -39,7 +39,7 @@ import :visualresources;
 
 import sm.vec;
 
-namespace mplot
+export namespace mplot
 {
     //! Forward declaration of a VisualBase class
     template <int> class VisualBase;

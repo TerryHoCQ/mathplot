@@ -1,3 +1,4 @@
+#include <mplot/gl/version.h>
 import mplot.core;
 
 int main()
