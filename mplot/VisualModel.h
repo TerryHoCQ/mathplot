@@ -30,8 +30,8 @@ import mplot.core; // To know about VisualBase and VisualOwnable static methods
 namespace mplot
 {
     //! Forward declaration of base classes
-    template <int> class VisualBase;
-    template <int> class VisualOwnable;
+    //template <int> class VisualBase;
+    //template <int> class VisualOwnable;
 
     /*!
      * An OpenGL model class
@@ -62,7 +62,10 @@ namespace mplot
             // Explicitly clear owned VisualTextModels
             this->texts.clear();
             if (this->vbos != nullptr) {
-                GladGLContext* _glfn = this->get_glfn (this->parentVis);
+                if (this->visual_id == std::numeric_limits<uint32_t>::max()) {
+                    throw std::runtime_error ("visual_id is unset");
+                }
+                GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->visual_id);
                 _glfn->DeleteBuffers (this->numVBO, this->vbos.get());
                 _glfn->DeleteVertexArrays (1, &this->vao);
             }
@@ -150,7 +153,10 @@ namespace mplot
         //! Common code to call after the vertices have been set up. GL has to have been initialised.
         void postVertexInit() final
         {
-            GladGLContext* _glfn = this->get_glfn (this->parentVis);
+            if (this->visual_id == std::numeric_limits<uint32_t>::max()) {
+                throw std::runtime_error ("visual_id is unset");
+            }
+            GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->visual_id);
 
             // Do gl memory allocation of vertex array once only
             if (this->vbos == nullptr) {
@@ -235,7 +241,11 @@ namespace mplot
          */
         void reinit_buffers() final
         {
-            GladGLContext* _glfn = this->get_glfn(this->parentVis);
+            if (this->visual_id == std::numeric_limits<uint32_t>::max()) {
+                throw std::runtime_error ("visual_id is unset");
+            }
+            GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->visual_id);
+
             if (this->setContext != nullptr) { this->setContext (this->parentVis); }
             if (this->flags.test (vm_bools::postVertexInitRequired) == true) { this->postVertexInit(); }
 
@@ -273,7 +283,10 @@ namespace mplot
         {
             if (this->setContext != nullptr) { this->setContext (this->parentVis); }
             if (this->flags.test (vm_bools::postVertexInitRequired) == true) { this->postVertexInit(); }
-            GladGLContext* _glfn = this->get_glfn(this->parentVis);
+            if (this->visual_id == std::numeric_limits<uint32_t>::max()) {
+                throw std::runtime_error ("visual_id is unset");
+            }
+            GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->visual_id);
             // Now re-set up the VBOs
             _glfn->BindVertexArray (this->vao);  // carefully unbind and rebind
             this->setupVBO (this->vbos[this->colVBO], this->vertexColors, visgl::colLoc);
@@ -295,7 +308,10 @@ namespace mplot
 
             GLint prev_shader = 0;
 
-            GladGLContext* _glfn = this->get_glfn (this->parentVis);
+            if (this->visual_id == std::numeric_limits<uint32_t>::max()) {
+                throw std::runtime_error ("visual_id is unset");
+            }
+            GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->visual_id);
             _glfn->GetIntegerv (GL_CURRENT_PROGRAM, &prev_shader);
             // Ensure the correct program is in play for this VisualModel
             _glfn->UseProgram (this->get_gprog(this->parentVis));
@@ -498,9 +514,6 @@ namespace mplot
             while (ti != this->texts.end()) { (*ti)->addViewRotation (r); ti++; }
         }
 
-        //! Get the GladGLContext function pointer
-        std::function<GladGLContext*(mplot::VisualBase<glver>*)> get_glfn;
-
     protected:
 
         //! A vector of pointers to text models that should be rendered.
@@ -511,7 +524,10 @@ namespace mplot
         {
             std::size_t sz = dat.size() * sizeof(float);
 
-            GladGLContext* _glfn = this->get_glfn(this->parentVis);
+            if (this->visual_id == std::numeric_limits<uint32_t>::max()) {
+                throw std::runtime_error ("visual_id is unset");
+            }
+            GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->visual_id);
             _glfn->BindBuffer (GL_ARRAY_BUFFER, buf);
             mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
             _glfn->BufferData (GL_ARRAY_BUFFER, sz, dat.data(), GL_STATIC_DRAW);

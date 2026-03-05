@@ -35,14 +35,15 @@ module;
 export module mplot.core:visualresources;
 import :visualface;
 import :visualresourcesbase;
+import :visualbase;
 
 import sm.vec;
 
 export namespace mplot
 {
     // Pointers to mplot::VisualBase are used to index font faces
-    template<int>
-    class VisualBase;
+    //template<int>
+    //class VisualBase;
 
     //! Singleton resource class for mplot::Visual scenes.
     template <int glver>
@@ -131,6 +132,27 @@ export namespace mplot
                     f = this->faces.erase (f);
                 } else { f++; }
             }
+        }
+
+        uint32_t register_visual (mplot::VisualBase<glver>* vp)
+        {
+            uint32_t visual_id = next_visual_id++;
+            visual_pointers[visual_id] = vp;
+            return visual_id;
+        }
+
+        uint32_t next_visual_id = 0;
+
+        // Pointers to Visuals in the program, keyed by a uint32_t ID
+        std::map<uint32_t, mplot::VisualBase<glver>*> visual_pointers;
+
+        // A VisualModel can call this, passing in the numeric ID of the context it belongs to and
+        // this will pass back the correct GL context pointer.
+        GladGLContext* get_glfn (uint32_t visual_id)
+        {
+            visual_pointers[visual_id]->setContext();
+            GladGLContext* glfn = visual_pointers[visual_id]->get_glfn (visual_pointers[visual_id]);
+            return glfn;
         }
 
         /*!

@@ -1019,6 +1019,9 @@ export namespace mplot
         //! The window (and OpenGL context) for this Visual
         mplot::win_t* window = nullptr;
 
+        //! Each window has an ID number, which is passed to the owned VisualModels
+        uint32_t visual_id = std::numeric_limits<uint32_t>::max();
+
         //! Current window width
         int window_w = 640;
         //! Current window height

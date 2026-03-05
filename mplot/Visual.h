@@ -105,6 +105,9 @@ export namespace mplot
             this->init_window();
             this->setContext(); // For freetype_init
             this->freetype_init();
+
+            uint32_t my_id = mplot::VisualResources<glver>::i().register_visual (this);
+
             this->releaseContext();
         }
 

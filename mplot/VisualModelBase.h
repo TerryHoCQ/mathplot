@@ -162,7 +162,9 @@ namespace mplot
         //! Re-create the model - called after updating data
         void reinit()
         {
-            if (this->setContext != nullptr) { this->setContext (this->parentVis); }
+            if (this->setContext != nullptr) {
+                this->setContext (this->parentVis);
+            }
             // Fixme: Better not to clear, then repeatedly pushback here:
             this->vertexPositions.clear();
             this->vertexNormals.clear();
@@ -784,6 +786,9 @@ namespace mplot
 
         // A VisualModel may be given a name
         std::string name = {};
+
+        // The mplot::Visual ID to which I belong. max means unset.
+        uint32_t visual_id = std::numeric_limits<uint32_t>::max();
 
         //! The current indices index
         GLuint idx = 0u;
