@@ -34,7 +34,6 @@
 #include <set>
 #include <tuple>
 
-#include <mplot/gl/version.h>
 #include <mplot/gl/util_mx.h>
 
 #include <sm/mathconst>
@@ -53,10 +52,9 @@ import sm.flags;
 import mplot.visualcommon;
 import mplot.visualresources;
 import mplot.visualtextmodel;
+import mplot.colour;
+import mplot.gl.version;
 
-//import mplot.core;// Can I avoid use of this in VisualModelBase?
-
-#include <mplot/colour.h>
 #include <mplot/tools.h>
 #include <mplot/NavMesh.h>
 
@@ -67,16 +65,6 @@ namespace mplot
         float f;
         uint8_t bytes[sizeof(float)];
     };
-
-    //! Forward declaration of a Visual class
-    // Right now, models need to know about VisualBase to:
-    // get shader progs
-    // set/get context
-    //
-    // Could I have a singleton that can do the work and is a separate class so taht VisualModel no
-    // longer needs to know about VisualBase?  Visual registers its identity and the shader programs
-    // and the singleton could set context based on an id that the VisualModel contains?
-    //template <int> class VisualBase;
 
     /*!
      * An OpenGL model class
@@ -1138,13 +1126,6 @@ namespace mplot
         //! If drawing with instancing, how many params will be used (these will be cycled through
         //! per-instance and there may be fewer than instance_count parameters)
         unsigned int instparam_count = 0;
-#if 0
-        //! Init the SSBOs for instanced rendering
-        std::function<unsigned int(mplot::VisualBase<glver>*, const unsigned int)> init_instance_data;
-        std::function<void(const unsigned int, const sm::vec<float, 3>&)> insert_instance_data;
-        std::function<void(const unsigned int, const std::array<float, 3>&, const float, const float)> insert_instparam_data;
-        std::function<void(mplot::VisualBase<glver>*)> instanced_needs_update;
-#endif
 
         //! Set the scaling matrix for all instances
         void set_instance_scale (const float scl)

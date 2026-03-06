@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <mplot/gl/version.h>
+import mplot.gl.version;
 
 namespace mplot
 {

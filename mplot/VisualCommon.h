@@ -11,7 +11,6 @@ module;
 #include <string>
 #include <array>
 #include <mplot/tools.h>
-#include <mplot/colour.h>
 
 export module mplot.visualcommon;
 
@@ -19,6 +18,7 @@ import sm.vec;
 import sm.range;
 import sm.vvec;
 import sm.mat;
+import mplot.colour;
 
 export namespace mplot
 {

@@ -28,7 +28,6 @@ module;
 #include <iostream>
 #include <map>
 #include <memory>
-#include <mplot/gl/version.h>
 #include <mplot/gl/util_mx.h>
 #include <mplot/gl/ssbo_mx.h>
 
@@ -39,6 +38,7 @@ import mplot.visualface;
 import mplot.visualfont;
 import mplot.textfeatures;
 import mplot.win_t;
+import mplot.gl.version;
 
 import sm.vec;
 

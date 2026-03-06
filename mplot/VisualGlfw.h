@@ -15,9 +15,10 @@ module;
 
 #include <iostream>
 #include <stdexcept>
-#include <mplot/gl/version.h>
 
-export module mplot.core:visualglfw;
+export module mplot.visualglfw;
+
+import mplot.gl.version;
 
 export namespace mplot
 {

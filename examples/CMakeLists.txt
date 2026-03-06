@@ -37,14 +37,16 @@ set_source_files_properties (
   ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
   ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
   ${PROJECT_SOURCE_DIR}/mplot/win_t.h
-  ${PROJECT_SOURCE_DIR}/mplot/core.ixx
+  ${PROJECT_SOURCE_DIR}/mplot/colour.h
+  ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
   PROPERTIES LANGUAGE CXX
 )
 
 add_executable(helloworld helloworld.cpp)
 target_sources(helloworld PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES
-  ${PROJECT_SOURCE_DIR}/mplot/core.ixx
+  ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
+  ${PROJECT_SOURCE_DIR}/mplot/colour.h
   ${PROJECT_SOURCE_DIR}/mplot/win_t.h
   ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
@@ -72,6 +74,20 @@ target_link_libraries(helloworld OpenGL::GL glfw Freetype::Freetype glad mplot_f
 add_executable(rod rod.cpp)
 target_sources(rod PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES
+  ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
+  ${PROJECT_SOURCE_DIR}/mplot/colour.h
+  ${PROJECT_SOURCE_DIR}/mplot/win_t.h
+  ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
+  ${PROJECT_SOURCE_DIR}/mplot/Visual.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualFace.h
+  ${PROJECT_SOURCE_DIR}/mplot/TextFeatures.h
+  ${PROJECT_SOURCE_DIR}/mplot/TextGeometry.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualResources.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
   ${PROJECT_SOURCE_DIR}/maths/sm/flags
   ${PROJECT_SOURCE_DIR}/maths/sm/algo
   ${PROJECT_SOURCE_DIR}/maths/sm/range
@@ -82,7 +98,7 @@ target_sources(rod PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   ${PROJECT_SOURCE_DIR}/maths/sm/geometry
   ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
   ${PROJECT_SOURCE_DIR}/maths/sm/vvec)
-target_link_libraries(rod OpenGL::GL glfw Freetype::Freetype)
+target_link_libraries(rod OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
 # mplot::Grid is runtime-configured
 add_executable(grid_simple grid_simple.cpp)

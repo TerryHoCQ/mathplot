@@ -1,5 +1,5 @@
-#include <mplot/gl/version.h>
-import mplot.core;
+import mplot.visual;
+import mplot.gl.version;
 
 int main()
 {

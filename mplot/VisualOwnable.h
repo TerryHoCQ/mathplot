@@ -30,7 +30,6 @@ module;
 #include <mplot/gl/shaders.h>
 #include <mplot/gl/loadshaders_mx.h>
 #include <mplot/gl/util_mx.h>
-#include <mplot/gl/version.h>
 #include <mplot/keys.h>
 #include <mplot/version.h>
 
@@ -49,7 +48,7 @@ module;
 
 #include <mplot/VisualDefaultShaders.h>
 
-export module mplot.core:visualownable;
+export module mplot.visualownable;
 
 import mplot.win_t;
 import mplot.visualcommon;
@@ -57,7 +56,8 @@ import mplot.visualresources;
 import mplot.visualtextmodel;
 import mplot.textgeometry;
 import mplot.textfeatures;
-import :coordarrows;
+import mplot.coordarrows;
+import mplot.gl.version;
 
 import sm.vec;
 
@@ -216,7 +216,8 @@ export namespace mplot
             // Explicitly deconstruct coordArrows, textModel and texts here
             this->coordArrows.reset (nullptr);
             this->textModel.reset (nullptr);
-            for (auto& t : this->texts) { t.reset (nullptr); }
+            for (uint32_t i = 0; i < this->texts.size(); ++i) { this->texts[i].reset (nullptr); }
+            //for (auto& t : this->texts) { t.reset (nullptr); }
 
             if (this->shaders.gprog) {
                 this->glfn->DeleteProgram (this->shaders.gprog);
@@ -598,29 +599,7 @@ export namespace mplot
             this->releaseContext();
             return tm->getTextGeometry();
         }
-#if 0 // code to use VisualResources directly
-        static unsigned int init_instance_data (mplot::VisualOwnable<glver>* _v, const unsigned int n_to_reserve)
-        {
-            unsigned int reservation = mplot::VisualResources<glver>::i().init_instance_ssbo (_v->glfn, n_to_reserve);
-            return reservation;
-        }
 
-        static void insert_instance_data (const unsigned int instance_idx, const sm::vec<float, 3>& coord)
-        {
-            mplot::VisualResources<glver>::i().insert_instance_data (instance_idx, coord);
-        }
-
-        static void insert_instparam_data (const unsigned int instance_idx,
-                                           const std::array<float, 3>& colour, const float& alpha, const float& scale)
-        {
-            mplot::VisualResources<glver>::i().insert_instparam_data (instance_idx, colour, alpha, scale);
-        }
-
-        static void copy_instance_data_to_gpu()
-        {
-            mplot::VisualResources<glver>::i().copy_instance_ssbo_to_gpu();
-        }
-#endif
     protected:
         // Initialize OpenGL shaders, set some flags (Alpha, Anti-aliasing), read in any external
         // state from json, and set up the coordinate arrows and any VisualTextModels that will be
@@ -700,13 +679,6 @@ export namespace mplot
         std::vector<mplot::gl::ShaderInfo> proj2d_shader_progs;
         //! Stores the info required to load the text shader
         std::vector<mplot::gl::ShaderInfo> text_shader_progs;
-#if 0 // To go
-        // These static functions will be set as callbacks in each VisualModel object.
-        static mplot::visgl::visual_shaderprogs get_shaderprogs (mplot::VisualOwnable<glver>* _v) { return _v->shaders; };
-        static GLuint get_gprog (mplot::VisualOwnable<glver>* _v) { return _v->shaders.gprog; };
-        static GLuint get_tprog (mplot::VisualOwnable<glver>* _v) { return _v->shaders.tprog; };
-        static void instanced_needs_update (mplot::VisualOwnable<glver>* _v) { _v->instancedNeedsUpdate (true); } //next
-#endif
 
         //! The colour of ambient and diffuse light sources
         sm::vec<float, 3> light_colour = { 1.0f, 1.0f, 1.0f };

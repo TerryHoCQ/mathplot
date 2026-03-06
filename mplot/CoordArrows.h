@@ -21,15 +21,16 @@ module;
 
 #include <sm/mathconst>
 
-#include <mplot/gl/version.h>
 #include <mplot/gl/util_mx.h>
-#include <mplot/colour.h>
 
-export module mplot.core:coordarrows;
+export module mplot.coordarrows;
 
 import mplot.visualtextmodel;
 import mplot.textfeatures;
 import mplot.visualfont;
+import mplot.visualcommon;
+import mplot.colour;
+import mplot.gl.version;
 import sm.vec;
 import sm.mat;
 import sm.flags;
@@ -264,10 +265,6 @@ export namespace mplot
                 if (loc_s != -1) { this->glfn->UniformMatrix4fv (loc_s, 1, GL_FALSE, idmat.arr.data()); }
 
                 // Draw the triangles
-                //GLint loc_is = this->glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("instance_start"));
-                //GLint loc_ic = this->glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("instance_count"));
-                //if (loc_is != -1) { this->glfn->Uniform1i (loc_is, -1); }
-                //if (loc_ic != -1) { this->glfn->Uniform1i (loc_ic, -1); }
                 this->glfn->DrawElements (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0);
 
                 // Unbind the VAO

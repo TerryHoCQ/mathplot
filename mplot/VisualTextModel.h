@@ -27,10 +27,8 @@ module;
 
 #include <sm/mathconst>
 
-#include <mplot/gl/version.h>
 #include <mplot/gl/util_mx.h>
 #include <mplot/unicode.h>
-#include <mplot/colour.h>
 
 export module mplot.visualtextmodel;
 
@@ -39,6 +37,8 @@ import mplot.visualcommon;
 export import mplot.textgeometry;
 export import mplot.textfeatures;
 import mplot.visualface;
+import mplot.colour;
+import mplot.gl.version;
 
 import sm.quaternion;
 import sm.mat;
@@ -46,9 +46,6 @@ import sm.vec;
 
 export namespace mplot
 {
-    //! Forward declaration of a VisualBase class
-    //template <int> class VisualBase;
-
     /*!
      * This is the base class for VisualTextModel containing common code, but no GL function calls.
      */
@@ -132,7 +129,8 @@ export namespace mplot
 
             // First convert string from ASCII/UTF-8 into Unicode.
             std::basic_string<char32_t> utxt = mplot::unicode::fromUtf8(_txt);
-            for (std::basic_string<char32_t>::const_iterator c = utxt.begin(); c != utxt.end(); c++) {
+            // on g++ 15 there's an issue with operator!= when used in a module
+            for (std::basic_string<char32_t>::const_iterator c = utxt.cbegin(); c != utxt.cend(); c++) {
                 mplot::visgl::CharInfo ci = this->face->glchars[*c];
                 float drop = (ci.size.y() - ci.bearing.y()) * this->fontscale;
                 geom.max_drop = (drop > geom.max_drop) ? drop : geom.max_drop;
@@ -165,10 +163,6 @@ export namespace mplot
             return geom;
         }
 
-        //! For some reason, I can't place these setupText functions in the base class. Compiler
-        //! gets confused wtih std::string aka std::__cxx11::basic_string<char> and
-        //! std::__cxx11::basic_string<char32_t>
-        //!{
         //! Set up a new text at a given position, with the given colour.
         void setupText (const std::string& _txt,
                         const sm::vec<float> _offset, std::array<float, 3> _clr = {0,0,0})
@@ -194,7 +188,6 @@ export namespace mplot
             // Convert std::string _txt to std::basic_string<uchar32_t> text and call the other setupText
             this->setupText (mplot::unicode::fromUtf8 (_txt));
         }
-        //!}
 
         //! With the given text and font size information, create the quads for the text.
         void setupText (const std::basic_string<char32_t>& _txt)

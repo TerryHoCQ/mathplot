@@ -1,11 +1,11 @@
 module;
 
 #include <array>
-#include <mplot/colour.h>
 
 export module mplot.textfeatures;
 
 import mplot.visualfont;
+import mplot.colour;
 
 export namespace mplot
 {

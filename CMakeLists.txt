@@ -155,7 +155,9 @@ else()
 endif()
 
 # Use packaged nlohmann json
-find_package(nlohmann_json REQUIRED)
+# find_package(nlohmann_json REQUIRED)
+# Now nlohmann is submoduled to get an up-to-date version (for C++ modules)
+include_directories("${PROJECT_SOURCE_DIR}/json/include")
 
 # If Qt5 is present, then some optional Qt examples will be compiled
 find_package(Qt5 QUIET COMPONENTS Gui Core Widgets)

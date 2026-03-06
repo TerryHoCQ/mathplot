@@ -24,15 +24,17 @@ module;
 
 #include <mutex>
 #include <chrono>
+#include <utility>
 
-#include <mplot/gl/version.h>
-
-export module mplot.core:visual;
+export module mplot.visual;
 
 export import mplot.win_t;
 import mplot.visualresources;
-export import :visualglfw;
-export import :visualownable;
+
+export import mplot.visualglfw;
+import mplot.visualownable;
+
+import mplot.gl.version;
 
 export namespace mplot
 {
