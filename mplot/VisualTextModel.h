@@ -67,8 +67,10 @@ export namespace mplot
         ~VisualTextModel()
         {
             if (this->vbos != nullptr) {
-                this->get_glfn(this->parentVis)->DeleteBuffers (this->numVBO, this->vbos.get());
-                this->get_glfn(this->parentVis)->DeleteVertexArrays (1, &this->vao);
+                // To be a visualresources get
+                GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
+                _glfn->DeleteBuffers (this->numVBO, this->vbos.get());
+                _glfn->DeleteVertexArrays (1, &this->vao);
             }
         }
 
@@ -78,9 +80,8 @@ export namespace mplot
             if (this->hide == true) { return; }
 
             GLint prev_shader;
-            GLuint tshaderprog = this->get_tprog (this->parentVis);
-
-            auto _glfn = this->get_glfn (this->parentVis);
+            GLuint tshaderprog = mplot::VisualResources<glver>::i().get_tprog (this->parentVis);
+            GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
 
             _glfn->GetIntegerv (GL_CURRENT_PROGRAM, &prev_shader);
 
@@ -120,20 +121,15 @@ export namespace mplot
             mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
         }
 
-#if 0
-        //! Get the GladGLContext function pointer
-        std::function<GladGLContext*(mplot::VisualBase<glver>*)> get_glfn;
-#endif
-
         //! Compute the geometry for a sample text.
         mplot::TextGeometry getTextGeometry (const std::string& _txt)
         {
             mplot::TextGeometry geom;
 
-            if (!this->get_glfn) { return geom; }
+            if (!mplot::VisualResources<glver>::i().test_glfn (this->parentVis)) { return geom; }
             if (this->face == nullptr) {
-                this->face = VisualResources<glver>::i().getVisualFace (this->tfeatures, this->parentVis,
-                                                                        this->get_glfn(this->parentVis));
+                GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
+                this->face = VisualResources<glver>::i().getVisualFace (this->tfeatures, this->parentVis, _glfn);
             }
 
             // First convert string from ASCII/UTF-8 into Unicode.
@@ -154,10 +150,10 @@ export namespace mplot
         {
             mplot::TextGeometry geom;
 
-            if (!this->get_glfn) { return geom; }
+            if (!mplot::VisualResources<glver>::i().test_glfn (this->parentVis)) { return geom; }
             if (this->face == nullptr) {
-                this->face = VisualResources<glver>::i().getVisualFace (this->tfeatures, this->parentVis,
-                                                                        this->get_glfn(this->parentVis));
+                GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
+                this->face = VisualResources<glver>::i().getVisualFace (this->tfeatures, this->parentVis, _glfn);
             }
 
             for (std::basic_string<char32_t>::const_iterator c = this->txt.begin(); c != this->txt.end(); c++) {
@@ -208,8 +204,8 @@ export namespace mplot
             constexpr bool debug_textquads = false;
 
             if (this->face == nullptr) {
-                this->face = VisualResources<glver>::i().getVisualFace (this->tfeatures, this->parentVis,
-                                                                        this->get_glfn(this->parentVis));
+                GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
+                this->face = VisualResources<glver>::i().getVisualFace (this->tfeatures, this->parentVis, _glfn);
             }
 
             this->txt = _txt;
@@ -285,7 +281,7 @@ export namespace mplot
         //! Common code to call after the vertices have been set up.
         void postVertexInit()
         {
-            auto _glfn = this->get_glfn (this->parentVis);
+            GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
             if (this->vbos == nullptr) {
                 // Create vertex array object
                 _glfn->GenVertexArrays (1, &this->vao); // Safe for OpenGL 4.4-
@@ -326,13 +322,14 @@ export namespace mplot
         void setupVBO (GLuint& buf, std::vector<float>& dat, unsigned int bufferAttribPosition)
         {
             std::size_t sz = dat.size() * sizeof(float);
-            auto _glfn = this->get_glfn (this->parentVis);
+            GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
             _glfn->BindBuffer (GL_ARRAY_BUFFER, buf);
             _glfn->BufferData (GL_ARRAY_BUFFER, sz, dat.data(), GL_STATIC_DRAW);
             _glfn->VertexAttribPointer (bufferAttribPosition, 3, GL_FLOAT, GL_FALSE, 0, (void*)(0));
             _glfn->EnableVertexAttribArray (bufferAttribPosition);
         }
 
+    public:
         //! Set clr_text to a value suitable to be visible on the background colour bgcolour
         void setVisibleOn (const std::array<float, 4>& bgcolour)
         {
@@ -477,17 +474,14 @@ export namespace mplot
         // A VisualTextModel may be given a name
         std::string name = "VisualTextModel";
 
-        // The mplot::Visual ID to which I belong. max means unset.
-        uint32_t visual_id = std::numeric_limits<uint32_t>::max();
-
         //! The colour of the text
         std::array<float, 3> clr_text = {0.0f, 0.0f, 0.0f};
         //! Line spacing, in multiples of the height of an 'h'
         float line_spacing = 1.4f;
-#if 0
-        //! Parent Visual (to be replaced with a uint32_t visual_id)
-        mplot::VisualBase<glver>* parentVis = nullptr;
+        //! Parent Visual. The mplot::Visual ID to which I belong. max means unset.
+        uint32_t parentVis = std::numeric_limits<uint32_t>::max();
 
+#if 0
         /*!
          * Callbacks are analogous to those in VisualModel
          */

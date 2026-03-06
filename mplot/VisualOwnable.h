@@ -59,6 +59,7 @@ module;
 
 export module mplot.core:visualownable;
 
+import mplot.win_t;
 import mplot.visualcommon;
 import mplot.visualresources;
 import mplot.visualtextmodel;
@@ -96,7 +97,7 @@ export namespace mplot
         //! True means that at least one of our VisualModels is an instanced rendering model
         haveInstanced,
         //! When true, the instanced data SSBO needs to be copied to the GPU
-        instancedNeedsUpdate,
+        //instancedNeedsUpdate, (gone to VisualResources)
         //! Left mouse button is down
         mouseButtonLeftPressed,
         //! Right mouse button is down
@@ -213,11 +214,7 @@ export namespace mplot
             this->init_gl();
         }
 
-        // Hopefully, these will go
-        // A callback friendly wrapper for setContext
-        static void set_context (mplot::VisualOwnable<glver>* _v) { _v->setContext(); };
-        // A callback friendly wrapper for releaseContext
-        static void release_context (mplot::VisualOwnable<glver>* _v) { _v->releaseContext(); };
+        ~VisualOwnable() {}
 
         //! Deconstruct gl memory/context
         void deconstructCommon()
@@ -226,14 +223,12 @@ export namespace mplot
             this->vm.clear();
             // Explicitly deconstruct coordArrows, textModel and texts here
             this->coordArrows.reset (nullptr);
-            this->userFrame.reset (nullptr);
             this->textModel.reset (nullptr);
             for (auto& t : this->texts) { t.reset (nullptr); }
 
             if (this->shaders.gprog) {
                 this->glfn->DeleteProgram (this->shaders.gprog);
                 this->shaders.gprog = 0;
-                this->active_gprog = mplot::visgl::graphics_shader_type::none;
             }
             if (this->shaders.tprog) {
                 this->glfn->DeleteProgram (this->shaders.tprog);
@@ -242,17 +237,9 @@ export namespace mplot
             this->free_gladgl_context (this->glfn);
 
             // Free up the Fonts associated with this mplot::Visual
-            mplot::VisualResources<glver>::i().freetype_deinit (this);
+            mplot::VisualResources<glver>::i().freetype_deinit (this->visual_id);
         }
 
-    protected:
-        void freetype_init()
-        {
-            // Now make sure that Freetype is set up (we assume that caller code has set the correct OpenGL context)
-            mplot::VisualResources<glver>::i().freetype_init (this, this->glfn);
-        }
-
-    public:
         // Public init that is given a context (window or widget) and then sets up the
         // VisualResource, shaders and so on.
         void init (mplot::win_t* ctx)
@@ -269,24 +256,9 @@ export namespace mplot
         {
             // VisualResources provides font management and GLFW management. Ensure it exists in memory.
             mplot::VisualResources<glver>::i().create();
-            this->freetype_init();
-            this->visual_id = mplot::VisualResources<glver>::i().register_visual (this->glfn);
+            this->visual_id = mplot::VisualResources<glver>::i().register_visual (this->glfn, this->window);
+            mplot::VisualResources<glver>::i().freetype_init (this->visual_id, this->glfn);
         }
-#if 0
-        // Hopefully this will go
-        /*!
-         * Set up the passed-in VisualModel (or indeed, VisualTextModel) with functions that need access to Visual attributes.
-         */
-        template <typename T>
-        void bindmodel (std::unique_ptr<T>& model)
-        {
-            model->set_parent (this);
-            model->get_shaderprogs = &mplot::VisualBase<glver>::get_shaderprogs;
-            model->get_gprog = &mplot::VisualBase<glver>::get_gprog;
-            model->get_tprog = &mplot::VisualBase<glver>::get_tprog;
-            model->instanced_needs_update = &mplot::VisualBase<glver>::instanced_needs_update;
-        }
-#endif
 
         /*!
          * Add a VisualModel to the scene as a unique_ptr. The Visual object takes ownership of the
@@ -377,11 +349,17 @@ export namespace mplot
         //! A callback function
         static void callback_render (mplot::VisualOwnable<glver>* _v) { _v->render(); };
 
-        //! GLAD OpenGL function context pointer
+        //! GLAD OpenGL function context pointer. A copy is stored in VisualResources.
         GladGLContext* glfn = nullptr;
 
         //! Stores the OpenGL function context version that was loaded
         int glfn_version = 0;
+
+        //! Graphics context functions that refer to the window system (GLFW usually) are defined in derived class
+        virtual void setContext() = 0;
+        virtual void releaseContext()  = 0;
+        virtual void swapBuffers() = 0;
+        virtual void setSwapInterval() = 0;
 
         //! Take a screenshot of the window. Return vec containing width * height or {-1, -1} on
         //! failure. Set transparent_bg to get a transparent background.
@@ -389,10 +367,10 @@ export namespace mplot
         {
             this->setContext();
 
-            GLint viewport[4]; // current viewport
+            int32_t viewport[4]; // current viewport
             this->glfn->GetIntegerv (GL_VIEWPORT, viewport);
 
-            sm::vec<int, 2> dims;
+            sm::vec<int32_t, 2> dims;
             dims[0] = viewport[2];
             dims[1] = viewport[3];
             auto bits = std::make_unique<GLubyte[]>(dims.product() * 4);
@@ -405,20 +383,20 @@ export namespace mplot
             this->glfn->PixelStorei (GL_PACK_SKIP_PIXELS, 0);
             this->glfn->ReadPixels (0, 0, dims[0], dims[1], GL_RGBA, GL_UNSIGNED_BYTE, bits.get());
 
-            for (int i = 0; i < dims[1]; ++i) {
-                int rev_line = (dims[1] - i - 1) * 4 * dims[0];
-                int for_line = i * 4 * dims[0];
+            for (int32_t i = 0; i < dims[1]; ++i) {
+                int32_t rev_line = (dims[1] - i - 1) * 4 * dims[0];
+                int32_t for_line = i * 4 * dims[0];
                 if (transparent_bg) {
-                    for (int j = 0; j < 4 * dims[0]; ++j) {
+                    for (int32_t j = 0; j < 4 * dims[0]; ++j) {
                         rbits[rev_line + j] = bits[for_line + j];
                     }
                 } else {
-                    for (int j = 0; j < 4 * dims[0]; ++j) {
+                    for (int32_t j = 0; j < 4 * dims[0]; ++j) {
                         rbits[rev_line + j] = (j % 4 == 3) ? 255 : bits[for_line + j];
                     }
                 }
             }
-            unsigned int error = lodepng::encode (img_filename, rbits.get(), dims[0], dims[1]);
+            uint32_t error = lodepng::encode (img_filename, rbits.get(), dims[0], dims[1]);
             if (error) {
                 std::cerr << "encoder error " << error << ": " << lodepng_error_text (error) << std::endl;
                 dims.set_from (-1);
@@ -431,14 +409,6 @@ export namespace mplot
         void render() noexcept
         {
             this->setContext();
-
-            if (this->ptype == perspective_type::orthographic || this->ptype == perspective_type::perspective) {
-                if (this->active_gprog != mplot::visgl::graphics_shader_type::projection2d) {
-                    if (this->shaders.gprog) { this->glfn->DeleteProgram (this->shaders.gprog); }
-                    this->shaders.gprog = mplot::gl::LoadShadersMX (this->proj2d_shader_progs, this->glfn);
-                    this->active_gprog = mplot::visgl::graphics_shader_type::projection2d;
-                }
-            } // else do nothing (all current shaders are 2D perspective)
 
             this->glfn->UseProgram (this->shaders.gprog);
             this->glfn->Viewport (0, 0, this->window_w * mplot::retinaScale, this->window_h * mplot::retinaScale);
@@ -503,14 +473,9 @@ export namespace mplot
                 this->coordArrows->render();
             }
 
-            // Show the user frame of reference
-            if (this->options.test (visual_options::showUserFrame) && this->userFrame) {
-                this->userFrame->render();
-            }
-
-            if (this->haveInstanced() && this->instancedNeedsUpdate()) {
-                this->copy_instance_data_to_gpu();
-                this->instancedNeedsUpdate (false);
+            if (this->haveInstanced() && mplot::VisualResources<glver>::i().get_instanced_needs_update (this->visual_id)) {
+                 mplot::VisualResources<glver>::i().copy_instance_ssbo_to_gpu();
+                 mplot::VisualResources<glver>::i().instanced_needs_update (this->visual_id, false);
             }
 
             auto vmi = this->vm.begin();
@@ -563,13 +528,6 @@ export namespace mplot
             return v0;
         }
 
-#if 0 // glfn always got from VisualResources now
-        //! Glad MX specific callback
-        static GladGLContext* get_glfn (const uint32_t _v)
-        {
-            return reinterpret_cast<mplot::VisualOwnable<glver>*>(_v)->glfn;
-        };
-#endif
     protected:
         // GLAD specific gl context creation/freeing. GladGLContext is a struct containing
         GladGLContext* create_gladgl_context (const GLADloadfunc procaddressfn)
@@ -598,22 +556,7 @@ export namespace mplot
                 this->free_gladgl_context (this->glfn);
             }
         }
-#if 0 // is going...
-        // Note: We have to have both VisualOwnable::bindmodel AND Visual::bindmodel (which calls VisualBase::bindmodel)
-        template <typename T>
-        void bindmodel (std::unique_ptr<T>& model)
-        {
-            model->set_parent (this);
-            model->get_shaderprogs = &mplot::VisualBase<glver>::get_shaderprogs;
-            model->get_gprog = &mplot::VisualBase<glver>::get_gprog;
-            model->get_tprog = &mplot::VisualBase<glver>::get_tprog;
-            model->instanced_needs_update = &mplot::VisualBase<glver>::instanced_needs_update;
-            model->get_glfn = &mplot::VisualOwnable<glver>::get_glfn;
-            model->init_instance_data = &mplot::VisualOwnable<glver>::init_instance_data;
-            model->insert_instance_data = &mplot::VisualOwnable<glver>::insert_instance_data;
-            model->insert_instparam_data = &mplot::VisualOwnable<glver>::insert_instparam_data;
-        }
-#endif
+
         //! Add a label _text to the scene at position _toffset. Font features are
         //! defined by the tfeatures. Return geometry of the text.
         mplot::TextGeometry addLabel (const std::string& _text,
@@ -623,7 +566,7 @@ export namespace mplot
             this->setContext();
             if (this->shaders.tprog == 0) { throw std::runtime_error ("No text shader prog."); }
             auto tmup = std::make_unique<mplot::VisualTextModel<glver>> (tfeatures);
-            this->bindmodel (tmup);
+
             if (tfeatures.centre_horz == true) {
                 mplot::TextGeometry tg = tmup->getTextGeometry(_text);
                 sm::vec<float, 3> centred_locn = _toffset;
@@ -649,7 +592,7 @@ export namespace mplot
             this->setContext();
             if (this->shaders.tprog == 0) { throw std::runtime_error ("No text shader prog."); }
             auto tmup = std::make_unique<mplot::VisualTextModel<glver>> (tfeatures);
-            this->bindmodel (tmup);
+
             if (tfeatures.centre_horz == true) {
                 mplot::TextGeometry tg = tmup->getTextGeometry(_text);
                 sm::vec<float, 3> centred_locn = _toffset;
@@ -663,7 +606,7 @@ export namespace mplot
             this->releaseContext();
             return tm->getTextGeometry();
         }
-
+#if 0 // code to use VisualResources directly
         static unsigned int init_instance_data (mplot::VisualOwnable<glver>* _v, const unsigned int n_to_reserve)
         {
             unsigned int reservation = mplot::VisualResources<glver>::i().init_instance_ssbo (_v->glfn, n_to_reserve);
@@ -685,7 +628,7 @@ export namespace mplot
         {
             mplot::VisualResources<glver>::i().copy_instance_ssbo_to_gpu();
         }
-
+#endif
     protected:
         // Initialize OpenGL shaders, set some flags (Alpha, Anti-aliasing), read in any external
         // state from json, and set up the coordinate arrows and any VisualTextModels that will be
@@ -709,7 +652,7 @@ export namespace mplot
                 {GL_FRAGMENT_SHADER, "Visual.frag.glsl", mplot::getDefaultFragShader(glver), 0 }
             };
             this->shaders.gprog = mplot::gl::LoadShadersMX (this->proj2d_shader_progs, this->glfn);
-            this->active_gprog = mplot::visgl::graphics_shader_type::projection2d;
+            mplot::VisualResources<glver>::i().set_gprog (this->visual_id, this->shaders.gprog);
 
             // A specific text shader is loaded for text rendering
             this->text_shader_progs = {
@@ -717,6 +660,7 @@ export namespace mplot
                 {GL_FRAGMENT_SHADER, "VisText.frag.glsl" , mplot::getDefaultTextFragShader(glver), 0 }
             };
             this->shaders.tprog = mplot::gl::LoadShadersMX (this->text_shader_progs, this->glfn);
+            mplot::VisualResources<glver>::i().set_tprog (this->visual_id, this->shaders.tprog);
 
             // OpenGL options
             this->glfn->Enable (GL_DEPTH_TEST);
@@ -729,10 +673,8 @@ export namespace mplot
 
             // Use coordArrowsOffset to set the location of the CoordArrows *scene*
             this->coordArrows = std::make_unique<mplot::CoordArrows<glver>>();
-            // For CoordArrows, because we don't add via Visual::addVisualModel(), we
-            // have to set the get_shaderprogs function here:
-            this->bindmodel (this->coordArrows); // Won't need bindmodel
-            this->coordArrows->glfn = this->glfn; // Just copy in
+            this->coordArrows->glfn = this->glfn;
+            this->coordArrows->gprog = this->shaders.gprog;
             // And NOW we can proceed to init (lengths, thickness, em size for labels):
             this->coordArrows->init (sm::vec<>{0.1f, 0.1f, 0.1f}, 1.0f, 0.01f);
 
@@ -745,7 +687,7 @@ export namespace mplot
             // Set up the title, which may or may not be rendered
             mplot::TextFeatures title_tf(0.035f, 64);
             this->textModel = std::make_unique<mplot::VisualTextModel<glver>> (title_tf);
-            this->bindmodel (this->textModel);
+
             this->textModel->setSceneTranslation ({0.0f, 0.0f, 0.0f});
             this->textModel->setupText (this->title);
 
@@ -761,9 +703,8 @@ export namespace mplot
         //! The OpenGL shader programs have an integer ID and are stored in a simple struct. There's
         //! one for graphical objects and a text shader program, which uses textures to draw text on
         //! quads.
-        mplot::visgl::visual_shaderprogs shaders;
-        //! Which shader is active for graphics shading. In practice, this is always 'projection2d'
-        mplot::visgl::graphics_shader_type active_gprog = mplot::visgl::graphics_shader_type::none;
+        mplot::visgl::visual_shaderprogs shaders; // stored in VisualResources too.
+
         //! Stores the info required to load the 2D projection shader
         std::vector<mplot::gl::ShaderInfo> proj2d_shader_progs;
         //! Stores the info required to load the text shader
@@ -773,7 +714,7 @@ export namespace mplot
         static mplot::visgl::visual_shaderprogs get_shaderprogs (mplot::VisualOwnable<glver>* _v) { return _v->shaders; };
         static GLuint get_gprog (mplot::VisualOwnable<glver>* _v) { return _v->shaders.gprog; };
         static GLuint get_tprog (mplot::VisualOwnable<glver>* _v) { return _v->shaders.tprog; };
-        static void instanced_needs_update (mplot::VisualOwnable<glver>* _v) { _v->instancedNeedsUpdate (true); }
+        static void instanced_needs_update (mplot::VisualOwnable<glver>* _v) { _v->instancedNeedsUpdate (true); } //next
 #endif
 
         //! The colour of ambient and diffuse light sources
@@ -868,9 +809,9 @@ export namespace mplot
         //! True if one of our added VisualModels is an instanced model
         bool haveInstanced() const { return this->state.test (visual_state::haveInstanced); }
 
-        //! Does our instanced data need to be pushed over to the GPU during render()?
-        bool instancedNeedsUpdate() const { return this->state.test (visual_state::instancedNeedsUpdate); }
-        void instancedNeedsUpdate (const bool val) { this->state.set (visual_state::instancedNeedsUpdate, val); }
+        //! Does our instanced data need to be pushed over to the GPU during render()? Now stored in VisualResources
+        //bool instancedNeedsUpdate() const { return this->state.test (visual_state::instancedNeedsUpdate); }
+        //void instancedNeedsUpdate (const bool val) { this->state.set (visual_state::instancedNeedsUpdate, val); }
 
         /*
          * User-settable projection values for the near clipping distance, the far clipping distance

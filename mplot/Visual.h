@@ -29,11 +29,10 @@ module;
 
 export module mplot.core:visual;
 
-export import :win_t;
+export import mplot.win_t;
+import mplot.visualresources;
 export import :visualglfw;
 export import :visualownable;
-import :visualbase;
-import :visualresources;
 
 export namespace mplot
 {
@@ -70,7 +69,8 @@ export namespace mplot
             this->options.set (visual_options::versionStdout, _version_stdout);
 
             this->init_resources();
-            this->init_gl();
+            this->init_gl(); // could this come before init_resources? NO, because init_gl has
+                             // VisualTextModel stuff that requires init_resources. Could maybe split init_gl
 
 #if 0 // To go!
             // Special tasks: re-bind coordArrows and title text
@@ -98,9 +98,10 @@ export namespace mplot
             // Set up the window that will present the OpenGL graphics.  This has to
             // happen BEFORE the call to VisualResources::freetype_init()
             this->init_window();
+            // Check: when is this->shaders set up? in *init_gl*! So need a set_shaders method in VisualResouces
+            this->visual_id = mplot::VisualResources<glver>::i().register_visual (this->glfn, this->window);
             this->setContext(); // For freetype_init
-            this->freetype_init();
-            this->visual_id = mplot::VisualResources<glver>::i().register_visual (this->glfn);
+            mplot::VisualResources<glver>::i().freetype_init (this->visual_id, this->glfn);
             this->releaseContext();
         }
 
@@ -162,29 +163,6 @@ export namespace mplot
         //! Obtain the window pointer
         win_t* getWindow() { return this->window; }
 
-#if 0 // To go
-        /*!
-         * Set up the passed-in VisualModel (or indeed, VisualTextModel) with functions that need access to Visual attributes.
-         */
-        template <typename T>
-        void bindmodel (std::unique_ptr<T>& model)
-        {
-            mplot::VisualBase<glver>::template bindmodel<T> (model); // base class binds
-            this->bindextra (model);
-        }
-
-        // The GL-dependent binds
-        template <typename T>
-        void bindextra (std::unique_ptr<T>& model)
-        {
-            model->setContext = &mplot::VisualBase<glver>::set_context;
-            model->releaseContext = &mplot::VisualBase<glver>::release_context;
-            model->get_glfn = &mplot::VisualOwnable<glver>::get_glfn;
-            model->init_instance_data = &mplot::VisualOwnable<glver>::init_instance_data;
-            model->insert_instance_data = &mplot::VisualOwnable<glver>::insert_instance_data;
-            model->insert_instparam_data = &mplot::VisualOwnable<glver>::insert_instparam_data;
-        }
-#endif
         /*
          * A note on setContext() in keepOpen/poll/waitevents/wait:
          *

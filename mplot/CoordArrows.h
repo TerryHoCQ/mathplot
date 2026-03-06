@@ -41,9 +41,6 @@ export namespace mplot
     // State/options flags
     enum class ca_bools : uint32_t { postVertexInitRequired, hide };
 
-    //! Forward declaration of a Visual class
-    //template <int> class VisualBase;
-
     //! This class creates the vertices for a set of coordinate arrows to be rendered
     //! in a 3-D scene.
     template<int glver = mplot::gl::version_4_1>
@@ -78,6 +75,57 @@ export namespace mplot
         }
         sm::flags<ca_bools> flags = flags_defaults();
 
+        // The hide attribute accessors
+        void setHide (const bool _h = true) { this->flags.set (ca_bools::hide, _h); }
+        void toggleHide() { this->flags.flip (ca_bools::hide); }
+        float hidden() const { return this->flags.test (ca_bools::hide); }
+
+        void setSceneMatrixTexts (const sm::mat<float, 4>& sv)
+        {
+            auto ti = this->texts.begin();
+            while (ti != this->texts.end()) { (*ti)->setSceneMatrix (sv); ti++; }
+        }
+
+        //! When setting the scene matrix, also have to set the text's scene matrices.
+        void setSceneMatrix (const sm::mat<float, 4>& sv)
+        {
+            this->scenematrix = sv;
+            this->setSceneMatrixTexts (sv);
+        }
+
+        void setSceneTranslationTexts (const sm::vec<float>& v0)
+        {
+            auto ti = this->texts.begin();
+            while (ti != this->texts.end()) { (*ti)->setSceneTranslation (v0); ti++; }
+        }
+
+        //! Set a translation into the scene and into any child texts
+        void setSceneTranslation (const sm::vec<float, 3>& v0)
+        {
+            this->scenematrix.set_identity();
+            this->scenematrix.translate (v0);
+            this->setSceneTranslationTexts (v0);
+        }
+
+        void setViewRotationTexts (const sm::quaternion<float>& r)
+        {
+            // See VisualModel for explanation
+            auto ti = this->texts.begin();
+            while (ti != this->texts.end()) {
+                (*ti)->setSceneRotation (r);
+                (*ti)->setViewRotation (r.invert());
+                ti++;
+            }
+        }
+        //! Set a rotation (only) into the view
+        void setViewRotation (const sm::quaternion<float>& r)
+        {
+            sm::vec<> os = this->viewmatrix.translation();
+            this->viewmatrix.set_identity();
+            this->viewmatrix.translate (os);
+            this->viewmatrix.rotate (r);
+            this->setViewRotationTexts (r);
+        }
 
         //! Make sure coord arrow colours are ok on the given background colour. Call this *after* finalize.
         void setColourForBackground (const std::array<float, 4>& bgcolour)
@@ -172,6 +220,71 @@ export namespace mplot
             this->initAxisLabels();
         }
 
+        void finalize()
+        {
+            this->initializeVertices();
+            this->flags.set (ca_bools::postVertexInitRequired, true);
+        }
+
+        uint32_t gprog = 0;
+
+        void render() // not final
+        {
+            if (this->hidden() == true) { return; }
+
+            // Execute post-vertex init at render, as GL should be available.
+            if (this->flags.test (ca_bools::postVertexInitRequired) == true) { this->postVertexInit(); }
+
+            GLint prev_shader = 0;
+
+            this->glfn->GetIntegerv (GL_CURRENT_PROGRAM, &prev_shader);
+            // Ensure the correct program is in play for this VisualModel
+            this->glfn->UseProgram (gprog);
+
+            if (!this->indices.empty()) {
+
+                this->glfn->PolygonMode (GL_FRONT_AND_BACK, GL_FILL); // filled not wireframe
+
+                // It is only necessary to bind the vertex array object before rendering
+                // (not the vertex buffer objects)
+                this->glfn->BindVertexArray (this->vao);
+
+                GLint loc_a = this->glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("alpha"));
+                if (loc_a != -1) { this->glfn->Uniform1f (loc_a, 1.0f); }
+
+                // The scene-view matrix
+                GLint loc_v = this->glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("v_matrix"));
+                if (loc_v != -1) { this->glfn->UniformMatrix4fv (loc_v, 1, GL_FALSE, this->scenematrix.arr.data()); }
+
+                // the model-view matrix
+                GLint loc_m = this->glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("m_matrix"));
+                if (loc_m != -1) { this->glfn->UniformMatrix4fv (loc_m, 1, GL_FALSE, this->viewmatrix.arr.data()); }
+
+                // the instance scaling matrix (applied to all instances)
+                GLint loc_s = this->glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("s_matrix"));
+                constexpr auto idmat = sm::mat<float, 4>::identity();
+                if (loc_s != -1) { this->glfn->UniformMatrix4fv (loc_s, 1, GL_FALSE, idmat.arr.data()); }
+
+                // Draw the triangles
+                //GLint loc_is = this->glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("instance_start"));
+                //GLint loc_ic = this->glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("instance_count"));
+                //if (loc_is != -1) { this->glfn->Uniform1i (loc_is, -1); }
+                //if (loc_ic != -1) { this->glfn->Uniform1i (loc_ic, -1); }
+                this->glfn->DrawElements (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0);
+
+                // Unbind the VAO
+                this->glfn->BindVertexArray(0);
+            }
+            mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
+
+            // Now render any VisualTextModels
+            auto ti = this->texts.begin();
+            while (ti != this->texts.end()) { (*ti)->render(); ti++; }
+
+            this->glfn->UseProgram (prev_shader);
+            mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
+        }
+
         //! Length multipliers that can be applied to ux, uy and uz
         sm::vec<float, 3> lengths = { 1.0f, 1.0f, 1.0f };
 
@@ -203,6 +316,8 @@ export namespace mplot
         std::string x_label = "X";
         std::string y_label = "Y";
         std::string z_label = "Z";
+
+        GladGLContext* glfn = nullptr;
 
     protected:
 
@@ -245,31 +360,27 @@ export namespace mplot
         //! CPU-side data for vertex colours
         std::vector<float> vertexColors = {};
 
-        GladGLContext* glfn = nullptr;
-
         //! Common code to call after the vertices have been set up. GL has to have been initialised.
         void postVertexInit()
         {
-            GladGLContext* _glfn = this->glfn;// this->get_glfn (this->parentVis);
-
             // Do gl memory allocation of vertex array once only
             if (this->vbos == nullptr) {
                 // Create vertex array object
-                _glfn->GenVertexArrays (1, &this->vao); // Safe for OpenGL 4.4-
+                this->glfn->GenVertexArrays (1, &this->vao); // Safe for OpenGL 4.4-
             }
-            _glfn->BindVertexArray (this->vao);
+            this->glfn->BindVertexArray (this->vao);
 
             // Create the vertex buffer objects (once only)
             if (this->vbos == nullptr) {
                 this->vbos = std::make_unique<uint32_t[]>(this->numVBO);
-                _glfn->GenBuffers (this->numVBO, this->vbos.get()); // OpenGL 4.4- safe
+                this->glfn->GenBuffers (this->numVBO, this->vbos.get()); // OpenGL 4.4- safe
             }
 
             // Set up the indices buffer - bind and buffer the data in this->indices
-            _glfn->BindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos[this->idxVBO]);
+            this->glfn->BindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos[this->idxVBO]);
 
             std::size_t sz = this->indices.size() * sizeof(uint32_t);
-            _glfn->BufferData (GL_ELEMENT_ARRAY_BUFFER, sz, this->indices.data(), GL_STATIC_DRAW);
+            this->glfn->BufferData (GL_ELEMENT_ARRAY_BUFFER, sz, this->indices.data(), GL_STATIC_DRAW);
 
             // Binds data from the "C++ world" to the OpenGL shader world for
             // "position", "normalin" and "color"
@@ -279,8 +390,8 @@ export namespace mplot
             this->setupVBO (this->vbos[this->colVBO], this->vertexColors, visgl::colLoc);
 
             // Unbind only the vertex array (not the buffers, that causes GL_INVALID_ENUM errors)
-            _glfn->BindVertexArray(0); // carefully unbind and rebind
-            mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
+            this->glfn->BindVertexArray(0); // carefully unbind and rebind
+            mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
 
             this->flags.set (ca_bools::postVertexInitRequired, false); // Maybe just a bool here
         }
@@ -306,24 +417,21 @@ export namespace mplot
          */
         void reinit_buffers()
         {
-            GladGLContext* _glfn = this->glfn; // this->get_glfn(this->parentVis);
-
             // Note that we do not worry about setting context here, we assume the parent Visual has the context
-
             if (this->flags.test (ca_bools::postVertexInitRequired) == true) { this->postVertexInit(); }
 
             // Now re-set up the VBOs
-            _glfn->BindVertexArray (this->vao);                                    // carefully unbind and rebind
-            _glfn->BindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos[this->idxVBO]);  // carefully unbind and rebind
+            this->glfn->BindVertexArray (this->vao);                                    // carefully unbind and rebind
+            this->glfn->BindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos[this->idxVBO]);  // carefully unbind and rebind
 
             std::size_t sz = this->indices.size() * sizeof(uint32_t);
-            _glfn->BufferData (GL_ELEMENT_ARRAY_BUFFER, sz, this->indices.data(), GL_STATIC_DRAW);
+            this->glfn->BufferData (GL_ELEMENT_ARRAY_BUFFER, sz, this->indices.data(), GL_STATIC_DRAW);
             this->setupVBO (this->vbos[this->posnVBO], this->vertexPositions, visgl::posnLoc);
             this->setupVBO (this->vbos[this->normVBO], this->vertexNormals, visgl::normLoc);
             this->setupVBO (this->vbos[this->colVBO], this->vertexColors, visgl::colLoc);
 
-            _glfn->BindVertexArray(0);                                // carefully unbind and rebind
-            mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);  // carefully unbind and rebind
+            this->glfn->BindVertexArray(0);                                // carefully unbind and rebind
+            mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);  // carefully unbind and rebind
         }
 
         //! A vector of pointers to text models that should be rendered.
@@ -334,24 +442,24 @@ export namespace mplot
         {
             std::size_t sz = dat.size() * sizeof(float);
 
-            GladGLContext* _glfn = this->glfn; // this->get_glfn(this->parentVis);
-            _glfn->BindBuffer (GL_ARRAY_BUFFER, buf);
-            mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
-            _glfn->BufferData (GL_ARRAY_BUFFER, sz, dat.data(), GL_STATIC_DRAW);
-            mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
-            _glfn->VertexAttribPointer (bufferAttribPosition, 3, GL_FLOAT, GL_FALSE, 0, (void*)(0));
-            mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
-            _glfn->EnableVertexAttribArray (bufferAttribPosition);
-            mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
+            this->glfn->BindBuffer (GL_ARRAY_BUFFER, buf);
+            mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
+            this->glfn->BufferData (GL_ARRAY_BUFFER, sz, dat.data(), GL_STATIC_DRAW);
+            mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
+            this->glfn->VertexAttribPointer (bufferAttribPosition, 3, GL_FLOAT, GL_FALSE, 0, (void*)(0));
+            mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
+            this->glfn->EnableVertexAttribArray (bufferAttribPosition);
+            mplot::gl::Util::checkError (__FILE__, __LINE__, this->glfn);
         }
 
-        //! Push three floats onto the vector of floats \a vp
         void vertex_push (const float& x, const float& y, const float& z, std::vector<float>& vp)
-        {
-            vp.emplace_back (x);
-            vp.emplace_back (y);
-            vp.emplace_back (z);
-        }
+        { vp.emplace_back (x); vp.emplace_back (y); vp.emplace_back (z); }
+        template<std::size_t N = 3> requires (N == 3 || N == 4)
+        void vertex_push (const std::array<float, N>& arr, std::vector<float>& vp)
+        { vp.emplace_back (arr[0]); vp.emplace_back (arr[1]); vp.emplace_back (arr[2]); }
+        template<std::size_t N = 3> requires (N == 3 || N == 4)
+        void vertex_push (const sm::vec<float, N>& vec, std::vector<float>& vp)
+        { vp.emplace_back (vec[0]); vp.emplace_back (vec[1]); vp.emplace_back (vec[2]); }
 
         /*!
          * Sphere, 1 colour version.

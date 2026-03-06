@@ -19,6 +19,11 @@ module;
 #  include <mplot/glad/gl_mx.h>
 #endif
 
+#ifndef _glfw3_h_
+# define GLFW_INCLUDE_NONE
+# include <GLFW/glfw3.h>
+#endif
+
 // FreeType for text rendering
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -28,16 +33,16 @@ module;
 #include <map>
 #include <memory>
 #include <mplot/gl/version.h>
-
-#include <mplot/gl/version.h>
 #include <mplot/gl/util_mx.h>
 #include <mplot/gl/ssbo_mx.h>
 
 export module mplot.visualresources;
 
+import mplot.visualcommon;
 import mplot.visualface;
 import mplot.visualfont;
 import mplot.textfeatures;
+import mplot.win_t;
 
 import sm.vec;
 
@@ -141,42 +146,132 @@ export namespace mplot
         }
 
         mplot::visgl::VisualFace* getVisualFace (const mplot::TextFeatures& tf,
-                                                 uint32_t _vis, GladGLContext* glfn)
+                                                 const uint32_t _vis, GladGLContext* glfn)
         {
             return this->getVisualFace (tf.font, tf.fontres, _vis, glfn);
         }
 
         //! Loop through this->faces clearing out those associated with the given mplot::Visual
-        void clearVisualFaces (uint32_t _vis)
+        void clearVisualFaces (const uint32_t _vis)
         {
+            mplot::VisualFont thefont;
+            unsigned int fpixels = 0;
+            uint32_t vf_vis = std::numeric_limits<uint32_t>::max();
+
             auto f = this->faces.begin();
+
             while (f != this->faces.end()) {
-                // f->first is a key. If its third, Visual<>* element == _vis, then delete and erase
-                if (std::get<uint32_t>(f->first) == _vis) {
+                // f->first is a key. If its third, visual_id element == _vis, then delete and erase
+                // f->first needs unpacking; want 3rd elemetn
+                std::tie(thefont, fpixels, vf_vis) = f->first;
+
+                if (vf_vis == _vis) {
                     f = this->faces.erase (f);
                 } else { f++; }
             }
         }
 
-        uint32_t register_visual (GladGLContext* glfn)
+        uint32_t next_visual_id = 0;
+
+        // GL function context pointers used in the program, keyed by a uint32_t ID
+        std::map<uint32_t, GladGLContext*> visual_keyed_gladglcontexts;
+        // GL shader programs used by Visual in the program, keyed by ID
+        std::map<uint32_t, mplot::visgl::visual_shaderprogs> visual_keyed_shaderprogs;
+        // Window contexts
+        std::map<uint32_t, mplot::win_t*> visual_keyed_windows;
+        // Does instanced data need update?
+        std::map<uint32_t, bool> visual_keyed_instanced_needs_update;
+
+        // win_t is GLFWwindow and this is really 'struct GLFWwindow' so we need it to be properly defined
+        uint32_t register_visual (GladGLContext* glfn, mplot::win_t* win)
         {
             uint32_t visual_id = this->next_visual_id++;
-            visual_gladglcontexts[visual_id] = glfn;
+            this->visual_keyed_gladglcontexts[visual_id] = glfn;
+            this->visual_keyed_shaderprogs[visual_id] = {}; // initialized empty with 0s
+            this->visual_keyed_windows[visual_id] = win;
+            this->visual_keyed_instanced_needs_update[visual_id] = false;
             return visual_id;
         }
 
-        uint32_t next_visual_id = 0;
-
-        // Pointers to Visuals in the program, keyed by a uint32_t ID
-        std::map<uint32_t, GladGLContext*> visual_gladglcontexts;
+        // Return true if there is a GladGLContext for visual_id
+        bool test_glfn (const uint32_t visual_id)
+        {
+            if (visual_id == std::numeric_limits<uint32_t>::max()) {
+                return false;
+            }
+            try {
+                [[maybe_unused]] GladGLContext* glfn = this->visual_keyed_gladglcontexts.at (visual_id);
+                return true;
+            } catch (const std::exception& e) {}
+            return false;
+        }
 
         // A VisualModel can call this, passing in the numeric ID of the context it belongs to and
         // this will pass back the correct GL context pointer.
-        GladGLContext* get_glfn (uint32_t visual_id)
+        GladGLContext* get_glfn (const uint32_t visual_id) noexcept
         {
-            // somehow set context from visual_pointers[visual_id]->setContext();
-            GladGLContext* glfn = visual_gladglcontexts[visual_id];
+            if (visual_id == std::numeric_limits<uint32_t>::max()) { return nullptr; }
+            GladGLContext* glfn = this->visual_keyed_gladglcontexts[visual_id];
             return glfn;
+        }
+
+        void set_tprog (const uint32_t visual_id, const uint32_t _tprog)
+        {
+            if (visual_id == std::numeric_limits<uint32_t>::max()) {
+                throw std::runtime_error ("VisualResources::set_tprog(): visual_id is unset");
+            }
+            this->visual_keyed_shaderprogs[visual_id].tprog = _tprog;
+        }
+
+        uint32_t get_tprog (const uint32_t visual_id)
+        {
+            if (visual_id == std::numeric_limits<uint32_t>::max()) {
+                throw std::runtime_error ("VisualResources::get_tprog(): visual_id is unset");
+            }
+            return this->visual_keyed_shaderprogs[visual_id].tprog;
+        }
+
+        void set_gprog (const uint32_t visual_id, const uint32_t _gprog)
+        {
+            if (visual_id == std::numeric_limits<uint32_t>::max()) {
+                throw std::runtime_error ("VisualResources::set_gprog(): visual_id is unset");
+            }
+            this->visual_keyed_shaderprogs[visual_id].gprog = _gprog;
+        }
+
+        uint32_t get_gprog (const uint32_t visual_id)
+        {
+            if (visual_id == std::numeric_limits<uint32_t>::max()) {
+                throw std::runtime_error ("VisualResources::get_gprog(): visual_id is unset");
+            }
+            return this->visual_keyed_shaderprogs[visual_id].gprog;
+        }
+
+        // Better in VisualGlfw? Or should what's in VisualGlfw come in here?
+        void setContext (const uint32_t visual_id)
+        {
+            if (visual_id == std::numeric_limits<uint32_t>::max()) {
+                throw std::runtime_error ("VisualResources::setContext(): visual_id is unset");
+            }
+            glfwMakeContextCurrent (this->visual_keyed_windows[visual_id]);
+        }
+
+        void releaseContext() { glfwMakeContextCurrent (nullptr); }
+
+        bool get_instanced_needs_update (const uint32_t visual_id)
+        {
+            if (visual_id == std::numeric_limits<uint32_t>::max()) {
+                throw std::runtime_error ("VisualResources::get_instanced_needs_update: visual_id is unset");
+            }
+            return this->visual_keyed_instanced_needs_update[visual_id];
+        }
+
+        void instanced_needs_update (const uint32_t visual_id, const bool val = true)
+        {
+            if (visual_id == std::numeric_limits<uint32_t>::max()) {
+                throw std::runtime_error ("VisualResources::instanced_needs_update: visual_id is unset");
+            }
+            this->visual_keyed_instanced_needs_update[visual_id] = val;
         }
 
         /*!
@@ -184,8 +279,9 @@ export namespace mplot
          * VisualResourcesdata in . Reserve n_to_reserve instances of data in the SSBOs. Return the
          * start offset into the buffers in terms of number of instances
          */
-        unsigned int init_instance_ssbo (GladGLContext* glfn, const unsigned int n_to_reserve)
+        unsigned int init_instance_ssbo (const uint32_t visual_id, const unsigned int n_to_reserve)
         {
+            GladGLContext* glfn = this->get_glfn (visual_id);
             unsigned int reservation = std::numeric_limits<unsigned int>::max();
             if constexpr (mplot::gl::version::has_ssbo (glver) == true) {
                 if (this->instance_data.ready() == false) { this->instance_data.init (glfn); }

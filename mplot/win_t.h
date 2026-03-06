@@ -5,7 +5,7 @@ module;
 # include <GLFW/glfw3.h>
 #endif // _glfw3_h_
 
-export module mplot.core:win_t;
+export module mplot.win_t;
 
 export namespace mplot
 {

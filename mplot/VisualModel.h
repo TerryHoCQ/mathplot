@@ -102,58 +102,18 @@ namespace mplot
         VisualModel (const sm::vec<float> _offset) { this->viewmatrix.translate (_offset); }
 
         //! destroy gl buffers in the deconstructor
-        ~VisualModel() // clang gives -Wdelete-non-abstract-non-virtual-dtor without virtual
+        virtual ~VisualModel() // clang gives -Wdelete-non-abstract-non-virtual-dtor without virtual
         {
             // Explicitly clear owned VisualTextModels
             this->texts.clear();
             if (this->vbos != nullptr) {
-                if (this->visual_id == std::numeric_limits<uint32_t>::max()) {
-                    throw std::runtime_error ("visual_id is unset");
+                GladGLContext* glfn = mplot::VisualResources<glver>::i().get_glfn (this->visual_id);
+                if (glfn) {
+                    glfn->DeleteBuffers (this->numVBO, this->vbos.get());
+                    glfn->DeleteVertexArrays (1, &this->vao);
                 }
-                GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->visual_id);
-                _glfn->DeleteBuffers (this->numVBO, this->vbos.get());
-                _glfn->DeleteVertexArrays (1, &this->vao);
             }
         }
-
-#if 0 // Hope to get rid of bindmodel
-        /*!
-         * Set up the passed-in VisualTextModel with functions that need access to the parent Visual attributes.
-         */
-        template <typename T>
-        void bindmodel (std::unique_ptr<T>& model)
-        {
-            if (this->parentVis == nullptr) {
-                throw std::runtime_error ("Can't bind a model, because I am not bound");
-            }
-            model->set_parent (this->parentVis);
-            model->get_shaderprogs = &mplot::VisualBase<glver>::get_shaderprogs;
-            model->get_gprog = &mplot::VisualBase<glver>::get_gprog;
-            model->get_tprog = &mplot::VisualBase<glver>::get_tprog;
-
-            model->get_glfn = &mplot::VisualOwnable<glver>::get_glfn;
-
-            model->setContext = &mplot::VisualBase<glver>::set_context;
-            model->releaseContext = &mplot::VisualBase<glver>::release_context;
-        }
-
-        /*!
-         * Set up the passed-in VisualTextModel with functions that need access to the parent Visual attributes.
-         */
-        template <typename T>
-        void bindmodel (std::unique_ptr<T>& model)
-        {
-            if (this->parentVis == nullptr) {
-                throw std::runtime_error ("Can't bind a model, because I am not bound");
-            }
-            model->set_parent (this->parentVis);
-            model->get_shaderprogs = &mplot::VisualBase<glver>::get_shaderprogs;
-            model->get_gprog = &mplot::VisualBase<glver>::get_gprog;
-            model->get_tprog = &mplot::VisualBase<glver>::get_tprog;
-            model->setContext = &mplot::VisualBase<glver>::set_context;
-            model->releaseContext = &mplot::VisualBase<glver>::release_context;
-        }
-#endif
 
         //! Common code to call after the vertices have been set up. GL has to have been initialised.
         void postVertexInit()
@@ -161,26 +121,26 @@ namespace mplot
             if (this->visual_id == std::numeric_limits<uint32_t>::max()) {
                 throw std::runtime_error ("visual_id is unset");
             }
-            GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->visual_id);
+            GladGLContext* glfn = mplot::VisualResources<glver>::i().get_glfn (this->visual_id);
 
             // Do gl memory allocation of vertex array once only
             if (this->vbos == nullptr) {
                 // Create vertex array object
-                _glfn->GenVertexArrays (1, &this->vao); // Safe for OpenGL 4.4-
+                glfn->GenVertexArrays (1, &this->vao); // Safe for OpenGL 4.4-
             }
-            _glfn->BindVertexArray (this->vao);
+            glfn->BindVertexArray (this->vao);
 
             // Create the vertex buffer objects (once only)
             if (this->vbos == nullptr) {
                 this->vbos = std::make_unique<GLuint[]>(this->numVBO);
-                _glfn->GenBuffers (this->numVBO, this->vbos.get()); // OpenGL 4.4- safe
+                glfn->GenBuffers (this->numVBO, this->vbos.get()); // OpenGL 4.4- safe
             }
 
             // Set up the indices buffer - bind and buffer the data in this->indices
-            _glfn->BindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos[this->idxVBO]);
+            glfn->BindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos[this->idxVBO]);
 
             std::size_t sz = this->indices.size() * sizeof(GLuint);
-            _glfn->BufferData (GL_ELEMENT_ARRAY_BUFFER, sz, this->indices.data(), GL_STATIC_DRAW);
+            glfn->BufferData (GL_ELEMENT_ARRAY_BUFFER, sz, this->indices.data(), GL_STATIC_DRAW);
 
             // Binds data from the "C++ world" to the OpenGL shader world for
             // "position", "normalin" and "color"
@@ -190,13 +150,13 @@ namespace mplot
             this->setupVBO (this->vbos[this->colVBO], this->vertexColors, visgl::colLoc);
 
             // Unbind only the vertex array (not the buffers, that causes GL_INVALID_ENUM errors)
-            _glfn->BindVertexArray(0); // carefully unbind and rebind
-            mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
+            glfn->BindVertexArray(0); // carefully unbind and rebind
+            mplot::gl::Util::checkError (__FILE__, __LINE__, glfn);
 
-            if (this->flags.test (vm_bools::instanced) && this->init_instance_data) {
+            if (this->flags.test (vm_bools::instanced)) {
                 // Here, we cause the SSBOs to be intialized if they haven't already, and we reserve
                 // some space in the SSBOs for *this model*
-                this->instance_start = this->init_instance_data (this->parentVis, this->max_instances);
+                this->instance_start = mplot::VisualResources<glver>::i().init_instance_ssbo (this->parentVis, this->max_instances);
                 if (this->instance_start == std::numeric_limits<unsigned int>::max()) {
                     throw std::runtime_error ("Failed to reserve space in SSBO");
                 }
@@ -207,20 +167,20 @@ namespace mplot
              */
             if (this->flags.test (vm_bools::compute_bb)) {
 
-                if (this->vbos_bb == nullptr) { _glfn->GenVertexArrays (1, &this->vao_bb); }
-                _glfn->BindVertexArray (this->vao_bb);
+                if (this->vbos_bb == nullptr) { glfn->GenVertexArrays (1, &this->vao_bb); }
+                glfn->BindVertexArray (this->vao_bb);
 
                 // Create the vertex buffer objects (once only)
                 if (this->vbos_bb == nullptr) {
                     this->vbos_bb = std::make_unique<GLuint[]>(this->numVBO);
-                    _glfn->GenBuffers (this->numVBO, this->vbos_bb.get());
+                    glfn->GenBuffers (this->numVBO, this->vbos_bb.get());
                 }
 
                 // Set up the indices buffer - bind and buffer the data in this->indices
-                _glfn->BindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos_bb[this->idxVBO]);
+                glfn->BindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos_bb[this->idxVBO]);
 
                 std::size_t sz = this->indices_bb.size() * sizeof(GLuint);
-                _glfn->BufferData (GL_ELEMENT_ARRAY_BUFFER, sz, this->indices_bb.data(), GL_STATIC_DRAW);
+                glfn->BufferData (GL_ELEMENT_ARRAY_BUFFER, sz, this->indices_bb.data(), GL_STATIC_DRAW);
 
                 // Binds data from the "C++ world" to the OpenGL shader world for
                 // "position", "normalin" and "color"
@@ -230,8 +190,8 @@ namespace mplot
                 this->setupVBO (this->vbos_bb[this->colVBO], this->vcol_bb, visgl::colLoc);
 
                 // Unbind only the vertex array (not the buffers, that causes GL_INVALID_ENUM errors)
-                _glfn->BindVertexArray(0); // carefully unbind and rebind
-                mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
+                glfn->BindVertexArray(0); // carefully unbind and rebind
+                mplot::gl::Util::checkError (__FILE__, __LINE__, glfn);
             }
 
             this->flags.set (vm_bools::postVertexInitRequired, false);
@@ -254,8 +214,9 @@ namespace mplot
          */
         std::unique_ptr<mplot::VisualTextModel<glver>> makeVisualTextModel(const mplot::TextFeatures& tfeatures)
         {
+            // No longer really worth having, as there is only the make_unique call
             auto tmup = std::make_unique<mplot::VisualTextModel<glver>> (tfeatures);
-            this->bindmodel (tmup);
+            //this->bindmodel (tmup);
             return tmup;
         }
 
@@ -269,11 +230,11 @@ namespace mplot
                                       const sm::vec<float, 3>& _toffset,
                                       const mplot::TextFeatures& tfeatures = mplot::TextFeatures())
         {
-            if (this->get_shaderprogs(this->parentVis).tprog == 0) {
+            if (mplot::VisualResources<glver>::i().get_tprog (this->parentVis) == 0) {
                 throw std::runtime_error ("No text shader prog. Did your VisualModel-derived class set it up?");
             }
 
-            if (this->setContext != nullptr) { this->setContext (this->parentVis); } // For VisualTextModel
+            mplot::VisualResources<glver>::i().setContext (this->parentVis); // For VisualTextModel
 
             auto tmup = this->makeVisualTextModel (tfeatures);
 
@@ -289,7 +250,7 @@ namespace mplot
             this->texts.push_back (std::move(tmup));
 
             // As this is a setup function, release the context
-            if (this->releaseContext != nullptr) { this->releaseContext (this->parentVis); }
+            mplot::VisualResources<glver>::i().releaseContext();
 
             return this->texts.back()->getTextGeometry();
         }
@@ -304,11 +265,11 @@ namespace mplot
                                       mplot::VisualTextModel<glver>*& tm,
                                       const mplot::TextFeatures& tfeatures = mplot::TextFeatures())
         {
-            if (this->get_shaderprogs(this->parentVis).tprog == 0) {
+            if (mplot::VisualResources<glver>::i().get_tprog (this->parentVis) == 0) {
                 throw std::runtime_error ("No text shader prog. Did your VisualModel-derived class set it up?");
             }
 
-            if (this->setContext != nullptr) { this->setContext (this->parentVis); } // For VisualTextModel
+            mplot::VisualResources<glver>::i().setContext (this->parentVis); // For VisualTextModel
 
             auto tmup = this->makeVisualTextModel (tfeatures);
 
@@ -325,7 +286,7 @@ namespace mplot
             tm = this->texts.back().get();
 
             // As this is a setup function, release the context
-            if (this->releaseContext != nullptr) { this->releaseContext (this->parentVis); }
+            mplot::VisualResources<glver>::i().releaseContext();
 
             return this->texts.back()->getTextGeometry();
         }
@@ -388,57 +349,51 @@ namespace mplot
          */
         void reinit_buffers()
         {
-            if (this->visual_id == std::numeric_limits<uint32_t>::max()) {
-                throw std::runtime_error ("visual_id is unset");
-            }
-            GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->visual_id);
+            GladGLContext* glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
 
-            if (this->setContext != nullptr) { this->setContext (this->parentVis); }
+            mplot::VisualResources<glver>::i().setContext (this->parentVis);
             if (this->flags.test (vm_bools::postVertexInitRequired) == true) { this->postVertexInit(); }
 
             // Now re-set up the VBOs
-            _glfn->BindVertexArray (this->vao);                                    // carefully unbind and rebind
-            _glfn->BindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos[this->idxVBO]);  // carefully unbind and rebind
+            glfn->BindVertexArray (this->vao);                                    // carefully unbind and rebind
+            glfn->BindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos[this->idxVBO]);  // carefully unbind and rebind
 
             std::size_t sz = this->indices.size() * sizeof(GLuint);
-            _glfn->BufferData (GL_ELEMENT_ARRAY_BUFFER, sz, this->indices.data(), GL_STATIC_DRAW);
+            glfn->BufferData (GL_ELEMENT_ARRAY_BUFFER, sz, this->indices.data(), GL_STATIC_DRAW);
             this->setupVBO (this->vbos[this->posnVBO], this->vertexPositions, visgl::posnLoc);
             this->setupVBO (this->vbos[this->normVBO], this->vertexNormals, visgl::normLoc);
             this->setupVBO (this->vbos[this->colVBO], this->vertexColors, visgl::colLoc);
 
-            _glfn->BindVertexArray(0);                                // carefully unbind and rebind
-            mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);  // carefully unbind and rebind
+            glfn->BindVertexArray(0);                                // carefully unbind and rebind
+            mplot::gl::Util::checkError (__FILE__, __LINE__, glfn);  // carefully unbind and rebind
 
             // Optional bounding box
             if (this->flags.test (vm_bools::compute_bb)) {
-                _glfn->BindVertexArray (this->vao_bb);
-                _glfn->BindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos_bb[this->idxVBO]);
+                glfn->BindVertexArray (this->vao_bb);
+                glfn->BindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos_bb[this->idxVBO]);
 
                 std::size_t sz = this->indices_bb.size() * sizeof(GLuint);
-                _glfn->BufferData (GL_ELEMENT_ARRAY_BUFFER, sz, this->indices_bb.data(), GL_STATIC_DRAW);
+                glfn->BufferData (GL_ELEMENT_ARRAY_BUFFER, sz, this->indices_bb.data(), GL_STATIC_DRAW);
                 this->setupVBO (this->vbos_bb[this->posnVBO], this->vpos_bb, visgl::posnLoc);
                 this->setupVBO (this->vbos_bb[this->normVBO], this->vnorm_bb, visgl::normLoc);
                 this->setupVBO (this->vbos_bb[this->colVBO], this->vcol_bb, visgl::colLoc);
 
-                _glfn->BindVertexArray(0);
-                mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
+                glfn->BindVertexArray(0);
+                mplot::gl::Util::checkError (__FILE__, __LINE__, glfn);
             }
         }
 
         //! reinit ONLY vertexColors buffer
         void reinit_colour_buffer()
         {
-            if (this->setContext != nullptr) { this->setContext (this->parentVis); }
+            mplot::VisualResources<glver>::i().setContext (this->parentVis);
             if (this->flags.test (vm_bools::postVertexInitRequired) == true) { this->postVertexInit(); }
-            if (this->visual_id == std::numeric_limits<uint32_t>::max()) {
-                throw std::runtime_error ("visual_id is unset");
-            }
-            GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->visual_id);
+            GladGLContext* glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
             // Now re-set up the VBOs
-            _glfn->BindVertexArray (this->vao);  // carefully unbind and rebind
+            glfn->BindVertexArray (this->vao);  // carefully unbind and rebind
             this->setupVBO (this->vbos[this->colVBO], this->vertexColors, visgl::colLoc);
-            _glfn->BindVertexArray(0);  // carefully unbind and rebind
-            mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
+            glfn->BindVertexArray(0);  // carefully unbind and rebind
+            mplot::gl::Util::checkError (__FILE__, __LINE__, glfn);
         }
 
         void clearTexts() { this->texts.clear(); }
@@ -465,9 +420,7 @@ namespace mplot
         //! Re-create the model - called after updating data
         void reinit()
         {
-            if (this->setContext != nullptr) {
-                this->setContext (this->parentVis);
-            }
+            mplot::VisualResources<glver>::i().setContext (this->parentVis);
             // Fixme: Better not to clear, then repeatedly pushback here:
             this->vertexPositions.clear();
             this->vertexNormals.clear();
@@ -495,7 +448,7 @@ namespace mplot
          */
         void reinit_with_clearTexts()
         {
-            if (this->setContext != nullptr) { this->setContext (this->parentVis); }
+            mplot::VisualResources<glver>::i().setContext (this->parentVis);
             this->vertexPositions.clear();
             this->vertexNormals.clear();
             this->vertexColors.clear();
@@ -771,13 +724,13 @@ namespace mplot
          */
         void finalize()
         {
-            if (this->setContext != nullptr) { this->setContext (this->parentVis); }
+            mplot::VisualResources<glver>::i().setContext (this->parentVis);
             this->initializeVertices();
             this->update_bb();
             this->flags.set (vm_bools::postVertexInitRequired, true);
             // Release context after creating and finalizing this VisualModel. On Visual::render(),
             // context will be re-acquired.
-            if (this->releaseContext != nullptr) { this->releaseContext (this->parentVis); }
+            mplot::VisualResources<glver>::i().releaseContext();
         }
 
         static constexpr bool debug_render = false;
@@ -792,42 +745,40 @@ namespace mplot
 
             GLint prev_shader = 0;
 
-            if (this->visual_id == std::numeric_limits<uint32_t>::max()) {
-                throw std::runtime_error ("visual_id is unset");
-            }
-            GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->visual_id);
-            _glfn->GetIntegerv (GL_CURRENT_PROGRAM, &prev_shader);
+            GladGLContext* glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
+            glfn->GetIntegerv (GL_CURRENT_PROGRAM, &prev_shader);
             // Ensure the correct program is in play for this VisualModel
-            _glfn->UseProgram (this->get_gprog(this->parentVis));
+            uint32_t gprog = mplot::VisualResources<glver>::i().get_gprog (this->parentVis);
+            glfn->UseProgram (gprog);
 
             if (!this->indices.empty()) {
 
                 // Enable/disable wireframe mode per-model on each render call
                 if (this->flags.test (vm_bools::wireframe)) {
-                    _glfn->PolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+                    glfn->PolygonMode (GL_FRONT_AND_BACK, GL_LINE);
                 } else {
-                    _glfn->PolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+                    glfn->PolygonMode (GL_FRONT_AND_BACK, GL_FILL);
                 }
 
                 // It is only necessary to bind the vertex array object before rendering
                 // (not the vertex buffer objects)
-                _glfn->BindVertexArray (this->vao);
+                glfn->BindVertexArray (this->vao);
 
                 // Pass this->float to GLSL so the model can have an alpha value.
-                GLint loc_a = _glfn->GetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("alpha"));
-                if (loc_a != -1) { _glfn->Uniform1f (loc_a, this->alpha); }
+                GLint loc_a = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("alpha"));
+                if (loc_a != -1) { glfn->Uniform1f (loc_a, this->alpha); }
 
                 // The scene-view matrix
-                GLint loc_v = _glfn->GetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("v_matrix"));
-                if (loc_v != -1) { _glfn->UniformMatrix4fv (loc_v, 1, GL_FALSE, this->scenematrix.arr.data()); }
+                GLint loc_v = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("v_matrix"));
+                if (loc_v != -1) { glfn->UniformMatrix4fv (loc_v, 1, GL_FALSE, this->scenematrix.arr.data()); }
 
                 // the model-view matrix
-                GLint loc_m = _glfn->GetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("m_matrix"));
-                if (loc_m != -1) { _glfn->UniformMatrix4fv (loc_m, 1, GL_FALSE, this->viewmatrix.arr.data()); }
+                GLint loc_m = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("m_matrix"));
+                if (loc_m != -1) { glfn->UniformMatrix4fv (loc_m, 1, GL_FALSE, this->viewmatrix.arr.data()); }
 
                 // the instance scaling matrix (applied to all instances)
-                GLint loc_s = _glfn->GetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("s_matrix"));
-                if (loc_s != -1) { _glfn->UniformMatrix4fv (loc_s, 1, GL_FALSE, this->instscale.arr.data()); }
+                GLint loc_s = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("s_matrix"));
+                if (loc_s != -1) { glfn->UniformMatrix4fv (loc_s, 1, GL_FALSE, this->instscale.arr.data()); }
 
                 if constexpr (debug_render) {
                     std::cout << "VisualModel::render: scenematrix:\n" << this->scenematrix << std::endl;
@@ -835,39 +786,39 @@ namespace mplot
                 }
 
                 // Draw the triangles
-                GLint loc_is = _glfn->GetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("instance_start"));
-                GLint loc_ic = _glfn->GetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("instance_count"));
-                GLint loc_ipc = _glfn->GetUniformLocation (this->get_gprog(this->parentVis), static_cast<const GLchar*>("instparam_count"));
+                GLint loc_is = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("instance_start"));
+                GLint loc_ic = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("instance_count"));
+                GLint loc_ipc = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("instparam_count"));
                 if (this->flags.test (vm_bools::instanced)) {
-                    if (loc_is != -1) { _glfn->Uniform1i (loc_is, this->instance_start); }
-                    if (loc_ic != -1) { _glfn->Uniform1i (loc_ic, this->instance_count); }
-                    if (loc_ipc != -1) { _glfn->Uniform1i (loc_ipc, this->instparam_count); }
-                    _glfn->DrawElementsInstanced (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0, this->instance_count);
+                    if (loc_is != -1) { glfn->Uniform1i (loc_is, this->instance_start); }
+                    if (loc_ic != -1) { glfn->Uniform1i (loc_ic, this->instance_count); }
+                    if (loc_ipc != -1) { glfn->Uniform1i (loc_ipc, this->instparam_count); }
+                    glfn->DrawElementsInstanced (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0, this->instance_count);
                 } else {
-                    if (loc_is != -1) { _glfn->Uniform1i (loc_is, -1); }
-                    if (loc_ic != -1) { _glfn->Uniform1i (loc_ic, -1); }
-                    _glfn->DrawElements (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0);
+                    if (loc_is != -1) { glfn->Uniform1i (loc_is, -1); }
+                    if (loc_ic != -1) { glfn->Uniform1i (loc_ic, -1); }
+                    glfn->DrawElements (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0);
                 }
 
                 // Unbind the VAO
-                _glfn->BindVertexArray(0);
+                glfn->BindVertexArray(0);
 
                 // Do the bounding box optionally
                 if (this->flags.test (vm_bools::compute_bb) && this->flags.test (vm_bools::show_bb) && !this->indices_bb.empty()) {
-                    _glfn->BindVertexArray (this->vao_bb);
-                    _glfn->DrawElements (GL_TRIANGLES, static_cast<unsigned int>(this->indices_bb.size()), GL_UNSIGNED_INT, 0);
-                    _glfn->BindVertexArray(0);
+                    glfn->BindVertexArray (this->vao_bb);
+                    glfn->DrawElements (GL_TRIANGLES, static_cast<unsigned int>(this->indices_bb.size()), GL_UNSIGNED_INT, 0);
+                    glfn->BindVertexArray(0);
                 }
             }
-            mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
+            mplot::gl::Util::checkError (__FILE__, __LINE__, glfn);
 
             // Now render any VisualTextModels
-            _glfn->PolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+            glfn->PolygonMode (GL_FRONT_AND_BACK, GL_FILL);
             auto ti = this->texts.begin();
             while (ti != this->texts.end()) { (*ti)->render(); ti++; }
 
-            _glfn->UseProgram (prev_shader);
-            mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
+            glfn->UseProgram (prev_shader);
+            mplot::gl::Util::checkError (__FILE__, __LINE__, glfn);
         }
 
         //! Setter for the viewmatrix
@@ -1190,22 +1141,6 @@ namespace mplot
         //! per-instance and there may be fewer than instance_count parameters)
         unsigned int instparam_count = 0;
 #if 0
-        /*!
-         * A function that will be runtime defined to get_shaderprogs from a pointer to
-         * Visual (saving a boilerplate argument and avoiding that killer circular
-         * dependency at the cost of one line of boilerplate in client programs)
-         */
-        std::function<mplot::visgl::visual_shaderprogs(mplot::VisualBase<glver>*)> get_shaderprogs;
-        //! Get the graphics shader prog id
-        std::function<GLuint(mplot::VisualBase<glver>*)> get_gprog;
-        //! Get the text shader prog id
-        std::function<GLuint(mplot::VisualBase<glver>*)> get_tprog;
-
-        //! Set OpenGL context. Should call parentVis->setContext().
-        std::function<void(mplot::VisualBase<glver>*)> setContext;
-        //! Release OpenGL context. Should call parentVis->releaseContext().
-        std::function<void(mplot::VisualBase<glver>*)> releaseContext;
-
         //! Init the SSBOs for instanced rendering
         std::function<unsigned int(mplot::VisualBase<glver>*, const unsigned int)> init_instance_data;
         std::function<void(const unsigned int, const sm::vec<float, 3>&)> insert_instance_data;
@@ -1252,12 +1187,6 @@ namespace mplot
             if (position.size() > this->max_instances) {
                 throw std::runtime_error ("set_instance_data: Haven't reserved enough space for that");
             }
-            if (!this->insert_instance_data) {
-                throw std::runtime_error ("set_instance_data: Function insert_instance_data is not bound");
-            }
-            if (!this->insert_instparam_data) {
-                throw std::runtime_error ("set_instance_data: Function insert_instparam_data is not bound");
-            }
             if (colour.size() != scale.size() || colour.size() != alpha.size()) {
                 throw std::runtime_error ("set_instance_data: params vvecs should all have same size (colour, rotn, scale)");
             }
@@ -1265,24 +1194,17 @@ namespace mplot
             for (size_t i = 0; i < position.size(); ++i) {
                 // Get access to the SSBO in VisualResources and add the 3 floats in position[i] at
                 // the location defined by this->instance_start + i
-                this->insert_instance_data (this->instance_start + i, position[i]);
+                mplot::VisualResources<glver>::i().insert_instance_data (this->instance_start + i, position[i]);
             }
             this->instance_count = position.size();
 
             for (size_t i = 0; i < colour.size(); ++i) {
-                this->insert_instparam_data (this->instance_start + i, colour[i], alpha[i], scale[i]);
+                mplot::VisualResources<glver>::i().insert_instparam_data (this->instance_start + i, colour[i], alpha[i], scale[i]);
             }
             this->instparam_count = colour.size();
 
-            this->instanced_needs_update (this->parentVis);
+            mplot::VisualResources<glver>::i().instanced_needs_update (this->parentVis);
         }
-
-
-#if 0
-        //! Update the instance positions and params (colour, rotn, scale) in a range
-        virtual void update_instance_data (const sm::vvec<sm::vec<float, 3>>& points, const sm::vvec<float>& data,
-                                           std::size_t i_s, std::size_t i_e) = 0;
-#endif
 
         //! Setter for the parent ID, parentVis
         void set_parent (const uint32_t _vis)
@@ -1422,15 +1344,15 @@ namespace mplot
             if (this->visual_id == std::numeric_limits<uint32_t>::max()) {
                 throw std::runtime_error ("visual_id is unset");
             }
-            GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->visual_id);
-            _glfn->BindBuffer (GL_ARRAY_BUFFER, buf);
-            mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
-            _glfn->BufferData (GL_ARRAY_BUFFER, sz, dat.data(), GL_STATIC_DRAW);
-            mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
-            _glfn->VertexAttribPointer (bufferAttribPosition, 3, GL_FLOAT, GL_FALSE, 0, (void*)(0));
-            mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
-            _glfn->EnableVertexAttribArray (bufferAttribPosition);
-            mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
+            GladGLContext* glfn = mplot::VisualResources<glver>::i().get_glfn (this->visual_id);
+            glfn->BindBuffer (GL_ARRAY_BUFFER, buf);
+            mplot::gl::Util::checkError (__FILE__, __LINE__, glfn);
+            glfn->BufferData (GL_ARRAY_BUFFER, sz, dat.data(), GL_STATIC_DRAW);
+            mplot::gl::Util::checkError (__FILE__, __LINE__, glfn);
+            glfn->VertexAttribPointer (bufferAttribPosition, 3, GL_FLOAT, GL_FALSE, 0, (void*)(0));
+            mplot::gl::Util::checkError (__FILE__, __LINE__, glfn);
+            glfn->EnableVertexAttribArray (bufferAttribPosition);
+            mplot::gl::Util::checkError (__FILE__, __LINE__, glfn);
         }
 
         //! Push three floats onto the vector of floats \a vp
