@@ -1,4 +1,4 @@
-export module mplot.core:textgeometry;
+export module mplot.textgeometry;
 
 export namespace mplot
 {

@@ -9,13 +9,6 @@
  */
 module;
 
-#include <tuple>
-#include <memory>
-#include <stdexcept>
-#include <array>
-#include <map>
-#include <limits>
-
 #if defined __gl3_h_ || defined __gl_h_
 // GL headers have been externally included
 #else
@@ -24,41 +17,54 @@ module;
 #  include <mplot/glad/gl_mx.h>
 #endif
 
-#include <mplot/gl/version.h>
-#include <mplot/gl/util_mx.h>
-#include <mplot/gl/ssbo_mx.h>
-
 // FreeType for text rendering
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#include <iostream>
+#include <map>
+#include <memory>
+#include <mplot/gl/version.h>
+
+#include <mplot/gl/version.h>
+#include <mplot/gl/util_mx.h>
+#include <mplot/gl/ssbo_mx.h>
+
 export module mplot.core:visualresources;
-import :visualface;
-import :visualfont;
-import :visualresourcesbase;
-import :textfeatures;
+
+import mplot.visualfont;
+import mplot.visualface;
+import mplot.textfeatures;
 
 import sm.vec;
 
 export namespace mplot
 {
-    // Pointers to mplot::VisualBase are used to index font faces
-    //template<int>
-    //class VisualBase;
-
-    //! Singleton resource class for mplot::Visual scenes.
+    //! Singleton resource class for mplot::Visual scenes. (base class, with no GL calls, and no
+    //! instance function)
     template <int glver>
-    class VisualResources : public VisualResourcesBase<glver>
+    class VisualResources
     {
     private:
         VisualResources(){}
-        ~VisualResources() { this->faces.clear(); }
+        ~VisualResources()
+        {
+            this->faces.clear();
+            // As with the case for faces, when each mplot::Visual goes out of scope, the FreeType
+            // instance gets cleaned up. So at this stage freetypes should also be empy and nothing
+            // will happen here either.
+            for (auto& ft : this->freetypes) { FT_Done_FreeType (ft.second); }
+        }
 
         //! The collection of VisualFaces generated for this instance of the
         //! application. Create one VisualFace for each unique combination of VisualFont
         //! and fontpixels (the texture resolution)
         std::map<std::tuple<mplot::VisualFont, unsigned int, mplot::VisualBase<glver>*>,
                  std::unique_ptr<mplot::visgl::VisualFace>> faces;
+
+        //! FreeType library object
+        std::map<mplot::VisualBase<glver>*, FT_Library> freetypes;
+
     public:
         VisualResources(const VisualResources<glver>&) = delete;
         VisualResources& operator=(const VisualResources<glver> &) = delete;
@@ -90,6 +96,20 @@ export namespace mplot
             }
         }
 
+        //! When a mplot::Visual goes out of scope, its freetype library instance should be
+        //! deinitialized.
+        void freetype_deinit (mplot::VisualBase<glver>* _vis)
+        {
+            // First clear the faces associated with VisualBase<>* _vis
+            this->clearVisualFaces (_vis);
+            // Second, clean up the FreeType library instance and erase from this->freetypes
+            auto freetype = this->freetypes.find (_vis);
+            if (freetype != this->freetypes.end()) {
+                FT_Done_FreeType (freetype->second);
+                this->freetypes.erase (freetype);
+            }
+        }
+
         //! The instance public function. Uses the very short name 'i' to keep code tidy.
         //! This relies on C++11 magic statics (N2660).
         static auto& i()
@@ -99,7 +119,7 @@ export namespace mplot
         }
 
         //! A function to call to simply make sure the singleton instance exists
-        void create() final {}
+        void create() {}
 
         //! Return a pointer to a VisualFace for the given \a font at the given texture
         //! resolution, \a fontpixels and the given window (i.e. OpenGL context) \a _win.
@@ -211,12 +231,35 @@ export namespace mplot
             if (this->instparam_data.ready()) { this->instparam_data.copy_to_gpu(); }
         }
 
+        /*!
+         * SSBO management
+         */
+        //! Instanced rendering mode (SSBO access). position data stored in SSBO index 1 (must match GLSL code)
+        static constexpr unsigned int instance_index = 1;
+        //! colour, scale, rotation stored in SSBO index 2
+        static constexpr unsigned int instparam_index = 2;
+        //! one 3D vector is 3 floats
+        static constexpr unsigned int floats_per_instance = 3;
+        //! Instance params are: colour/alpha (4 floats), scale (1 float)
+        static constexpr unsigned int floats_per_instparam = 5;
+
+        //! This will control how much GPU RAM is allocated when using instanced rendering
+        //! (Hopefully, when I'm finished, the RAM will be allocated only if at least one
+        //! VisualModel is marked 'instanced'). Makes a big difference to speed of operation (unless
+        //! I can send a portion of a buffer to the GPU).
+        static constexpr unsigned int max_instances = 32 * 1024;
+        static constexpr unsigned int max_instance_floats = floats_per_instance * max_instances;
+        static constexpr unsigned int max_instparam_floats = floats_per_instparam * max_instances;
+
         //! Shader Storage Buffer Object for instanced rendering - this holds positions only
-        mplot::gl::ssbo<mplot::VisualResourcesBase<glver>::instance_index,
-                        float, mplot::VisualResourcesBase<glver>::max_instance_floats> instance_data;
+        mplot::gl::ssbo<mplot::VisualResources<glver>::instance_index,
+                        float, mplot::VisualResources<glver>::max_instance_floats> instance_data;
         //! Shader Storage Buffer Object for instanced rendering - this holds colour, alpha and scale
-        mplot::gl::ssbo<mplot::VisualResourcesBase<glver>::instparam_index,
-                        float, mplot::VisualResourcesBase<glver>::max_instparam_floats> instparam_data;
+        mplot::gl::ssbo<mplot::VisualResources<glver>::instparam_index,
+                        float, mplot::VisualResources<glver>::max_instparam_floats> instparam_data;
+
+        // The Current location from which space in the instance SSBOs should be allocated
+        unsigned int instance_top = 0;
     };
 
 } // namespace mplot

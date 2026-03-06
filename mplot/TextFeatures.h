@@ -3,9 +3,9 @@ module;
 #include <array>
 #include <mplot/colour.h>
 
-export module mplot.core:textfeatures;
+export module mplot.textfeatures;
 
-import :visualfont;
+import mplot.visualfont;
 
 export namespace mplot
 {

@@ -1,4 +1,4 @@
-export module mplot.core:visualfont;
+export module mplot.visualfont;
 
 /*
  * This is just an enumerated class that defines the fonts we pack into a mplot binary
