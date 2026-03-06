@@ -53,6 +53,8 @@ import sm.flags;
 
 // Need to import common here
 import mplot.visualcommon;
+import mplot.visualresources;
+import mplot.visualtextmodel;
 
 //import mplot.core;// Can I avoid use of this in VisualModelBase?
 
@@ -76,7 +78,7 @@ namespace mplot
     // Could I have a singleton that can do the work and is a separate class so taht VisualModel no
     // longer needs to know about VisualBase?  Visual registers its identity and the shader programs
     // and the singleton could set context based on an id that the VisualModel contains?
-    template <int> class VisualBase;
+    //template <int> class VisualBase;
 
     /*!
      * An OpenGL model class
@@ -328,13 +330,13 @@ namespace mplot
             return this->texts.back()->getTextGeometry();
         }
 
-        void setSceneMatrixTexts (const sm::mat<float, 4>& sv) final
+        void setSceneMatrixTexts (const sm::mat<float, 4>& sv)
         {
             auto ti = this->texts.begin();
             while (ti != this->texts.end()) { (*ti)->setSceneMatrix (sv); ti++; }
         }
 
-        void setSceneTranslationTexts (const sm::vec<float>& v0) final
+        void setSceneTranslationTexts (const sm::vec<float>& v0)
         {
             auto ti = this->texts.begin();
             while (ti != this->texts.end()) { (*ti)->setSceneTranslation (v0); ti++; }
@@ -878,16 +880,12 @@ namespace mplot
 
         void scaleViewMatrix (const float by) { this->viewmatrix.scale (by); }
 
-        virtual void setSceneMatrixTexts (const sm::mat<float, 4>& sv) = 0;
-
         //! When setting the scene matrix, also have to set the text's scene matrices.
         void setSceneMatrix (const sm::mat<float, 4>& sv)
         {
             this->scenematrix = sv;
             this->setSceneMatrixTexts (sv);
         }
-
-        virtual void setSceneTranslationTexts (const sm::vec<float>& v0) = 0;
 
         //! Set a translation into the scene and into any child texts
         template <std::size_t N = 3> requires (N == 3) || (N == 4)
@@ -937,8 +935,6 @@ namespace mplot
             this->viewmatrix.rotate (r);
         }
 
-        virtual void setViewRotationTexts (const sm::quaternion<float>& r) = 0;
-
         //! Set a rotation (only) into the view
         void setViewRotation (const sm::quaternion<float>& r)
         {
@@ -948,8 +944,6 @@ namespace mplot
             this->viewmatrix.rotate (r);
             this->setViewRotationTexts (r);
         }
-
-        virtual void addViewRotationTexts (const sm::quaternion<float>& r) = 0;
 
         //! Apply a further rotation to the model view matrix
         void addViewRotation (const sm::quaternion<float>& r)
@@ -1289,10 +1283,13 @@ namespace mplot
         virtual void update_instance_data (const sm::vvec<sm::vec<float, 3>>& points, const sm::vvec<float>& data,
                                            std::size_t i_s, std::size_t i_e) = 0;
 #endif
-        //! Setter for the parent pointer, parentVis
-        void set_parent (mplot::VisualBase<glver>* _vis)
+
+        //! Setter for the parent ID, parentVis
+        void set_parent (const uint32_t _vis)
         {
-            if (this->parentVis != nullptr) { throw std::runtime_error ("VisualModel: Set the parent pointer once only!"); }
+            if (this->parentVis != std::numeric_limits<uint32_t>::max()) {
+                throw std::runtime_error ("VisualModel: Set the parent pointer once only!");
+            }
             this->parentVis = _vis;
         }
 
@@ -1410,14 +1407,15 @@ namespace mplot
         //! A model-wide alpha value for the shader
         float alpha = 1.0f;
 
-        // The mplot::VisualBase in which this model exists.
-        mplot::VisualBase<glver>* parentVis = nullptr;
+        // The mplot::VisualBase in which this model exists. (visual_id)
+        //mplot::VisualBase<glver>* parentVis = nullptr;
+        uint32_t parentVis = std::numeric_limits<uint32_t>::max();
 
         //! A vector of pointers to text models that should be rendered.
         std::vector<std::unique_ptr<mplot::VisualTextModel<glver>>> texts;
 
         //! Set up a vertex buffer object - bind, buffer and set vertex array object attribute
-        void setupVBO (GLuint& buf, std::vector<float>& dat, unsigned int bufferAttribPosition) final
+        void setupVBO (GLuint& buf, std::vector<float>& dat, unsigned int bufferAttribPosition)
         {
             std::size_t sz = dat.size() * sizeof(float);
 
@@ -1458,9 +1456,6 @@ namespace mplot
             vp.emplace_back (vec[1]);
             vp.emplace_back (vec[2]);
         }
-
-        //! Set up a vertex buffer object - bind, buffer and set vertex array object attribute
-        virtual void setupVBO (GLuint& buf, std::vector<float>& dat, unsigned int bufferAttribPosition) = 0;
 
     protected:
         /*!

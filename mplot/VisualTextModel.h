@@ -10,6 +10,14 @@
  */
 module;
 
+#if defined __gl3_h_ || defined __gl_h_
+// GL headers have been externally included
+#else
+// Include GLAD header
+# define GLAD_GL_IMPLEMENTATION
+#  include <mplot/glad/gl_mx.h>
+#endif
+
 #include <iostream>
 #include <cstdint>
 #include <string>
@@ -22,14 +30,16 @@ module;
 #include <sm/mathconst>
 
 #include <mplot/gl/version.h>
+#include <mplot/gl/util_mx.h>
 #include <mplot/unicode.h>
 #include <mplot/colour.h>
 
 export module mplot.visualtextmodel;
 
+import mplot.visualresources;
 import mplot.visualcommon;
-import mplot.textgeometry;
-import mplot.textfeatures;
+export import mplot.textgeometry;
+export import mplot.textfeatures;
 import mplot.visualface;
 
 import sm.quaternion;
@@ -39,7 +49,7 @@ import sm.vec;
 export namespace mplot
 {
     //! Forward declaration of a VisualBase class
-    template <int> class VisualBase;
+    //template <int> class VisualBase;
 
     /*!
      * This is the base class for VisualTextModel containing common code, but no GL function calls.
@@ -322,11 +332,6 @@ export namespace mplot
             _glfn->VertexAttribPointer (bufferAttribPosition, 3, GL_FLOAT, GL_FALSE, 0, (void*)(0));
             _glfn->EnableVertexAttribArray (bufferAttribPosition);
         }
-
-
-        // DIVIDE
-        //
-
 
         //! Set clr_text to a value suitable to be visible on the background colour bgcolour
         void setVisibleOn (const std::array<float, 4>& bgcolour)

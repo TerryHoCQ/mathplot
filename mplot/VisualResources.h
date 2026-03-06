@@ -4,6 +4,8 @@
  * Declares a VisualResource class to hold the information about Freetype and any other
  * one-per-program resources.
  *
+ * Importantly, holds some OpenGL state, especially the GL function pointers for each window.
+ *
  * \author Seb James
  * \date November 2020
  */
@@ -21,6 +23,7 @@ module;
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#include <cstdint>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -30,10 +33,10 @@ module;
 #include <mplot/gl/util_mx.h>
 #include <mplot/gl/ssbo_mx.h>
 
-export module mplot.core:visualresources;
+export module mplot.visualresources;
 
-import mplot.visualfont;
 import mplot.visualface;
+import mplot.visualfont;
 import mplot.textfeatures;
 
 import sm.vec;
@@ -56,14 +59,14 @@ export namespace mplot
             for (auto& ft : this->freetypes) { FT_Done_FreeType (ft.second); }
         }
 
-        //! The collection of VisualFaces generated for this instance of the
-        //! application. Create one VisualFace for each unique combination of VisualFont
-        //! and fontpixels (the texture resolution)
-        std::map<std::tuple<mplot::VisualFont, unsigned int, mplot::VisualBase<glver>*>,
+        //! The collection of VisualFaces generated for this instance of the application. Create one
+        //! VisualFace for each unique combination of VisualFont and fontpixels (the texture
+        //! resolution). uint32_t is the 'visual_id' an ID of the Visual instance.
+        std::map<std::tuple<mplot::VisualFont, unsigned int, uint32_t>,
                  std::unique_ptr<mplot::visgl::VisualFace>> faces;
 
-        //! FreeType library object
-        std::map<mplot::VisualBase<glver>*, FT_Library> freetypes;
+        //! FreeType library object. Keyed by the 'visual_id' an ID of the Visual instance.
+        std::map<uint32_t, FT_Library> freetypes;
 
     public:
         VisualResources(const VisualResources<glver>&) = delete;
@@ -77,7 +80,7 @@ export namespace mplot
         //! window). Thus, arguably, the FT_Library should be a member of mplot::Visual,
         //! but that's a task for the future, as I coded it this way under the false
         //! assumption that I'd only need one FT_Library.
-        void freetype_init (mplot::VisualBase<glver>* _vis, GladGLContext* glfn = nullptr)
+        void freetype_init (uint32_t _vis, GladGLContext* glfn = nullptr)
         {
             FT_Library freetype = nullptr;
             try {
@@ -98,9 +101,9 @@ export namespace mplot
 
         //! When a mplot::Visual goes out of scope, its freetype library instance should be
         //! deinitialized.
-        void freetype_deinit (mplot::VisualBase<glver>* _vis)
+        void freetype_deinit (uint32_t _vis)
         {
-            // First clear the faces associated with VisualBase<>* _vis
+            // First clear the faces associated with Visual with ID _vis
             this->clearVisualFaces (_vis);
             // Second, clean up the FreeType library instance and erase from this->freetypes
             auto freetype = this->freetypes.find (_vis);
@@ -124,7 +127,7 @@ export namespace mplot
         //! Return a pointer to a VisualFace for the given \a font at the given texture
         //! resolution, \a fontpixels and the given window (i.e. OpenGL context) \a _win.
         mplot::visgl::VisualFace* getVisualFace (mplot::VisualFont font, unsigned int fontpixels,
-                                                 mplot::VisualBase<glver>* _vis, GladGLContext* glfn)
+                                                 uint32_t _vis, GladGLContext* glfn)
         {
             mplot::visgl::VisualFace* rtn = nullptr;
             auto key = std::make_tuple(font, fontpixels, _vis);
@@ -138,18 +141,18 @@ export namespace mplot
         }
 
         mplot::visgl::VisualFace* getVisualFace (const mplot::TextFeatures& tf,
-                                                 mplot::VisualBase<glver>* _vis, GladGLContext* glfn)
+                                                 uint32_t _vis, GladGLContext* glfn)
         {
             return this->getVisualFace (tf.font, tf.fontres, _vis, glfn);
         }
 
         //! Loop through this->faces clearing out those associated with the given mplot::Visual
-        void clearVisualFaces (mplot::VisualBase<glver>* _vis) final
+        void clearVisualFaces (uint32_t _vis)
         {
             auto f = this->faces.begin();
             while (f != this->faces.end()) {
                 // f->first is a key. If its third, Visual<>* element == _vis, then delete and erase
-                if (std::get<mplot::VisualBase<glver>*>(f->first) == _vis) {
+                if (std::get<uint32_t>(f->first) == _vis) {
                     f = this->faces.erase (f);
                 } else { f++; }
             }

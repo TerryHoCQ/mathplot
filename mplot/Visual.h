@@ -72,9 +72,11 @@ export namespace mplot
             this->init_resources();
             this->init_gl();
 
+#if 0 // To go!
             // Special tasks: re-bind coordArrows and title text
             this->bindextra (this->coordArrows);
             this->bindextra (this->textModel);
+#endif
         }
 
         //! Deconstructor destroys GLFW/Qt window and deregisters access to VisualResources
@@ -160,6 +162,7 @@ export namespace mplot
         //! Obtain the window pointer
         win_t* getWindow() { return this->window; }
 
+#if 0 // To go
         /*!
          * Set up the passed-in VisualModel (or indeed, VisualTextModel) with functions that need access to Visual attributes.
          */
@@ -181,7 +184,7 @@ export namespace mplot
             model->insert_instance_data = &mplot::VisualOwnable<glver>::insert_instance_data;
             model->insert_instparam_data = &mplot::VisualOwnable<glver>::insert_instparam_data;
         }
-
+#endif
         /*
          * A note on setContext() in keepOpen/poll/waitevents/wait:
          *

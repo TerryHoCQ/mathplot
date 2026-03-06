@@ -30,8 +30,8 @@ module;
 export module mplot.core:coordarrows;
 
 import mplot.visualtextmodel;
-import :textfeatures;
-import :visualfont;
+import mplot.textfeatures;
+import mplot.visualfont;
 import sm.vec;
 import sm.mat;
 import sm.flags;

@@ -177,7 +177,7 @@ import mplot.textfeatures;
 
 import sm.vec;
 
-namespace mplot::visgl
+export namespace mplot::visgl
 {
     struct VisualFace
     {
@@ -198,6 +198,8 @@ namespace mplot::visgl
         VisualFace (const mplot::VisualFont _font, unsigned int fontpixels, FT_Library& ft_freetype,
                     GladGLContext* glfn = nullptr)
         {
+            constexpr bool debug_visualface = false;
+
             this->init_common (_font, fontpixels, ft_freetype);
 
             // How far to loop. In principle, up to 21 bits worth - that's 2097151 possible characters!
@@ -259,9 +261,6 @@ namespace mplot::visgl
 
         ~VisualFace () {}
 
-        //! Set true for informational/debug messages
-        static constexpr bool debug_visualface = false;
-
         //! The FT_Face that we're managing
         FT_Face face;
 
@@ -272,6 +271,8 @@ namespace mplot::visgl
 
         void init_common (const mplot::VisualFont _font, unsigned int fontpixels, FT_Library& ft_freetype)
         {
+            constexpr bool debug_visualface = false;
+
             std::string fontpath = "";
 #ifdef _MSC_VER
             char* userprofile = getenv ("USERPROFILE");
@@ -484,6 +485,7 @@ namespace mplot::visgl
         template <typename T = const char>
         void makeTempFontFile (const std::string& fontpath, T* file_start, T* file_stop)
         {
+            constexpr bool debug_visualface = false;
             T* p;
             if (!mplot::tools::fileExists (fontpath)) {
                 std::ofstream fout;

@@ -59,8 +59,8 @@ module;
 
 export module mplot.core:visualownable;
 
-import :visualcommon;
-import :visualresources;
+import mplot.visualcommon;
+import mplot.visualresources;
 import mplot.visualtextmodel;
 import mplot.textgeometry;
 import mplot.textfeatures;
@@ -175,7 +175,7 @@ export namespace mplot
     };
 
     /*!
-     * VisualOwnable - adds multi-context-safe GL calls to the 'scene' base class, VisualBase
+     * VisualOwnable - An ownable 'scene' base class.
      *
      * This class assumes that GL functions have been loaded by the GLAD header system as a
      * GladGLContext pointer, which is called glfn here. GL function calls are glfn->Clear for
@@ -246,7 +246,7 @@ export namespace mplot
         }
 
     protected:
-        void freetype_init() final
+        void freetype_init()
         {
             // Now make sure that Freetype is set up (we assume that caller code has set the correct OpenGL context)
             mplot::VisualResources<glver>::i().freetype_init (this, this->glfn);
@@ -272,7 +272,7 @@ export namespace mplot
             this->freetype_init();
             this->visual_id = mplot::VisualResources<glver>::i().register_visual (this->glfn);
         }
-
+#if 0
         // Hopefully this will go
         /*!
          * Set up the passed-in VisualModel (or indeed, VisualTextModel) with functions that need access to Visual attributes.
@@ -286,6 +286,8 @@ export namespace mplot
             model->get_tprog = &mplot::VisualBase<glver>::get_tprog;
             model->instanced_needs_update = &mplot::VisualBase<glver>::instanced_needs_update;
         }
+#endif
+
         /*!
          * Add a VisualModel to the scene as a unique_ptr. The Visual object takes ownership of the
          * unique_ptr. The index into Visual::vm is returned.
@@ -294,6 +296,7 @@ export namespace mplot
         unsigned int addVisualModelId (std::unique_ptr<T>& model)
         {
             std::unique_ptr<mplot::VisualModel<glver>> vmp = std::move(model);
+            vmp->set_parent (this->visual_id);
             if (vmp->instanced()) { this->state.set (visual_state::haveInstanced, true); }
             this->vm.push_back (std::move(vmp));
             unsigned int rtn = (this->vm.size()-1);
@@ -308,6 +311,7 @@ export namespace mplot
         T* addVisualModel (std::unique_ptr<T>& model)
         {
             std::unique_ptr<mplot::VisualModel<glver>> vmp = std::move(model);
+            vmp->set_parent (this->visual_id);
             if (vmp->instanced()) { this->state.set (visual_state::haveInstanced, true); }
             this->vm.push_back (std::move(vmp));
             return static_cast<T*>(this->vm.back().get());
@@ -334,7 +338,7 @@ export namespace mplot
             for (unsigned int modelId = 0; modelId < this->vm.size(); ++modelId) {
                 if (this->vm[modelId].get() == vm_to_follow) {
                     this->followedVM = this->vm[modelId].get();
-                    this->followedLastViewMatrix = this->followedVM->getViewMatrix(); // COULD pass mat4
+                    this->followedLastViewMatrix = this->followedVM->getViewMatrix();
                     break;
                 }
             }
@@ -371,8 +375,7 @@ export namespace mplot
         void set_cursorpos (double _x, double _y) { this->cursorpos = {static_cast<float>(_x), static_cast<float>(_y)}; }
 
         //! A callback function
-        static void callback_render (mplot::VisualBase<glver>* _v) { _v->render(); };
-
+        static void callback_render (mplot::VisualOwnable<glver>* _v) { _v->render(); };
 
         //! GLAD OpenGL function context pointer
         GladGLContext* glfn = nullptr;
@@ -560,12 +563,13 @@ export namespace mplot
             return v0;
         }
 
+#if 0 // glfn always got from VisualResources now
         //! Glad MX specific callback
-        static GladGLContext* get_glfn (mplot::VisualBase<glver>* _v)
+        static GladGLContext* get_glfn (const uint32_t _v)
         {
             return reinterpret_cast<mplot::VisualOwnable<glver>*>(_v)->glfn;
         };
-
+#endif
     protected:
         // GLAD specific gl context creation/freeing. GladGLContext is a struct containing
         GladGLContext* create_gladgl_context (const GLADloadfunc procaddressfn)
@@ -594,7 +598,7 @@ export namespace mplot
                 this->free_gladgl_context (this->glfn);
             }
         }
-
+#if 0 // is going...
         // Note: We have to have both VisualOwnable::bindmodel AND Visual::bindmodel (which calls VisualBase::bindmodel)
         template <typename T>
         void bindmodel (std::unique_ptr<T>& model)
@@ -609,7 +613,7 @@ export namespace mplot
             model->insert_instance_data = &mplot::VisualOwnable<glver>::insert_instance_data;
             model->insert_instparam_data = &mplot::VisualOwnable<glver>::insert_instparam_data;
         }
-
+#endif
         //! Add a label _text to the scene at position _toffset. Font features are
         //! defined by the tfeatures. Return geometry of the text.
         mplot::TextGeometry addLabel (const std::string& _text,
@@ -660,10 +664,9 @@ export namespace mplot
             return tm->getTextGeometry();
         }
 
-        static unsigned int init_instance_data (mplot::VisualBase<glver>* _v, const unsigned int n_to_reserve)
+        static unsigned int init_instance_data (mplot::VisualOwnable<glver>* _v, const unsigned int n_to_reserve)
         {
-            auto __v = reinterpret_cast<mplot::VisualOwnable<glver>*>(_v);
-            unsigned int reservation = mplot::VisualResources<glver>::i().init_instance_ssbo (__v->glfn, n_to_reserve);
+            unsigned int reservation = mplot::VisualResources<glver>::i().init_instance_ssbo (_v->glfn, n_to_reserve);
             return reservation;
         }
 
@@ -765,13 +768,13 @@ export namespace mplot
         std::vector<mplot::gl::ShaderInfo> proj2d_shader_progs;
         //! Stores the info required to load the text shader
         std::vector<mplot::gl::ShaderInfo> text_shader_progs;
-
+#if 0 // To go
         // These static functions will be set as callbacks in each VisualModel object.
-        static mplot::visgl::visual_shaderprogs get_shaderprogs (mplot::VisualBase<glver>* _v) { return _v->shaders; };
-        static GLuint get_gprog (mplot::VisualBase<glver>* _v) { return _v->shaders.gprog; };
-        static GLuint get_tprog (mplot::VisualBase<glver>* _v) { return _v->shaders.tprog; };
-
-        static void instanced_needs_update (mplot::VisualBase<glver>* _v) { _v->instancedNeedsUpdate (true); }
+        static mplot::visgl::visual_shaderprogs get_shaderprogs (mplot::VisualOwnable<glver>* _v) { return _v->shaders; };
+        static GLuint get_gprog (mplot::VisualOwnable<glver>* _v) { return _v->shaders.gprog; };
+        static GLuint get_tprog (mplot::VisualOwnable<glver>* _v) { return _v->shaders.tprog; };
+        static void instanced_needs_update (mplot::VisualOwnable<glver>* _v) { _v->instancedNeedsUpdate (true); }
+#endif
 
         //! The colour of ambient and diffuse light sources
         sm::vec<float, 3> light_colour = { 1.0f, 1.0f, 1.0f };
