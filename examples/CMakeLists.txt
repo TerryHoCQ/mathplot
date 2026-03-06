@@ -67,7 +67,7 @@ target_sources(helloworld PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE
   ${PROJECT_SOURCE_DIR}/maths/sm/geometry
   ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
   ${PROJECT_SOURCE_DIR}/maths/sm/vvec)
-target_link_libraries(helloworld OpenGL::GL glfw Freetype::Freetype glad)
+target_link_libraries(helloworld OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
 add_executable(rod rod.cpp)
 target_sources(rod PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}

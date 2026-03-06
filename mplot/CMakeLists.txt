@@ -100,6 +100,10 @@ if(WIN32)
   add_subdirectory(fonts)
 endif()
 
+# Build a small library containing the mathplot font binaries
+include_directories(BEFORE ${PROJECT_SOURCE_DIR})
+add_library(mplot_fontdata VisualFaceAsm.cpp)
+
 # There are also headers in sub directories
 add_subdirectory(gl) # GL common and compute code
 add_subdirectory(glad) # GLAD header library
