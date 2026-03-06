@@ -2,4 +2,4 @@ install(FILES gl.h gl_mx.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include/mplot/gla
 
 # Build glad library here
 include_directories(BEFORE ${PROJECT_SOURCE_DIR})
-add_library(glad SHARED gl.c)
+add_library(glad STATIC gl.c)
