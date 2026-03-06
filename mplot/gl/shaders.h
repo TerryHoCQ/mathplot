@@ -9,6 +9,12 @@
  * Author: Seb James.
  */
 
+#if defined __gl3_h_ || defined __gl_h_
+// GL headers have been externally included
+#else
+# include <mplot/glad/gl.h>
+#endif
+
 #include <iostream>
 #include <fstream>
 #include <cstring>

@@ -15,9 +15,7 @@
 #if defined __gl3_h_ || defined __gl_h_
 // GL headers have been externally included
 #else
-// Include GLAD header
-# define GLAD_GL_IMPLEMENTATION
-#  include <mplot/glad/gl_mx.h>
+# include <mplot/glad/gl.h>
 #endif
 
 #include <type_traits>

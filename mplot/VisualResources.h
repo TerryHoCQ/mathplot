@@ -11,14 +11,10 @@
  */
 module;
 
-#if defined __gl3_h_ || defined __gl_h_
-// GL headers have been externally included
-#else
 // Include GLAD header
-# define GLAD_GL_IMPLEMENTATION
-#  include <mplot/glad/gl_mx.h>
-#endif
+#include <mplot/glad/gl.h>
 
+// Probably DO want to separate all things GLFW into VisualGlfw.
 #ifndef _glfw3_h_
 # define GLFW_INCLUDE_NONE
 # include <GLFW/glfw3.h>

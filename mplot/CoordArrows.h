@@ -11,9 +11,7 @@ module;
 #if defined __gl3_h_ || defined __gl_h_ // could get a fuller list from glfw.h
 // GL headers appear to have been externally included.
 #else
-// Include GLAD header
-# define GLAD_GL_IMPLEMENTATION
-#  include <mplot/glad/gl_mx.h>
+# include <mplot/glad/gl.h>
 #endif // GL headers
 
 #include <array>
