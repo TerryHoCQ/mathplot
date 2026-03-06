@@ -1,16 +1,23 @@
-#pragma once
-
 /*
  * Common code for GL functionality in mathplot programs that use multicontext GLAD headers.
  *
  * Author: Seb James.
  */
+module;
+
+#if defined __gl3_h_ || defined __gl_h_
+// GL headers have been externally included
+#else
+# include <mplot/glad/gl.h>
+#endif
 
 #include <stdexcept>
 #include <string>
 #include <iostream>
 
-namespace mplot::gl::Util
+export module mplot.gl.util;
+
+export namespace mplot::gl::Util
 {
     GLenum checkError (const char *file, int line, GladGLContext* glfn)
     {

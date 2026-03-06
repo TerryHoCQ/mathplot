@@ -29,13 +29,10 @@ module;
 
 #include <mplot/gl/shaders.h>
 #include <mplot/gl/loadshaders_mx.h>
-#include <mplot/gl/util_mx.h>
 #include <mplot/keys.h>
 #include <mplot/version.h>
 
 #include <nlohmann/json.hpp>
-
-#include <mplot/tools.h>
 
 #include <mplot/VisualDefaultShaders.h>
 
@@ -58,6 +55,8 @@ import mplot.textgeometry;
 import mplot.textfeatures;
 import mplot.coordarrows;
 import mplot.gl.version;
+import mplot.gl.util;
+import mplot.tools;
 
 import sm.vec;
 
@@ -261,6 +260,7 @@ export namespace mplot
         unsigned int addVisualModelId (std::unique_ptr<T>& model)
         {
             std::unique_ptr<mplot::VisualModel<glver>> vmp = std::move(model);
+            std::cout << "set parent on visualmodel to " << visual_id << std::endl;
             vmp->set_parent (this->visual_id);
             if (vmp->instanced()) { this->state.set (visual_state::haveInstanced, true); }
             this->vm.push_back (std::move(vmp));
@@ -276,6 +276,7 @@ export namespace mplot
         T* addVisualModel (std::unique_ptr<T>& model)
         {
             std::unique_ptr<mplot::VisualModel<glver>> vmp = std::move(model);
+            std::cout << "set parent on visualmodel to " << visual_id << std::endl;
             vmp->set_parent (this->visual_id);
             if (vmp->instanced()) { this->state.set (visual_state::haveInstanced, true); }
             this->vm.push_back (std::move(vmp));
@@ -1085,6 +1086,8 @@ export namespace mplot
             }
             return cvm;
         }
+
+        uint32_t get_id() const { return this->visual_id; }
 
     protected:
 

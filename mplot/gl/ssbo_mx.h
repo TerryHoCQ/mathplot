@@ -10,11 +10,11 @@
  */
 
 #include <cstddef>
-#include <mplot/gl/util_mx.h>
 
 import sm.vec;
 import sm.vvec;
 import sm.range;
+import mplot.gl.util;
 
 namespace mplot::gl
 {

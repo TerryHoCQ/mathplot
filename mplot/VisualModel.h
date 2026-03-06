@@ -34,10 +34,7 @@
 #include <set>
 #include <tuple>
 
-#include <mplot/gl/util_mx.h>
-
 #include <sm/mathconst>
-#include <sm/base64>
 
 import sm.geometry_polyhedra;
 import sm.quaternion;
@@ -47,6 +44,7 @@ import sm.vvec;
 import sm.range;
 import sm.algo;
 import sm.flags;
+import sm.base64;
 
 // Need to import common here
 import mplot.visualcommon;
@@ -54,8 +52,9 @@ import mplot.visualresources;
 import mplot.visualtextmodel;
 import mplot.colour;
 import mplot.gl.version;
+import mplot.gl.util;
+import mplot.tools;
 
-#include <mplot/tools.h>
 #include <mplot/NavMesh.h>
 
 namespace mplot
@@ -93,7 +92,7 @@ namespace mplot
             // Explicitly clear owned VisualTextModels
             this->texts.clear();
             if (this->vbos != nullptr) {
-                GladGLContext* glfn = mplot::VisualResources<glver>::i().get_glfn (this->visual_id);
+                GladGLContext* glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
                 if (glfn) {
                     glfn->DeleteBuffers (this->numVBO, this->vbos.get());
                     glfn->DeleteVertexArrays (1, &this->vao);
@@ -104,10 +103,11 @@ namespace mplot
         //! Common code to call after the vertices have been set up. GL has to have been initialised.
         void postVertexInit()
         {
-            if (this->visual_id == std::numeric_limits<uint32_t>::max()) {
-                throw std::runtime_error ("visual_id is unset");
+            std::cout << "postvertexinit...\n" << std::flush;
+            if (this->parentVis == std::numeric_limits<uint32_t>::max()) {
+                throw std::runtime_error ("parentVis is unset");
             }
-            GladGLContext* glfn = mplot::VisualResources<glver>::i().get_glfn (this->visual_id);
+            GladGLContext* glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
 
             // Do gl memory allocation of vertex array once only
             if (this->vbos == nullptr) {
@@ -184,7 +184,7 @@ namespace mplot
         }
 
         //! Initialize vertex buffer objects and vertex array object. Empty for 'text only' VisualModels.
-        void initializeVertices() {};
+        virtual void initializeVertices() {};
         /*!
          * Helper to make a VisualTextModel and bind it ready for use.
          *
@@ -202,7 +202,7 @@ namespace mplot
         {
             // No longer really worth having, as there is only the make_unique call
             auto tmup = std::make_unique<mplot::VisualTextModel<glver>> (tfeatures);
-            //this->bindmodel (tmup);
+            tmup->set_parent (this->parentVis);
             return tmup;
         }
 
@@ -710,7 +710,7 @@ namespace mplot
          */
         void finalize()
         {
-            mplot::VisualResources<glver>::i().setContext (this->parentVis);
+            mplot::VisualResources<glver>::i().setContext (this->parentVis); // need context? yes for text.
             this->initializeVertices();
             this->update_bb();
             this->flags.set (vm_bools::postVertexInitRequired, true);
@@ -1105,9 +1105,6 @@ namespace mplot
         // A VisualModel may be given a name
         std::string name = {};
 
-        // The mplot::Visual ID to which I belong. max means unset.
-        uint32_t visual_id = std::numeric_limits<uint32_t>::max();
-
         //! The current indices index
         GLuint idx = 0u;
         GLuint idx_bb = 0u;
@@ -1188,10 +1185,7 @@ namespace mplot
         //! Setter for the parent ID, parentVis
         void set_parent (const uint32_t _vis)
         {
-            if (this->parentVis != std::numeric_limits<uint32_t>::max()) {
-                throw std::runtime_error ("VisualModel: Set the parent pointer once only!");
-            }
-            this->parentVis = _vis;
+            if (this->parentVis == std::numeric_limits<uint32_t>::max()) { this->parentVis = _vis; }
         }
 
         // Flags defaults.
@@ -1308,8 +1302,7 @@ namespace mplot
         //! A model-wide alpha value for the shader
         float alpha = 1.0f;
 
-        // The mplot::VisualBase in which this model exists. (visual_id)
-        //mplot::VisualBase<glver>* parentVis = nullptr;
+        // The mplot::VisualBase in which this model exists.
         uint32_t parentVis = std::numeric_limits<uint32_t>::max();
 
         //! A vector of pointers to text models that should be rendered.
@@ -1320,10 +1313,10 @@ namespace mplot
         {
             std::size_t sz = dat.size() * sizeof(float);
 
-            if (this->visual_id == std::numeric_limits<uint32_t>::max()) {
-                throw std::runtime_error ("visual_id is unset");
+            if (this->parentVis == std::numeric_limits<uint32_t>::max()) {
+                throw std::runtime_error ("parentVis is unset");
             }
-            GladGLContext* glfn = mplot::VisualResources<glver>::i().get_glfn (this->visual_id);
+            GladGLContext* glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
             glfn->BindBuffer (GL_ARRAY_BUFFER, buf);
             mplot::gl::Util::checkError (__FILE__, __LINE__, glfn);
             glfn->BufferData (GL_ARRAY_BUFFER, sz, dat.data(), GL_STATIC_DRAW);

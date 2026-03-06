@@ -5,12 +5,12 @@
  */
 module;
 
+#include <cstdint>
 #include <stdexcept>
 #include <iostream>
 #include <cstring>
 #include <string>
 #include <array>
-#include <mplot/tools.h>
 
 export module mplot.visualcommon;
 
@@ -19,6 +19,7 @@ import sm.range;
 import sm.vvec;
 import sm.mat;
 import mplot.colour;
+import mplot.tools;
 
 export namespace mplot
 {

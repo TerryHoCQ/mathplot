@@ -21,8 +21,6 @@ module;
 
 #include <sm/mathconst>
 
-#include <mplot/gl/util_mx.h>
-
 export module mplot.coordarrows;
 
 import mplot.visualtextmodel;
@@ -31,6 +29,7 @@ import mplot.visualfont;
 import mplot.visualcommon;
 import mplot.colour;
 import mplot.gl.version;
+import mplot.gl.util;
 import sm.vec;
 import sm.mat;
 import sm.flags;

@@ -25,6 +25,8 @@ set_source_files_properties (
   ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
   ${PROJECT_SOURCE_DIR}/maths/sm/flags
   ${PROJECT_SOURCE_DIR}/maths/sm/centroid
+  ${PROJECT_SOURCE_DIR}/maths/sm/util
+  ${PROJECT_SOURCE_DIR}/maths/sm/base64
   ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
   ${PROJECT_SOURCE_DIR}/mplot/Visual.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
@@ -38,14 +40,18 @@ set_source_files_properties (
   ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
   ${PROJECT_SOURCE_DIR}/mplot/win_t.h
   ${PROJECT_SOURCE_DIR}/mplot/colour.h
+  ${PROJECT_SOURCE_DIR}/mplot/tools.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
+  ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
   PROPERTIES LANGUAGE CXX
 )
 
 add_executable(helloworld helloworld.cpp)
 target_sources(helloworld PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES
+  ${PROJECT_SOURCE_DIR}/mplot/tools.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
+  ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
   ${PROJECT_SOURCE_DIR}/mplot/colour.h
   ${PROJECT_SOURCE_DIR}/mplot/win_t.h
   ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
@@ -59,6 +65,7 @@ target_sources(helloworld PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE
   ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
+  ${PROJECT_SOURCE_DIR}/maths/sm/base64
   ${PROJECT_SOURCE_DIR}/maths/sm/flags
   ${PROJECT_SOURCE_DIR}/maths/sm/algo
   ${PROJECT_SOURCE_DIR}/maths/sm/range
@@ -74,7 +81,9 @@ target_link_libraries(helloworld OpenGL::GL glfw Freetype::Freetype glad mplot_f
 add_executable(rod rod.cpp)
 target_sources(rod PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES
+  ${PROJECT_SOURCE_DIR}/mplot/tools.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
+  ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
   ${PROJECT_SOURCE_DIR}/mplot/colour.h
   ${PROJECT_SOURCE_DIR}/mplot/win_t.h
   ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
@@ -88,6 +97,8 @@ target_sources(rod PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
+  ${PROJECT_SOURCE_DIR}/maths/sm/util
+  ${PROJECT_SOURCE_DIR}/maths/sm/base64
   ${PROJECT_SOURCE_DIR}/maths/sm/flags
   ${PROJECT_SOURCE_DIR}/maths/sm/algo
   ${PROJECT_SOURCE_DIR}/maths/sm/range

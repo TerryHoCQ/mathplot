@@ -6,12 +6,13 @@
 
 #include <mplot/gl/shaders.h>
 
-#include <mplot/tools.h>
 #include <cstdint>
 #include <vector>
 #include <iostream>
 #include <cstring>
 #include <memory>
+
+import mplot.tools;
 
 namespace mplot::gl
 {

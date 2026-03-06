@@ -26,8 +26,6 @@ module;
 #include <utility>
 #include <fstream>
 
-#include <mplot/tools.h>
-
 #include <mplot/VisualFaceAsm.h>
 
 /*
@@ -39,6 +37,7 @@ export module mplot.visualface;
 import mplot.visualcommon;
 import mplot.visualfont;
 import mplot.textfeatures;
+import mplot.tools;
 
 import sm.vec;
 

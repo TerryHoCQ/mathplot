@@ -50,6 +50,7 @@ namespace mplot
         //! Initialize vertex buffer objects and vertex array object.
         void initializeVertices()
         {
+            std::cout << "right one called\n";
             this->vertexPositions.clear();
             this->vertexNormals.clear();
             this->vertexColors.clear();
@@ -63,7 +64,7 @@ namespace mplot
                 // Can alternatively use the 'oriented' tube
                 this->computeTube (this->start_coord, this->end_coord,
                                    face_uy, face_uz,
-                                   this->start_col, this->end_col, this->radius, 6, sm::mathconst<float>::pi_over_6);
+                                   this->start_col, this->end_col, this->radius, 60, sm::mathconst<float>::pi_over_6);
             }
         }
 

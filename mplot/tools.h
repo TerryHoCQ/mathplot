@@ -3,7 +3,7 @@
  *
  * \author Seb James
  */
-#pragma once
+module;
 
 #include <vector>
 #include <utility>
@@ -33,30 +33,32 @@
 #define CHARS_NUMERIC_ALPHALOWER "etaoinshrdlcumwfgypbvkjxqz0123456789"
 #define CHARS_NUMERIC_ALPHAUPPER "0123456789ETAOINSHRDLCUMWFGYPBVKJXQZ"
 
-namespace mplot
+export module mplot.tools;
+
+export namespace mplot
 {
     /*!
      * Chars which are safe for IP domainnames. Allow numeric and alpha chars, the underscore and the
      * hyphen. colon is strictly allowed, but best avoided.
      */
-    static constexpr std::string_view chars_xml_safe {CHARS_NUMERIC_ALPHA"_-"};
+    constexpr std::string_view chars_xml_safe {CHARS_NUMERIC_ALPHA"_-"};
 
     /*!
      * These are the chars which are acceptable for use in both unix, mac AND windows file
      * names. This doesn't guarantee a safe Windows filename, as Windows imposes some extra
      * conditions (no '.' at end of name, some files such as NUL.txt AUX.txt disallowed).
      */
-    static constexpr std::string_view chars_common_file_safe {CHARS_NUMERIC_ALPHA"_-.{}^[]`=,;"};
+    constexpr std::string_view chars_common_file_safe {CHARS_NUMERIC_ALPHA"_-.{}^[]`=,;"};
 
     /*!
      * Chars which are safe for IP domainnames
      */
-    static constexpr std::string_view chars_ip_domainname_safe {CHARS_NUMERIC_ALPHA"-."};
+    constexpr std::string_view chars_ip_domainname_safe {CHARS_NUMERIC_ALPHA"-."};
 
     /*!
      * Chars which are safe for IP addresses
      */
-    static constexpr std::string_view chars_ip_address_safe {CHARS_NUMERIC"."};
+    constexpr std::string_view chars_ip_address_safe {CHARS_NUMERIC"."};
 
     //! Allows use of transform and tolower() on strings with GNU compiler
     struct to_lower { char operator() (const char c) const { return tolower(c); } };

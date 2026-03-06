@@ -27,7 +27,6 @@ module;
 
 #include <sm/mathconst>
 
-#include <mplot/gl/util_mx.h>
 #include <mplot/unicode.h>
 
 export module mplot.visualtextmodel;
@@ -39,6 +38,7 @@ export import mplot.textfeatures;
 import mplot.visualface;
 import mplot.colour;
 import mplot.gl.version;
+import mplot.gl.util;
 
 import sm.quaternion;
 import sm.mat;

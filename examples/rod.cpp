@@ -2,13 +2,14 @@
  * Visualize a Rod
  */
 #include <iostream>
+#include <memory>
 
 import mplot.visual;
 import mplot.gl.version;
 
 #include <mplot/ColourMap.h>
 
-//#include <mplot/RodVisual.h> // import mplot.gridvisual;
+#include <mplot/RodVisual.h> // import mplot.gridvisual;
 
 import sm.vec;
 
@@ -28,20 +29,24 @@ int main()
     constexpr sm::vec<float, 3> colour1 = { 1.0, 0.0, 0.0 };
     constexpr sm::vec<float, 3> colour2 = { 0.0, 0.9, 0.4 };
 
+    std::cout << "creating first...\n" << std::flush;
+
     sm::vec<float, 3> offset = { 0.0, 0.0, 0.0 };
     sm::vec<float, 3> start = { 0, 0, 0 };
     sm::vec<float, 3> end = { 0.25, 0, 0 };
     std::unique_ptr<mplot::VisualModel<>> rvm = std::make_unique<mplot::RodVisual<>> (offset, start, end, 0.1f, colour1, colour1);
-    v.bindmodel (rvm);
+    rvm->set_parent (v.get_id()); // A bind model call. howeer, we could pass v.visual_id to the VisualModel constructor
     rvm->finalize();
+    std::cout << "addVisualmodel...\n" << std::flush;
     v.addVisualModel (rvm);
 
     sm::vec<float, 3> start2 = { -0.1, 0.2, 0.6 };
     sm::vec<float, 3> end2 = { 0.2, 0.4, 0.6 };
     // You can reuse the unique_ptr rvm, once you've transferred ownership with v.addVisualModel (rvm)
     rvm = std::make_unique<mplot::RodVisual<>>(offset, start2, end2, 0.05f, colour2);
-    v.bindmodel (rvm);
+    rvm->set_parent (v.get_id());
     rvm->finalize();
+    std::cout << "addVisualmodel...\n" << std::flush;
     v.addVisualModel (rvm);
 
     v.keepOpen();

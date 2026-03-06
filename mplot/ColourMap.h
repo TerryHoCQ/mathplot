@@ -9,8 +9,8 @@
 #include <stdexcept>
 #include <cmath>
 #include <cstdint>
-#include <mplot/tools.h>
 
+import mplot.tools;
 import sm.vec;
 #include <sm/mathconst>
 import sm.flags;

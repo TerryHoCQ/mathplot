@@ -28,7 +28,6 @@ module;
 #include <iostream>
 #include <map>
 #include <memory>
-#include <mplot/gl/util_mx.h>
 #include <mplot/gl/ssbo_mx.h>
 
 export module mplot.visualresources;
@@ -39,7 +38,7 @@ import mplot.visualfont;
 import mplot.textfeatures;
 import mplot.win_t;
 import mplot.gl.version;
-
+import mplot.gl.util;
 import sm.vec;
 
 export namespace mplot
