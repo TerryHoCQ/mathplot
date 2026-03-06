@@ -558,7 +558,7 @@ export namespace mplot
             this->setContext();
             if (this->shaders.tprog == 0) { throw std::runtime_error ("No text shader prog."); }
             auto tmup = std::make_unique<mplot::VisualTextModel<glver>> (tfeatures);
-
+            tmup->set_parent (this->visual_id);
             if (tfeatures.centre_horz == true) {
                 mplot::TextGeometry tg = tmup->getTextGeometry(_text);
                 sm::vec<float, 3> centred_locn = _toffset;
@@ -584,7 +584,7 @@ export namespace mplot
             this->setContext();
             if (this->shaders.tprog == 0) { throw std::runtime_error ("No text shader prog."); }
             auto tmup = std::make_unique<mplot::VisualTextModel<glver>> (tfeatures);
-
+            tmup->set_parent (this->visual_id);
             if (tfeatures.centre_horz == true) {
                 mplot::TextGeometry tg = tmup->getTextGeometry(_text);
                 sm::vec<float, 3> centred_locn = _toffset;
@@ -667,10 +667,9 @@ export namespace mplot
             this->coordArrows = std::make_unique<mplot::CoordArrows<glver>>();
             this->coordArrows->glfn = this->glfn;
             this->coordArrows->gprog = this->shaders.gprog;
+            this->coordArrows->parentVis = this->visual_id;
             // And NOW we can proceed to init (lengths, thickness, em size for labels):
             this->coordArrows->init (sm::vec<>{0.1f, 0.1f, 0.1f}, 1.0f, 0.01f);
-
-            // Prolly don't need the finalize scheme with CoordArrows
             this->coordArrows->finalize(); // VisualModel::finalize releases context (normally this is the right thing)...
             this->setContext();            // ...but we've got more work to do, so re-acquire context (if we're managing it)
 
@@ -679,7 +678,7 @@ export namespace mplot
             // Set up the title, which may or may not be rendered
             mplot::TextFeatures title_tf(0.035f, 64);
             this->textModel = std::make_unique<mplot::VisualTextModel<glver>> (title_tf);
-
+            this->textModel->set_parent (this->visual_id);
             this->textModel->setSceneTranslation ({0.0f, 0.0f, 0.0f});
             this->textModel->setupText (this->title);
 

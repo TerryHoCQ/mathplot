@@ -186,6 +186,7 @@ export namespace mplot
             this->visual_keyed_shaderprogs[visual_id] = {}; // initialized empty with 0s
             this->visual_keyed_windows[visual_id] = win;
             this->visual_keyed_instanced_needs_update[visual_id] = false;
+            std::cout << "Registered Visual ID " << visual_id << std::endl;
             return visual_id;
         }
 

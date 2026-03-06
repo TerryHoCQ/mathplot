@@ -201,6 +201,8 @@ export namespace mplot
         {
             constexpr bool debug_textquads = false;
 
+            std::cout << "Accessing VisualResources, parentVis is " << this->parentVis << std::endl;
+
             if (this->face == nullptr) {
                 GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
                 this->face = VisualResources<glver>::i().getVisualFace (this->tfeatures, this->parentVis, _glfn);
@@ -479,34 +481,14 @@ export namespace mplot
         //! Parent Visual. The mplot::Visual ID to which I belong. max means unset.
         uint32_t parentVis = std::numeric_limits<uint32_t>::max();
 
-#if 0
-        /*!
-         * Callbacks are analogous to those in VisualModel
-         */
-        std::function<mplot::visgl::visual_shaderprogs(mplot::VisualBase<glver>*)> get_shaderprogs;
-        //! Get the graphics shader prog id
-        std::function<uint32_t(mplot::VisualBase<glver>*)> get_gprog;
-        //! Get the text shader prog id
-        std::function<uint32_t(mplot::VisualBase<glver>*)> get_tprog;
-
-        //! Set OpenGL context. Should call parentVis->setContext().
-        std::function<void(mplot::VisualBase<glver>*)> setContext;
-        //! Release OpenGL context. Should call parentVis->releaseContext().
-        std::function<void(mplot::VisualBase<glver>*)> releaseContext;
-
-        //! SSBOs are unused in VisualTextModels, but these functions have to be present
-        std::function<unsigned int(mplot::VisualBase<glver>*, const unsigned int)> init_instance_data;
-        std::function<void(const unsigned int, const sm::vec<float, 3>&)> insert_instance_data;
-        std::function<void(const unsigned int, const std::array<float, 3>&, const float, const float)> insert_instparam_data;
-        std::function<void(mplot::VisualBase<glver>*)> instanced_needs_update;
-
         //! Setter for the parent pointer, parentVis
-        void set_parent (mplot::VisualBase<glver>* _vis)
+        void set_parent (const uint32_t _vis)
         {
-            //if (this->parentVis != nullptr) { throw std::runtime_error ("VisualTextModel: Set the parent pointer once only!"); }
+            if (this->parentVis != std::numeric_limits<uint32_t>::max()) {
+                throw std::runtime_error ("VisualTextModel: Set the parent pointer once only!");
+            }
             this->parentVis = _vis;
         }
-#endif
 
     protected:
         // The text features for this VisualTextModel

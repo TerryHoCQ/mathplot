@@ -146,7 +146,7 @@ export namespace mplot
         std::unique_ptr<mplot::VisualTextModel<glver>> makeVisualTextModel(const mplot::TextFeatures& tfeatures)
         {
             auto tmup = std::make_unique<mplot::VisualTextModel<glver>> (tfeatures);
-            //this->bindmodel (tmup);
+            tmup->set_parent (this->parentVis);
             return tmup;
         }
 
@@ -317,10 +317,10 @@ export namespace mplot
 
         GladGLContext* glfn = nullptr;
 
-    protected:
+        // The mplot::Visual in which this model exists.
+        uint32_t parentVis = std::numeric_limits<uint32_t>::max();
 
-        // The mplot::VisualBase in which this model exists.
-        //mplot::VisualBase<glver>* parentVis = nullptr;
+    protected:
 
         //! The current indices index
         uint32_t idx = 0u;

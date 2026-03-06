@@ -71,12 +71,6 @@ export namespace mplot
             this->init_resources();
             this->init_gl(); // could this come before init_resources? NO, because init_gl has
                              // VisualTextModel stuff that requires init_resources. Could maybe split init_gl
-
-#if 0 // To go!
-            // Special tasks: re-bind coordArrows and title text
-            this->bindextra (this->coordArrows);
-            this->bindextra (this->textModel);
-#endif
         }
 
         //! Deconstructor destroys GLFW/Qt window and deregisters access to VisualResources
