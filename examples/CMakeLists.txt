@@ -65,6 +65,7 @@ target_sources(helloworld PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE
   ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
+  ${PROJECT_SOURCE_DIR}/maths/sm/util
   ${PROJECT_SOURCE_DIR}/maths/sm/base64
   ${PROJECT_SOURCE_DIR}/maths/sm/flags
   ${PROJECT_SOURCE_DIR}/maths/sm/algo
