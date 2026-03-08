@@ -1,4 +1,4 @@
-#pragma once
+module;
 
 #include <mplot/ColourMap_Lists.h>    // Colour map tables from matplotlib
 #include <mplot/colourmaps_crameri.h> // Colour map tables from Fabio Crameri
@@ -10,13 +10,16 @@
 #include <cmath>
 #include <cstdint>
 
+#include <sm/mathconst>
+
+export module mplot.colourmap;
+
 import mplot.tools;
 import sm.vec;
-#include <sm/mathconst>
 import sm.flags;
-#include <sm/crc32>
+import sm.crc32;
 
-namespace mplot
+export namespace mplot
 {
     //! Different colour maps types.
     enum class ColourMapType : uint32_t

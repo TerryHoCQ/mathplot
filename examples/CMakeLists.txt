@@ -27,6 +27,7 @@ set_source_files_properties (
   ${PROJECT_SOURCE_DIR}/maths/sm/centroid
   ${PROJECT_SOURCE_DIR}/maths/sm/util
   ${PROJECT_SOURCE_DIR}/maths/sm/base64
+  ${PROJECT_SOURCE_DIR}/maths/sm/crc32
   ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
   ${PROJECT_SOURCE_DIR}/mplot/Visual.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
@@ -37,6 +38,10 @@ set_source_files_properties (
   ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualDataModel.h
+  ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
+  ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
   ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
   ${PROJECT_SOURCE_DIR}/mplot/win_t.h
   ${PROJECT_SOURCE_DIR}/mplot/colour.h
@@ -65,6 +70,8 @@ target_sources(helloworld PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE
   ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
+  ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
   ${PROJECT_SOURCE_DIR}/maths/sm/util
   ${PROJECT_SOURCE_DIR}/maths/sm/base64
   ${PROJECT_SOURCE_DIR}/maths/sm/flags
@@ -98,8 +105,12 @@ target_sources(rod PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
+  ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
+  ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
   ${PROJECT_SOURCE_DIR}/maths/sm/util
   ${PROJECT_SOURCE_DIR}/maths/sm/base64
+  ${PROJECT_SOURCE_DIR}/maths/sm/crc32
   ${PROJECT_SOURCE_DIR}/maths/sm/flags
   ${PROJECT_SOURCE_DIR}/maths/sm/algo
   ${PROJECT_SOURCE_DIR}/maths/sm/range
@@ -116,21 +127,44 @@ target_link_libraries(rod OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata
 add_executable(grid_simple grid_simple.cpp)
 target_sources(grid_simple PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES
+  ${PROJECT_SOURCE_DIR}/mplot/tools.h
+  ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
+  ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
+  ${PROJECT_SOURCE_DIR}/mplot/colour.h
+  ${PROJECT_SOURCE_DIR}/mplot/win_t.h
+  ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
+  ${PROJECT_SOURCE_DIR}/mplot/Visual.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualFace.h
+  ${PROJECT_SOURCE_DIR}/mplot/TextFeatures.h
+  ${PROJECT_SOURCE_DIR}/mplot/TextGeometry.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualResources.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualDataModel.h
+  ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
+  ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
+  ${PROJECT_SOURCE_DIR}/maths/sm/util
+  ${PROJECT_SOURCE_DIR}/maths/sm/base64
+  ${PROJECT_SOURCE_DIR}/maths/sm/crc32
   ${PROJECT_SOURCE_DIR}/maths/sm/flags
-  ${PROJECT_SOURCE_DIR}/maths/sm/scale
+  ${PROJECT_SOURCE_DIR}/maths/sm/algo
   ${PROJECT_SOURCE_DIR}/maths/sm/range
   ${PROJECT_SOURCE_DIR}/maths/sm/random
   ${PROJECT_SOURCE_DIR}/maths/sm/vec
-  ${PROJECT_SOURCE_DIR}/maths/sm/algo
-  ${PROJECT_SOURCE_DIR}/maths/sm/vvec
-  ${PROJECT_SOURCE_DIR}/maths/sm/centroid
   ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
   ${PROJECT_SOURCE_DIR}/maths/sm/mat
   ${PROJECT_SOURCE_DIR}/maths/sm/geometry
   ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
+  ${PROJECT_SOURCE_DIR}/maths/sm/vvec
+  ${PROJECT_SOURCE_DIR}/maths/sm/scale
+  ${PROJECT_SOURCE_DIR}/maths/sm/centroid
   ${PROJECT_SOURCE_DIR}/maths/sm/grid
 )
-target_link_libraries(grid_simple OpenGL::GL glfw Freetype::Freetype)
+target_link_libraries(grid_simple OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
 #
 # Any example that uses sm::hexgrid or sm::cartgrid requires

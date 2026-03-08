@@ -7,18 +7,22 @@
  * \author Seb James
  * \date October 2025
  */
-
-#pragma once
+module;
 
 #include <cstdint>
+#include <cmath>
+#include <iostream>
 #include <limits>
 #include <tuple>
 #include <array>
 #include <vector>
 #include <set>
 #include <map>
+#include <bitset>
 #include <stdexcept>
 #include <string_view>
+
+export module mplot.visualmodel:navmesh;
 
 import sm.vec;
 import sm.vvec;
@@ -27,7 +31,7 @@ import sm.mat;
 import sm.geometry;
 import sm.util;
 
-namespace mplot
+export namespace mplot
 {
     namespace mesh
     {

@@ -6,8 +6,7 @@
 
 import mplot.visual;
 import mplot.gl.version;
-
-#include <mplot/ColourMap.h>
+import mplot.colourmap;
 
 #include <mplot/RodVisual.h> // import mplot.gridvisual;
 

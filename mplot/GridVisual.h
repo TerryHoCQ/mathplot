@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include <array>
@@ -8,9 +9,9 @@
 import sm.grid;
 import sm.vec;
 import sm.flags;
-
-#include <mplot/ColourMap.h>
-#include <mplot/VisualDataModel.h>
+import mplot.colourmap;
+import mplot.colour;
+import mplot.visualdatamodel;
 
 namespace mplot
 {

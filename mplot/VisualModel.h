@@ -9,8 +9,7 @@
  * \author Seb James
  * \date March 2025
  */
-
-#pragma once
+module;
 
 #if defined __gl3_h_ || defined __gl_h_
 // GL headers have been externally included
@@ -36,6 +35,8 @@
 
 #include <sm/mathconst>
 
+export module mplot.visualmodel;
+
 import sm.geometry_polyhedra;
 import sm.quaternion;
 import sm.mat;
@@ -55,9 +56,10 @@ import mplot.gl.version;
 import mplot.gl.util;
 import mplot.tools;
 
-#include <mplot/NavMesh.h>
+import :navmesh;
+//#include <mplot/NavMesh.h>
 
-namespace mplot
+export namespace mplot
 {
     union float_bytes // for gltf output
     {

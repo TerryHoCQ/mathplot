@@ -36,8 +36,6 @@ module;
 
 #include <mplot/VisualDefaultShaders.h>
 
-#include <mplot/VisualModel.h>
-
 // Use Lode Vandevenne's PNG encoder
 #define LODEPNG_NO_COMPILE_DECODER 1
 #define LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS 1
@@ -47,6 +45,7 @@ module;
 
 export module mplot.visualownable;
 
+import mplot.visualmodel;
 import mplot.win_t;
 import mplot.visualcommon;
 import mplot.visualresources;
@@ -59,6 +58,9 @@ import mplot.gl.util;
 import mplot.tools;
 
 import sm.vec;
+import sm.flags;
+import sm.quaternion;
+import sm.mat;
 
 export namespace mplot
 {

@@ -1,21 +1,23 @@
 /*!
  * VisualModels which have data.
  */
-#pragma once
+module;
 
 #include <vector>
 #include <cstdint>
+
+export module mplot.visualdatamodel;
 
 import sm.vec;
 import sm.vvec;
 import sm.scale;
 import sm.centroid;
 
-#include <mplot/VisualModel.h>
-#include <mplot/ColourMap.h>
+export import mplot.visualmodel;
+import mplot.colourmap;
+import mplot.gl.version;
 
-
-namespace mplot
+export namespace mplot
 {
     //! VisualDataModel implementation base class containing common functionality - all the
     //! sm::scale objects and methods.
