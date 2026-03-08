@@ -53,6 +53,9 @@ set_source_files_properties (
   ${PROJECT_SOURCE_DIR}/mplot/graphstyles.h
   ${PROJECT_SOURCE_DIR}/mplot/DatasetStyle.h
   ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.h
+
+  ${PROJECT_SOURCE_DIR}/mplot/GridVisual.h
+
   PROPERTIES LANGUAGE CXX
 )
 
@@ -196,6 +199,7 @@ target_sources(grid_simple PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURC
   ${PROJECT_SOURCE_DIR}/mplot/VisualDataModel.h
   ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
   ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
+  ${PROJECT_SOURCE_DIR}/mplot/GridVisual.h
   ${PROJECT_SOURCE_DIR}/maths/sm/util
   ${PROJECT_SOURCE_DIR}/maths/sm/base64
   ${PROJECT_SOURCE_DIR}/maths/sm/crc32
@@ -290,6 +294,13 @@ if(ARMADILLO_FOUND)
     ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
     ${PROJECT_SOURCE_DIR}/mplot/VisualDataModel.h
     ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
+
+    ${PROJECT_SOURCE_DIR}/mplot/GridVisual.h
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.h
+    ${PROJECT_SOURCE_DIR}/mplot/graphing.h
+    ${PROJECT_SOURCE_DIR}/mplot/graphstyles.h
+    ${PROJECT_SOURCE_DIR}/mplot/DatasetStyle.h
+
     ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
     ${PROJECT_SOURCE_DIR}/maths/sm/util
     ${PROJECT_SOURCE_DIR}/maths/sm/base64

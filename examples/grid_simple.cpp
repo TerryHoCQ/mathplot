@@ -14,8 +14,8 @@ import mplot.visual;
 import mplot.gl.version;
 import mplot.visualmodel;
 import mplot.textfeatures;
-
-#include <mplot/GridVisual.h>      // import mplot.gridvisual;
+import mplot.gridvisual;
+import mplot.colourmap;
 
 int main()
 {

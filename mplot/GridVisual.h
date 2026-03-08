@@ -1,4 +1,4 @@
-#pragma once
+module;
 
 #include <cstdint>
 #include <iostream>
@@ -6,14 +6,18 @@
 #include <array>
 #include <unordered_map>
 
+export module mplot.gridvisual;
+
 import sm.grid;
-import sm.vec;
+export import sm.vec;
 import sm.flags;
+
+import mplot.gl.version;
 import mplot.colourmap;
 import mplot.colour;
 import mplot.visualdatamodel;
 
-namespace mplot
+export namespace mplot
 {
     /*!
      * How to visualize a grid. You could draw a triangle map with vertices at the centres of the
