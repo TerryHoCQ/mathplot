@@ -48,11 +48,11 @@ import sm.flags;
 import sm.base64;
 
 // Need to import common here
-import mplot.visualcommon;
+export import mplot.gl.version;
+export import mplot.visualcommon;
 export import mplot.visualresources;
-import mplot.visualtextmodel;
-import mplot.colour;
-import mplot.gl.version;
+export import mplot.visualtextmodel;
+export import mplot.colour;
 import mplot.gl.util;
 import mplot.tools;
 

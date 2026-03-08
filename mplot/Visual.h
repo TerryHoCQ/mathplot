@@ -28,13 +28,12 @@ module;
 
 export module mplot.visual;
 
+export import mplot.gl.version;
 export import mplot.win_t;
-import mplot.visualresources;
 
+import mplot.visualresources;
 export import mplot.visualglfw;
 import mplot.visualownable;
-
-import mplot.gl.version;
 
 export namespace mplot
 {

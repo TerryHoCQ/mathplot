@@ -1,16 +1,18 @@
-#pragma once
+module;
 
 /*!
  * \file Declares VectorVisual to visualize a vector.
  */
 
 #include <array>
-import sm.vec;
-#include <mplot/colour.h>
-#include <mplot/ColourMap.h>
-#include <mplot/VisualModel.h>
 
-namespace mplot
+export module mplot.vectorvisual;
+
+import sm.vec;
+import mplot.visualmodel;
+import mplot.colourmap;
+
+export namespace mplot
 {
     //! How should the visualized vector go? Does it start at the origin? If so, it goes 'from'
     //! the origin; FromOrigin. Does it instead sit on top of the origin (OnOrigin)?

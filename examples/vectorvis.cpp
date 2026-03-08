@@ -5,14 +5,18 @@
 #include <array>
 #include <stdexcept>
 #include <string>
+#include <memory>
 
-#include <sm/vec>
-#include <sm/quaternion>
-#include <sm/mat>
+import sm.vec;
+import sm.quaternion;
+import sm.mat;
 
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/VectorVisual.h>
+import mplot.visual;
+import mplot.colour;
+import mplot.colourmap;
+import mplot.textfeatures;
+
+import mplot.vectorvisual;
 
 int main()
 {
@@ -24,7 +28,7 @@ int main()
     sm::vec<float> offset = {1,0,0};
 
     auto vvm = std::make_unique<mplot::VectorVisual<float, 3>>(offset);
-    v.bindmodel (vvm);
+    vvm->set_parent (v.get_id());
     vvm->thevec = {1,1,1};
     vvm->fixed_colour = true;
     vvm->single_colour = mplot::colour::crimson;
@@ -33,7 +37,7 @@ int main()
     auto ptr = v.addVisualModel (vvm);
 
     vvm = std::make_unique<mplot::VectorVisual<float, 3>>(-offset);
-    v.bindmodel (vvm);
+    vvm->set_parent (v.get_id());
     vvm->thevec = {1,1,1};
     vvm->fixed_colour = true;
     vvm->single_colour = mplot::colour::royalblue;
