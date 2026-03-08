@@ -5,8 +5,9 @@ import sm.vec;
 import sm.vvec;
 import sm.scale;
 import sm.geometry;
-#include <mplot/VisualModel.h>
-#include <mplot/ColourMap.h>
+import sm.geometry_polyhedra;
+import mplot.visualmodel;
+import mplot.colourmap;
 
 namespace mplot
 {

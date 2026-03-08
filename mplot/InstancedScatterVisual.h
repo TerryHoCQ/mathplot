@@ -10,9 +10,12 @@
 #include <vector>
 #include <array>
 import sm.vec;
-#include <mplot/tools.h>
-#include <mplot/VisualModel.h>
-#include <mplot/graphstyles.h>
+
+import mplot.gl.version;
+import mplot.tools;
+import mplot.visualmodel;
+import mplot.graphstyles;
+import mplot.colour;
 
 namespace mplot
 {

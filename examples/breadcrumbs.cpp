@@ -1,17 +1,20 @@
 /*
  * Visualize a test surface
  */
+#include <memory>
 #include <iostream>
 #include <fstream>
 #include <cmath>
 #include <array>
 
-#include <sm/scale>
-#include <sm/vec>
-#include <sm/vvec>
+#include <sm/mathconst>
+import sm.scale;
+import sm.vec;
+import sm.vvec;
 
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
+import mplot.visual;
+import mplot.colourmap;
+
 #include <mplot/InstancedScatterVisual.h>
 #include <mplot/GeodesicVisual.h>
 
@@ -41,7 +44,7 @@ int main()
     // A normal, non instanced model. A sphere to orbit around.
     auto gv1 = std::make_unique<mplot::GeodesicVisual<float,glver>> (sm::vec<>{}, 0.2f);
     gv1->name = "geodesic";
-    v.bindmodel (gv1);
+    gv1->set_parent (v.get_id());
     gv1->iterations = 3;
     gv1->cm.setType (mplot::ColourMapType::Tofino);
     gv1->finalize();
@@ -66,7 +69,7 @@ int main()
 
     auto isv = std::make_unique<mplot::InstancedScatterVisual<glver>> (sm::vec<>{});
     isv->name = "isv1";
-    v.bindmodel (isv);
+    isv->set_parent (v.get_id());
     isv->max_instances = dsz;
     isv->radiusFixed = 0.03f;
     isv->finalize();
@@ -75,7 +78,7 @@ int main()
     // Another one
     isv = std::make_unique<mplot::InstancedScatterVisual<glver>> (sm::vec<>{0,0.1,0});
     isv->name = "isv2";
-    v.bindmodel (isv);
+    isv->set_parent (v.get_id());
     isv->max_instances = dsz;
     isv->radiusFixed = 0.03f;
     isv->finalize();
