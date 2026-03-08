@@ -36,14 +36,14 @@ This quick start shows dependency installation for Linux, because on this platfo
 sudo apt install build-essential cmake git wget \
                  nlohmann-json3-dev librapidxml-dev \
                  freeglut3-dev libglu1-mesa-dev libxmu-dev libxi-dev \
-                 libglfw3-dev libfreetype-dev libarmadillo-dev libhdf5-dev
+                 libglfw3-dev libfreetype-dev libarmadillo-dev libhdf5-dev clang-23 # yes, it's bleeding edge, no this won't work
 
 git clone --recurse-submodules git@github.com:sebsjames/mathplot   # Get your copy of the morphologica code
 cd mathplot
 mkdir build         # Create a build directory
 cd build
-cmake ..            # Call cmake to generate the makefiles
-make graph1         # Compile a single one of the examples. Add VERBOSE=1 to see the compiler commands.
+cmake .. -GNinja    # Call cmake to generate the makefiles
+ninja graph1        # Compile a single one of the examples. Add VERBOSE=1 to see the compiler commands.
 ./examples/graph1   # Run the program. You should see a graph of a cubic function.
 # After closing the graph1 program, open its source code and modify something (see examples/graph2.cpp for ideas)
 gedit ../examples/graph1.cpp
@@ -51,19 +51,19 @@ gedit ../examples/graph1.cpp
 The program graph1.cpp is:
 ```c++
 // Visualize a graph. Minimal example showing how a default graph appears
-#include <sm/vvec> // vvec is part of Seb's maths library
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
+#include <memory>
+import mplot.visual;
+import mplot.graphvisual; // exports sm.vvec and sm.vec
 
 int main()
 {
-    // Set up your mplot::Visual 'scene environment'.
+    // Set up a mplot::Visual 'scene environment'.
     mplot::Visual v(1024, 768, "Made with mplot::GraphVisual");
-    // Create a new GraphVisual object with offset within the scene of 0,0,0
+    // Create a GraphVisual object (obtaining a unique_ptr to the object) with a spatial offset within the scene of 0,0,0
     auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>({0,0,0}));
-    // Boilerplate bindmodel function call - do this for every model you add to a Visual
-    v.bindmodel (gv);
-    // Data for the x axis. sm::vvec is like std::vector, but with built-in maths methods
+    // This mandatory line of boilerplate code sets the parent pointer in GraphVisual and binds some functions
+    gv->set_parent (v.get_id());
+    // Data for the x axis. A vvec is like std::vector, but with built-in maths methods
     sm::vvec<double> x;
     // This works like numpy's linspace() (the 3 args are "start", "end" and "num"):
     x.linspace (-0.5, 0.8, 14);
@@ -71,10 +71,12 @@ int main()
     gv->setdata (x, x.pow(3));
     // finalize() makes the GraphVisual compute the vertices of the OpenGL model
     gv->finalize();
-    // Add the GraphVisual OpenGL model to the Visual scene (which takes ownership of the unique_ptr)
+    // Add the GraphVisual OpenGL model to the Visual scene, transferring ownership of the unique_ptr
     v.addVisualModel (gv);
     // Render the scene on the screen until user quits with 'Ctrl-q'
     v.keepOpen();
+    // Because v owns the unique_ptr to the GraphVisual, its memory will be deallocated when v goes out of scope.
+    return 0;
 }
 ```
 The program generates a clean looking graph...
