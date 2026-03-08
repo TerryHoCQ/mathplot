@@ -7,7 +7,7 @@ import sm.grid;
 #include <sm/hexgrid>
 
 #include <mplot/loadpng.h>
-#include <mplot/Visual.h>
+import mplot.visual;
 #include <mplot/GraphVisual.h>
 #include <mplot/HexGridVisual.h>
 #include <mplot/GridVisual.h>
@@ -371,5 +371,3 @@ int main()
 
     return 0;
 }
-
-

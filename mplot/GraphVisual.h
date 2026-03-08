@@ -9,12 +9,14 @@
 #include <iostream>
 #include <array>
 #include <vector>
+#include <map>
 #include <deque>
 #include <cmath>
 #include <sstream>
 #include <memory>
 #include <cstdint>
 
+#include <sm/trait_tests>
 #include <sm/mathconst>
 import sm.scale;
 import sm.range;
@@ -24,15 +26,17 @@ import sm.quaternion;
 import sm.histo;
 import sm.grid;
 
-#include <mplot/tools.h>
-#include <mplot/colour.h>
-#include <mplot/gl/version.h>
-#include <mplot/VisualModel.h>
 #include <mplot/graphing.h>
 #include <mplot/graphstyles.h>
-#include <mplot/ColourMap.h>
 #include <mplot/DatasetStyle.h>
-#include <mplot/VisualTextModel.h>
+
+import mplot.tools;
+import mplot.colour;
+import mplot.gl.version;
+import mplot.visualmodel;
+import mplot.colourmap;
+import mplot.visualtextmodel;
+import mplot.visualfont;
 
 namespace mplot
 {

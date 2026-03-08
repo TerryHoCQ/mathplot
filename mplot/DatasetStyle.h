@@ -5,8 +5,9 @@
 import sm.vec;
 import sm.flags;
 #include <mplot/graphstyles.h>
-#include <mplot/ColourMap.h>
-#include <mplot/colour.h>
+
+import mplot.colourmap;
+import mplot.colour;
 
 namespace mplot
 {

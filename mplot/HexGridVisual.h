@@ -7,10 +7,11 @@ import sm.vec;
 import sm.vvec;
 #include <sm/hexgrid>
 import sm.scale;
-#include <mplot/gl/version.h>
-#include <mplot/tools.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/ColourMap.h>
+
+import mplot.gl.version;
+import mplot.tools;
+import mplot.visualdatamodel;
+import mplot.colourmap;
 
 /*
  * Macros for testing neighbours. The step along for neighbours on the
