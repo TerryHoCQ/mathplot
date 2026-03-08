@@ -4,20 +4,21 @@
  * \author Seb James
  * \date 2025
  */
-#pragma once
+module;
 
 #include <iostream>
 #include <vector>
 #include <array>
-import sm.vec;
 
-import mplot.gl.version;
+export module mplot.instancedscattervisual;
+
+export import sm.vec;
+export import mplot.graphstyles;
+export import mplot.colour;
+export import mplot.visualmodel;
 import mplot.tools;
-import mplot.visualmodel;
-import mplot.graphstyles;
-import mplot.colour;
 
-namespace mplot
+export namespace mplot
 {
     template <int glver = mplot::gl::version_4_3>
     class InstancedScatterVisual : public VisualModel<glver>

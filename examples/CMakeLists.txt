@@ -60,6 +60,8 @@ set_source_files_properties (
 
   ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.h
 
+  ${PROJECT_SOURCE_DIR}/mplot/InstancedScatterVisual.h
+
   PROPERTIES LANGUAGE CXX
 )
 
@@ -289,6 +291,7 @@ if(NOT APPLE)
     ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
     ${PROJECT_SOURCE_DIR}/mplot/graphstyles.h
     ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
+    ${PROJECT_SOURCE_DIR}/mplot/InstancedScatterVisual.h
     ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
     ${PROJECT_SOURCE_DIR}/maths/sm/util
     ${PROJECT_SOURCE_DIR}/maths/sm/base64
