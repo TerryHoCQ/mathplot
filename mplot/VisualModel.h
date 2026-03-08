@@ -49,7 +49,7 @@ import sm.base64;
 
 // Need to import common here
 import mplot.visualcommon;
-import mplot.visualresources;
+export import mplot.visualresources;
 import mplot.visualtextmodel;
 import mplot.colour;
 import mplot.gl.version;

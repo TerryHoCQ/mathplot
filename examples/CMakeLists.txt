@@ -274,6 +274,7 @@ endif()
 # Any example that uses sm::hexgrid or sm::cartgrid requires
 # libarmadillo (because the classes use sm::BezCurve).
 #
+if(0)
 if(ARMADILLO_FOUND)
   add_executable(showcase showcase.cpp)
   target_sources(showcase PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
@@ -324,6 +325,7 @@ if(ARMADILLO_FOUND)
   )
   target_link_libraries(showcase OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 endif(ARMADILLO_FOUND)
+endif (0)
 
 if(0) # During development
 

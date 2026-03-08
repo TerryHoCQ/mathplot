@@ -194,8 +194,6 @@ export namespace mplot
         {
             constexpr bool debug_textquads = false;
 
-            std::cout << "Accessing VisualResources, parentVis is " << this->parentVis << std::endl;
-
             if (this->face == nullptr) {
                 GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
                 this->face = VisualResources<glver>::i().getVisualFace (this->tfeatures, this->parentVis, _glfn);

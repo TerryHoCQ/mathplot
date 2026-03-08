@@ -647,9 +647,7 @@ export namespace mplot
 
             // Use coordArrowsOffset to set the location of the CoordArrows *scene*
             this->coordArrows = std::make_unique<mplot::CoordArrows<glver>>();
-            this->coordArrows->glfn = this->glfn;
-            this->coordArrows->gprog = this->shaders.gprog;
-            this->coordArrows->parentVis = this->visual_id;
+            this->coordArrows->set_parent (this->visual_id);
             // And NOW we can proceed to init (lengths, thickness, em size for labels):
             this->coordArrows->init (sm::vec<>{0.1f, 0.1f, 0.1f}, 1.0f, 0.01f);
             this->coordArrows->finalize(); // VisualModel::finalize releases context (normally this is the right thing)...
