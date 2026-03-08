@@ -56,6 +56,8 @@ set_source_files_properties (
 
   ${PROJECT_SOURCE_DIR}/mplot/GridVisual.h
 
+  ${PROJECT_SOURCE_DIR}/mplot/RodVisual.h
+
   PROPERTIES LANGUAGE CXX
 )
 
@@ -115,6 +117,7 @@ target_sources(rod PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
   ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
+  ${PROJECT_SOURCE_DIR}/mplot/RodVisual.h
   ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
   ${PROJECT_SOURCE_DIR}/maths/sm/util
   ${PROJECT_SOURCE_DIR}/maths/sm/base64

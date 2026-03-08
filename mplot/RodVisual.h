@@ -1,12 +1,16 @@
-#pragma once
+module;
 
+#include <iostream>
 #include <array>
 #include <sm/mathconst>
 
-import sm.vec;
-import mplot.visualmodel;
+export module mplot.rodvisual;
 
-namespace mplot
+import sm.vec;
+import mplot.gl.version;
+export import mplot.visualmodel;
+
+export namespace mplot
 {
     //! This class creates the vertices for a cylindrical 'rod' in a 3D scene.
     template<int glver = mplot::gl::version_4_1>

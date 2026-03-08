@@ -4,13 +4,12 @@
 #include <iostream>
 #include <memory>
 
+import sm.vec;
+
 import mplot.visual;
 import mplot.gl.version;
 import mplot.colourmap;
-
-#include <mplot/RodVisual.h> // import mplot.gridvisual;
-
-import sm.vec;
+import mplot.rodvisual;
 
 int main()
 {

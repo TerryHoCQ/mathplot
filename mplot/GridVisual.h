@@ -15,7 +15,8 @@ import sm.flags;
 import mplot.gl.version;
 import mplot.colourmap;
 import mplot.colour;
-import mplot.visualdatamodel;
+export import mplot.visualmodel;
+export import mplot.visualdatamodel;
 
 export namespace mplot
 {
