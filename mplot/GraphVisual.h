@@ -4,7 +4,7 @@
  * \author Seb James
  * \date 2020
  */
-#pragma once
+module;
 
 #include <iostream>
 #include <array>
@@ -15,20 +15,25 @@
 #include <sstream>
 #include <memory>
 #include <cstdint>
+#include <algorithm>
 
 #include <sm/trait_tests>
 #include <sm/mathconst>
+
+export module mplot.graphvisual;
+
+import mplot.graphing;
+export import mplot.graphstyles;
+export import mplot.datasetstyle;
+
 import sm.scale;
 import sm.range;
-import sm.vec;
-import sm.vvec;
+export import sm.vec;
+export import sm.vvec;
 import sm.quaternion;
 import sm.histo;
 import sm.grid;
 
-#include <mplot/graphing.h>
-#include <mplot/graphstyles.h>
-#include <mplot/DatasetStyle.h>
 
 import mplot.tools;
 import mplot.colour;
@@ -38,7 +43,7 @@ import mplot.colourmap;
 import mplot.visualtextmodel;
 import mplot.visualfont;
 
-namespace mplot
+export namespace mplot
 {
     /*!
      * A VisualModel for showing a 2D graph.

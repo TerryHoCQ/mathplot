@@ -48,6 +48,11 @@ set_source_files_properties (
   ${PROJECT_SOURCE_DIR}/mplot/tools.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
+
+  ${PROJECT_SOURCE_DIR}/mplot/graphing.h
+  ${PROJECT_SOURCE_DIR}/mplot/graphstyles.h
+  ${PROJECT_SOURCE_DIR}/mplot/DatasetStyle.h
+  ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.h
   PROPERTIES LANGUAGE CXX
 )
 
@@ -145,6 +150,10 @@ target_sources(graph1 PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR
   ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
   ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
   ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
+  ${PROJECT_SOURCE_DIR}/mplot/graphing.h
+  ${PROJECT_SOURCE_DIR}/mplot/graphstyles.h
+  ${PROJECT_SOURCE_DIR}/mplot/DatasetStyle.h
+  ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.h
   ${PROJECT_SOURCE_DIR}/maths/sm/util
   ${PROJECT_SOURCE_DIR}/maths/sm/base64
   ${PROJECT_SOURCE_DIR}/maths/sm/crc32

@@ -5,8 +5,7 @@
  * Seb James
  * March 2025
  */
-
-#pragma once
+module;
 
 #include <string>
 #include <cmath>
@@ -22,16 +21,19 @@
 #endif
 
 #include <sm/constexpr_math>
+
+export module mplot.graphing;
+
 import sm.range;
 import sm.algo;
 import sm.vvec;
 
-namespace mplot::graphing
+export namespace mplot::graphing
 {
     //! Graph-specific number formatting for tick labels. You must pass in an adjacent
     //! label (which affects the optimum precision to use for formatting)
     template <typename F>
-    static std::string number_format (const F num, const F adjacent_num)
+    std::string number_format (const F num, const F adjacent_num)
     {
         sm::range<int> num_sigcols = sm::algo::significant_cols<F> (num);
         F num_diff = std::abs (num - adjacent_num);
@@ -99,7 +101,7 @@ namespace mplot::graphing
      * of maketicks.
      */
     template <typename F>
-    static std::deque<F> maketicks (F rmin, F rmax, float realmin, float realmax, const sm::range<F>& _num_ticks_range)
+    std::deque<F> maketicks (F rmin, F rmax, float realmin, float realmax, const sm::range<F>& _num_ticks_range)
     {
         std::deque<F> ticks = {};
 
@@ -193,7 +195,7 @@ namespace mplot::graphing
      * This overload accepts separate min and max for the preferred number of ticks.
      */
     template <typename F>
-    static std::deque<F> maketicks (F rmin, F rmax, float realmin, float realmax, const F _min_num_ticks = 3, const F _max_num_ticks = 10)
+    std::deque<F> maketicks (F rmin, F rmax, float realmin, float realmax, const F _min_num_ticks = 3, const F _max_num_ticks = 10)
     {
         sm::range<F> _num_ticks_range(_min_num_ticks, _max_num_ticks);
         return mplot::graphing::maketicks<F> (rmin, rmax, realmin, realmax, _num_ticks_range);
@@ -203,7 +205,7 @@ namespace mplot::graphing
      * Make ticks overload for a specified number of ticks
      */
     template <typename F>
-    static std::deque<F> maketicks (F rmin, F rmax, float realmin, float realmax, const F num_ticks)
+    std::deque<F> maketicks (F rmin, F rmax, float realmin, float realmax, const F num_ticks)
     {
         sm::range<F> _num_ticks_range(num_ticks, num_ticks);
         return mplot::graphing::maketicks<F> (rmin, rmax, realmin, realmax, _num_ticks_range);

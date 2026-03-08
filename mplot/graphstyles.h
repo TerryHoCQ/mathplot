@@ -2,9 +2,9 @@
  * Graphing styles - a number of enumerated classes.
  */
 
-#pragma once
+export module mplot.graphstyles;
 
-namespace mplot
+export namespace mplot
 {
     //! What shape for the graph markers?
     enum class markerstyle

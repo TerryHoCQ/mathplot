@@ -1,7 +1,7 @@
 // Visualize a graph. Minimal example showing how a default graph appears
+#include <memory>
 import mplot.visual;
-#include <mplot/GraphVisual.h>
-import sm.vvec;
+import mplot.graphvisual; // exports sm.vvec and sm.vec
 
 int main()
 {

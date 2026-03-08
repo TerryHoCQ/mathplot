@@ -1,15 +1,19 @@
-#pragma once
+module;
 
 #include <array>
 #include <string>
+
+export module mplot.datasetstyle;
+
 import sm.vec;
 import sm.flags;
-#include <mplot/graphstyles.h>
+
+export import mplot.graphstyles;
 
 import mplot.colourmap;
 import mplot.colour;
 
-namespace mplot
+export namespace mplot
 {
     // Boolean flags relating to quiver plots that form part of a DatasetStyle
     enum class quiver_flags : unsigned int
