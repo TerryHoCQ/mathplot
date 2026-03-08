@@ -1,17 +1,22 @@
-#pragma once
+module;
 
 /*!
  * \file Declares NormalsVisual to visualize the normals of another VisualModel
  */
 
+#include <cstdint>
+#include <iostream>
 #include <array>
-import sm.vec;
+#include <vector>
+
+export module mplot.normalsvisual;
+
+export import mplot.visualmodel;
+export import sm.vec;
 import sm.mat;
 import sm.flags;
-#include <mplot/colour.h>
-#include <mplot/VisualModel.h>
 
-namespace mplot
+export namespace mplot
 {
     enum class normalsvisual_flags : uint32_t
     {

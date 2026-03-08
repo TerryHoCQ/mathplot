@@ -1,4 +1,4 @@
-#pragma once
+module;
 
 #include <cstdint>
 #include <string>
@@ -7,13 +7,15 @@
 #include <array>
 #include <stdexcept>
 
+export module mplot.verticesvisual;
+
 import sm.vec;
 import sm.vvec;
 import sm.mat;
 
-#include <mplot/VisualModel.h>
+export import mplot.visualmodel;
 
-namespace mplot
+export namespace mplot
 {
     /*!
      * Create a visual model directly from indices, vertices and normals, which might have been

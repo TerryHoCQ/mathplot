@@ -45,20 +45,20 @@ module;
 
 export module mplot.visualownable;
 
-import mplot.visualmodel;
-import mplot.win_t;
-import mplot.visualcommon;
+export import mplot.visualmodel;
+export import mplot.win_t;
+export import mplot.visualcommon;
 import mplot.visualresources;
-import mplot.visualtextmodel;
-import mplot.textgeometry;
-import mplot.textfeatures;
+export import mplot.visualtextmodel;
+export import mplot.textgeometry;
+export import mplot.textfeatures;
 import mplot.coordarrows;
-import mplot.gl.version;
+export import mplot.gl.version;
 import mplot.gl.util;
 import mplot.tools;
 
-import sm.vec;
-import sm.flags;
+export import sm.vec;
+export import sm.flags;
 import sm.quaternion;
 import sm.mat;
 

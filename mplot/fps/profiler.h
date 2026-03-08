@@ -5,7 +5,7 @@
  * Author: Seb James
  * Date: 2024-2025
  */
-#pragma once
+module;
 
 #include <chrono>
 #include <deque>
@@ -13,7 +13,9 @@
 #include <sstream>
 #include <cmath>
 
-namespace mplot::fps
+export module mplot.fps.profiler;
+
+export namespace mplot::fps
 {
     using namespace std::chrono;
     using sc = std::chrono::steady_clock;

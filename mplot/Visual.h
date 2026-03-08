@@ -33,7 +33,7 @@ export import mplot.win_t;
 
 import mplot.visualresources;
 export import mplot.visualglfw;
-import mplot.visualownable;
+export import mplot.visualownable;
 
 export namespace mplot
 {

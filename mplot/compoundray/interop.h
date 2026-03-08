@@ -4,7 +4,7 @@
  * Author: Seb James
  * Date: June 2025
  */
-#pragma once
+module;
 
 // CompoundRay include files (*not* part of mathplot)
 #include <MulticamScene.h>
@@ -12,16 +12,19 @@
 #include <cuda/BufferView.h>
 #include <sutil/Matrix.h>
 
+export module mplot.compoundray.interop;
+
 // maths and mathplot includes
 import sm.vec;
 import sm.mat;
-#include <mplot/Visual.h>
-#include <mplot/VerticesVisual.h>
+
+import mplot.visual;
+import mplot.verticesvisual;
 
 // scene exists at global scope in libEyeRenderer.so
 extern MulticamScene* scene;
 
-namespace mplot::compoundray
+export namespace mplot::compoundray
 {
     // Helper to convert sm::mat<float, 4> to Matrix4x4
     sutil::Matrix4x4 mat44_to_Matrix4x4 (const sm::mat<float, 4>& m)
