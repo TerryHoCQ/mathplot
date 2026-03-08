@@ -19,6 +19,8 @@
 #include <cmath>
 #include <cassert>  // assert()
 #include <cstdint>  // uintptr_t etc
+#include <cstring>  // std::memset
+#include <bitset>
 #include <functional>
 #include <sm/mathconst>
 import sm.vec;
@@ -1262,7 +1264,7 @@ namespace jcv
             size_t memsize = sizeof(priorityqueue) + eventssize + sitessize + sizeof(context_internal<T>) + 16u; // 16 bytes padding for alignment
 
             char* originalmem = (char*)allocfn (userallocctx, memsize);
-            memset (originalmem, 0, memsize);
+            std::memset (originalmem, 0, memsize);
 
             // align memory
             char* mem = (char*)align (originalmem, sizeof(void*));

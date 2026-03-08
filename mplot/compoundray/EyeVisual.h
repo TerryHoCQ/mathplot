@@ -1,22 +1,26 @@
 //
 // A visualmodel to render a compound-ray compound eye.
 //
-
-#pragma once
+module;
 
 #include <array>
 #include <vector>
 #include <sm/mathconst>
-import sm.vec;
+#include <mplot/jcvoronoi/jc_voronoi.h>
+
+export module mplot.compoundray.eyevisual;
+
+export import sm.vec;
 import sm.mat;
 import sm.range;
 import sm.geometry;
 import sm.centroid;
-#include <mplot/VisualModel.h>
-#include <mplot/gl/version.h>
-#include <mplot/jcvoronoi/jc_voronoi.h>
 
-namespace mplot::compoundray
+export import mplot.gl.version;
+export import mplot.visualmodel;
+import mplot.tools;
+
+export namespace mplot::compoundray
 {
     // This is a binary-compatible equivalent to struct Ommatidium from cameras/CompoundEyeDataTypes.h in compound-ray.
     // Use reinterpret_cast<std::vector<mplot::compoundray::Ommatidium>*>(ommatidia) if your ommatidia originate inside compound ray.
@@ -29,7 +33,7 @@ namespace mplot::compoundray
     };
 
     // Helper function. Read the compound-ray csv eye file into ommatidia. ommatidia should be a pointer to an allocate vector.
-    [[maybe_unused]] static std::vector<mplot::compoundray::Ommatidium>*
+    [[maybe_unused]] std::vector<mplot::compoundray::Ommatidium>*
     readEye (std::vector<mplot::compoundray::Ommatidium>* ommatidia, const std::string& path)
     {
         if (ommatidia == nullptr) { return ommatidia; }

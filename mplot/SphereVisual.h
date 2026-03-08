@@ -1,13 +1,16 @@
 /*
  * You just want a sphere visual model? Here it is.
  */
-#pragma once
+module;
 
 #include <array>
-import sm.vec;
-#include <mplot/VisualModel.h>
 
-namespace mplot
+export module mplot.spherevisual;
+
+export import mplot.visualmodel;
+export import sm.vec;
+
+export namespace mplot
 {
     //! This class creates the vertices for a simple sphere in a 3D scene.
     template<int glver = mplot::gl::version_4_1>

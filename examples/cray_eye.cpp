@@ -7,16 +7,14 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <vector>
 
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/mat>
+import sm.vvec;
+import sm.mat;
 
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/SphereVisual.h>
-#include <mplot/VectorVisual.h>
-#include <mplot/compoundray/EyeVisual.h>
+import mplot.visual;
+import mplot.colourmap;
+import mplot.compoundray.eyevisual;
 
 int main (int argc, char** argv)
 {
@@ -68,7 +66,7 @@ int main (int argc, char** argv)
     }
 
     auto eyevm = std::make_unique<mplot::compoundray::EyeVisual<>> (sm::vec<>{}, &ommatidiaColours, ommatidia.get());
-    v.bindmodel (eyevm);
+    eyevm->set_parent (v.get_id());
     eyevm->name = "CompoundRay Eye";
     eyevm->show_cones = true;
 
