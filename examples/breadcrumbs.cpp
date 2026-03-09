@@ -16,7 +16,7 @@ import mplot.visual;
 import mplot.colourmap;
 
 import mplot.instancedscattervisual;
-#include <mplot/GeodesicVisual.h>
+import mplot.geodesicvisual;
 
 // Instanced rendering requires OpenGL 4.3 or higher (for the SSBO)
 constexpr int glver = mplot::gl::version_4_3;

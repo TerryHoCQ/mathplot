@@ -1,15 +1,20 @@
-#pragma once
+module;
 
 #include <array>
-import sm.vec;
-import sm.vvec;
-import sm.scale;
+#include <stdexcept>
+
+export module mplot.geodesicvisual;
+
+export import sm.vec;
+export import sm.vvec;
+export import sm.scale;
 import sm.geometry;
 import sm.geometry_polyhedra;
-import mplot.visualmodel;
-import mplot.colourmap;
 
-namespace mplot
+export import mplot.visualmodel;
+export import mplot.colourmap;
+
+export namespace mplot
 {
     /*!
      * This class creates the vertices for an geodesic polyhedron in a 3D scene.

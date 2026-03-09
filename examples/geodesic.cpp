@@ -3,17 +3,15 @@
  */
 
 #include <iostream>
+#include <memory>
 #include <fstream>
 #include <cmath>
 #include <array>
 #include <stdexcept>
 #include <string>
 
-#include <sm/vec>
-
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/GeodesicVisual.h>
+import mplot.visual;
+import mplot.geodesicvisual;
 
 int main()
 {
@@ -35,7 +33,7 @@ int main()
         for (int i = 0; i < imax; ++i) {
             auto cl = cm.convert (i / static_cast<float>(imax - 1));
             auto gv1 = std::make_unique<mplot::GeodesicVisual<float>> (offset + step * i, 0.9f);
-            v.bindmodel (gv1);
+            gv1->set_parent (v.get_id());
             gv1->iterations = i;
             std::string lbl = std::string("iterations = ") + std::to_string(i);
             gv1->addLabel (lbl, {0, -1, 0}, mplot::TextFeatures(0.06f));
