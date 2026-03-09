@@ -16,6 +16,7 @@
  */
 module;
 
+#include <fstream>
 #include <string>
 #include <array>
 #include <vector>
