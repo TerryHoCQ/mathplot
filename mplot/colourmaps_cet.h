@@ -1,11 +1,12 @@
 // CET Colour maps from https://colorcet.com/gallery.html
 // Converted into C++ lookup tables for mathplot by Seb James
-
-#pragma once
+module;
 
 #include <array>
 
-namespace mplot::cet
+export module mplot.colourmap:colourmaps_cet;
+
+export namespace mplot::cet
 {
     constexpr std::array<std::array<float, 3>, 256> cm_CET_C4s = {{
             { 0.1020000f, 0.3900000f, 0.8970000f },

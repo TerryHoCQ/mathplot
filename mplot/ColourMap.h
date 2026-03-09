@@ -1,10 +1,6 @@
 module;
 
-#include <mplot/ColourMap_Lists.h>    // Colour map tables from matplotlib
-#include <mplot/colourmaps_crameri.h> // Colour map tables from Fabio Crameri
 #include <mplot/lenthe_colormap.hpp>  // William Lenthe's implementation of perceptually uniform colour maps
-#include <mplot/colourmaps_cet.h>     // Colour map tables from CET
-
 #include <string_view>
 #include <stdexcept>
 #include <cmath>
@@ -13,6 +9,10 @@ module;
 #include <sm/mathconst>
 
 export module mplot.colourmap;
+
+export import :colourmaps_cet;      // Colour map tables from CET
+export import :colourmaps_crameri;  // Colour map tables from Fabio Crameri
+export import :colourmap_lists;     // Colour map tables from matplotlib
 
 import mplot.tools;
 import sm.vec;

@@ -1,11 +1,13 @@
-#pragma once
+module;
 
 #include <array>
+
+export module mplot.colourmap:colourmap_lists;
 
 /*!
  * Listed colour maps, copied from _cm_listed.py
  */
-namespace mplot
+export namespace mplot
 {
     /*!
      * Magma

@@ -42,6 +42,9 @@ set_source_files_properties (
   ${PROJECT_SOURCE_DIR}/mplot/VisualDataModel.h
   ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
   ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
+  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
+  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
+  ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
   ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
   ${PROJECT_SOURCE_DIR}/mplot/win_t.h
   ${PROJECT_SOURCE_DIR}/mplot/colour.h
@@ -130,6 +133,9 @@ target_sources(rod PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
   ${PROJECT_SOURCE_DIR}/mplot/RodVisual.h
   ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
+  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
+  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
+  ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
   ${PROJECT_SOURCE_DIR}/maths/sm/util
   ${PROJECT_SOURCE_DIR}/maths/sm/base64
   ${PROJECT_SOURCE_DIR}/maths/sm/crc32
@@ -169,6 +175,9 @@ target_sources(rod_with_normals PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_
   ${PROJECT_SOURCE_DIR}/mplot/RodVisual.h
   ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.h
   ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
+  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
+  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
+  ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
   ${PROJECT_SOURCE_DIR}/maths/sm/util
   ${PROJECT_SOURCE_DIR}/maths/sm/base64
   ${PROJECT_SOURCE_DIR}/maths/sm/crc32
@@ -208,6 +217,9 @@ target_sources(ellipsoid PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_
   ${PROJECT_SOURCE_DIR}/mplot/RodVisual.h
   ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.h
   ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
+  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
+  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
+  ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
   ${PROJECT_SOURCE_DIR}/maths/sm/util
   ${PROJECT_SOURCE_DIR}/maths/sm/base64
   ${PROJECT_SOURCE_DIR}/maths/sm/crc32
@@ -246,6 +258,9 @@ target_sources(vectorvis PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_
   ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
   ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.h
   ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
+  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
+  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
+  ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
   ${PROJECT_SOURCE_DIR}/maths/sm/util
   ${PROJECT_SOURCE_DIR}/maths/sm/base64
   ${PROJECT_SOURCE_DIR}/maths/sm/crc32
@@ -288,6 +303,9 @@ target_sources(cray_eye PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_D
   ${PROJECT_SOURCE_DIR}/mplot/compoundray/EyeVisual.h
 
   ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
+  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
+  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
+  ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
   ${PROJECT_SOURCE_DIR}/maths/sm/util
   ${PROJECT_SOURCE_DIR}/maths/sm/base64
   ${PROJECT_SOURCE_DIR}/maths/sm/crc32
@@ -327,6 +345,9 @@ target_sources(graph1 PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR
   ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
   ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
   ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
+  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
+  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
+  ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
   ${PROJECT_SOURCE_DIR}/mplot/graphing.h
   ${PROJECT_SOURCE_DIR}/mplot/graphstyles.h
   ${PROJECT_SOURCE_DIR}/mplot/DatasetStyle.h
@@ -373,6 +394,9 @@ target_sources(grid_simple PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURC
   ${PROJECT_SOURCE_DIR}/mplot/VisualDataModel.h
   ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
   ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
+  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
+  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
+  ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
   ${PROJECT_SOURCE_DIR}/mplot/GridVisual.h
   ${PROJECT_SOURCE_DIR}/maths/sm/util
   ${PROJECT_SOURCE_DIR}/maths/sm/base64
@@ -422,6 +446,9 @@ if(NOT APPLE)
     ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
     ${PROJECT_SOURCE_DIR}/mplot/InstancedScatterVisual.h
     ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
+    ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
+    ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
+    ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
     ${PROJECT_SOURCE_DIR}/maths/sm/util
     ${PROJECT_SOURCE_DIR}/maths/sm/base64
     ${PROJECT_SOURCE_DIR}/maths/sm/crc32
@@ -478,6 +505,9 @@ if(ARMADILLO_FOUND)
     ${PROJECT_SOURCE_DIR}/mplot/DatasetStyle.h
 
     ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
+    ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
+    ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
+    ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
     ${PROJECT_SOURCE_DIR}/maths/sm/util
     ${PROJECT_SOURCE_DIR}/maths/sm/base64
     ${PROJECT_SOURCE_DIR}/maths/sm/crc32

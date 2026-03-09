@@ -56,8 +56,7 @@ export import mplot.colour;
 import mplot.gl.util;
 import mplot.tools;
 
-import :navmesh;
-//#include <mplot/NavMesh.h>
+export import :navmesh;
 
 export namespace mplot
 {

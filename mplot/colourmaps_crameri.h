@@ -1,9 +1,10 @@
 // Scientific Colour Maps from Fabio Crameri (see https://zenodo.org/records/8409685)
 // Converted into C++ lookup tables for mathplot by Seb James
-
-#pragma once
+module;
 
 #include <array>
+
+export module mplot.colourmap:colourmaps_crameri;
 
 namespace mplot::crameri
 {
