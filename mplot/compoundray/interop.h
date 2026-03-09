@@ -14,8 +14,9 @@ module;
 
 export module mplot.compoundray.interop;
 
-// maths and mathplot includes
+// maths and mathplot imports
 import sm.vec;
+import sm.vvec;
 import sm.mat;
 
 import mplot.visual;
@@ -148,7 +149,7 @@ export namespace mplot::compoundray
                           << norm.size() << " norms, " << colr.size() << " colours" << std::endl;
             }
             auto vertvm = std::make_unique<mplot::VerticesVisual<glver>> (tfm, ind, posn, norm, colr);
-            thevisual->bindmodel (vertvm);
+            vertvm->set_parent (thevisual->get_id());
             vertvm->name = mymeshes[mi]->name;
             if (make_navmeshes == true) { vertvm->make_navmesh(); }
             vertvm->finalize();
