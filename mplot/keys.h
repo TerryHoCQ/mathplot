@@ -163,7 +163,6 @@ namespace mplot
         static constexpr int release = 0;
         static constexpr int press   = 1;
         static constexpr int repeat  = 2;
-
     };
 
     // Mouse buttons. left is really 'primary' and right is 'secondary' because
