@@ -65,7 +65,7 @@ int main()
     mplot::Visual v(1024, 768, "Made with mplot::GraphVisual");
     // Create a GraphVisual object (obtaining a unique_ptr to the object) with a spatial offset within the scene of 0,0,0
     auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>({0,0,0}));
-    // This mandatory line of boilerplate code sets the parent pointer in GraphVisual and binds some functions
+    // This mandatory line of boilerplate code sets the parent ID in GraphVisual
     gv->set_parent (v.get_id());
     // Data for the x axis. A vvec is like std::vector, but with built-in maths methods
     sm::vvec<double> x;
