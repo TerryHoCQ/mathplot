@@ -1,11 +1,16 @@
-#pragma once
+module;
 
 #include <array>
-import sm.vec;
-#include <mplot/VisualModel.h>
-#include <mplot/ColourMap.h>
+#include <vector>
+#include <utility>
 
-namespace mplot
+export module mplot.rhombovisual;
+
+export import mplot.visualmodel;
+export import mplot.colourmap;
+export import sm.vec;
+
+export namespace mplot
 {
     //! This class creates the vertices for a rhombohedron
     template<int glver = mplot::gl::version_4_1>
