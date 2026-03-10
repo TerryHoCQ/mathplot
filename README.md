@@ -15,7 +15,7 @@
 
 [![Mentioned in Awesome C++](https://awesome.re/mentioned-badge.svg)](https://github.com/myd7349/awesome-cpp?tab=readme-ov-file#data-visualization)
 
-**Header-only library code to visualize C++ numerical simulations using modern OpenGL.**
+**Modular C++20 library code to visualize numerical simulations using modern OpenGL.**
 
 Mathplot is a library for drawing **3D data visualization** objects called `VisualModels`.
 
@@ -33,12 +33,16 @@ This quick start shows dependency installation for Linux, because on this platfo
 
 ```bash
 # Install dependencies for building graph1.cpp and (almost) all the other examples (assuming Debian-like OS)
-sudo apt install build-essential cmake git wget \
+sudo apt install build-essential cmake git wget ninja-build \
                  nlohmann-json3-dev librapidxml-dev \
                  freeglut3-dev libglu1-mesa-dev libxmu-dev libxi-dev \
-                 libglfw3-dev libfreetype-dev libarmadillo-dev libhdf5-dev clang-23 # yes, it's bleeding edge, no this won't work
+                 libglfw3-dev libfreetype-dev libarmadillo-dev libhdf5-dev
 
-git clone --recurse-submodules git@github.com:sebsjames/mathplot   # Get your copy of the morphologica code
+# Install a very up to date compiler
+sudo apt install clang-23 clang-tools-23 # You can't apt install clang-23, as it's currently pre-release
+sudo apt install gcc-16                  # this won't work either, but hopefully gcc16 will compile mathplot
+
+git clone --recurse-submodules git@github.com:sebsjames/mathplot   # Get your copy of the mathplot code
 cd mathplot
 mkdir build         # Create a build directory
 cd build
