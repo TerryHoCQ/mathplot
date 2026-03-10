@@ -105,7 +105,6 @@ export namespace mplot
         //! Common code to call after the vertices have been set up. GL has to have been initialised.
         void postVertexInit()
         {
-            std::cout << "postvertexinit...\n" << std::flush;
             if (this->parentVis == std::numeric_limits<uint32_t>::max()) {
                 throw std::runtime_error ("parentVis is unset");
             }

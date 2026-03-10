@@ -266,7 +266,6 @@ export namespace mplot
         unsigned int addVisualModelId (std::unique_ptr<T>& model)
         {
             std::unique_ptr<mplot::VisualModel<glver>> vmp = std::move(model);
-            std::cout << "set parent on visualmodel to " << visual_id << std::endl;
             vmp->set_parent (this->visual_id);
             if (vmp->instanced()) { this->state.set (visual_state::haveInstanced, true); }
             this->vm.push_back (std::move(vmp));
@@ -282,7 +281,6 @@ export namespace mplot
         T* addVisualModel (std::unique_ptr<T>& model)
         {
             std::unique_ptr<mplot::VisualModel<glver>> vmp = std::move(model);
-            std::cout << "set parent on visualmodel to " << visual_id << std::endl;
             vmp->set_parent (this->visual_id);
             if (vmp->instanced()) { this->state.set (visual_state::haveInstanced, true); }
             this->vm.push_back (std::move(vmp));
