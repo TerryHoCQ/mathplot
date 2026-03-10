@@ -1,19 +1,27 @@
 /*
  * A colour bar visual
  */
+module;
 
-#pragma once
+#include <cstdint>
+#include <iostream>
+#include <array>
+#include <deque>
+#include <string>
+#include <utility>
+
+export module mplot.colourbarvisual;
 
 import sm.range;
 import sm.scale;
 import sm.vec;
 
-#include <mplot/VisualModel.h>
-#include <mplot/ColourMap.h>
-#include <mplot/graphing.h>
-#include <mplot/graphstyles.h>
+export import mplot.visualmodel;
+export import mplot.colourmap;
+import mplot.graphing;
+export import mplot.graphstyles;
 
-namespace mplot
+export namespace mplot
 {
     // Should our colourbar be horizontal or vertical? Horizontal bars always have
     // min->max from left to right. Vertical bars always have min->max from bottom to
