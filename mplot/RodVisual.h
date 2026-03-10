@@ -54,7 +54,6 @@ export namespace mplot
         //! Initialize vertex buffer objects and vertex array object.
         void initializeVertices()
         {
-            std::cout << "right one called\n";
             this->vertexPositions.clear();
             this->vertexNormals.clear();
             this->vertexColors.clear();
