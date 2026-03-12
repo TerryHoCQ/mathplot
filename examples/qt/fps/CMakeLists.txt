@@ -1,5 +1,3 @@
-if(ARMADILLO_FOUND)
-  add_executable(qtfps main.cpp mainwindow.cpp)
-  target_compile_definitions(qtfps PUBLIC GL3_PROTOTYPES GL_GLEXT_PROTOTYPES)
-  target_link_libraries(qtfps Qt5::Gui Qt5::Widgets Qt5::Core ${MPLOT_LIBS_CORE} ${MPLOT_LIBS_GL})
-endif(ARMADILLO_FOUND)
+add_executable(qtfps main.cpp mainwindow.cpp)
+target_compile_definitions(qtfps PUBLIC GL3_PROTOTYPES GL_GLEXT_PROTOTYPES)
+target_link_libraries(qtfps Qt5::Gui Qt5::Widgets Qt5::Core ${MPLOT_LIBS_CORE} ${MPLOT_LIBS_GL})

@@ -126,15 +126,10 @@ find_package(HDF5)
 if(HDF5_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HDF5_DEFINITIONS}")
 endif()
-find_package(Armadillo)
 
 include_directories(${OPENGL_INCLUDE_DIR})
 if(HDF5_FOUND)
   include_directories(${HDF5_INCLUDE_DIR})
-endif()
-if(ARMADILLO_FOUND)
-  # Two possible values for the armadillo include dirs
-  include_directories(${ARMADILLO_INCLUDE_DIR} ${ARMADILLO_INCLUDE_DIRS})
 endif()
 include_directories(${GLFW3_INCLUDE_DIR})
 
