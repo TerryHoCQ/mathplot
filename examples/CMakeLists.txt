@@ -12,8 +12,11 @@ set_source_files_properties (
   ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
   ${PROJECT_SOURCE_DIR}/maths/sm/mat
   ${PROJECT_SOURCE_DIR}/maths/sm/hex
+  ${PROJECT_SOURCE_DIR}/maths/sm/hexgrid
   ${PROJECT_SOURCE_DIR}/maths/sm/bezcoord
+  ${PROJECT_SOURCE_DIR}/maths/sm/binomial
   ${PROJECT_SOURCE_DIR}/maths/sm/bezcurve
+  ${PROJECT_SOURCE_DIR}/maths/sm/bezcurvepath
   ${PROJECT_SOURCE_DIR}/maths/sm/winder
   ${PROJECT_SOURCE_DIR}/maths/sm/bootstrap
   ${PROJECT_SOURCE_DIR}/maths/sm/grid
@@ -72,6 +75,8 @@ set_source_files_properties (
   ${PROJECT_SOURCE_DIR}/mplot/compoundray/EyeVisual.h
 
   ${PROJECT_SOURCE_DIR}/mplot/InstancedScatterVisual.h
+
+  ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.h
 
   PROPERTIES LANGUAGE CXX
 )
@@ -578,6 +583,62 @@ if(ARMADILLO_FOUND)
 endif(ARMADILLO_FOUND)
 endif (0)
 
+  add_executable(hexgrid hexgrid.cpp)
+  target_sources(hexgrid PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES
+    ${PROJECT_SOURCE_DIR}/mplot/tools.h
+    ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
+    ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
+    ${PROJECT_SOURCE_DIR}/mplot/colour.h
+    ${PROJECT_SOURCE_DIR}/mplot/win_t.h
+    ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
+    ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
+    ${PROJECT_SOURCE_DIR}/mplot/Visual.h
+    ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
+    ${PROJECT_SOURCE_DIR}/mplot/VisualFace.h
+    ${PROJECT_SOURCE_DIR}/mplot/TextFeatures.h
+    ${PROJECT_SOURCE_DIR}/mplot/TextGeometry.h
+    ${PROJECT_SOURCE_DIR}/mplot/VisualResources.h
+    ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
+    ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
+    ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
+    ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
+    ${PROJECT_SOURCE_DIR}/mplot/graphstyles.h
+    ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
+    ${PROJECT_SOURCE_DIR}/mplot/VisualDataModel.h
+    ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.h
+    ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.h
+    ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
+    ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
+    ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
+    ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
+    ${PROJECT_SOURCE_DIR}/maths/sm/util
+    ${PROJECT_SOURCE_DIR}/maths/sm/base64
+    ${PROJECT_SOURCE_DIR}/maths/sm/crc32
+    ${PROJECT_SOURCE_DIR}/maths/sm/flags
+    ${PROJECT_SOURCE_DIR}/maths/sm/algo
+    ${PROJECT_SOURCE_DIR}/maths/sm/range
+    ${PROJECT_SOURCE_DIR}/maths/sm/random
+    ${PROJECT_SOURCE_DIR}/maths/sm/vec
+    ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
+    ${PROJECT_SOURCE_DIR}/maths/sm/mat
+    ${PROJECT_SOURCE_DIR}/maths/sm/geometry
+    ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
+    ${PROJECT_SOURCE_DIR}/maths/sm/vvec
+    ${PROJECT_SOURCE_DIR}/maths/sm/scale
+    ${PROJECT_SOURCE_DIR}/maths/sm/centroid
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid
+    ${PROJECT_SOURCE_DIR}/maths/sm/bezcoord
+    ${PROJECT_SOURCE_DIR}/maths/sm/binomial
+    ${PROJECT_SOURCE_DIR}/maths/sm/nm_simplex
+    ${PROJECT_SOURCE_DIR}/maths/sm/bezcurve
+    ${PROJECT_SOURCE_DIR}/maths/sm/bezcurvepath
+    ${PROJECT_SOURCE_DIR}/maths/sm/hex
+    ${PROJECT_SOURCE_DIR}/maths/sm/hexgrid
+
+  )
+  target_link_libraries(hexgrid OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
 if(0) # During development
 
 #
@@ -640,9 +701,6 @@ if(ARMADILLO_FOUND)
       target_link_libraries(grid_resampled_image OpenGL::GL glfw Freetype::Freetype)
     endif()
   endif()
-
-  add_executable(hexgrid hexgrid.cpp)
-  target_link_libraries(hexgrid OpenGL::GL glfw Freetype::Freetype)
 
   add_executable(unicode_coordaxes unicode_coordaxes.cpp)
   target_link_libraries(unicode_coordaxes OpenGL::GL glfw Freetype::Freetype)
