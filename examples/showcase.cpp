@@ -1,18 +1,22 @@
 // A showcase of different visual models
+#include <memory>
+#include <string>
+#include <cmath>
+#include <vector>
+#include <sm/mathconst>
 
 import sm.vvec;
 import sm.grid;
+import sm.hexgrid;
 
-#include <sm/mathconst>
-#include <sm/hexgrid>
-
-#include <mplot/loadpng.h>
+import mplot.loadpng;
+import mplot.unicode;
 import mplot.visual;
-#include <mplot/GraphVisual.h>
-#include <mplot/HexGridVisual.h>
-#include <mplot/GridVisual.h>
-#include <mplot/TriaxesVisual.h>
-#include <mplot/ScatterVisual.h>
+import mplot.graphvisual;
+import mplot.hexgridvisual;
+import mplot.gridvisual;
+import mplot.triaxesvisual;
+import mplot.scattervisual;
 
 // A simple Izhikevich neuron model class used below
 struct izhi
@@ -94,7 +98,7 @@ int main()
      */
     {
         auto gv1 = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>({0,1,0}));
-        v.bindmodel (gv1);
+        gv1->set_parent (v.get_id());
         gv1->axisstyle = mplot::axisstyle::twinax;
         gv1->setsize (1.6, 1.6);
         sm::vvec<double> x;
@@ -122,7 +126,7 @@ int main()
             data[ri] = 0.05f + 0.15f*std::sin(10.0f*hg.d_x[ri]) * std::sin(1.8f*hg.d_y[ri]) ; // Range 0->1
         }
         auto hgv = std::make_unique<mplot::HexGridVisual<float,mplot::gl::version_4_1>>(&hg, sm::vec<float>({-2,-0.5,0}));
-        v.bindmodel (hgv);
+        hgv->set_parent (v.get_id());
         hgv->setScalarData (&data);
         hgv->cm.setType (mplot::ColourMapType::Inferno);
         hgv->hexVisMode = mplot::HexVisMode::HexInterp; // Or mplot::HexVisMode::Triangles for a smoother surface plot
@@ -149,7 +153,7 @@ int main()
         }
         sm::vec<float, 3> offset = { -1.1f, -1.0f, 0.0f };
         auto gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-        v.bindmodel (gv);
+        gv->set_parent (v.get_id());
         gv->gridVisMode = mplot::GridVisMode::Columns;
         gv->setScalarData (&data);
         gv->cm.setType (mplot::ColourMapType::Twilight);
@@ -173,7 +177,7 @@ int main()
 
         // Now visualise with a GridVisual
         auto gv2 = std::make_unique<mplot::GridVisual<float>>(&g2, sm::vec<float>({0.2,-0.5,0}));
-        v.bindmodel (gv2);
+        gv2->set_parent (v.get_id());
         gv2->gridVisMode = mplot::GridVisMode::Pixels;
         gv2->setScalarData (&image_data);
         gv2->cm.setType (mplot::ColourMapType::GreyscaleInv);
@@ -182,7 +186,7 @@ int main()
         gv2->finalize();
         v.addVisualModel (gv2);
         auto gv3 = std::make_unique<mplot::GridVisual<float>>(&g2, sm::vec<float>({0.2,-1,0}));
-        v.bindmodel (gv3);
+        gv3->set_parent (v.get_id());
         gv3->gridVisMode = mplot::GridVisMode::Columns;
         gv3->interpolate_colour_sides (true);
         gv3->setScalarData (&image_data);
@@ -203,7 +207,7 @@ int main()
     // First the Triaxes:
     auto scat_offs = sm::vec<float>({-4,-1.0,0});
     auto tav = std::make_unique<mplot::TriaxesVisual<float>>(scat_offs);
-    v.bindmodel (tav);
+    tav->set_parent (v.get_id());
     tav->axisstyle = mplot::axisstyle::L;
     // Specify axes min and max with a min and max vector
     //                                         x      y       z
@@ -217,7 +221,7 @@ int main()
     v.addVisualModel (tav);
     // Second the scatter vis:
     auto sv = std::make_unique<mplot::ScatterVisual<float>> (scat_offs);
-    v.bindmodel (sv);
+    sv->set_parent (v.get_id());
     sm::vvec<sm::vec<float, 3>> points(20*20);
     sm::vvec<float> data(20*20);
     sv->setDataCoords (&points);
@@ -281,7 +285,7 @@ int main()
     // Graph membrane voltage vs. time
     sm::vec<float> izoff = {-4, 1, 0};
     auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({0,0,0})+izoff);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->twodimensional (twodee);
     gv->setsize (1,0.8);
     gv->xlabel = "t";
@@ -295,7 +299,7 @@ int main()
 
     // Graph u(t)
     auto gu = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({0,1.1,0})+izoff);
-    v.bindmodel (gu);
+    gu->set_parent (v.get_id());
     gu->twodimensional (twodee);
     gu->setsize (1,0.5);
     gu->xlabel = "t";
@@ -312,7 +316,7 @@ int main()
     // Graph nullclines, u vs v and vector field
     ds.showlines = false;
     auto gp = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({1.5,0,0})+izoff);
-    v.bindmodel (gp);
+    gp->set_parent (v.get_id());
     gp->twodimensional (twodee);
     gp->setsize (1.6, 1.6);
     gp->xlabel = "v";

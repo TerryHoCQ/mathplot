@@ -6,12 +6,13 @@
  * \author Seb James
  * \date January 2022
  */
-
-#pragma once
+module;
 
 #include <string>
 
-namespace mplot::unicode
+export module mplot.unicode;
+
+export namespace mplot::unicode
 {
     /*
      * These constants are defined to make program code that uses unicode::toUtf8()
@@ -19,140 +20,140 @@ namespace mplot::unicode
      */
 
     // Greek lower case letters
-    static constexpr char32_t alpha = 0x03b1;
-    static constexpr char32_t beta = 0x03b2;
-    static constexpr char32_t gamma = 0x03b3;
-    static constexpr char32_t delta = 0x03b4;
-    static constexpr char32_t epsilon = 0x03b5;
-    static constexpr char32_t zeta = 0x03b6;
-    static constexpr char32_t eta = 0x03b7;
-    static constexpr char32_t theta = 0x03b8;
-    static constexpr char32_t iota = 0x03b9;
-    static constexpr char32_t kappa = 0x03ba;
-    static constexpr char32_t lambda = 0x03bb;
-    static constexpr char32_t mu = 0x03bc;
-    static constexpr char32_t nu = 0x03bd;
-    static constexpr char32_t xi = 0x03be;
-    static constexpr char32_t omicron = 0x03bf;
-    static constexpr char32_t pi = 0x03c0;
-    static constexpr char32_t rho = 0x03c1;
-    static constexpr char32_t finalsigma = 0x03c2;
-    static constexpr char32_t sigma = 0x03c3;
-    static constexpr char32_t tau = 0x03c4;
-    static constexpr char32_t upsilon = 0x03c5;
-    static constexpr char32_t phi = 0x03c6;
-    static constexpr char32_t chi = 0x03c7;
-    static constexpr char32_t psi = 0x03c8;
-    static constexpr char32_t omega = 0x03c9;
+    constexpr char32_t alpha = 0x03b1;
+    constexpr char32_t beta = 0x03b2;
+    constexpr char32_t gamma = 0x03b3;
+    constexpr char32_t delta = 0x03b4;
+    constexpr char32_t epsilon = 0x03b5;
+    constexpr char32_t zeta = 0x03b6;
+    constexpr char32_t eta = 0x03b7;
+    constexpr char32_t theta = 0x03b8;
+    constexpr char32_t iota = 0x03b9;
+    constexpr char32_t kappa = 0x03ba;
+    constexpr char32_t lambda = 0x03bb;
+    constexpr char32_t mu = 0x03bc;
+    constexpr char32_t nu = 0x03bd;
+    constexpr char32_t xi = 0x03be;
+    constexpr char32_t omicron = 0x03bf;
+    constexpr char32_t pi = 0x03c0;
+    constexpr char32_t rho = 0x03c1;
+    constexpr char32_t finalsigma = 0x03c2;
+    constexpr char32_t sigma = 0x03c3;
+    constexpr char32_t tau = 0x03c4;
+    constexpr char32_t upsilon = 0x03c5;
+    constexpr char32_t phi = 0x03c6;
+    constexpr char32_t chi = 0x03c7;
+    constexpr char32_t psi = 0x03c8;
+    constexpr char32_t omega = 0x03c9;
 
     // Greek upper case letters
-    static constexpr char32_t Alpha = 0x0391;
-    static constexpr char32_t Beta = 0x0392;
-    static constexpr char32_t Gamma = 0x0393;
-    static constexpr char32_t Delta = 0x0394;
-    static constexpr char32_t Epsilon = 0x0395;
-    static constexpr char32_t Zeta = 0x0396;
-    static constexpr char32_t Eta = 0x0397;
-    static constexpr char32_t Theta = 0x0398;
-    static constexpr char32_t Iota = 0x0399;
-    static constexpr char32_t Kappa = 0x039a;
-    static constexpr char32_t Lambda = 0x039b;
-    static constexpr char32_t Mu = 0x039c;
-    static constexpr char32_t Nu = 0x039d;
-    static constexpr char32_t Xi = 0x039e;
-    static constexpr char32_t Omicron = 0x039f;
-    static constexpr char32_t Pi = 0x03a0;
-    static constexpr char32_t Rho = 0x03a1;
-    static constexpr char32_t Sigma = 0x03a3;
-    static constexpr char32_t Tau = 0x03a4;
-    static constexpr char32_t Upsilon = 0x03a5;
-    static constexpr char32_t Phi = 0x03a6;
-    static constexpr char32_t Chi = 0x03a7;
-    static constexpr char32_t Psi = 0x03a8;
-    static constexpr char32_t Omega = 0x03a9;
+    constexpr char32_t Alpha = 0x0391;
+    constexpr char32_t Beta = 0x0392;
+    constexpr char32_t Gamma = 0x0393;
+    constexpr char32_t Delta = 0x0394;
+    constexpr char32_t Epsilon = 0x0395;
+    constexpr char32_t Zeta = 0x0396;
+    constexpr char32_t Eta = 0x0397;
+    constexpr char32_t Theta = 0x0398;
+    constexpr char32_t Iota = 0x0399;
+    constexpr char32_t Kappa = 0x039a;
+    constexpr char32_t Lambda = 0x039b;
+    constexpr char32_t Mu = 0x039c;
+    constexpr char32_t Nu = 0x039d;
+    constexpr char32_t Xi = 0x039e;
+    constexpr char32_t Omicron = 0x039f;
+    constexpr char32_t Pi = 0x03a0;
+    constexpr char32_t Rho = 0x03a1;
+    constexpr char32_t Sigma = 0x03a3;
+    constexpr char32_t Tau = 0x03a4;
+    constexpr char32_t Upsilon = 0x03a5;
+    constexpr char32_t Phi = 0x03a6;
+    constexpr char32_t Chi = 0x03a7;
+    constexpr char32_t Psi = 0x03a8;
+    constexpr char32_t Omega = 0x03a9;
 
     // Math symbols
-    static constexpr char32_t plusminus = 0x00b1;
-    static constexpr char32_t minusplus = 0x2213;
-    static constexpr char32_t divides = 0x00f7;
-    static constexpr char32_t multiplies = 0x00d7;
-    static constexpr char32_t forall = 0x2200;
-    static constexpr char32_t exists = 0x2203;
-    static constexpr char32_t nabla = 0x2207;
-    static constexpr char32_t piproduct = 0x220f;
-    static constexpr char32_t sigmasum = 0x2211;
-    static constexpr char32_t sqrt = 0x221a;
-    static constexpr char32_t cubert = 0x221b;
-    static constexpr char32_t infinity = 0x221e;
-    static constexpr char32_t notequal = 0x2260;
-    static constexpr char32_t almostequal = 0x2248;
-    static constexpr char32_t asympequal = 0x2243;
-    static constexpr char32_t approxequal = 0x2245;
-    static constexpr char32_t degreesign = 0x00b0;
-    static constexpr char32_t perpendicular = 0x27c2;
-    static constexpr char32_t parrallelto = 0x2225;
-    static constexpr char32_t proportionalto = 0x221d;
-    static constexpr char32_t integral = 0x222b;
-    static constexpr char32_t doubleintegral = 0x222c;
-    static constexpr char32_t tripleintegral = 0x222d;
-    static constexpr char32_t contourintegral = 0x222e;
-    static constexpr char32_t surfaceintegral = 0x222f;
-    static constexpr char32_t volumeintegral = 0x2230;
+    constexpr char32_t plusminus = 0x00b1;
+    constexpr char32_t minusplus = 0x2213;
+    constexpr char32_t divides = 0x00f7;
+    constexpr char32_t multiplies = 0x00d7;
+    constexpr char32_t forall = 0x2200;
+    constexpr char32_t exists = 0x2203;
+    constexpr char32_t nabla = 0x2207;
+    constexpr char32_t piproduct = 0x220f;
+    constexpr char32_t sigmasum = 0x2211;
+    constexpr char32_t sqrt = 0x221a;
+    constexpr char32_t cubert = 0x221b;
+    constexpr char32_t infinity = 0x221e;
+    constexpr char32_t notequal = 0x2260;
+    constexpr char32_t almostequal = 0x2248;
+    constexpr char32_t asympequal = 0x2243;
+    constexpr char32_t approxequal = 0x2245;
+    constexpr char32_t degreesign = 0x00b0;
+    constexpr char32_t perpendicular = 0x27c2;
+    constexpr char32_t parrallelto = 0x2225;
+    constexpr char32_t proportionalto = 0x221d;
+    constexpr char32_t integral = 0x222b;
+    constexpr char32_t doubleintegral = 0x222c;
+    constexpr char32_t tripleintegral = 0x222d;
+    constexpr char32_t contourintegral = 0x222e;
+    constexpr char32_t surfaceintegral = 0x222f;
+    constexpr char32_t volumeintegral = 0x2230;
 
     // Arrers
-    static constexpr char32_t leftarrow = 0x2190;
-    static constexpr char32_t uparrow = 0x2191;
-    static constexpr char32_t rightarrow = 0x2192;
-    static constexpr char32_t downarrow = 0x2193;
-    static constexpr char32_t rightarrow2 = 0x1f812;
-    static constexpr char32_t longrightarrow = 0x27f6;
-    static constexpr char32_t longleftarrow = 0x27f5;
-    static constexpr char32_t longleftrightarrow = 0x27f7;
-    static constexpr char32_t line_emdash = 0x2014;
-    static constexpr char32_t line_horzbar = 0x2015;
+    constexpr char32_t leftarrow = 0x2190;
+    constexpr char32_t uparrow = 0x2191;
+    constexpr char32_t rightarrow = 0x2192;
+    constexpr char32_t downarrow = 0x2193;
+    constexpr char32_t rightarrow2 = 0x1f812;
+    constexpr char32_t longrightarrow = 0x27f6;
+    constexpr char32_t longleftarrow = 0x27f5;
+    constexpr char32_t longleftrightarrow = 0x27f7;
+    constexpr char32_t line_emdash = 0x2014;
+    constexpr char32_t line_horzbar = 0x2015;
 
     // Superscripts
-    static constexpr char32_t ss0 = 0x2070;
-    static constexpr char32_t ss1 = 0x00b9;
-    static constexpr char32_t ss2 = 0x00b2;
-    static constexpr char32_t ss3 = 0x00b3;
-    static constexpr char32_t ss4 = 0x2074;
-    static constexpr char32_t ss5 = 0x2075;
-    static constexpr char32_t ss6 = 0x2076;
-    static constexpr char32_t ss7 = 0x2077;
-    static constexpr char32_t ss8 = 0x2078;
-    static constexpr char32_t ss9 = 0x2079;
-    static constexpr char32_t ssplus = 0x207a;
-    static constexpr char32_t ssminus = 0x207b;
-    static constexpr char32_t ssequals = 0x207c;
-    static constexpr char32_t ssleftbracket = 0x207d;
-    static constexpr char32_t ssrightbracket = 0x207e;
+    constexpr char32_t ss0 = 0x2070;
+    constexpr char32_t ss1 = 0x00b9;
+    constexpr char32_t ss2 = 0x00b2;
+    constexpr char32_t ss3 = 0x00b3;
+    constexpr char32_t ss4 = 0x2074;
+    constexpr char32_t ss5 = 0x2075;
+    constexpr char32_t ss6 = 0x2076;
+    constexpr char32_t ss7 = 0x2077;
+    constexpr char32_t ss8 = 0x2078;
+    constexpr char32_t ss9 = 0x2079;
+    constexpr char32_t ssplus = 0x207a;
+    constexpr char32_t ssminus = 0x207b;
+    constexpr char32_t ssequals = 0x207c;
+    constexpr char32_t ssleftbracket = 0x207d;
+    constexpr char32_t ssrightbracket = 0x207e;
 
     // Subscripts
-    static constexpr char32_t subs0 = 0x2080;
-    static constexpr char32_t subs1 = 0x2081;
-    static constexpr char32_t subs2 = 0x2082;
-    static constexpr char32_t subs3 = 0x2083;
-    static constexpr char32_t subs4 = 0x2084;
-    static constexpr char32_t subs5 = 0x2085;
-    static constexpr char32_t subs6 = 0x2086;
-    static constexpr char32_t subs7 = 0x2087;
-    static constexpr char32_t subs8 = 0x2088;
-    static constexpr char32_t subs9 = 0x2089;
+    constexpr char32_t subs0 = 0x2080;
+    constexpr char32_t subs1 = 0x2081;
+    constexpr char32_t subs2 = 0x2082;
+    constexpr char32_t subs3 = 0x2083;
+    constexpr char32_t subs4 = 0x2084;
+    constexpr char32_t subs5 = 0x2085;
+    constexpr char32_t subs6 = 0x2086;
+    constexpr char32_t subs7 = 0x2087;
+    constexpr char32_t subs8 = 0x2088;
+    constexpr char32_t subs9 = 0x2089;
 
-    static constexpr char32_t subsplus = 0x208a;
-    static constexpr char32_t subsminus = 0x208b;
-    static constexpr char32_t subsequals = 0x208c;
-    static constexpr char32_t subsleftbracket = 0x208d;
-    static constexpr char32_t subsrightbracket = 0x208e;
+    constexpr char32_t subsplus = 0x208a;
+    constexpr char32_t subsminus = 0x208b;
+    constexpr char32_t subsequals = 0x208c;
+    constexpr char32_t subsleftbracket = 0x208d;
+    constexpr char32_t subsrightbracket = 0x208e;
 
     // Comparison
-    static constexpr char32_t lessthaneq = 0x2264;
-    static constexpr char32_t greaterthaneq = 0x2265;
-    static constexpr char32_t notlessthan = 0x226e;
-    static constexpr char32_t notgreaterthan = 0x226f;
-    static constexpr char32_t lessthanapproxeq = 0x2272;
-    static constexpr char32_t greaterthanapproxeq = 0x2273;
+    constexpr char32_t lessthaneq = 0x2264;
+    constexpr char32_t greaterthaneq = 0x2265;
+    constexpr char32_t notlessthan = 0x226e;
+    constexpr char32_t notgreaterthan = 0x226f;
+    constexpr char32_t lessthanapproxeq = 0x2272;
+    constexpr char32_t greaterthanapproxeq = 0x2273;
 
     //! Convert an input 8 bit string encoded in UTF-8 (or ASCII) format into an
     //! output string of unicode characters.

@@ -3,17 +3,26 @@
  * box. Use along with ScatterVisual or HexGridVisual for plotting 3D graph
  * visualisations.
  */
-#pragma once
+module;
 
+#include <iostream>
+#include <string>
+#include <deque>
+#include <utility>
 #include <sm/mathconst>
+
+export module mplot.triaxesvisual;
+
 import sm.scale;
 import sm.vec;
 import sm.quaternion;
-#include <mplot/VisualModel.h>
-#include <mplot/graphing.h>
-#include <mplot/graphstyles.h> // Share tickstyle, axestyle
 
-namespace mplot
+import mplot.visualmodel;
+import mplot.visualfont;
+import mplot.graphing;
+import mplot.graphstyles; // Share tickstyle, axestyle
+
+export namespace mplot
 {
     template <typename Flt, int glver = mplot::gl::version_4_1>
     class TriaxesVisual : public VisualModel<glver>
@@ -254,7 +263,6 @@ namespace mplot
 
             // y axis label (have to rotate)
             lbl = this->makeVisualTextModel (tf);
-            this->bindmodel (lbl);
             geom = lbl->getTextGeometry (this->ylabel);
 
             // Rotate label if it's long

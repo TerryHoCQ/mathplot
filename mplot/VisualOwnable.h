@@ -40,13 +40,6 @@ module;
 
 #include <mplot/VisualDefaultShaders.h>
 
-// Use Lode Vandevenne's PNG encoder
-#define LODEPNG_NO_COMPILE_DECODER 1
-#define LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS 1
-#include <mplot/lodepng.h>
-
-#include <mplot/VisualDefaultShaders.h>
-
 export module mplot.visualownable;
 
 export import mplot.visualmodel;
@@ -60,6 +53,7 @@ import mplot.coordarrows;
 export import mplot.gl.version;
 import mplot.gl.util;
 import mplot.tools;
+import mplot.loadpng; // Use Lode Vandevenne's PNG encoder
 
 export import sm.vec;
 export import sm.flags;
@@ -394,9 +388,9 @@ export namespace mplot
                     }
                 }
             }
-            uint32_t error = lodepng::encode (img_filename, rbits.get(), dims[0], dims[1]);
+            uint32_t error = mplot::png_encode (img_filename, rbits.get(), dims[0], dims[1]);
             if (error) {
-                std::cerr << "encoder error " << error << ": " << lodepng_error_text (error) << std::endl;
+                std::cerr << "encoder error " << error << ": " << mplot::png_error_text (error) << std::endl;
                 dims.set_from (-1);
                 return dims;
             }

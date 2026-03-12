@@ -4,17 +4,20 @@
  * \author Seb James
  * \date 2019
  */
-#pragma once
+module;
 
 #include <iostream>
 #include <vector>
 #include <array>
-import sm.vec;
-#include <mplot/tools.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/graphstyles.h>
 
-namespace mplot
+export module mplot.scattervisual;
+
+import sm.vec;
+import mplot.tools;
+export import mplot.visualdatamodel;
+export import mplot.graphstyles;
+
+export namespace mplot
 {
     //! The template argument Flt is the type of the data which this ScatterVisual
     //! will visualize.

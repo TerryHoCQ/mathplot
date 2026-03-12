@@ -1,24 +1,33 @@
-#pragma once
-
 /*
  * Helper to load PNG images into mplot::vvec<mplot::vec<float>> format and similar.
- *
- * Note: You have to #include this before mplot/Visual.h
  */
+module;
+
 #define LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS 1
 #include <mplot/lodepng.h>
 
+#include <cstdint>
 #include <type_traits>
 #include <vector>
 #include <string>
 #include <cstddef>
 #include <stdexcept>
 
-import sm.vec;
+export module mplot.loadpng;
+
+export import sm.vec;
 import sm.vvec;
 
-namespace mplot
+export namespace mplot
 {
+    uint32_t png_encode (const std::string& img_filename, const unsigned char* in, int32_t w, int32_t h)
+    {
+        if (w < 0 || h < 0) { return std::numeric_limits<uint32_t>::max(); }
+        return lodepng::encode (img_filename, in, w, h);
+    }
+
+    std::string png_error_text (const uint32_t error) { return lodepng_error_text (error); }
+
     /*
      * Wrap lodepng::decode to load a PNG from file, placing the data into the
      * image_data array. Figure out based on the type of T, how to scale the numbers.
@@ -35,8 +44,8 @@ namespace mplot
      * image_data will be filled in a bottom-left to top-right order.
      */
     template <typename T>
-    static sm::vec<unsigned int, 2> loadpng (const std::string& filename, sm::vvec<T>& image_data,
-                                             const sm::vec<bool,2> flip = {false, true})
+    sm::vec<unsigned int, 2> loadpng (const std::string& filename, sm::vvec<T>& image_data,
+                                      const sm::vec<bool,2> flip = {false, true})
     {
         std::vector<unsigned char> png;
         unsigned int w = 0;
@@ -116,9 +125,9 @@ namespace mplot
      * to errors)
      */
     template <typename T, std::size_t N>
-    static sm::vec<unsigned int, 2> loadpng (const std::string& filename,
-                                             sm::vvec<sm::vec<T, N>>& image_data,
-                                             const sm::vec<bool,2> flip = {false, true})
+    sm::vec<unsigned int, 2> loadpng (const std::string& filename,
+                                      sm::vvec<sm::vec<T, N>>& image_data,
+                                      const sm::vec<bool,2> flip = {false, true})
     {
         std::vector<unsigned char> png;
         unsigned int w = 0;
@@ -199,8 +208,8 @@ namespace mplot
 
     // Load a colour PNG and return a vector of type T with elements ordered as RGBRGBRGB...
     template <typename T>
-    static sm::vec<unsigned int, 2> loadpng_rgb (const std::string& filename, sm::vvec<T>& image_data,
-                                                 const sm::vec<bool,2> flip = {false, true})
+    sm::vec<unsigned int, 2> loadpng_rgb (const std::string& filename, sm::vvec<T>& image_data,
+                                          const sm::vec<bool,2> flip = {false, true})
     {
         std::vector<unsigned char> png;
         unsigned int w = 0;
@@ -264,8 +273,8 @@ namespace mplot
 
     // Load a colour PNG and return a vector of type T with elements ordered as RGBARGBARGBA...
     template <typename T>
-    static sm::vec<unsigned int, 2> loadpng_rgba (const std::string& filename, sm::vvec<T>& image_data,
-                                                  const sm::vec<bool,2> flip = {false, true})
+    sm::vec<unsigned int, 2> loadpng_rgba (const std::string& filename, sm::vvec<T>& image_data,
+                                           const sm::vec<bool,2> flip = {false, true})
     {
         std::vector<unsigned char> png;
         unsigned int w = 0;
@@ -332,8 +341,8 @@ namespace mplot
 
     // Load a colour PNG and return a vector of type T with elements ordered as RGBARGBARGBA...
     template <typename T, unsigned int im_w, unsigned int im_h>
-    static sm::vec<unsigned int, 2> loadpng_rgba (const std::string& filename, sm::vec<T, 4*im_w*im_h>& image_data,
-                                                  const sm::vec<bool,2> flip = {false, true})
+    sm::vec<unsigned int, 2> loadpng_rgba (const std::string& filename, sm::vec<T, 4*im_w*im_h>& image_data,
+                                           const sm::vec<bool,2> flip = {false, true})
     {
         std::vector<unsigned char> png;
         unsigned int w = 0;

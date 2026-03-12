@@ -31,6 +31,7 @@ set_source_files_properties (
   ${PROJECT_SOURCE_DIR}/maths/sm/util
   ${PROJECT_SOURCE_DIR}/maths/sm/base64
   ${PROJECT_SOURCE_DIR}/maths/sm/crc32
+
   ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
   ${PROJECT_SOURCE_DIR}/mplot/Visual.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
@@ -52,6 +53,8 @@ set_source_files_properties (
   ${PROJECT_SOURCE_DIR}/mplot/win_t.h
   ${PROJECT_SOURCE_DIR}/mplot/colour.h
   ${PROJECT_SOURCE_DIR}/mplot/tools.h
+  ${PROJECT_SOURCE_DIR}/mplot/unicode.h
+  ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
 
@@ -78,6 +81,10 @@ set_source_files_properties (
 
   ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.h
 
+  ${PROJECT_SOURCE_DIR}/mplot/TriaxesVisual.h
+
+  ${PROJECT_SOURCE_DIR}/mplot/ScatterVisual.h
+
   PROPERTIES LANGUAGE CXX
 )
 
@@ -85,6 +92,8 @@ add_executable(helloworld helloworld.cpp)
 target_sources(helloworld PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES
   ${PROJECT_SOURCE_DIR}/mplot/tools.h
+  ${PROJECT_SOURCE_DIR}/mplot/unicode.h
+  ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
   ${PROJECT_SOURCE_DIR}/mplot/colour.h
@@ -121,6 +130,8 @@ add_executable(rod rod.cpp)
 target_sources(rod PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES
   ${PROJECT_SOURCE_DIR}/mplot/tools.h
+  ${PROJECT_SOURCE_DIR}/mplot/unicode.h
+  ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
   ${PROJECT_SOURCE_DIR}/mplot/colour.h
@@ -162,6 +173,8 @@ add_executable(rod_with_normals rod_with_normals.cpp)
 target_sources(rod_with_normals PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES
   ${PROJECT_SOURCE_DIR}/mplot/tools.h
+  ${PROJECT_SOURCE_DIR}/mplot/unicode.h
+  ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
   ${PROJECT_SOURCE_DIR}/mplot/colour.h
@@ -204,6 +217,8 @@ add_executable(ellipsoid ellipsoid.cpp)
 target_sources(ellipsoid PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES
   ${PROJECT_SOURCE_DIR}/mplot/tools.h
+  ${PROJECT_SOURCE_DIR}/mplot/unicode.h
+  ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
   ${PROJECT_SOURCE_DIR}/mplot/colour.h
@@ -247,6 +262,8 @@ if(NOT APPLE)
   target_sources(geodesic PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
     FILES
     ${PROJECT_SOURCE_DIR}/mplot/tools.h
+    ${PROJECT_SOURCE_DIR}/mplot/unicode.h
+    ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
     ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
     ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
     ${PROJECT_SOURCE_DIR}/mplot/colour.h
@@ -292,6 +309,8 @@ add_executable(vectorvis vectorvis.cpp)
 target_sources(vectorvis PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES
   ${PROJECT_SOURCE_DIR}/mplot/tools.h
+  ${PROJECT_SOURCE_DIR}/mplot/unicode.h
+  ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
   ${PROJECT_SOURCE_DIR}/mplot/colour.h
@@ -333,6 +352,8 @@ add_executable(cray_eye cray_eye.cpp)
 target_sources(cray_eye PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES
   ${PROJECT_SOURCE_DIR}/mplot/tools.h
+  ${PROJECT_SOURCE_DIR}/mplot/unicode.h
+  ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
   ${PROJECT_SOURCE_DIR}/mplot/colour.h
@@ -380,6 +401,8 @@ add_executable(graph1 graph1.cpp)
 target_sources(graph1 PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES
   ${PROJECT_SOURCE_DIR}/mplot/tools.h
+  ${PROJECT_SOURCE_DIR}/mplot/unicode.h
+  ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
   ${PROJECT_SOURCE_DIR}/mplot/colour.h
@@ -428,6 +451,8 @@ add_executable(grid_simple grid_simple.cpp)
 target_sources(grid_simple PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES
   ${PROJECT_SOURCE_DIR}/mplot/tools.h
+  ${PROJECT_SOURCE_DIR}/mplot/unicode.h
+  ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
   ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
   ${PROJECT_SOURCE_DIR}/mplot/colour.h
@@ -479,6 +504,8 @@ if(NOT APPLE)
   target_sources(breadcrumbs PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
     FILES
     ${PROJECT_SOURCE_DIR}/mplot/tools.h
+    ${PROJECT_SOURCE_DIR}/mplot/unicode.h
+    ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
     ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
     ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
     ${PROJECT_SOURCE_DIR}/mplot/colour.h
@@ -523,16 +550,12 @@ if(NOT APPLE)
   target_link_libraries(breadcrumbs OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 endif()
 
-#
-# Any example that uses sm::hexgrid or sm::cartgrid requires
-# libarmadillo (because the classes use sm::BezCurve).
-#
-if(0)
-if(ARMADILLO_FOUND)
-  add_executable(showcase showcase.cpp)
-  target_sources(showcase PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+add_executable(showcase showcase.cpp)
+target_sources(showcase PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
     FILES
     ${PROJECT_SOURCE_DIR}/mplot/tools.h
+    ${PROJECT_SOURCE_DIR}/mplot/unicode.h
+    ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
     ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
     ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
     ${PROJECT_SOURCE_DIR}/mplot/colour.h
@@ -551,17 +574,20 @@ if(ARMADILLO_FOUND)
     ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
     ${PROJECT_SOURCE_DIR}/mplot/VisualDataModel.h
     ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
-
-    ${PROJECT_SOURCE_DIR}/mplot/GridVisual.h
-    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.h
     ${PROJECT_SOURCE_DIR}/mplot/graphing.h
     ${PROJECT_SOURCE_DIR}/mplot/graphstyles.h
     ${PROJECT_SOURCE_DIR}/mplot/DatasetStyle.h
-
     ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
     ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
     ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
     ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
+
+    ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.h
+    ${PROJECT_SOURCE_DIR}/mplot/TriaxesVisual.h
+    ${PROJECT_SOURCE_DIR}/mplot/ScatterVisual.h
+    ${PROJECT_SOURCE_DIR}/mplot/GridVisual.h
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.h
+
     ${PROJECT_SOURCE_DIR}/maths/sm/util
     ${PROJECT_SOURCE_DIR}/maths/sm/base64
     ${PROJECT_SOURCE_DIR}/maths/sm/crc32
@@ -571,6 +597,7 @@ if(ARMADILLO_FOUND)
     ${PROJECT_SOURCE_DIR}/maths/sm/random
     ${PROJECT_SOURCE_DIR}/maths/sm/vec
     ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo
     ${PROJECT_SOURCE_DIR}/maths/sm/mat
     ${PROJECT_SOURCE_DIR}/maths/sm/geometry
     ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
@@ -578,15 +605,22 @@ if(ARMADILLO_FOUND)
     ${PROJECT_SOURCE_DIR}/maths/sm/scale
     ${PROJECT_SOURCE_DIR}/maths/sm/centroid
     ${PROJECT_SOURCE_DIR}/maths/sm/grid
+    ${PROJECT_SOURCE_DIR}/maths/sm/bezcoord
+    ${PROJECT_SOURCE_DIR}/maths/sm/binomial
+    ${PROJECT_SOURCE_DIR}/maths/sm/nm_simplex
+    ${PROJECT_SOURCE_DIR}/maths/sm/bezcurve
+    ${PROJECT_SOURCE_DIR}/maths/sm/bezcurvepath
+    ${PROJECT_SOURCE_DIR}/maths/sm/hex
+    ${PROJECT_SOURCE_DIR}/maths/sm/hexgrid
   )
   target_link_libraries(showcase OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-endif(ARMADILLO_FOUND)
-endif (0)
 
   add_executable(hexgrid hexgrid.cpp)
   target_sources(hexgrid PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
     FILES
     ${PROJECT_SOURCE_DIR}/mplot/tools.h
+    ${PROJECT_SOURCE_DIR}/mplot/unicode.h
+    ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
     ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
     ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
     ${PROJECT_SOURCE_DIR}/mplot/colour.h
@@ -635,7 +669,6 @@ endif (0)
     ${PROJECT_SOURCE_DIR}/maths/sm/bezcurvepath
     ${PROJECT_SOURCE_DIR}/maths/sm/hex
     ${PROJECT_SOURCE_DIR}/maths/sm/hexgrid
-
   )
   target_link_libraries(hexgrid OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 

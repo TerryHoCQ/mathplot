@@ -27,15 +27,14 @@ module;
 
 #include <sm/mathconst>
 
-#include <mplot/unicode.h>
-
 export module mplot.visualtextmodel;
 
 import mplot.visualresources;
 import mplot.visualcommon;
 export import mplot.textgeometry;
 export import mplot.textfeatures;
-import mplot.visualface;
+export import mplot.unicode;
+export import mplot.visualface;
 import mplot.colour;
 import mplot.gl.version;
 import mplot.gl.util;
