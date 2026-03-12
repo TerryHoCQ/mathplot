@@ -22,7 +22,8 @@
 #include <cstring>  // std::memset
 #include <bitset>
 #include <functional>
-#include <sm/mathconst>
+
+import sm.mathconst;
 import sm.vec;
 import sm.geometry;
 import sm.winder;

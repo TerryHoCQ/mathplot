@@ -5,21 +5,22 @@
  * Author: Seb James
  * Date: July 2024
  */
-
-#pragma once
+module;
 
 #include <array>
 #include <bitset>
 #include <map>
 
-#include <sm/mathconst>
+export module mplot.gratingvisual;
+
+import sm.mathconst;
 import sm.vec;
 import sm.geometry;
 
-#include <mplot/colour.h>
-#include <mplot/VisualModel.h>
+export import mplot.colour;
+import mplot.visualmodel;
 
-namespace mplot
+export namespace mplot
 {
     enum class border_id
     {

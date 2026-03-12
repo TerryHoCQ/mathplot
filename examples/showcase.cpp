@@ -3,8 +3,8 @@
 #include <string>
 #include <cmath>
 #include <vector>
-#include <sm/mathconst>
 
+import sm.mathconst;
 import sm.vvec;
 import sm.grid;
 import sm.hexgrid;

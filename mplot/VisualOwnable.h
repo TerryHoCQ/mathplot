@@ -29,8 +29,6 @@ module;
 #include <functional>
 #include <cstddef>
 
-#include <sm/mathconst>
-
 #include <nlohmann/json.hpp>
 
 #include <mplot/gl/shaders.h>
@@ -55,6 +53,7 @@ import mplot.gl.util;
 import mplot.tools;
 import mplot.loadpng; // Use Lode Vandevenne's PNG encoder
 
+import sm.mathconst;
 export import sm.vec;
 export import sm.flags;
 import sm.quaternion;

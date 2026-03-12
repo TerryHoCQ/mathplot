@@ -1,12 +1,15 @@
-#pragma once
+module;
 
 #include <array>
-import sm.vec;
-#include <sm/mathconst>
-import sm.mat;
-#include <mplot/VisualModel.h>
 
-namespace mplot
+export module mplot.rectanglevisual;
+
+import sm.mathconst;
+import sm.vec;
+import sm.mat;
+import mplot.visualmodel;
+
+export namespace mplot
 {
     //! This class creates the vertices for a simple flat rectangle in a 3D scene.
     template<int glver = mplot::gl::version_4_1>

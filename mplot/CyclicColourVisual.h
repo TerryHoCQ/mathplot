@@ -1,18 +1,19 @@
 /*
  * A visual to label Cyclic colour maps
  */
-
-#pragma once
+module;
 
 #include <deque>
 
-#include <sm/mathconst>
+export module mplot.cycliccolourvisual;
+
+import sm.mathconst;
 import sm.vec;
 
-#include <mplot/VisualModel.h>
-#include <mplot/unicode.h>
+import mplot.unicode;
+import mplot.visualmodel;
 
-namespace mplot
+export namespace mplot
 {
     template <typename F, int glver = mplot::gl::version_4_1>
     class CyclicColourVisual : public VisualModel<glver>

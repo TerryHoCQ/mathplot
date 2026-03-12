@@ -25,8 +25,6 @@ module;
 #include <functional>
 #include <memory>
 
-#include <sm/mathconst>
-
 export module mplot.visualtextmodel;
 
 import mplot.visualresources;
@@ -39,6 +37,7 @@ import mplot.colour;
 import mplot.gl.version;
 import mplot.gl.util;
 
+import sm.mathconst;
 import sm.quaternion;
 import sm.mat;
 import sm.vec;

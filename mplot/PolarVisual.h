@@ -1,17 +1,25 @@
 /*
  * A visual for polar plots (rho, theta)
  */
+module;
 
-#pragma once
+#include <array>
+#include <deque>
+#include <string>
+#include <cmath>
+#include <utility>
+#include <stdexcept>
 
-#include <sm/mathconst>
+export module mplot.polarvisual;
+
+import sm.mathconst;
 import sm.vec;
 
-#include <mplot/unicode.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/GraphVisual.h>
+import mplot.unicode;
+import mplot.visualdatamodel;
+import mplot.graphvisual;
 
-namespace mplot
+export namespace mplot
 {
     template <typename F, int glver = mplot::gl::version_4_1>
     struct PolarVisual : public VisualDataModel<F, glver>

@@ -34,10 +34,9 @@ module;
 #include <set>
 #include <tuple>
 
-#include <sm/mathconst>
-
 export module mplot.visualmodel;
 
+import sm.mathconst;
 import sm.geometry_polyhedra;
 import sm.quaternion;
 import sm.mat;

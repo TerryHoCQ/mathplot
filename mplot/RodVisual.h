@@ -2,10 +2,10 @@ module;
 
 #include <iostream>
 #include <array>
-#include <sm/mathconst>
 
 export module mplot.rodvisual;
 
+import sm.mathconst;
 import sm.vec;
 import mplot.gl.version;
 export import mplot.visualmodel;

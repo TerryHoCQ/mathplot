@@ -5,11 +5,11 @@ module;
 
 #include <array>
 #include <vector>
-#include <sm/mathconst>
 #include <mplot/jcvoronoi/jc_voronoi.h>
 
 export module mplot.compoundray.eyevisual;
 
+export import sm.mathconst;
 export import sm.vec;
 import sm.mat;
 import sm.range;

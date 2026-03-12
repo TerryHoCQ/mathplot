@@ -9,10 +9,10 @@ module;
 #include <string>
 #include <deque>
 #include <utility>
-#include <sm/mathconst>
 
 export module mplot.triaxesvisual;
 
+export import sm.mathconst;
 import sm.scale;
 import sm.vec;
 import sm.quaternion;

@@ -6,8 +6,6 @@ module;
 #include <cmath>
 #include <cstdint>
 
-#include <sm/mathconst>
-
 export module mplot.colourmap;
 
 export import :colourmaps_cet;      // Colour map tables from CET
@@ -15,6 +13,7 @@ export import :colourmaps_crameri;  // Colour map tables from Fabio Crameri
 export import :colourmap_lists;     // Colour map tables from matplotlib
 
 import mplot.tools;
+export import sm.mathconst;
 import sm.vec;
 import sm.flags;
 import sm.crc32;

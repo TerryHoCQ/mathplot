@@ -28,7 +28,8 @@
 #include <cstdint>
 #include <cassert>
 #include <algorithm>
-#include <sm/mathconst>
+
+import sm.mathconst;
 
 // The healpix namespace contains code from the HEALPix C library, slightly modified.
 namespace hp

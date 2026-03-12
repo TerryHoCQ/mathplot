@@ -6,7 +6,8 @@
  */
 #pragma once
 
-#include <sm/mathconst>
+import sm.mathconst;
+
 #include <algorithm>
 #include <stdexcept>
 #include <cmath>

@@ -7,7 +7,7 @@
 #include <cmath>
 #include <array>
 
-#include <sm/mathconst>
+import sm.mathconst;
 import sm.scale;
 import sm.vec;
 import sm.vvec;

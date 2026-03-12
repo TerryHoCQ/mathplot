@@ -7,11 +7,10 @@ module;
 #include <string>
 #include <utility>
 
-#include <sm/mathconst>
-
 export module mplot.lengthscalevisual;
 
 import mplot.visualmodel;
+import sm.mathconst;
 import sm.vec;
 import sm.scale;
 import sm.quaternion;

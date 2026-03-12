@@ -1,37 +1,35 @@
 # All #includes in test programs have to be #include <mplot/header.h>
 include_directories(BEFORE ${PROJECT_SOURCE_DIR})
 
-# Each C++ module file has to be listed here (as they don't have a .cppm or .ixx file suffix)
-set_source_files_properties (
+set(SM_CORE_MODULES
+  ${PROJECT_SOURCE_DIR}/maths/sm/mathconst
+  ${PROJECT_SOURCE_DIR}/maths/sm/constexpr_math
   ${PROJECT_SOURCE_DIR}/maths/sm/range
   ${PROJECT_SOURCE_DIR}/maths/sm/random
   ${PROJECT_SOURCE_DIR}/maths/sm/vec
-  ${PROJECT_SOURCE_DIR}/maths/sm/vvec
-  ${PROJECT_SOURCE_DIR}/maths/sm/scale
-  ${PROJECT_SOURCE_DIR}/maths/sm/hdfdata
   ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
   ${PROJECT_SOURCE_DIR}/maths/sm/mat
-  ${PROJECT_SOURCE_DIR}/maths/sm/hex
-  ${PROJECT_SOURCE_DIR}/maths/sm/hexgrid
-  ${PROJECT_SOURCE_DIR}/maths/sm/bezcoord
-  ${PROJECT_SOURCE_DIR}/maths/sm/binomial
-  ${PROJECT_SOURCE_DIR}/maths/sm/bezcurve
-  ${PROJECT_SOURCE_DIR}/maths/sm/bezcurvepath
-  ${PROJECT_SOURCE_DIR}/maths/sm/winder
-  ${PROJECT_SOURCE_DIR}/maths/sm/bootstrap
-  ${PROJECT_SOURCE_DIR}/maths/sm/grid
-  ${PROJECT_SOURCE_DIR}/maths/sm/algo
-  ${PROJECT_SOURCE_DIR}/maths/sm/nm_simplex
-  ${PROJECT_SOURCE_DIR}/maths/sm/histo
-  ${PROJECT_SOURCE_DIR}/maths/sm/boxfilter
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
-  ${PROJECT_SOURCE_DIR}/maths/sm/flags
-  ${PROJECT_SOURCE_DIR}/maths/sm/centroid
   ${PROJECT_SOURCE_DIR}/maths/sm/util
   ${PROJECT_SOURCE_DIR}/maths/sm/base64
   ${PROJECT_SOURCE_DIR}/maths/sm/crc32
-
+  ${PROJECT_SOURCE_DIR}/maths/sm/flags
+  ${PROJECT_SOURCE_DIR}/maths/sm/algo
+  ${PROJECT_SOURCE_DIR}/maths/sm/geometry
+  ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
+  ${PROJECT_SOURCE_DIR}/maths/sm/vvec
+  ${PROJECT_SOURCE_DIR}/maths/sm/scale
+  ${PROJECT_SOURCE_DIR}/maths/sm/centroid
+)
+# Base modules for mathplot
+set(MPLOT_CORE_MODULES
+  ${PROJECT_SOURCE_DIR}/mplot/tools.h
+  ${PROJECT_SOURCE_DIR}/mplot/unicode.h
+  ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
+  ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
+  ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
+  ${PROJECT_SOURCE_DIR}/mplot/colour.h
+  ${PROJECT_SOURCE_DIR}/mplot/win_t.h
+  ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
   ${PROJECT_SOURCE_DIR}/mplot/Visual.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
@@ -43,632 +41,166 @@ set_source_files_properties (
   ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualDataModel.h
   ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
   ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
   ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
   ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
   ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
-  ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
-  ${PROJECT_SOURCE_DIR}/mplot/win_t.h
-  ${PROJECT_SOURCE_DIR}/mplot/colour.h
-  ${PROJECT_SOURCE_DIR}/mplot/tools.h
-  ${PROJECT_SOURCE_DIR}/mplot/unicode.h
-  ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
-  ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
-  ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
-
   ${PROJECT_SOURCE_DIR}/mplot/graphing.h
   ${PROJECT_SOURCE_DIR}/mplot/graphstyles.h
   ${PROJECT_SOURCE_DIR}/mplot/DatasetStyle.h
+  ${PROJECT_SOURCE_DIR}/mplot/VisualDataModel.h
+)
+
+# Maths used in individual VisualModels, but not the mathplot core
+set(SM_VISUALMODEL_MODULES
+  ${PROJECT_SOURCE_DIR}/maths/sm/winder
+  ${PROJECT_SOURCE_DIR}/maths/sm/histo
+  ${PROJECT_SOURCE_DIR}/maths/sm/grid
+  ${PROJECT_SOURCE_DIR}/maths/sm/nm_simplex
+  ${PROJECT_SOURCE_DIR}/maths/sm/bezcoord
+  ${PROJECT_SOURCE_DIR}/maths/sm/binomial
+  ${PROJECT_SOURCE_DIR}/maths/sm/bezcurve
+  ${PROJECT_SOURCE_DIR}/maths/sm/bezcurvepath
+  ${PROJECT_SOURCE_DIR}/maths/sm/hex
+  ${PROJECT_SOURCE_DIR}/maths/sm/hexgrid
+)
+
+# The modules required for hexgrids
+set(SM_HEXGRID_MODULES
+  ${PROJECT_SOURCE_DIR}/maths/sm/nm_simplex
+  ${PROJECT_SOURCE_DIR}/maths/sm/binomial
+  ${PROJECT_SOURCE_DIR}/maths/sm/bezcoord
+  ${PROJECT_SOURCE_DIR}/maths/sm/bezcurve
+  ${PROJECT_SOURCE_DIR}/maths/sm/bezcurvepath
+  ${PROJECT_SOURCE_DIR}/maths/sm/hex
+  ${PROJECT_SOURCE_DIR}/maths/sm/hexgrid
+)
+
+set(MPLOT_VISUALMODEL_MODULES
   ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.h
-
   ${PROJECT_SOURCE_DIR}/mplot/GridVisual.h
-
   ${PROJECT_SOURCE_DIR}/mplot/RodVisual.h
-
   ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.h
-
   ${PROJECT_SOURCE_DIR}/mplot/SphereVisual.h
-
   ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.h
-
   ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.h
-
   ${PROJECT_SOURCE_DIR}/mplot/compoundray/EyeVisual.h
-
   ${PROJECT_SOURCE_DIR}/mplot/InstancedScatterVisual.h
-
   ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.h
-
   ${PROJECT_SOURCE_DIR}/mplot/TriaxesVisual.h
-
   ${PROJECT_SOURCE_DIR}/mplot/ScatterVisual.h
+)
 
+# Each C++ module file has to be listed here (as they don't have a .cppm or .ixx file suffix)
+set_source_files_properties (
+  ${SM_CORE_MODULES}
+  ${MPLOT_CORE_MODULES}
+  ${SM_VISUALMODEL_MODULES}
+  ${MPLOT_VISUALMODEL_MODULES}
   PROPERTIES LANGUAGE CXX
 )
 
 add_executable(helloworld helloworld.cpp)
 target_sources(helloworld PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES
-  ${PROJECT_SOURCE_DIR}/mplot/tools.h
-  ${PROJECT_SOURCE_DIR}/mplot/unicode.h
-  ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
-  ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
-  ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
-  ${PROJECT_SOURCE_DIR}/mplot/colour.h
-  ${PROJECT_SOURCE_DIR}/mplot/win_t.h
-  ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
-  ${PROJECT_SOURCE_DIR}/mplot/Visual.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualFace.h
-  ${PROJECT_SOURCE_DIR}/mplot/TextFeatures.h
-  ${PROJECT_SOURCE_DIR}/mplot/TextGeometry.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualResources.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
-  ${PROJECT_SOURCE_DIR}/maths/sm/util
-  ${PROJECT_SOURCE_DIR}/maths/sm/base64
-  ${PROJECT_SOURCE_DIR}/maths/sm/crc32
-  ${PROJECT_SOURCE_DIR}/maths/sm/flags
-  ${PROJECT_SOURCE_DIR}/maths/sm/algo
-  ${PROJECT_SOURCE_DIR}/maths/sm/range
-  ${PROJECT_SOURCE_DIR}/maths/sm/random
-  ${PROJECT_SOURCE_DIR}/maths/sm/vec
-  ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
-  ${PROJECT_SOURCE_DIR}/maths/sm/mat
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
-  ${PROJECT_SOURCE_DIR}/maths/sm/vvec)
+  FILES ${MPLOT_CORE_MODULES} ${SM_CORE_MODULES})
 target_link_libraries(helloworld OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
 add_executable(rod rod.cpp)
 target_sources(rod PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES
-  ${PROJECT_SOURCE_DIR}/mplot/tools.h
-  ${PROJECT_SOURCE_DIR}/mplot/unicode.h
-  ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
-  ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
-  ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
-  ${PROJECT_SOURCE_DIR}/mplot/colour.h
-  ${PROJECT_SOURCE_DIR}/mplot/win_t.h
-  ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
-  ${PROJECT_SOURCE_DIR}/mplot/Visual.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualFace.h
-  ${PROJECT_SOURCE_DIR}/mplot/TextFeatures.h
-  ${PROJECT_SOURCE_DIR}/mplot/TextGeometry.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualResources.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
-  ${PROJECT_SOURCE_DIR}/mplot/RodVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
-  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
-  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
-  ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
-  ${PROJECT_SOURCE_DIR}/maths/sm/util
-  ${PROJECT_SOURCE_DIR}/maths/sm/base64
-  ${PROJECT_SOURCE_DIR}/maths/sm/crc32
-  ${PROJECT_SOURCE_DIR}/maths/sm/flags
-  ${PROJECT_SOURCE_DIR}/maths/sm/algo
-  ${PROJECT_SOURCE_DIR}/maths/sm/range
-  ${PROJECT_SOURCE_DIR}/maths/sm/random
-  ${PROJECT_SOURCE_DIR}/maths/sm/vec
-  ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
-  ${PROJECT_SOURCE_DIR}/maths/sm/mat
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
-  ${PROJECT_SOURCE_DIR}/maths/sm/vvec)
+  FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES} ${PROJECT_SOURCE_DIR}/mplot/RodVisual.h
+)
 target_link_libraries(rod OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
 add_executable(rod_with_normals rod_with_normals.cpp)
 target_sources(rod_with_normals PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES
-  ${PROJECT_SOURCE_DIR}/mplot/tools.h
-  ${PROJECT_SOURCE_DIR}/mplot/unicode.h
-  ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
-  ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
-  ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
-  ${PROJECT_SOURCE_DIR}/mplot/colour.h
-  ${PROJECT_SOURCE_DIR}/mplot/win_t.h
-  ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
-  ${PROJECT_SOURCE_DIR}/mplot/Visual.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualFace.h
-  ${PROJECT_SOURCE_DIR}/mplot/TextFeatures.h
-  ${PROJECT_SOURCE_DIR}/mplot/TextGeometry.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualResources.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
-  ${PROJECT_SOURCE_DIR}/mplot/RodVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
-  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
-  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
-  ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
-  ${PROJECT_SOURCE_DIR}/maths/sm/util
-  ${PROJECT_SOURCE_DIR}/maths/sm/base64
-  ${PROJECT_SOURCE_DIR}/maths/sm/crc32
-  ${PROJECT_SOURCE_DIR}/maths/sm/flags
-  ${PROJECT_SOURCE_DIR}/maths/sm/algo
-  ${PROJECT_SOURCE_DIR}/maths/sm/range
-  ${PROJECT_SOURCE_DIR}/maths/sm/random
-  ${PROJECT_SOURCE_DIR}/maths/sm/vec
-  ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
-  ${PROJECT_SOURCE_DIR}/maths/sm/mat
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
-  ${PROJECT_SOURCE_DIR}/maths/sm/vvec)
+  FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES} ${PROJECT_SOURCE_DIR}/mplot/RodVisual.h ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.h
+  )
 target_link_libraries(rod_with_normals OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
 add_executable(ellipsoid ellipsoid.cpp)
 target_sources(ellipsoid PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES
-  ${PROJECT_SOURCE_DIR}/mplot/tools.h
-  ${PROJECT_SOURCE_DIR}/mplot/unicode.h
-  ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
-  ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
-  ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
-  ${PROJECT_SOURCE_DIR}/mplot/colour.h
-  ${PROJECT_SOURCE_DIR}/mplot/win_t.h
-  ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
-  ${PROJECT_SOURCE_DIR}/mplot/Visual.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualFace.h
-  ${PROJECT_SOURCE_DIR}/mplot/TextFeatures.h
-  ${PROJECT_SOURCE_DIR}/mplot/TextGeometry.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualResources.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
+  FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
   ${PROJECT_SOURCE_DIR}/mplot/RodVisual.h
   ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
-  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
-  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
-  ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
-  ${PROJECT_SOURCE_DIR}/maths/sm/util
-  ${PROJECT_SOURCE_DIR}/maths/sm/base64
-  ${PROJECT_SOURCE_DIR}/maths/sm/crc32
-  ${PROJECT_SOURCE_DIR}/maths/sm/flags
-  ${PROJECT_SOURCE_DIR}/maths/sm/algo
-  ${PROJECT_SOURCE_DIR}/maths/sm/range
-  ${PROJECT_SOURCE_DIR}/maths/sm/random
-  ${PROJECT_SOURCE_DIR}/maths/sm/vec
-  ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
-  ${PROJECT_SOURCE_DIR}/maths/sm/mat
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
-  ${PROJECT_SOURCE_DIR}/maths/sm/vvec)
+)
 target_link_libraries(ellipsoid OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
 if(NOT APPLE)
   add_executable(geodesic geodesic.cpp)
   target_sources(geodesic PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-    FILES
-    ${PROJECT_SOURCE_DIR}/mplot/tools.h
-    ${PROJECT_SOURCE_DIR}/mplot/unicode.h
-    ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
-    ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
-    ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
-    ${PROJECT_SOURCE_DIR}/mplot/colour.h
-    ${PROJECT_SOURCE_DIR}/mplot/win_t.h
-    ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
-    ${PROJECT_SOURCE_DIR}/mplot/Visual.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualFace.h
-    ${PROJECT_SOURCE_DIR}/mplot/TextFeatures.h
-    ${PROJECT_SOURCE_DIR}/mplot/TextGeometry.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualResources.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
-    ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
+    FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
     ${PROJECT_SOURCE_DIR}/mplot/RodVisual.h
     ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.h
     ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.h
-    ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
-    ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
-    ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
-    ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
-    ${PROJECT_SOURCE_DIR}/maths/sm/scale
-    ${PROJECT_SOURCE_DIR}/maths/sm/util
-    ${PROJECT_SOURCE_DIR}/maths/sm/base64
-    ${PROJECT_SOURCE_DIR}/maths/sm/crc32
-    ${PROJECT_SOURCE_DIR}/maths/sm/flags
-    ${PROJECT_SOURCE_DIR}/maths/sm/algo
-    ${PROJECT_SOURCE_DIR}/maths/sm/range
-    ${PROJECT_SOURCE_DIR}/maths/sm/random
-    ${PROJECT_SOURCE_DIR}/maths/sm/vec
-    ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
-    ${PROJECT_SOURCE_DIR}/maths/sm/mat
-    ${PROJECT_SOURCE_DIR}/maths/sm/geometry
-    ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
-    ${PROJECT_SOURCE_DIR}/maths/sm/vvec)
+)
   target_link_libraries(geodesic OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 endif()
 
 add_executable(vectorvis vectorvis.cpp)
 target_sources(vectorvis PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES
-  ${PROJECT_SOURCE_DIR}/mplot/tools.h
-  ${PROJECT_SOURCE_DIR}/mplot/unicode.h
-  ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
-  ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
-  ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
-  ${PROJECT_SOURCE_DIR}/mplot/colour.h
-  ${PROJECT_SOURCE_DIR}/mplot/win_t.h
-  ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
-  ${PROJECT_SOURCE_DIR}/mplot/Visual.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualFace.h
-  ${PROJECT_SOURCE_DIR}/mplot/TextFeatures.h
-  ${PROJECT_SOURCE_DIR}/mplot/TextGeometry.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualResources.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
+  FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
   ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
-  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
-  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
-  ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
-  ${PROJECT_SOURCE_DIR}/maths/sm/util
-  ${PROJECT_SOURCE_DIR}/maths/sm/base64
-  ${PROJECT_SOURCE_DIR}/maths/sm/crc32
-  ${PROJECT_SOURCE_DIR}/maths/sm/flags
-  ${PROJECT_SOURCE_DIR}/maths/sm/algo
-  ${PROJECT_SOURCE_DIR}/maths/sm/range
-  ${PROJECT_SOURCE_DIR}/maths/sm/random
-  ${PROJECT_SOURCE_DIR}/maths/sm/vec
-  ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
-  ${PROJECT_SOURCE_DIR}/maths/sm/mat
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
-  ${PROJECT_SOURCE_DIR}/maths/sm/vvec)
+)
 target_link_libraries(vectorvis OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
 add_executable(cray_eye cray_eye.cpp)
 target_sources(cray_eye PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES
-  ${PROJECT_SOURCE_DIR}/mplot/tools.h
-  ${PROJECT_SOURCE_DIR}/mplot/unicode.h
-  ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
-  ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
-  ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
-  ${PROJECT_SOURCE_DIR}/mplot/colour.h
-  ${PROJECT_SOURCE_DIR}/mplot/win_t.h
-  ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
-  ${PROJECT_SOURCE_DIR}/mplot/Visual.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualFace.h
-  ${PROJECT_SOURCE_DIR}/mplot/TextFeatures.h
-  ${PROJECT_SOURCE_DIR}/mplot/TextGeometry.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualResources.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
-
+  FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
   ${PROJECT_SOURCE_DIR}/mplot/SphereVisual.h
   ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/compoundray/EyeVisual.h
-
-  ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
-  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
-  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
-  ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
-  ${PROJECT_SOURCE_DIR}/maths/sm/util
-  ${PROJECT_SOURCE_DIR}/maths/sm/base64
-  ${PROJECT_SOURCE_DIR}/maths/sm/crc32
   ${PROJECT_SOURCE_DIR}/maths/sm/winder
-  ${PROJECT_SOURCE_DIR}/maths/sm/centroid
-  ${PROJECT_SOURCE_DIR}/maths/sm/flags
-  ${PROJECT_SOURCE_DIR}/maths/sm/algo
-  ${PROJECT_SOURCE_DIR}/maths/sm/range
-  ${PROJECT_SOURCE_DIR}/maths/sm/random
-  ${PROJECT_SOURCE_DIR}/maths/sm/vec
-  ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
-  ${PROJECT_SOURCE_DIR}/maths/sm/mat
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
-  ${PROJECT_SOURCE_DIR}/maths/sm/vvec)
+  ${PROJECT_SOURCE_DIR}/mplot/compoundray/EyeVisual.h
+)
 target_link_libraries(cray_eye OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
 add_executable(graph1 graph1.cpp)
 target_sources(graph1 PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES
-  ${PROJECT_SOURCE_DIR}/mplot/tools.h
-  ${PROJECT_SOURCE_DIR}/mplot/unicode.h
-  ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
-  ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
-  ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
-  ${PROJECT_SOURCE_DIR}/mplot/colour.h
-  ${PROJECT_SOURCE_DIR}/mplot/win_t.h
-  ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
-  ${PROJECT_SOURCE_DIR}/mplot/Visual.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualFace.h
-  ${PROJECT_SOURCE_DIR}/mplot/TextFeatures.h
-  ${PROJECT_SOURCE_DIR}/mplot/TextGeometry.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualResources.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
-  ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
-  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
-  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
-  ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
-  ${PROJECT_SOURCE_DIR}/mplot/graphing.h
-  ${PROJECT_SOURCE_DIR}/mplot/graphstyles.h
-  ${PROJECT_SOURCE_DIR}/mplot/DatasetStyle.h
-  ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.h
-  ${PROJECT_SOURCE_DIR}/maths/sm/util
-  ${PROJECT_SOURCE_DIR}/maths/sm/base64
-  ${PROJECT_SOURCE_DIR}/maths/sm/crc32
-  ${PROJECT_SOURCE_DIR}/maths/sm/flags
-  ${PROJECT_SOURCE_DIR}/maths/sm/algo
-  ${PROJECT_SOURCE_DIR}/maths/sm/range
-  ${PROJECT_SOURCE_DIR}/maths/sm/random
-  ${PROJECT_SOURCE_DIR}/maths/sm/vec
-  ${PROJECT_SOURCE_DIR}/maths/sm/scale
+  FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
   ${PROJECT_SOURCE_DIR}/maths/sm/histo
   ${PROJECT_SOURCE_DIR}/maths/sm/grid
-  ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
-  ${PROJECT_SOURCE_DIR}/maths/sm/mat
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
-  ${PROJECT_SOURCE_DIR}/maths/sm/vvec)
+  ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.h
+)
 target_link_libraries(graph1 OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
-# mplot::Grid is runtime-configured
+# sm::grid visualization example
 add_executable(grid_simple grid_simple.cpp)
 target_sources(grid_simple PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES
-  ${PROJECT_SOURCE_DIR}/mplot/tools.h
-  ${PROJECT_SOURCE_DIR}/mplot/unicode.h
-  ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
-  ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
-  ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
-  ${PROJECT_SOURCE_DIR}/mplot/colour.h
-  ${PROJECT_SOURCE_DIR}/mplot/win_t.h
-  ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
-  ${PROJECT_SOURCE_DIR}/mplot/Visual.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualFace.h
-  ${PROJECT_SOURCE_DIR}/mplot/TextFeatures.h
-  ${PROJECT_SOURCE_DIR}/mplot/TextGeometry.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualResources.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualDataModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
-  ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
-  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
-  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
-  ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
-  ${PROJECT_SOURCE_DIR}/mplot/GridVisual.h
-  ${PROJECT_SOURCE_DIR}/maths/sm/util
-  ${PROJECT_SOURCE_DIR}/maths/sm/base64
-  ${PROJECT_SOURCE_DIR}/maths/sm/crc32
-  ${PROJECT_SOURCE_DIR}/maths/sm/flags
-  ${PROJECT_SOURCE_DIR}/maths/sm/algo
-  ${PROJECT_SOURCE_DIR}/maths/sm/range
-  ${PROJECT_SOURCE_DIR}/maths/sm/random
-  ${PROJECT_SOURCE_DIR}/maths/sm/vec
-  ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
-  ${PROJECT_SOURCE_DIR}/maths/sm/mat
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
-  ${PROJECT_SOURCE_DIR}/maths/sm/vvec
-  ${PROJECT_SOURCE_DIR}/maths/sm/scale
-  ${PROJECT_SOURCE_DIR}/maths/sm/centroid
+  FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
   ${PROJECT_SOURCE_DIR}/maths/sm/grid
+  ${PROJECT_SOURCE_DIR}/mplot/GridVisual.h
 )
 target_link_libraries(grid_simple OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
-# This sphere example uses constexpr code
 if(NOT APPLE)
   # Instancing also not available on Apple (limited to OpenGL 4.1)
-  #add_executable(scatter_instanced scatter_instanced.cpp)
-  #target_link_libraries(scatter_instanced OpenGL::GL glfw Freetype::Freetype)
   add_executable(breadcrumbs breadcrumbs.cpp)
   target_sources(breadcrumbs PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-    FILES
-    ${PROJECT_SOURCE_DIR}/mplot/tools.h
-    ${PROJECT_SOURCE_DIR}/mplot/unicode.h
-    ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
-    ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
-    ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
-    ${PROJECT_SOURCE_DIR}/mplot/colour.h
-    ${PROJECT_SOURCE_DIR}/mplot/win_t.h
-    ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
-    ${PROJECT_SOURCE_DIR}/mplot/Visual.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualFace.h
-    ${PROJECT_SOURCE_DIR}/mplot/TextFeatures.h
-    ${PROJECT_SOURCE_DIR}/mplot/TextGeometry.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualResources.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
-    ${PROJECT_SOURCE_DIR}/mplot/graphstyles.h
-    ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
-    ${PROJECT_SOURCE_DIR}/mplot/InstancedScatterVisual.h
+    FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
     ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.h
-    ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
-    ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
-    ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
-    ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
-    ${PROJECT_SOURCE_DIR}/maths/sm/util
-    ${PROJECT_SOURCE_DIR}/maths/sm/base64
-    ${PROJECT_SOURCE_DIR}/maths/sm/crc32
-    ${PROJECT_SOURCE_DIR}/maths/sm/flags
-    ${PROJECT_SOURCE_DIR}/maths/sm/algo
-    ${PROJECT_SOURCE_DIR}/maths/sm/range
-    ${PROJECT_SOURCE_DIR}/maths/sm/random
-    ${PROJECT_SOURCE_DIR}/maths/sm/vec
-    ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
-    ${PROJECT_SOURCE_DIR}/maths/sm/mat
-    ${PROJECT_SOURCE_DIR}/maths/sm/geometry
-    ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
-    ${PROJECT_SOURCE_DIR}/maths/sm/vvec
-    ${PROJECT_SOURCE_DIR}/maths/sm/scale
-    ${PROJECT_SOURCE_DIR}/maths/sm/centroid
-    ${PROJECT_SOURCE_DIR}/maths/sm/grid
+    ${PROJECT_SOURCE_DIR}/mplot/InstancedScatterVisual.h
   )
   target_link_libraries(breadcrumbs OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 endif()
 
 add_executable(showcase showcase.cpp)
 target_sources(showcase PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-    FILES
-    ${PROJECT_SOURCE_DIR}/mplot/tools.h
-    ${PROJECT_SOURCE_DIR}/mplot/unicode.h
-    ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
-    ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
-    ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
-    ${PROJECT_SOURCE_DIR}/mplot/colour.h
-    ${PROJECT_SOURCE_DIR}/mplot/win_t.h
-    ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
-    ${PROJECT_SOURCE_DIR}/mplot/Visual.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualFace.h
-    ${PROJECT_SOURCE_DIR}/mplot/TextFeatures.h
-    ${PROJECT_SOURCE_DIR}/mplot/TextGeometry.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualResources.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualDataModel.h
-    ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
-    ${PROJECT_SOURCE_DIR}/mplot/graphing.h
-    ${PROJECT_SOURCE_DIR}/mplot/graphstyles.h
-    ${PROJECT_SOURCE_DIR}/mplot/DatasetStyle.h
-    ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
-    ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
-    ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
-    ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
-
-    ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.h
-    ${PROJECT_SOURCE_DIR}/mplot/TriaxesVisual.h
-    ${PROJECT_SOURCE_DIR}/mplot/ScatterVisual.h
-    ${PROJECT_SOURCE_DIR}/mplot/GridVisual.h
-    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.h
-
-    ${PROJECT_SOURCE_DIR}/maths/sm/util
-    ${PROJECT_SOURCE_DIR}/maths/sm/base64
-    ${PROJECT_SOURCE_DIR}/maths/sm/crc32
-    ${PROJECT_SOURCE_DIR}/maths/sm/flags
-    ${PROJECT_SOURCE_DIR}/maths/sm/algo
-    ${PROJECT_SOURCE_DIR}/maths/sm/range
-    ${PROJECT_SOURCE_DIR}/maths/sm/random
-    ${PROJECT_SOURCE_DIR}/maths/sm/vec
-    ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
-    ${PROJECT_SOURCE_DIR}/maths/sm/histo
-    ${PROJECT_SOURCE_DIR}/maths/sm/mat
-    ${PROJECT_SOURCE_DIR}/maths/sm/geometry
-    ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
-    ${PROJECT_SOURCE_DIR}/maths/sm/vvec
-    ${PROJECT_SOURCE_DIR}/maths/sm/scale
-    ${PROJECT_SOURCE_DIR}/maths/sm/centroid
-    ${PROJECT_SOURCE_DIR}/maths/sm/grid
-    ${PROJECT_SOURCE_DIR}/maths/sm/bezcoord
-    ${PROJECT_SOURCE_DIR}/maths/sm/binomial
-    ${PROJECT_SOURCE_DIR}/maths/sm/nm_simplex
-    ${PROJECT_SOURCE_DIR}/maths/sm/bezcurve
-    ${PROJECT_SOURCE_DIR}/maths/sm/bezcurvepath
-    ${PROJECT_SOURCE_DIR}/maths/sm/hex
-    ${PROJECT_SOURCE_DIR}/maths/sm/hexgrid
-  )
+  FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  ${SM_HEXGRID_MODULES}
+  ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.h
+  ${PROJECT_SOURCE_DIR}/mplot/TriaxesVisual.h
+  ${PROJECT_SOURCE_DIR}/mplot/ScatterVisual.h
+  ${PROJECT_SOURCE_DIR}/maths/sm/grid
+  ${PROJECT_SOURCE_DIR}/mplot/GridVisual.h
+  ${PROJECT_SOURCE_DIR}/maths/sm/histo
+  ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.h
+)
   target_link_libraries(showcase OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(hexgrid hexgrid.cpp)
   target_sources(hexgrid PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-    FILES
-    ${PROJECT_SOURCE_DIR}/mplot/tools.h
-    ${PROJECT_SOURCE_DIR}/mplot/unicode.h
-    ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
-    ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
-    ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
-    ${PROJECT_SOURCE_DIR}/mplot/colour.h
-    ${PROJECT_SOURCE_DIR}/mplot/win_t.h
-    ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
-    ${PROJECT_SOURCE_DIR}/mplot/Visual.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualFace.h
-    ${PROJECT_SOURCE_DIR}/mplot/TextFeatures.h
-    ${PROJECT_SOURCE_DIR}/mplot/TextGeometry.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualResources.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
-    ${PROJECT_SOURCE_DIR}/mplot/graphstyles.h
-    ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
-    ${PROJECT_SOURCE_DIR}/mplot/VisualDataModel.h
+    FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES} ${SM_HEXGRID_MODULES}
     ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.h
-    ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.h
-    ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
-    ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
-    ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
-    ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
-    ${PROJECT_SOURCE_DIR}/maths/sm/util
-    ${PROJECT_SOURCE_DIR}/maths/sm/base64
-    ${PROJECT_SOURCE_DIR}/maths/sm/crc32
-    ${PROJECT_SOURCE_DIR}/maths/sm/flags
-    ${PROJECT_SOURCE_DIR}/maths/sm/algo
-    ${PROJECT_SOURCE_DIR}/maths/sm/range
-    ${PROJECT_SOURCE_DIR}/maths/sm/random
-    ${PROJECT_SOURCE_DIR}/maths/sm/vec
-    ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
-    ${PROJECT_SOURCE_DIR}/maths/sm/mat
-    ${PROJECT_SOURCE_DIR}/maths/sm/geometry
-    ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra
-    ${PROJECT_SOURCE_DIR}/maths/sm/vvec
-    ${PROJECT_SOURCE_DIR}/maths/sm/scale
-    ${PROJECT_SOURCE_DIR}/maths/sm/centroid
-    ${PROJECT_SOURCE_DIR}/maths/sm/grid
-    ${PROJECT_SOURCE_DIR}/maths/sm/bezcoord
-    ${PROJECT_SOURCE_DIR}/maths/sm/binomial
-    ${PROJECT_SOURCE_DIR}/maths/sm/nm_simplex
-    ${PROJECT_SOURCE_DIR}/maths/sm/bezcurve
-    ${PROJECT_SOURCE_DIR}/maths/sm/bezcurvepath
-    ${PROJECT_SOURCE_DIR}/maths/sm/hex
-    ${PROJECT_SOURCE_DIR}/maths/sm/hexgrid
   )
   target_link_libraries(hexgrid OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 

@@ -1,16 +1,19 @@
 /*
  * A visual to label HSV graphs
  */
+module;
 
-#pragma once
+#include <array>
 
-#include <sm/mathconst>
+export module mplot.hsvwheelvisual;
+
+import sm.mathconst;
 import sm.vec;
 
-#include <mplot/VisualModel.h>
-#include <mplot/GraphVisual.h>
+import mplot.visualmodel;
+import mplot.graphvisual;
 
-namespace mplot
+export namespace mplot
 {
     template <typename F, int glver = mplot::gl::version_4_1>
     class HSVWheelVisual : public VisualModel<glver>

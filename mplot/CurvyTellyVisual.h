@@ -1,12 +1,19 @@
-#pragma once
+module;
 
+#include <cstdint>
+#include <iostream>
 #include <array>
-#include <sm/mathconst>
+#include <limits>
+#include <cmath>
+
+export module mplot.curvytellyvisual;
+
+import sm.mathconst;
 import sm.vec;
 import sm.grid;
-#include <mplot/GridVisual.h>
+import mplot.gridvisual;
 
-namespace mplot
+export namespace mplot
 {
     /*!
      * Draw a curved CartGrid like a curved TV. You make a cylinder if you make the rotation

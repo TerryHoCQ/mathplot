@@ -1,16 +1,23 @@
-#pragma once
+module;
 
+#include <cstdint>
+#include <iostream>
 #include <array>
 #include <vector>
-#include <sm/mathconst>
+#include <stdexcept>
+#include <mplot/jcvoronoi/jc_voronoi.h>
+
+export module mplot.sphericalprojectionvisual;
+
+import sm.mathconst;
 import sm.vec;
 import sm.range;
 import sm.geometry;
-#include <mplot/VisualModel.h>
-#include <mplot/gl/version.h>
-#include <mplot/jcvoronoi/jc_voronoi.h>
 
-namespace mplot
+import mplot.gl.version;
+import mplot.visualmodel;
+
+export namespace mplot
 {
     //! This class creates a flat projection of spherical data provided as vvecs of
     //! latitude-longitude pairs and scalar or vector values. Use VisualDataModel?

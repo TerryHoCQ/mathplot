@@ -7,12 +7,10 @@
 #include <sstream>
 #include <memory>
 
-#include <sm/mathconst>
+import sm.mathconst;
 import sm.mat;
 
 import mplot.visual;
-//import mplot.visualmodel;
-//import mplot.colour;
 import mplot.normalsvisual;
 
 // Quick visual that simply draws ellipsoid

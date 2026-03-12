@@ -18,7 +18,6 @@ module;
 #include <algorithm>
 
 #include <sm/trait_tests>
-#include <sm/mathconst>
 
 export module mplot.graphvisual;
 
@@ -26,6 +25,7 @@ import mplot.graphing;
 export import mplot.graphstyles;
 export import mplot.datasetstyle;
 
+export import sm.mathconst;
 import sm.scale;
 import sm.range;
 export import sm.vec;
@@ -33,7 +33,6 @@ export import sm.vvec;
 import sm.quaternion;
 import sm.histo;
 import sm.grid;
-
 
 import mplot.tools;
 import mplot.colour;
