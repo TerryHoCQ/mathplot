@@ -1,21 +1,26 @@
-#pragma once
+module;
 
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include <array>
 #include <algorithm>
 #include <functional>
+#include <cmath>
+
+export module mplot.quivervisual;
 
 import sm.scale;
 import sm.vec;
 import sm.vvec;
 
-#include <mplot/tools.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/colour.h>
-#include <mplot/graphstyles.h>
+import mplot.tools;
+import mplot.visualdatamodel;
+export import mplot.colour;
+export import mplot.colourmap;
+export import mplot.graphstyles;
 
-namespace mplot
+export namespace mplot
 {
     //! A class to make quiver plots
     template <typename Flt, int glver = mplot::gl::version_4_1>

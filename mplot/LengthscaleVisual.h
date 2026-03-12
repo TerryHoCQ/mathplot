@@ -1,19 +1,22 @@
 /*
  * This is a VisualModel to place a length marker in your scene
  */
-
-#pragma once
+module;
 
 #include <array>
+#include <string>
+#include <utility>
 
 #include <sm/mathconst>
+
+export module mplot.lengthscalevisual;
+
+import mplot.visualmodel;
 import sm.vec;
 import sm.scale;
 import sm.quaternion;
 
-#include <mplot/VisualModel.h>
-
-namespace mplot
+export namespace mplot
 {
     //! A length scale marker
     template<int glver = mplot::gl::version_4_1>
