@@ -33,10 +33,10 @@ This quick start shows dependency installation for Linux, because on this platfo
 
 ```bash
 # Install dependencies for building graph1.cpp and (almost) all the other examples (assuming Debian-like OS)
-sudo apt install build-essential cmake git wget ninja-build \
+sudo apt install build-essential cmake git ninja-build \
                  nlohmann-json3-dev librapidxml-dev \
                  freeglut3-dev libglu1-mesa-dev libxmu-dev libxi-dev \
-                 libglfw3-dev libfreetype-dev libarmadillo-dev libhdf5-dev
+                 libglfw3-dev libfreetype-dev libhdf5-dev
 
 # Install a very up to date compiler
 sudo apt install clang-23 clang-tools-23 # You can't apt install clang-23, as it's currently pre-release

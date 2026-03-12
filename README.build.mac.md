@@ -49,7 +49,7 @@ command line tools, then install the Mac ports installation package.
 Finally, use Mac ports to install the rest of the dependencies:
 
 ```sh
-sudo port install cmake armadillo nlohmann-json
+sudo port install cmake
 ```
 
 *Be aware that if you have conflicting versions of any of the
@@ -63,8 +63,7 @@ compile glfw3 by hand.
 
 It's much cleaner to build each of the dependencies by hand. That
 means first installing cmake, which I do with a binary package from
-https://cmake.org/download/, and then compiling hdf5 and
-armadillo (all of which support a cmake build process).
+https://cmake.org/download/, and then compiling hdf5.
 
 After downloading and installing cmake using the MacOS installer, I
 add these lines to ~/.zprofile so that I can type cmake at the terminal:
@@ -80,31 +79,8 @@ The mathplot github actions for mac runners use brew to install
 dependencies. The command for the basic dependencies is
 
 ```sh
-brew install libomp glfw armadillo hdf5 nlohmann-json
-```
-
-#### Armadillo
-
-Armadillo is a library for matrix manipulation. The only place it's used in
-mathplot is within the Bezier curve code,
-sm::bezcurve. This code is used in the sm::hexgrid classes. If your programs won't use Bezier curve code, then you don't need Armadillo. It *is* required to compile some of mathplot's test programs though.
-
-Download a package - I downloaded
-armadillo-9.900.3.tar.xz, though older versions back to 8.400.0 should
-work.
-
-```sh
-mkdir -p ~/src
-cd ~/src
-tar xvf path/to/downloaded/armadillo-9.900.3.tar.xz
-cd armadillo-9.900.3
-mkdir build
-cd build
-cmake ..
-# or optionally: cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14
-# which will set the install locn and get the code compiled for targets as old as mac 10.14
-make
-sudo make install
+brew install libomp glfw hdf5 # nlohmann-json
+# nlohmann-json was removed as I have to bundle a very up to date version for C++ modules support
 ```
 
 #### HDF5
@@ -133,8 +109,7 @@ If present, the Qt5 components Core, Gui and Widgets components are used to comp
 
 ### Common manual dependency builds
 
-Whether or not you used mac ports to install hdf5 and
-armadillo, glfw3 also needs to be built separately (I've not investigated
+Whether or not you used mac ports to install hdf5, glfw3 also needs to be built separately (I've not investigated
 whether there is a mac ports version of glfw).
 
 #### glfw3
@@ -152,20 +127,6 @@ cmake ..
 make
 sudo make install
 ```
-
-#### nlohmann json
-
-You'll need a package of nlohmann json.
-
-```sh
-sudo brew install nlohmann-json
-```
-```sh
-sudo port install nlohmann-json
-```
-
-Or install manually from https://github.com/nlohmann/json
-
 
 ## Build mathplot on Mac
 
