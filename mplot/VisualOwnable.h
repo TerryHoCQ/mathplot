@@ -22,9 +22,9 @@ module;
 #include <vector>
 #include <map>
 // clang was happy with a tuple:
-//#include <tuple>
+#include <tuple>
 // g++ generated an error with the tuple, so could use a pair:
-#include <utility>
+//#include <utility>
 #include <memory>
 #include <functional>
 #include <cstddef>
@@ -1733,8 +1733,8 @@ export namespace mplot
                 if (fout.is_open()) { fout << "{\n"; }
             }
 
-            //std::multimap<float, std::tuple<sm::vec<float>, mplot::VisualModel<glver>*> > possible_centres; // tuple
-            std::multimap<float, std::pair<sm::vec<float>, mplot::VisualModel<glver>*> > possible_centres;    // pair
+            std::multimap<float, std::tuple<sm::vec<float>, mplot::VisualModel<glver>*> > possible_centres; // tuple
+            //std::multimap<float, std::pair<sm::vec<float>, mplot::VisualModel<glver>*> > possible_centres;    // pair
             auto vmi = this->vm.begin();
             while (vmi != this->vm.end()) {
 
@@ -1761,8 +1761,8 @@ export namespace mplot
 
                     if (tr_bb_centre[2] < 0.0f) { // Only if in front of viewer (z must be negative)
                         // Perp. distance as key, value is tuple of BB centre and visualmodel pointer
-                        //possible_centres.insert ({ pdist, { tr_bb_centre, (*vmi).get() } });            // tuple
-                        possible_centres.insert ({ pdist, std::make_pair (tr_bb_centre, (*vmi).get()) }); // pair
+                        possible_centres.insert ({ pdist, { tr_bb_centre, (*vmi).get() } });            // tuple
+                        //possible_centres.insert ({ pdist, std::make_pair (tr_bb_centre, (*vmi).get()) }); // pair
                     }
                 }
                 ++vmi;
@@ -1774,13 +1774,13 @@ export namespace mplot
             }
 
             if (!possible_centres.empty()) {
-                //const auto [rcentre, vmptr] = possible_centres.begin()->second;                            // tuple
-                std::pair<sm::vec<float>, mplot::VisualModel<glver>*> pr = possible_centres.begin()->second; // pair
-                // this->rotation_centre = rcentre; // tuple
-                this->rotation_centre = pr.first;   // pair
+                const auto [rcentre, vmptr] = possible_centres.begin()->second;                            // tuple
+                //std::pair<sm::vec<float>, mplot::VisualModel<glver>*> pr = possible_centres.begin()->second; // pair
+                this->rotation_centre = rcentre; // tuple
+                //this->rotation_centre = pr.first;   // pair
                 this->d_to_rotation_centre = this->rotation_centre.length();
-                //if (options.test (visual_options::highlightRotationVM)) { vmptr->show_bb (true); }   // tuple
-                if (options.test (visual_options::highlightRotationVM)) { pr.second->show_bb (true); } // pair
+                if (options.test (visual_options::highlightRotationVM)) { vmptr->show_bb (true); }   // tuple
+                //if (options.test (visual_options::highlightRotationVM)) { pr.second->show_bb (true); } // pair
             } // else don't change rotation_centre
         }
 
