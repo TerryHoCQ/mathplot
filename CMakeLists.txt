@@ -188,6 +188,12 @@ if(BUILD_TESTS)
   add_subdirectory(tests)
 endif(BUILD_TESTS)
 
+option(BUILD_BUGREP "Build bugrep" OFF)
+if(BUILD_BUGREP)
+  # bug reproduction
+  add_subdirectory(bugrep)
+endif(BUILD_BUGREP)
+
 # incbin for Visual Studio; code-generation for colour tables
 option(BUILD_UTILS "Build developer utils" OFF)
 if(BUILD_UTILS)
