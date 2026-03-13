@@ -86,12 +86,15 @@ export namespace mplot
         scrolling,
         //! True means that at least one of our VisualModels is an instanced rendering model
         haveInstanced,
-        //! When true, the instanced data SSBO needs to be copied to the GPU
-        //instancedNeedsUpdate, (gone to VisualResources)
         //! Left mouse button is down
         mouseButtonLeftPressed,
         //! Right mouse button is down
-        mouseButtonRightPressed
+        mouseButtonRightPressed,
+        //! If client code changes viewfollowsVMTranslations or viewFollowsVMBehind, this should be
+        //! set to signal to computeSceneview that the lastSceneview should be saved or restored to.
+        viewFollowsModeChanged,
+        //! Set true while the sceneview is 'zooming back' to the overview mode (or the whereever-you-left-it mode)
+        viewTransition
     };
 
     //! Boolean options - similar to state, but more likely to be modified by client code
@@ -768,10 +771,6 @@ export namespace mplot
         //! True if one of our added VisualModels is an instanced model
         bool haveInstanced() const { return this->state.test (visual_state::haveInstanced); }
 
-        //! Does our instanced data need to be pushed over to the GPU during render()? Now stored in VisualResources
-        //bool instancedNeedsUpdate() const { return this->state.test (visual_state::instancedNeedsUpdate); }
-        //void instancedNeedsUpdate (const bool val) { this->state.set (visual_state::instancedNeedsUpdate, val); }
-
         /*
          * User-settable projection values for the near clipping distance, the far clipping distance
          * and the field of view of the camera.
@@ -1159,6 +1158,25 @@ export namespace mplot
             return newpos; // rather than prop, as in get_cam_movement
         }
 
+        void switch_view_follows_mode()
+        {
+            // Relevant only if there is a followedVM
+            if (this->followedVM == nullptr) { return; }
+
+            if (this->options.test (visual_options::viewFollowsVMBehind) == true
+                && this->options.test (visual_options::viewFollowsVMTranslations) == false) {
+                this->options.reset (visual_options::viewFollowsVMBehind);
+                this->options.set (visual_options::viewFollowsVMTranslations);
+                this->state.set (visual_state::viewFollowsModeChanged);
+                std::cout << "sceneview follows agent movements (overview)\n";
+            } else { // this->options.test (mplot::visual_options::viewFollowsVMTranslations) == true
+                this->options.set (visual_options::viewFollowsVMBehind);
+                this->state.set (visual_state::viewFollowsModeChanged);
+                this->options.reset (visual_options::viewFollowsVMTranslations);
+                std::cout << "sceneview follows behind agent (follower view)\n";
+            }
+        }
+
         // Compile-time function to create a rotate-about-y transform
         static constexpr sm::mat<float, 4> rotate_about_y()
         {
@@ -1172,18 +1190,9 @@ export namespace mplot
         sm::vec<float> folcam_offset_tr = folcam_offset_tr_default;
         sm::quaternion<float> folcam_offset_rot;
 
-        sm::mat<float, 4> update_folcam_viewmatrix()
+        sm::mat<float, 4> update_viewmatrix_towards_target (const sm::mat<float, 4>& target)
         {
             sm::mat<float, 4> fol_cur;
-
-            if (this->followedVM == nullptr) { return fol_cur; }
-
-            // Target view from the followedVM
-            //sm::mat<float, 4> fol_targ = this->followedVM->getViewMatrix() * this->folcam_offset;
-            sm::mat<float, 4> rmat;
-            rmat.rotate (folcam_offset_rot);
-            sm::mat<float, 4> fol_targ = this->followedVM->getViewMatrix() * rmat;
-            fol_targ.translate (folcam_offset_tr);
 
             // Compute folcam_viewmatrix from sceneview (it's the inverse, along with a rotation)
             constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
@@ -1199,11 +1208,9 @@ export namespace mplot
             r_cur0.renormalize();
 
             // get_cam_movement computes the positional shift
-            sm::vec<float> pos_shift = this->get_cam_movement<float> (fol_cur, fol_targ,
-                                                                      this->followedVM_vel, this->trans_tc);
+            sm::vec<float> pos_shift = this->get_cam_movement<float> (fol_cur, target, this->followedVM_vel, this->trans_tc);
             // get_cam_rotation computes the rotation for the next camera position
-            sm::quaternion<float> cam_rotn = this->get_cam_rotation<float> (r_cur0, fol_targ,
-                                                                            this->followedVM_rvel, this->rotn_tc);
+            sm::quaternion<float> cam_rotn = this->get_cam_rotation<float> (r_cur0, target, this->followedVM_rvel, this->rotn_tc);
 
             // set the translation/rotation into fol_cur
             fol_cur.pretranslate (pos_shift);
@@ -1216,6 +1223,29 @@ export namespace mplot
             return fol_cur;
         }
 
+        // To zoom down to, and follow behind the agent
+        sm::mat<float, 4> update_folcam_viewmatrix()
+        {
+            if (this->followedVM == nullptr) { return sm::mat<float, 4>::identity(); }
+            // Target view from the followedVM
+            sm::mat<float, 4> rmat;
+            rmat.rotate (folcam_offset_rot);
+            sm::mat<float, 4> fol_targ = this->followedVM->getViewMatrix() * rmat;
+            fol_targ.translate (folcam_offset_tr);
+            // FIXME: I may want to update the lastSceneview matrix as fol_targ moves.
+            return update_viewmatrix_towards_target (fol_targ);
+        }
+
+        // To zoom back to the drone view
+        sm::mat<float, 4> update_overcam_viewmatrix()
+        {
+            if (this->followedVM == nullptr) { return sm::mat<float, 4>::identity(); }
+            // fol_targ will be the inverse of the lastSceneview
+            constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
+            sm::mat<float, 4> targ = this->lastSceneview.inverse() * rotn_y;
+            return update_viewmatrix_towards_target (targ);
+        }
+
         // A follow-me camera view
         void computeSceneview_for_follower()
         {
@@ -1225,10 +1255,30 @@ export namespace mplot
             this->savedSceneview = this->sceneview;
         }
 
+        // When we're not close to the 'overview cam' location (which is the last place you were
+        // before you went into viewFollowsVMBehind mode) then we need this function to get there
+        void computeSceneview_for_overcam()
+        {
+            sm::mat<float, 4> overcam_viewmatrix = this->update_overcam_viewmatrix(); // target is lastSceneview
+            constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
+            this->sceneview = rotn_y * overcam_viewmatrix.inverse();
+            this->savedSceneview = this->sceneview;
+        }
+
         // This is called every time render() is called
         void computeSceneview()
         {
             if (this->options.test (visual_options::viewFollowsVMBehind) && this->followedVM != nullptr) {
+
+                if (this->state.test (visual_state::viewFollowsModeChanged)) {
+                    // Record sceneview now
+                    this->lastSceneview = this->sceneview;
+                    this->lastSceneview_tr = this->sceneview_tr;
+                    // THEN, we can update lastSceneview whilst also updating agent location
+                    // then zoom back to lastSceneview as the target.
+                    this->state.reset (visual_state::viewFollowsModeChanged);
+                }
+
                 // Use scenetrans_delta to shift the view with the scrollwheel
                 this->folcam_offset_tr += this->scenetrans_delta;
                 this->scenetrans_delta.zero();
@@ -1237,23 +1287,55 @@ export namespace mplot
                 return;
             }
 
-            if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
-                // Calculate model view transformation - transforming from "model space" to "worldspace".
-                //std::cout << "standard view, call computeSceneview_about_rotation_centre\n";
-                this->computeSceneview_about_rotation_centre();
-            } // else don't change sceneview
-            //else { std::cout << "No changing sceneview...\n"; }
+            if (this->state.test (visual_state::viewFollowsModeChanged)) {
+                // Changed back to normal, non-follower mode. Zoom back, so set viewTransition
+                std::cout << "viewFollowsModeChanged back to \"non-follow\"\n";
+                this->state.set (visual_state::viewTransition);
+                this->state.reset (visual_state::viewFollowsModeChanged);
+            }
 
-            //std::cout << "sceneview\n" << sceneview << std::endl;
+            // if sceneview is not close to lastSceneview and we have no commanded rotations
+            // (scenetrans_delta and rotation_delta are 0) then we make changes to return to
+            // lastSceneview:
+            if (this->followedVM != nullptr
+                && std::abs(this->scenetrans_delta.sum()) == 0.0f
+                && this->rotation_delta.is_zero_rotation() == true
+                && this->state.test (visual_state::viewTransition)) {
+                // zoom towards lastSceneview:
+                this->computeSceneview_for_overcam();
+                // Update d_to_rotation_centre with distance to followedVM
+                // scene view in world frame
+                constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
+                sm::mat<float, 4> sv_viewmatrix = this->sceneview.inverse() * rotn_y;
+                // followed vm
+                sm::mat<float, 4> fvm = this->followedVM->getViewMatrix();
 
-            if (this->state.test (visual_state::scrolling)) {
-                this->scenetrans_delta.zero();
-                this->state.reset (visual_state::scrolling);
+                this->d_to_rotation_centre = (fvm.translation() - sv_viewmatrix.translation()).length();
+
+                // Did we get there? If so, set viewTransition false
+                if ((this->sceneview.translation() - this->lastSceneview.translation()).length() < 0.001f) {
+                    this->state.reset (visual_state::viewTransition);
+                }
+            } else {
+
+                if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
+                    // Calculate model view transformation - transforming from "model space" to "worldspace".
+                    //std::cout << "standard view, call computeSceneview_about_rotation_centre\n";
+                    this->computeSceneview_about_rotation_centre();
+                    // As we had a commanded movement, cancel the viewTransition
+                    this->state.reset (visual_state::viewTransition);
+                } // else don't change sceneview
+                //else { std::cout << "No changing sceneview...\n"; }
+
+                if (this->state.test (visual_state::scrolling)) {
+                    this->scenetrans_delta.zero();
+                    this->state.reset (visual_state::scrolling);
+                }
             }
 
             if (this->options.test (visual_options::viewFollowsVMTranslations)
                 && this->followedVM != nullptr
-                && this->followedLastViewMatrix != this->followedVM->getViewMatrix()) { // NEED KNOWLEDGE OF VISUALMODEL
+                && this->followedLastViewMatrix != this->followedVM->getViewMatrix()) {
 
                 // Move camera the difference between followedLastViewMatrix and
                 // followedVM->getViewMatrix() in the screen frame of reference.
@@ -1264,8 +1346,10 @@ export namespace mplot
                 this->sceneview_tr.pretranslate (fol_screenframe);
                 this->savedSceneview.pretranslate (fol_screenframe);
                 this->savedSceneview_tr.pretranslate (fol_screenframe);
+                this->lastSceneview.pretranslate (fol_screenframe);
+                this->lastSceneview_tr.pretranslate (fol_screenframe);
 
-                this->followedLastViewMatrix = this->followedVM->getViewMatrix(); // NEED KNOWLEDGE OF VISUALMODEL
+                this->followedLastViewMatrix = this->followedVM->getViewMatrix();
             }
         }
 
@@ -1383,15 +1467,18 @@ export namespace mplot
         //! The sceneview matrix, which changes as the user moves the view with mouse
         //! movements. Initialized in VisualOwnable constructor.
         sm::mat<float, 4> sceneview;
-
         //! The non-rotating sceneview matrix, updated only from mouse translations (avoiding rotations)
         sm::mat<float, 4> sceneview_tr;
 
         //! Saved sceneview at mouse button down
         sm::mat<float, 4> savedSceneview;
-
         //! Saved sceneview_tr
         sm::mat<float, 4> savedSceneview_tr;
+
+        //! The sceneview when the user switched to a follow-me mode. This can become a target to return to when switching back.
+        sm::mat<float, 4> lastSceneview;
+        //! translation only version of lastSceneview
+        sm::mat<float, 4> lastSceneview_tr;
 
     public:
 
