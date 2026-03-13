@@ -1,3 +1,4 @@
+// B.cppm
 export module B;
 
 export template <int tp = 1>
