@@ -1622,34 +1622,34 @@ export namespace mplot
 
             if (this->state.test (visual_state::sceneLocked) == false
                 && _key == key::o && (mods & keymod::control) && action == keyaction::press) {
-                this->fov -= 2;
-                if (this->fov < 1.0) { this->fov = 2.0; }
+                this->fov -= 2.0f;
+                if (this->fov < 1.0f) { this->fov = 2.0f; }
                 std::cout << "FOV reduced to " << this->fov << std::endl;
             }
             if (this->state.test (visual_state::sceneLocked) == false
                 && _key == key::p && (mods & keymod::control) && action == keyaction::press) {
-                this->fov += 2;
-                if (this->fov > 179.0) { this->fov = 178.0; }
+                this->fov += 2.0f;
+                if (this->fov > 179.0f) { this->fov = 178.0f; }
                 std::cout << "FOV increased to " << this->fov << std::endl;
             }
             if (this->state.test (visual_state::sceneLocked) == false
                 && _key == key::u && (mods & keymod::control) && action == keyaction::press) {
-                this->zNear /= 2;
+                this->zNear /= 2.0f;
                 std::cout << "zNear reduced to " << this->zNear << std::endl;
             }
             if (this->state.test (visual_state::sceneLocked) == false
                 && _key == key::i && (mods & keymod::control) && action == keyaction::press) {
-                this->zNear *= 2;
+                this->zNear *= 2.0f;
                 std::cout << "zNear increased to " << this->zNear << std::endl;
             }
             if (this->state.test (visual_state::sceneLocked) == false
                 && _key == key::left_bracket && (mods & keymod::control) && action == keyaction::press) {
-                this->zFar /= 2;
+                this->zFar /= 2.0f;
                 std::cout << "zFar reduced to " << this->zFar << std::endl;
             }
             if (this->state.test (visual_state::sceneLocked) == false
                 && _key == key::right_bracket && (mods & keymod::control) && action == keyaction::press) {
-                this->zFar *= 2;
+                this->zFar *= 2.0f;
                 std::cout << "zFar increased to " << this->zFar << std::endl;
             }
 
