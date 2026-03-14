@@ -29,6 +29,18 @@ Mathplot can be **integrated with GUI frameworks** including [Qt](https://doc.qt
 
 ## Quick Start
 
+### Compilers that compile all the examples
+
+* clang-20
+* clang-21
+* clang-22
+* clang-23 (prerelease)
+
+Compilers that nearly work
+
+* clang-19 (ellipsoid example produces linker error)
+* gcc-16 (prerelease)
+
 This quick start shows dependency installation for Linux, because on this platform, it's a single call to apt (or your favourite package manager). If you're using a Mac, see [README.build.mac](https://github.com/sebsjames/mathplot/tree/main/README.build.mac.md) for help getting dependencies in place. It's [README.build.windows](https://github.com/sebsjames/mathplot/tree/main/README.build.windows.md) for Windows users. For notes on supported compilers, see [README.build.compiler](https://github.com/sebsjames/mathplot/tree/main/README.build.compiler.md)
 
 ```bash
