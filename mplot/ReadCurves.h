@@ -21,9 +21,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <sm/bezcurvepath>
 #include <rapidxml/rapidxml.hpp>
-#include <mplot/tools.h> // for tools::searchReplace and tools::containsOnlyWhitespace
+//#include <mplot/tools.h> // for tools::searchReplace and tools::containsOnlyWhitespace
+import mplot.tools;
+import sm.bezcurvepath;
 
 namespace mplot
 {

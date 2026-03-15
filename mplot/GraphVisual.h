@@ -17,8 +17,6 @@ module;
 #include <cstdint>
 #include <algorithm>
 
-#include <sm/trait_tests>
-
 export module mplot.graphvisual;
 
 import mplot.graphing;
@@ -33,6 +31,7 @@ export import sm.vvec;
 import sm.quaternion;
 import sm.histo;
 import sm.grid;
+import sm.trait_tests;
 
 import mplot.tools;
 import mplot.colour;

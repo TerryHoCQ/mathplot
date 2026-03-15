@@ -3,17 +3,9 @@
  *
  * Author: Seb James.
  */
-module;
-
-#include <cstdint>
-#include <stdexcept>
-#include <iostream>
-#include <cstring>
-#include <string>
-#include <array>
-
 export module mplot.visualcommon;
 
+import std;
 import sm.vec;
 import sm.range;
 import sm.vvec;
@@ -24,7 +16,7 @@ import mplot.tools;
 export namespace mplot
 {
     // State/options flags for VisualModels
-    enum class vm_bools : uint32_t
+    enum class vm_bools : std::uint32_t
     {
         postVertexInitRequired,
         twodimensional,         // If true, then this VisualModel should always be viewed in a plane - it's a 2D model
@@ -40,7 +32,7 @@ export namespace mplot
     {
         std::string name;
         sm::mat<float, 4> transform;
-        sm::vvec<uint32_t> indices;
+        sm::vvec<std::uint32_t> indices;
         sm::vvec<sm::vec<float>> positions;
         sm::vvec<sm::vec<float>> normals;
         sm::vvec<sm::vec<float>> colours;

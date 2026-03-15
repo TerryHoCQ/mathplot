@@ -1,10 +1,6 @@
-module;
-
-#include <array>
-#include <string>
-
 export module mplot.datasetstyle;
 
+import std;
 import sm.vec;
 import sm.flags;
 

@@ -5,23 +5,9 @@
  * Seb James
  * March 2025
  */
-module;
-
-#include <string>
-#include <cmath>
-#include <limits>
-#include <deque>
-#include <iostream>
-#ifdef MPLOT_HAVE_STD_FORMAT
-# include <format>
-#else
-# include <sstream>
-# include <iomanip>
-# include <ios>
-#endif
-
 export module mplot.graphing;
 
+import std;
 import sm.constexpr_math;
 import sm.range;
 import sm.algo;

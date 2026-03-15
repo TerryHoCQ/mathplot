@@ -1,13 +1,14 @@
 module;
 
 #include <mplot/lenthe_colormap.hpp>  // William Lenthe's implementation of perceptually uniform colour maps
-#include <string_view>
-#include <stdexcept>
-#include <cmath>
-#include <cstdint>
+//#include <string_view>
+//#include <stdexcept>
+//#include <cmath>
+//#include <cstdint>
 
 export module mplot.colourmap;
 
+import std;
 export import :colourmaps_cet;      // Colour map tables from CET
 export import :colourmaps_crameri;  // Colour map tables from Fabio Crameri
 export import :colourmap_lists;     // Colour map tables from matplotlib

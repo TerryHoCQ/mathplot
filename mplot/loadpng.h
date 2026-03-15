@@ -6,15 +6,9 @@ module;
 #define LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS 1
 #include <mplot/lodepng.h>
 
-#include <cstdint>
-#include <type_traits>
-#include <vector>
-#include <string>
-#include <cstddef>
-#include <stdexcept>
-
 export module mplot.loadpng;
 
+import std;
 export import sm.vec;
 import sm.vvec;
 
