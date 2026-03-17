@@ -46,7 +46,7 @@ Test machine: Scan desktop, Intel(R) Core(TM) Ultra 9 285K
 Building 'antpov'. Using clang20 across the tests with:
 
 ```bash
-CC=clang-20 CXX=clang++-20 cmake .. -G Ninja -DCMAKE_CXX_FLAGS=-stdlib=libc++
+CC=clang-20 CXX=clang++-20 cmake .. -G Ninja -DOptiX_INSTALL_DIR=~/src/NVIDIA-OptiX-SDK-8.0.0-linux64-x86_64 -DCMAKE_CXX_FLAGS=-stdlib=libc++
 ```
 
 ### Without `import std;`
@@ -65,4 +65,6 @@ Build after touch antpov.cpp (4 items): 7.6 s
 
 ## Header only
 
-With clang20...
+Build antpov from scratch (2 items): 17.4 s
+
+Build after touch antpov.cpp (2 items): 17.4 s
