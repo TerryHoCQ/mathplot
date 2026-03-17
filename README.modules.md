@@ -36,7 +36,7 @@ breadcrumbs rebuild time after touch breadcrumbs.cpp: 5.93 s
 
 ## Header only
 
-clang20:
+clang20: 19 s
 
-breadcrumbs rebuild time after touch breadcrumbs.cpp (rebuilds 4 items):  s
-breadcrumbs rebuild time after touch VisualModel (rebuilds 130 items): s
+breadcrumbs rebuild time after touch breadcrumbs.cpp (rebuilds 4 items): 6.9 s
+breadcrumbs rebuild time after touch VisualModel (rebuilds 130 items): 6.9 s
