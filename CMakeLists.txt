@@ -1,4 +1,9 @@
+# 3.28.5: C++20 modules support 3.30 gives C++23 import std;
 cmake_minimum_required(VERSION 3.28.5)
+
+# For future import std; support
+# set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
+
 project(mathplot LANGUAGES CXX C)
 # Note that the project version is encoded in mplot/version.h and not in this CMakeLists.txt
 
@@ -8,9 +13,14 @@ message(STATUS "  (This can be changed with `cmake -DCMAKE_INSTALL_PREFIX=/some/
 #
 # We're firmly at C++20.
 #
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+
+# For future import std; support
+# set(CMAKE_CXX_EXTENSIONS ON)
+# Tell CMake that we explicitly want `import std`. This will initialize the
+# property on all targets declared after this to 1
+# set(CMAKE_CXX_MODULE_STD 1)
 
 include(CheckIncludeFileCXX) # CHECK_INCLUDE_FILE_CXX will be used in later scripts
 
@@ -25,7 +35,7 @@ endif()
 
 # Add the host definition to CXXFLAGS along with other switches
 if (APPLE)
-  set(CMAKE_CXX_FLAGS "-Wall -g -O3")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -O3")
 else()
   if(CMAKE_CXX_COMPILER_ID MATCHES MSVC OR CMAKE_CXX_COMPILER_FRONTEND_VARIANT MATCHES MSVC)
     # Set flags for Windows.
@@ -34,25 +44,20 @@ else()
     # /Zc:__cplusplus ensures __cplusplus define does not lie
     # /constexpr:steps is equivalent to -fconstexpr-steps or -fconstexpr-ops-limit
     if(CMAKE_CXX_COMPILER_ID MATCHES MSVC)
-      set(CMAKE_CXX_FLAGS "-DNOMINMAX /EHsc /Zc:__cplusplus /constexpr:steps500000000")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNOMINMAX /EHsc /Zc:__cplusplus /constexpr:steps500000000")
     else()
-      set(CMAKE_CXX_FLAGS "-DNOMINMAX /EHsc /Zc:__cplusplus /clang:-fconstexpr-steps=500000000")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNOMINMAX /EHsc /Zc:__cplusplus /clang:-fconstexpr-steps=500000000")
     endif()
   elseif(CMAKE_CXX_COMPILER_ID MATCHES Intel)
     # To use Intel compiler, you can call cmake as: `cmake -DCMAKE_CXX_COMPILER=icpc ..` or `CXX=icpc cmake ..`
     message(WARNING "Intel compiler has not been tested for some time")
-    set(CMAKE_CXX_FLAGS "-Wall -g -std=c++20 -xHOST -O3")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -std=c++20 -xHOST -O3")
   else() # GCC or Clang
     if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
-      # Add compiler version check, to ensure gcc is version 14? 15? or later.
-      if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 14)
-        message(FATAL_ERROR "GCC version must be at least 14")
-      else()
-        message(STATUS "GCC version ${CMAKE_CXX_COMPILER_VERSION} OK!")
-      endif()
+      message(WARNING "GCC probably won't work, try clang-20")
     endif()
     set(COMPREHENSIVE_WARNING_FLAGS "-Wall -Wextra -Wpedantic -pedantic-errors -Werror -Wfatal-errors -Wno-psabi")
-    set(CMAKE_CXX_FLAGS "-g ${COMPREHENSIVE_WARNING_FLAGS} -O3")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g ${COMPREHENSIVE_WARNING_FLAGS} -O3")
     if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
       # Make it possible to compile complex constexpr functions (gcc only)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconstexpr-ops-limit=5000000000")
@@ -177,6 +182,125 @@ check_include_file_cxx ("rapidxml/rapidxml.hpp" HAVE_RAPIDXML)
 if (NOT HAVE_RAPIDXML)
   include_directories("${PROJECT_SOURCE_DIR}/include/rapidxml-1.13")
 endif() # else we have it in a directory included by default in the path
+
+#
+# sebsjames/maths module groups
+#
+set(SM_CONSTEXPR_MATH_MODULES
+  ${PROJECT_SOURCE_DIR}/sm/mathconst
+  ${PROJECT_SOURCE_DIR}/sm/constexpr_math
+)
+set(SM_POLYSOLVE_MODULES
+  ${SM_CONSTEXPR_MATH_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/polysolve
+)
+set(SM_BESSEL_I0_MODULES
+  ${SM_POLYSOLVE_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/bessel_i0
+)
+set(SM_RANDOM_MODULES
+  ${SM_BESSEL_I0_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/random
+)
+set(SM_RANGE_MODULES
+  ${SM_CONSTEXPR_MATH_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/trait_tests
+  ${PROJECT_SOURCE_DIR}/sm/range
+)
+set(SM_VEC_MODULES
+  ${SM_RANGE_MODULES}
+  ${SM_RANDOM_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/vec
+)
+set(SM_VVEC_MODULES
+  ${SM_RANGE_MODULES}
+  ${SM_RANDOM_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/vvec
+)
+set(SM_SCALE_MODULES
+  ${SM_VVEC_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/scale
+)
+set(SM_UTIL_MODULES
+  ${PROJECT_SOURCE_DIR}/sm/trait_tests
+  ${PROJECT_SOURCE_DIR}/sm/util
+)
+set(SM_HDFDATA_MODULES
+  ${SM_VEC_MODULES}
+  ${SM_VVEC_MODULES}
+  ${SM_UTIL_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/hdfdata
+)
+set(SM_QUATERNION_MODULES
+  ${SM_VEC_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/quaternion
+)
+set(SM_MAT_MODULES
+  ${SM_QUATERNION_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/mat
+)
+set(SM_BEZCOORD_MODULES
+  ${SM_VEC_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/bezcoord
+)
+set(SM_HEX_MODULES
+  ${SM_BEZCOORD_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/hex
+)
+set(SM_WINDER_MODULES
+  ${SM_VEC_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/winder
+)
+set(SM_BOOTSTRAP_MODULES
+  ${SM_VEC_MODULES}
+  ${SM_VVEC_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/bootstrap
+)
+set(SM_GRID_MODULES
+  ${SM_VEC_MODULES}
+  ${SM_VVEC_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/grid
+)
+set(SM_ALGO_MODULES
+  ${SM_VEC_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/algo
+)
+set(SM_NM_SIMPLEX_MODULES
+  ${SM_ALGO_MODULES}
+  ${SM_VVEC_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/nm_simplex
+)
+set(SM_HISTO_MODULES
+  ${SM_VEC_MODULES}
+  ${SM_VVEC_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/histo
+)
+set(SM_BOXFILTER_MODULES
+  ${SM_VEC_MODULES}
+  ${SM_VVEC_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/boxfilter
+)
+set(SM_GEOMETRY_MODULES
+  ${SM_ALGO_MODULES}
+  ${SM_VVEC_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/geometry
+)
+set(SM_BEZCURVE_MODULES
+  ${SM_BEZCOORD_MODULES}
+  ${SM_MAT_MODULES}
+  ${SM_NM_SIMPLEX_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/binomial
+  ${PROJECT_SOURCE_DIR}/sm/bezcurve
+)
+set(SM_BEZCURVEPATH_MODULES
+  ${SM_BEZCURVE_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/bezcurvepath
+)
+set(SM_HEXGRID_MODULES
+  ${SM_BEZCURVEPATH_MODULES}
+  ${SM_HEX_MODULES}
+  ${PROJECT_SOURCE_DIR}/sm/hexgrid
+)
 
 # All the mathplot headers are here
 add_subdirectory(mplot)

@@ -104,7 +104,7 @@ export namespace mplot
         //! Common code to call after the vertices have been set up. GL has to have been initialised.
         void postVertexInit()
         {
-            if (this->parentVis == std::numeric_limits<uint32_t>::max()) {
+            if (this->parentVis == std::numeric_limits<std::uint32_t>::max()) {
                 throw std::runtime_error ("parentVis is unset");
             }
             GladGLContext* glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
@@ -475,14 +475,14 @@ export namespace mplot
                 h = (h << 5) - 1 + std::hash<float>{}(this->vertexNormals[i]);
             }
             for (std::size_t i = 0u; i < this->indices.size(); ++i) {
-                h = (h << 5) - 1 + std::hash<uint32_t>{}(this->indices[i]);
+                h = (h << 5) - 1 + std::hash<std::uint32_t>{}(this->indices[i]);
             }
             return h;
         }
 
         // Get a single position from vertexPositions, using the index into the vector<vec>
         // interpretation of vertexPositions
-        sm::vec<float, 3> get_position (const uint32_t vec_idx) const
+        sm::vec<float, 3> get_position (const std::uint32_t vec_idx) const
         {
             auto vp = reinterpret_cast<const std::vector<sm::vec<float, 3>>*>(&this->vertexPositions);
             return (*vp)[vec_idx];
@@ -490,14 +490,14 @@ export namespace mplot
 
         // Get a single normal from vertexNormals, using the index into the vector<vec>
         // interpretation of vertexNormals
-        sm::vec<float, 3> get_normal (const uint32_t vec_idx) const
+        sm::vec<float, 3> get_normal (const std::uint32_t vec_idx) const
         {
             auto vn = reinterpret_cast<const std::vector<sm::vec<float, 3>>*>(&this->vertexNormals);
             return (*vn)[vec_idx];
         }
 
         // Get the area of the triangle whose start index is vec_idx
-        float get_area (const uint32_t vec_idx0, const uint32_t vec_idx1, const uint32_t vec_idx2) const
+        float get_area (const std::uint32_t vec_idx0, const std::uint32_t vec_idx1, const std::uint32_t vec_idx2) const
         {
             auto vp = reinterpret_cast<const std::vector<sm::vec<float, 3>>*>(&this->vertexPositions);
             auto t0 = (*vp)[vec_idx0];
@@ -526,11 +526,11 @@ export namespace mplot
             // Treat vertexPositions as a vector of vec:
             auto vp = reinterpret_cast<const std::vector<sm::vec<float, 3>>*>(&this->vertexPositions);
 
-            uint32_t vps = vp->size();
-            std::unordered_map<sm::vec<float, 3>, std::set<uint32_t>, sm::vec<float, 3>::hash> equiv_v;
-            uint32_t i = 0;
+            std::uint32_t vps = vp->size();
+            std::unordered_map<sm::vec<float, 3>, std::set<std::uint32_t>, sm::vec<float, 3>::hash> equiv_v;
+            std::uint32_t i = 0;
             for (auto p : *vp) { equiv_v[p].insert (i++); }
-            std::map<uint32_t, std::set<uint32_t>> equiv;
+            std::map<std::uint32_t, std::set<std::uint32_t>> equiv;
             for (auto e : equiv_v) { equiv[*e.second.begin()] = e.second; }
             if constexpr (debug_mn) {
                 for (auto e : equiv) {
@@ -543,8 +543,8 @@ export namespace mplot
 
             // Make inverse of equiv to translate from original (indices, vertexPositions) index to
             // new topographic mesh index
-            sm::vvec<uint32_t> navmesh_idx (vps, 0);
-            uint32_t vcount = 0;
+            sm::vvec<std::uint32_t> navmesh_idx (vps, 0);
+            std::uint32_t vcount = 0;
             i = 0;
             for (auto eqs : equiv) {
                 vcount += eqs.second.size();
@@ -568,7 +568,7 @@ export namespace mplot
             navmesh->vertex.resize (equiv.size(), mesh::vertex{});
             i = 0;
             for (auto eq : equiv) {
-                navmesh->vertex[i++] = { (*vp)[eq.first], std::numeric_limits<uint32_t>::max() };
+                navmesh->vertex[i++] = { (*vp)[eq.first], std::numeric_limits<std::uint32_t>::max() };
             }
 
             // We're turing a triangle mesh into a navmesh. Don't know what to do if there are stray vertices.
@@ -578,13 +578,13 @@ export namespace mplot
 
             // Lastly, generate edges. For which we require use of indices, which is expressed in
             // terms of the old indices. That lookup is navmesh_idx.
-            for (uint32_t i = 0; i < this->indices.size(); i += 3) {
+            for (std::uint32_t i = 0; i < this->indices.size(); i += 3) {
 
                 // Add three halfedges for the triangle
-                const uint32_t hesz = navmesh->halfedge.size();
-                const uint32_t he0 = hesz;
-                const uint32_t he1 = hesz + 1;
-                const uint32_t he2 = hesz + 2;
+                const std::uint32_t hesz = navmesh->halfedge.size();
+                const std::uint32_t he0 = hesz;
+                const std::uint32_t he1 = hesz + 1;
+                const std::uint32_t he2 = hesz + 2;
 
                 if constexpr (debug_mn) {
                     std::cout << "setting halfedge["<< he0 << "]  to { {"
@@ -603,9 +603,9 @@ export namespace mplot
                 navmesh->halfedge.resize (hesz + 3, {});
 
                 // Now, could also try to identify LINES
-                navmesh->halfedge[he0] = { {navmesh_idx[indices[i    ]], navmesh_idx[indices[i + 1]]}, std::numeric_limits<uint32_t>::max(), he1, he2, 0u };
-                navmesh->halfedge[he1] = { {navmesh_idx[indices[i + 1]], navmesh_idx[indices[i + 2]]}, std::numeric_limits<uint32_t>::max(), he2, he0, 0u };
-                navmesh->halfedge[he2] = { {navmesh_idx[indices[i + 2]], navmesh_idx[indices[i    ]]}, std::numeric_limits<uint32_t>::max(), he0, he1, 0u };
+                navmesh->halfedge[he0] = { {navmesh_idx[indices[i    ]], navmesh_idx[indices[i + 1]]}, std::numeric_limits<std::uint32_t>::max(), he1, he2, 0u };
+                navmesh->halfedge[he1] = { {navmesh_idx[indices[i + 1]], navmesh_idx[indices[i + 2]]}, std::numeric_limits<std::uint32_t>::max(), he2, he0, 0u };
+                navmesh->halfedge[he2] = { {navmesh_idx[indices[i + 2]], navmesh_idx[indices[i    ]]}, std::numeric_limits<std::uint32_t>::max(), he0, he1, 0u };
 
                 if constexpr (debug_mn) {
                     std::cout << "halfedge["<< hesz << "] contains: vi:"
@@ -669,7 +669,7 @@ export namespace mplot
             this->navmesh = std::make_unique<mplot::NavMesh>();
 
             // Have we got a pre-computed navmesh file for the halfedge twin relationships?
-            uint64_t h = this->hash();
+            std::uint64_t h = this->hash();
             if (navmesh_dir.empty()) {
                 navmesh_dir = mplot::tools::getTmpPath();
             } else {
@@ -734,7 +734,7 @@ export namespace mplot
             GladGLContext* glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
             glfn->GetIntegerv (GL_CURRENT_PROGRAM, &prev_shader);
             // Ensure the correct program is in play for this VisualModel
-            uint32_t gprog = mplot::VisualResources<glver>::i().get_gprog (this->parentVis);
+            std::uint32_t gprog = mplot::VisualResources<glver>::i().get_gprog (this->parentVis);
             glfn->UseProgram (gprog);
 
             if (!this->indices.empty()) {
@@ -1167,14 +1167,14 @@ export namespace mplot
                 throw std::runtime_error ("set_instance_data: params vvecs should all have same size (colour, rotn, scale)");
             }
 
-            for (size_t i = 0; i < position.size(); ++i) {
+            for (std::size_t i = 0; i < position.size(); ++i) {
                 // Get access to the SSBO in VisualResources and add the 3 floats in position[i] at
                 // the location defined by this->instance_start + i
                 mplot::VisualResources<glver>::i().insert_instance_data (this->instance_start + i, position[i]);
             }
             this->instance_count = position.size();
 
-            for (size_t i = 0; i < colour.size(); ++i) {
+            for (std::size_t i = 0; i < colour.size(); ++i) {
                 mplot::VisualResources<glver>::i().insert_instparam_data (this->instance_start + i, colour[i], alpha[i], scale[i]);
             }
             this->instparam_count = colour.size();
@@ -1183,9 +1183,9 @@ export namespace mplot
         }
 
         //! Setter for the parent ID, parentVis
-        void set_parent (const uint32_t _vis)
+        void set_parent (const std::uint32_t _vis)
         {
-            if (this->parentVis == std::numeric_limits<uint32_t>::max()) { this->parentVis = _vis; }
+            if (this->parentVis == std::numeric_limits<std::uint32_t>::max()) { this->parentVis = _vis; }
         }
 
         // Flags defaults.
@@ -1303,7 +1303,7 @@ export namespace mplot
         float alpha = 1.0f;
 
         // The mplot::VisualBase in which this model exists.
-        uint32_t parentVis = std::numeric_limits<uint32_t>::max();
+        std::uint32_t parentVis = std::numeric_limits<std::uint32_t>::max();
 
         //! A vector of pointers to text models that should be rendered.
         std::vector<std::unique_ptr<mplot::VisualTextModel<glver>>> texts;
@@ -1313,7 +1313,7 @@ export namespace mplot
         {
             std::size_t sz = dat.size() * sizeof(float);
 
-            if (this->parentVis == std::numeric_limits<uint32_t>::max()) {
+            if (this->parentVis == std::numeric_limits<std::uint32_t>::max()) {
                 throw std::runtime_error ("parentVis is unset");
             }
             GladGLContext* glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
@@ -1360,7 +1360,7 @@ export namespace mplot
             mg.validate();
 
             bool single_colr = mg.colours.empty();
-            for (uint32_t i = 0; i < mg.positions.size(); ++i) {
+            for (std::uint32_t i = 0; i < mg.positions.size(); ++i) {
                 // We apply mg.transform *here*, rather than writing it into the viewmatrix. This is
                 // because other elements of this visual model may be added with the assumption of an
                 // identity viewmatrix.
@@ -1372,7 +1372,7 @@ export namespace mplot
                     this->vertex_push (mg.colours[i], this->vertexColors);
                 }
             }
-            for (uint32_t i = 0; i < mg.indices.size(); ++i) {
+            for (std::uint32_t i = 0; i < mg.indices.size(); ++i) {
                 this->indices.push_back (mg.indices[i] + this->idx);
             }
             this->idx += mg.positions.size();
@@ -1922,7 +1922,7 @@ export namespace mplot
             v.renormalize();
 
             // Push corner vertices
-            size_t vpsz = this->vertexPositions.size();
+            std::size_t vpsz = this->vertexPositions.size();
             this->vertexPositions.resize (vpsz + 12);
             for (unsigned int i = 0; i < 3u; ++i) { this->vertexPositions[vpsz++] = c1[i]; }
             for (unsigned int i = 0; i < 3u; ++i) { this->vertexPositions[vpsz++] = c2[i]; }
@@ -1930,8 +1930,8 @@ export namespace mplot
             for (unsigned int i = 0; i < 3u; ++i) { this->vertexPositions[vpsz++] = c4[i]; }
 
             // Colours/normals
-            size_t vcsz = this->vertexColors.size();
-            size_t vnsz = this->vertexNormals.size();
+            std::size_t vcsz = this->vertexColors.size();
+            std::size_t vnsz = this->vertexNormals.size();
             this->vertexColors.resize (vcsz + 12);
             this->vertexNormals.resize (vnsz + 12);
             for (unsigned int i = 0; i < 4u; ++i) {
@@ -1941,7 +1941,7 @@ export namespace mplot
                 }
             }
 
-            size_t i0 = this->indices.size();
+            std::size_t i0 = this->indices.size();
             this->indices.resize (i0 + 6, 0);
             this->indices[i0++] = this->idx;
             this->indices[i0++] = this->idx + 2;

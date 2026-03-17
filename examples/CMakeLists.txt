@@ -5,10 +5,13 @@ set(SM_CORE_MODULES
   ${PROJECT_SOURCE_DIR}/maths/sm/mathconst
   ${PROJECT_SOURCE_DIR}/maths/sm/constexpr_math
   ${PROJECT_SOURCE_DIR}/maths/sm/range
+  ${PROJECT_SOURCE_DIR}/maths/sm/polysolve
+  ${PROJECT_SOURCE_DIR}/maths/sm/bessel_i0
   ${PROJECT_SOURCE_DIR}/maths/sm/random
   ${PROJECT_SOURCE_DIR}/maths/sm/vec
   ${PROJECT_SOURCE_DIR}/maths/sm/quaternion
   ${PROJECT_SOURCE_DIR}/maths/sm/mat
+  ${PROJECT_SOURCE_DIR}/maths/sm/trait_tests
   ${PROJECT_SOURCE_DIR}/maths/sm/util
   ${PROJECT_SOURCE_DIR}/maths/sm/base64
   ${PROJECT_SOURCE_DIR}/maths/sm/crc32

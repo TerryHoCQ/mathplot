@@ -78,7 +78,7 @@ export namespace mplot
         }
 
         //! An overridable function to set the colour of rect ri
-        std::array<float, 3> setColour (uint64_t ri)
+        std::array<float, 3> setColour (std::uint64_t ri)
         {
             std::array<float, 3> clr = { 0.0f, 0.0f, 0.0f };
             if (this->cm.numDatums() == 3) {
@@ -139,7 +139,7 @@ export namespace mplot
     };
 
     //! VisualDataModel implementation that deals with std::vector pointers to scalar/vector data
-    template <int32_t ctype = 0, typename T = float, int glver = mplot::gl::version_4_1>
+    template <std::int32_t ctype = 0, typename T = float, int glver = mplot::gl::version_4_1>
     struct VisualDataModel_impl : public VisualDataModel_impl_base<T, glver>
     {
         void setScalarData (const std::vector<T>* _data) { this->scalarData = _data; }
