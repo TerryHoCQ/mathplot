@@ -62,6 +62,12 @@ For now, I'm sticking with regular C++20 modules, because the addition of `impor
 * Using C++20 modules will require that any third-party header-only code you're using is modules compatible - this just means avoiding a few small things like the `static` keyword on namespaced functions, but if your third-party library needs patching, it's an additional level of complexity.
 * Using `import std;` can lead to complex linking issues, so evaluate your third party libraries carefully.
 
+## What I will do now
+
+For now, I'm going to work with dev/modules branches on [mathplot](https://github.com/sebsjames/mathplot/tree/dev/modules) and [maths](https://github.com/sebsjames/maths/tree/dev/modules).
+
+I still need to convert all the mathplot examples and **mplot/**  code to modules. When it had matured enough, I'll merge it into main. C++ modules are coming for mathplot and maths...
+
 ## Matplot example profiling
 
 Here's a profile of build times for mathplot examples. The examples built were:
