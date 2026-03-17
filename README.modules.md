@@ -1,6 +1,4 @@
-# Modules builds
-
-## Motivation
+# C++ Modules
 
 Around March 2026 I wanted to try to improve the 35 second build time of [a project](https://github.com/sebsjames/antpov) I was working on.
 
