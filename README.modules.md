@@ -20,7 +20,7 @@ The first stage was to convert to basic C++20 modules, where I would only make m
 There were several tasks
 
 * Switch from building with cmake/Makefiles to cmake/Ninja. Add the new incantations to recognise modules files and compile these.
-* Discover that the real minimum version for C++20 modules is [cmake 3.28.5](https://discourse.cmake.org/t/how-can-i-be-sure-that-a-c-20-module-is-not-re-compiled-after-a-non-module-code-change/15535).
+* Discover that the real minimum version for C++20 modules is [cmake 3.28.5](https://discourse.cmake.org/t/how-can-i-be-sure-that-a-c-20-module-is-not-re-compiled-after-a-non-module-code-change/15535). Prior to this version, your modules would *build* but a re-build would cause *all* the modules to rebuild, and thus give you no build-time speed up!
 * Remove all circular dependencies from the code - there was a fundamental one in mathplot's core which required an architectural redesign (this is a real improvement).
 * Switch from header-only glad to glad as a compiled library (I did consider trying to make a 'glad module' but wasn't sure it would work; the glad project doesn't have a generator for 'modularized glad')
 * Make a library of the mathplot fonts to link to the executable (previously, the asm calls were header-only)
@@ -40,7 +40,7 @@ C++23 `import std;` is available with clang-20 and gcc-15. CMake supports it too
 
 This involved:
 
-* Learning how to ensure that the toolchain would build the std.* library module. Crucially, I had to pass the correct library (libc++ for clang-20) on the cmake command line. Some lines had to change in CMakeLists.txt, too.
+* Learning how to ensure that the toolchain would build the std.* library module. Crucially, [I had to pass the correct runtime library](https://discourse.cmake.org/t/having-difficulty-compiling-with-import-std-support-cmake-cant-build-std-cppm/15557) (libc++ for clang-20) on the cmake command line. Some lines had to change in CMakeLists.txt, too.
 * Switching all use of `size_t` to the fully qualified `std::size_t` and `uint32_t` and similar from `cstdint` to `std::uint32_t` (alternatively, I could have used `import std.compat`).
 
 I got this working over a weekend and built both maths tests and mathplot examples with `import std;`.
@@ -58,9 +58,11 @@ For now, I'm sticking with regular C++20 modules, because the addition of `impor
 ## What I learned
 
 * The minimum compiler versions are practically clang-20 and gcc-master (with some bugs still to be resolved, though I DID get most of the mathplot examples to build).
+* Make sure to use cmake 3.28.5 or higher (I've been using the latest release, 4.2.x).
 * Had I switched to clang-20 with my original header-only code, I could have improved my build times from 35 s to 20-ish seconds!
 * The modules build process reduces the re-build time on the complex project to less than 10 seconds, so the work was worthwhile.
-* Using `import std;` can lead to complex linking issues
+* Using C++20 modules will require that any third-party header-only code you're using is modules compatible - this just means avoiding a few small things like the `static` keyword on namespaced functions, but if your third-party library needs patching, it's an additional level of complexity.
+* Using `import std;` can lead to complex linking issues, so evaluate your third party libraries carefully.
 
 ## Matplot example profiling
 
