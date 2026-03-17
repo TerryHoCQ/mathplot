@@ -2,20 +2,25 @@
 
 ## Motivation
 
-Around March 2026 I wanted to try to improve the 35 second build time of a project I was working on.
+Around March 2026 I wanted to try to improve the 35 second build time of [a project](https://github.com/sebsjames/antpov) I was working on.
+
+I was originally building the project with gcc-13 (and sometimes gcc-14), and linking the library [compound-ray](https://github.com/sebsjames/compound-ray)) containing CUDA and OptiX code, which was compiled with gcc-12 and CUDA's nvcc.
+The build time was about 35 seconds, regardless of which source code file I changed and of how trivial that change was.
+
 I was aware of C++ modules as a way to automate the building of an otherwise header-only codebase like mathplot.
-I gave it a try, first in sebsjames/maths, and then in mathplot.
+I was interested to give it a try with the hope that it would speed up re-build times for my project.
 
-I was originally buildling the project with gcc 13 or gcc 14, and linking a library containing CUDA and OptiX code, which was compiled with gcc 12 and CUDA's nvcc. The build time was about 35 seconds, regardless of which source code file I changed and of how trivial that change was.
+Before starting I looked at compilers you'd need to build C++20 modules. Documentation suggested clang-18 or gcc-14 (but really 15) would be minimal requirements, along with cmake at about version 28 from late 2023.
+With gcc-15 soon to be available in a standard Ubuntu download, and clang-18 and cmake 28 both available in Ubuntu 24.04, I decided that the module-supporting toolchains were available and it was worth the time making the code changes.
 
-Before starting I looked at compilers you'd need to build C++20 modules. Documentation suggested clang-18 or gcc-14 (but really 15) would be minimal requirements.
-With gcc 15 soon to be available in a standard Ubuntu download and clang-18 already there, I decided it was worth the time making the code changes.
+### Stage 1 C++20 modules
 
 The first stage was to convert to basic C++20 modules, where I would only make modules out of my own code, and continue to use `#include <iostream>` rather than `import std;` or `import <iostream>;`.
 
 There were several tasks
 
 * Switch from building with cmake/Makefiles to cmake/Ninja. Add the new incantations to recognise modules files and compile these.
+* Discover that the real minimum version for C++20 modules is [cmake 3.28.5](https://discourse.cmake.org/t/how-can-i-be-sure-that-a-c-20-module-is-not-re-compiled-after-a-non-module-code-change/15535).
 * Remove all circular dependencies from the code - there was a fundamental one in mathplot's core which required an architectural redesign (this is a real improvement).
 * Switch from header-only glad to glad as a compiled library (I did consider trying to make a 'glad module' but wasn't sure it would work; the glad project doesn't have a generator for 'modularized glad')
 * Make a library of the mathplot fonts to link to the executable (previously, the asm calls were header-only)
@@ -25,15 +30,9 @@ There were several tasks
 * Remove any non-modules compatible third party library links that I could (armadillo)
 * Re-write my Bezier curve code to use `sm::mat` instead of `arma::Mat`
 * Add stuff to `sm::mat` as part of the thing above (and fix some bugs)
-* Report several bugs to gcc, as gcc-15 was falling over on some of my C++ once it was encapsulated in a module
+* Report several bugs to gcc, as gcc-15 was falling over on some of my C++ once it was encapsulated in a module: [124430](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=124430) [124431](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=124431) [124466](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=124466) [124470](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=124470) [124483](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=124483)
 
 All this work took about 2 weeks.
-
-I discovered that the minimum compiler versions are practically clang-20 and gcc-master (with some bugs still to be resolved).
-
-I discovered that, had I switched to clang-20 with my original header-only code, I could have improved my build times from 35 s to 20-ish seconds!
-
-However, my re-build time on the complex project is down to less than 10 seconds, so the work was worthwhile.
 
 ### Stage 2 `import std;`
 
@@ -56,9 +55,16 @@ I think this can be made to work, but I will either have to:
 
 For now, I'm sticking with regular C++20 modules, because the addition of `import std;` doesn't make that much difference to compile times.
 
-## Matplot examples
+## What I learned
 
-The examples built were:
+* The minimum compiler versions are practically clang-20 and gcc-master (with some bugs still to be resolved, though I DID get most of the mathplot examples to build).
+* Had I switched to clang-20 with my original header-only code, I could have improved my build times from 35 s to 20-ish seconds!
+* The modules build process reduces the re-build time on the complex project to less than 10 seconds, so the work was worthwhile.
+* Using `import std;` can lead to complex linking issues
+
+## Matplot example profiling
+
+Here's a profile of build times for mathplot examples. The examples built were:
 
 ```
 breadcrumbs cray_eye ellipsoid geodesic graph1 grid_simple helloworld hexgrid rod rod_with_normals showcase vectorvis
@@ -95,7 +101,7 @@ All examples from scratch: 19 s
 breadcrumbs rebuild time after touch breadcrumbs.cpp (rebuilds 4 items):  6.9 s
 breadcrumbs rebuild time after touch VisualModel (rebuilds 130 items):    6.9 s
 
-## Complex example
+## Profiling the complex example
 
 Test machine: Scan desktop, Intel(R) Core(TM) Ultra 9 285K
 
@@ -109,7 +115,7 @@ CC=clang-20 CXX=clang++-20 cmake .. -G Ninja -DOptiX_INSTALL_DIR=~/src/NVIDIA-Op
 
 Build antpov from scratch (138 items): 26.3 s
 
-Build after touch antpov.cpp: 8.9 s
+Build after touch antpov.cpp:          8.9 s
 
 ### With `import std;`
 
