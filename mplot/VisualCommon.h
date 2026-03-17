@@ -3,9 +3,17 @@
  *
  * Author: Seb James.
  */
+module;
+
+#include <cstdint>
+#include <stdexcept>
+#include <iostream>
+#include <cstring>
+#include <string>
+#include <array>
+
 export module mplot.visualcommon;
 
-import std;
 import sm.vec;
 import sm.range;
 import sm.vvec;

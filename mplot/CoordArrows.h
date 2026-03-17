@@ -6,9 +6,13 @@
  * \author Seb James
  * \date 2019
  */
+module;
+
+#include <array>
+#include <string>
+
 export module mplot.coordarrows;
 
-import std;
 import sm.vec;
 import mplot.gl.version;
 export import mplot.visualmodel;

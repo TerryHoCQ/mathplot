@@ -1,9 +1,13 @@
 /*!
  * VisualModels which have data.
  */
+module;
+
+#include <vector>
+#include <cstdint>
+
 export module mplot.visualdatamodel;
 
-import std;
 import sm.vec;
 import sm.vvec;
 import sm.scale;

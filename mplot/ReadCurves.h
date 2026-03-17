@@ -22,7 +22,7 @@
 #include <string.h>
 
 #include <rapidxml/rapidxml.hpp>
-//#include <mplot/tools.h> // for tools::searchReplace and tools::containsOnlyWhitespace
+
 import mplot.tools;
 import sm.bezcurvepath;
 

@@ -22,9 +22,12 @@ module;
 # include <GLFW/glfw3.h>
 #endif // _glfw3_h_
 
+#include <mutex>
+#include <chrono>
+#include <utility>
+
 export module mplot.visual;
 
-import std;
 export import mplot.gl.version;
 export import mplot.win_t;
 

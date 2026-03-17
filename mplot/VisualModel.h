@@ -17,9 +17,25 @@ module;
 # include <mplot/glad/gl.h>
 #endif
 
+#include <cstdint>
+#include <type_traits>
+#include <iostream>
+#include <vector>
+#include <array>
+#include <algorithm>
+#include <iterator>
+#include <string>
+#include <memory>
+#include <functional>
+#include <cstddef>
+#include <cmath>
+#include <bitset>
+#include <map>
+#include <set>
+#include <tuple>
+
 export module mplot.visualmodel;
 
-import std;
 import sm.mathconst;
 import sm.geometry_polyhedra;
 import sm.quaternion;

@@ -21,6 +21,11 @@ module;
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#include <map>
+#include <iostream>
+#include <utility>
+#include <fstream>
+
 #include <mplot/VisualFaceAsm.h>
 
 /*
@@ -29,7 +34,6 @@ module;
 
 export module mplot.visualface;
 
-import std;
 import mplot.visualcommon;
 import mplot.visualfont;
 import mplot.textfeatures;
