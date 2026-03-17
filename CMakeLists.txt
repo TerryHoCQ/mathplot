@@ -1,6 +1,8 @@
-cmake_minimum_required(VERSION 3.30)
+# 3.28.5: C++20 modules support 3.30 gives C++23 import std;
+cmake_minimum_required(VERSION 3.28.5)
 
-set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
+# For future import std; support
+# set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
 
 project(mathplot LANGUAGES CXX C)
 # Note that the project version is encoded in mplot/version.h and not in this CMakeLists.txt
@@ -13,10 +15,12 @@ message(STATUS "  (This can be changed with `cmake -DCMAKE_INSTALL_PREFIX=/some/
 #
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS ON)
+
+# For future import std; support
+# set(CMAKE_CXX_EXTENSIONS ON)
 # Tell CMake that we explicitly want `import std`. This will initialize the
 # property on all targets declared after this to 1
-set(CMAKE_CXX_MODULE_STD 1)
+# set(CMAKE_CXX_MODULE_STD 1)
 
 include(CheckIncludeFileCXX) # CHECK_INCLUDE_FILE_CXX will be used in later scripts
 
