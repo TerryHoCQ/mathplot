@@ -66,7 +66,11 @@ For now, I'm sticking with regular C++20 modules, because the addition of `impor
 
 For now, I'm going to work with dev/modules branches on [mathplot](https://github.com/sebsjames/mathplot/tree/dev/modules) and [maths](https://github.com/sebsjames/maths/tree/dev/modules).
 
-I still need to convert all the mathplot examples and **mplot/**  code to modules. When it had matured enough, I'll merge it into main. C++ modules are coming for mathplot and maths...
+I still need to convert all the mathplot examples and **mplot/**  code to modules. Once I've completed the conversion, and when it has matured enough, I'll merge the modules code into main.
+
+I've made several significant improvements to the codebase as a result of this work, which would have to be backported if I wanted to abandon modules and stick with header only.
+
+However, I think that C++ modules are coming for mathplot and maths.
 
 ## Matplot example profiling
 
