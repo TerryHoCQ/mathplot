@@ -1,4 +1,60 @@
-# Modules build times
+# Modules builds
+
+## Motivation
+
+Around March 2026 I wanted to try to improve the 35 second build time of a project I was working on.
+I was aware of C++ modules as a way to automate the building of an otherwise header-only codebase like mathplot.
+I gave it a try, first in sebsjames/maths, and then in mathplot.
+
+I was originally buildling the project with gcc 13 or gcc 14, and linking a library containing CUDA and OptiX code, which was compiled with gcc 12 and CUDA's nvcc. The build time was about 35 seconds, regardless of which source code file I changed and of how trivial that change was.
+
+Before starting I looked at compilers you'd need to build C++20 modules. Documentation suggested clang-18 or gcc-14 (but really 15) would be minimal requirements.
+With gcc 15 soon to be available in a standard Ubuntu download and clang-18 already there, I decided it was worth the time making the code changes.
+
+The first stage was to convert to basic C++20 modules, where I would only make modules out of my own code, and continue to use `#include <iostream>` rather than `import std;` or `import <iostream>;`.
+
+There were several tasks
+
+* Switch from building with cmake/Makefiles to cmake/Ninja. Add the new incantations to recognise modules files and compile these.
+* Remove all circular dependencies from the code - there was a fundamental one in mathplot's core which required an architectural redesign (this is a real improvement).
+* Switch from header-only glad to glad as a compiled library (I did consider trying to make a 'glad module' but wasn't sure it would work; the glad project doesn't have a generator for 'modularized glad')
+* Make a library of the mathplot fonts to link to the executable (previously, the asm calls were header-only)
+* Learn the new kind of error messages and how to understand them.
+* Edit all the files to export and import modules.
+* Ensure I was using modules-compatible versions of third party libraries (nlohman-json)
+* Remove any non-modules compatible third party library links that I could (armadillo)
+* Re-write my Bezier curve code to use `sm::mat` instead of `arma::Mat`
+* Add stuff to `sm::mat` as part of the thing above (and fix some bugs)
+* Report several bugs to gcc, as gcc-15 was falling over on some of my C++ once it was encapsulated in a module
+
+All this work took about 2 weeks.
+
+I discovered that the minimum compiler versions are practically clang-20 and gcc-master (with some bugs still to be resolved).
+
+I discovered that, had I switched to clang-20 with my original header-only code, I could have improved my build times from 35 s to 20-ish seconds!
+
+However, my re-build time on the complex project is down to less than 10 seconds, so the work was worthwhile.
+
+### Stage 2 `import std;`
+
+C++23 `import std;` is available with clang-20 and gcc-15. CMake supports it too. I figured I may as well move to `import std;` along with my C++20 `sm.` and `mplot.` modules.
+
+This involved:
+
+* Learning how to ensure that the toolchain would build the std.* library module. Crucially, I had to pass the correct library (libc++ for clang-20) on the cmake command line. Some lines had to change in CMakeLists.txt, too.
+* Switching all use of `size_t` to the fully qualified `std::size_t` and `uint32_t` and similar from `cstdint` to `std::uint32_t` (alternatively, I could have used `import std.compat`).
+
+I got this working over a weekend and built both maths tests and mathplot examples with `import std;`.
+
+However, with the more complex project, I discovered a gotcha. If you link another compiled C++ library (compound-ray) then it has to be compiled with a binary compatible libc++.
+With `import std;` I got best results with libc++, but compound-ray compiles with libstdc++.
+
+I think this can be made to work, but I will either have to:
+
+* Update the compound-ray build process to build with CUDA-13, which is clang-20 compatible
+* Make the compound-ray API pure C (right now I'm using a C++ data structure to transfer data
+
+For now, I'm sticking with regular C++20 modules, because the addition of `import std;` doesn't make that much difference to compile times.
 
 ## Matplot examples
 
