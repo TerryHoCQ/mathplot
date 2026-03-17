@@ -10,8 +10,8 @@ The build time was about 35 seconds, regardless of which source code file I chan
 I was aware of C++ modules as a way to automate the building of an otherwise header-only codebase like mathplot.
 I was interested to give it a try with the hope that it would speed up re-build times for my project.
 
-Before starting I looked at compilers you'd need to build C++20 modules. Documentation suggested clang-18 or gcc-14 (but really 15) would be minimal requirements, along with cmake at about version 28 from late 2023.
-With gcc-15 soon to be available in a standard Ubuntu download, and clang-18 and cmake 28 both available in Ubuntu 24.04, I decided that the module-supporting toolchains were available and it was worth the time making the code changes.
+Before starting I looked at compilers you'd need to build C++20 modules. Documentation suggested clang-18 or gcc-14 (but really 15) would be minimal requirements, along with cmake at about version 3.28 from late 2023.
+With gcc-15 soon to be available in a standard Ubuntu download, and clang-18 and cmake 3.28 both available in Ubuntu 24.04, I decided that the module-supporting toolchains were available and it was worth the time making the code changes.
 
 ### Stage 1 C++20 modules
 
@@ -82,24 +82,30 @@ CC=clang-20 CXX=clang++-20 cmake .. -G Ninja -DCMAKE_CXX_FLAGS=-stdlib=libc++
 
 Building with *full* modules, including import std;
 
+```
 All examples from scratch: 42-46 sec, (13min user time)
 
 breadcrumbs rebuild time after touch breadcrumbs.cpp (rebuilds 4 items):  5.8 s
 breadcrumbs rebuild time after touch VisualModel (rebuilds 130 items):   24.0 s
+```
 
 ### Without `import std;`
 
+```
 All examples from scratch: 74 s
 
 breadcrumbs rebuild time after touch breadcrumbs.cpp:                     5.9 s
 breadcrumbs rebuild time after touch VisualModel (rebuilds 11 items):    17.6 s
+```
 
 ### Header only
 
+```
 All examples from scratch: 19 s
 
 breadcrumbs rebuild time after touch breadcrumbs.cpp (rebuilds 4 items):  6.9 s
 breadcrumbs rebuild time after touch VisualModel (rebuilds 130 items):    6.9 s
+```
 
 ## Profiling the complex example
 
@@ -113,20 +119,26 @@ CC=clang-20 CXX=clang++-20 cmake .. -G Ninja -DOptiX_INSTALL_DIR=~/src/NVIDIA-Op
 
 ### Without `import std;`
 
+```
 Build antpov from scratch (138 items): 26.3 s
 
 Build after touch antpov.cpp:          8.9 s
+```
 
 ### With `import std;`
 
 Note that the final link does not complete at present, but I think these times are representative
 
+```
 Build antpov from scratch (150 items): 19.5 s
 
 Build after touch antpov.cpp (4 items): 7.6 s
+```
 
 ## Header only
 
+```
 Build antpov from scratch (2 items): 17.4 s
 
 Build after touch antpov.cpp (2 items): 17.4 s
+```
