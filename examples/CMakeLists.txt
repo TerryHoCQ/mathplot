@@ -53,6 +53,7 @@ set(MPLOT_CORE_MODULES
   ${PROJECT_SOURCE_DIR}/mplot/graphstyles.h
   ${PROJECT_SOURCE_DIR}/mplot/DatasetStyle.h
   ${PROJECT_SOURCE_DIR}/mplot/VisualDataModel.h
+  ${PROJECT_SOURCE_DIR}/mplot/compoundray/Ommatidium.h
 )
 
 # Maths used in individual VisualModels, but not the mathplot core

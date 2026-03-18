@@ -18,20 +18,11 @@ import sm.centroid;
 
 export import mplot.gl.version;
 export import mplot.visualmodel;
+export import mplot.compoundray.ommatidium;
 import mplot.tools;
 
 export namespace mplot::compoundray
 {
-    // This is a binary-compatible equivalent to struct Ommatidium from cameras/CompoundEyeDataTypes.h in compound-ray.
-    // Use reinterpret_cast<std::vector<mplot::compoundray::Ommatidium>*>(ommatidia) if your ommatidia originate inside compound ray.
-    struct Ommatidium
-    {
-        sm::vec<float, 3> relativePosition = {};
-        sm::vec<float, 3> relativeDirection = {};
-        float acceptanceAngleRadians = 0.0f;
-        float focalPointOffset = 0.0f;
-    };
-
     // Helper function. Read the compound-ray csv eye file into ommatidia. ommatidia should be a pointer to an allocate vector.
     [[maybe_unused]] std::vector<mplot::compoundray::Ommatidium>*
     readEye (std::vector<mplot::compoundray::Ommatidium>* ommatidia, const std::string& path)
