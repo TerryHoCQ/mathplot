@@ -1,130 +1,35 @@
 # All #includes in test programs have to be #include <mplot/header.h>
 include_directories(BEFORE ${PROJECT_SOURCE_DIR})
 
-set(SM_CORE_MODULES
-  ${PROJECT_SOURCE_DIR}/maths/sm/mathconst.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/constexpr_math.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/range.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/polysolve.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/bessel_i0.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/random.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/vec.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/quaternion.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/mat.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/trait_tests.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/util.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/base64.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/crc32.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/flags.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/algo.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/vvec.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/scale.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/centroid.cppm
-)
-# Base modules for mathplot
-set(MPLOT_CORE_MODULES
-  ${PROJECT_SOURCE_DIR}/mplot/tools.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/unicode.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/loadpng.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/gl/version.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/colour.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/win_t.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/Visual.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/VisualFace.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/TextFeatures.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/TextGeometry.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/VisualResources.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/VisualFont.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/VisualModel.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/NavMesh.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/ColourMap.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/graphing.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/graphstyles.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/DatasetStyle.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/VisualDataModel.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/compoundray/Ommatidium.cppm
-)
-
-# Maths used in individual VisualModels, but not the mathplot core
-set(SM_VISUALMODEL_MODULES
-  ${PROJECT_SOURCE_DIR}/maths/sm/winder.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/nm_simplex.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/bezcoord.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/binomial.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/bezcurve.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/bezcurvepath.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/hex.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/hexgrid.cppm
-)
-
-# The modules required for hexgrids
-set(SM_HEXGRID_MODULES
-  ${PROJECT_SOURCE_DIR}/maths/sm/nm_simplex.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/binomial.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/bezcoord.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/bezcurve.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/bezcurvepath.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/hex.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/hexgrid.cppm
-)
-
-set(MPLOT_VISUALMODEL_MODULES
-  ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/RodVisual.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/SphereVisual.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/compoundray/EyeVisual.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/InstancedScatterVisual.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/TriaxesVisual.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/ScatterVisual.cppm
-)
-
 # Each C++ module file has to be listed here (as they don't have a .cppm or .ixx file suffix)
 set_source_files_properties (
-  ${SM_CORE_MODULES}
+  ${MPLOT_MATHS_CORE_MODULES}
   ${MPLOT_CORE_MODULES}
-  ${SM_VISUALMODEL_MODULES}
+  ${MPLOT_MATHS_VISUALMODEL_MODULES}
   ${MPLOT_VISUALMODEL_MODULES}
   PROPERTIES LANGUAGE CXX
 )
 
 add_executable(helloworld helloworld.cpp)
 target_sources(helloworld PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES ${MPLOT_CORE_MODULES} ${SM_CORE_MODULES})
+  FILES ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_CORE_MODULES})
 target_link_libraries(helloworld OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
 add_executable(rod rod.cpp)
 target_sources(rod PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES} ${PROJECT_SOURCE_DIR}/mplot/RodVisual.cppm
+  FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES} ${PROJECT_SOURCE_DIR}/mplot/RodVisual.cppm
 )
 target_link_libraries(rod OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
 add_executable(rod_with_normals rod_with_normals.cpp)
 target_sources(rod_with_normals PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES} ${PROJECT_SOURCE_DIR}/mplot/RodVisual.cppm ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.cppm
+  FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES} ${PROJECT_SOURCE_DIR}/mplot/RodVisual.cppm ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.cppm
   )
 target_link_libraries(rod_with_normals OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
 add_executable(ellipsoid ellipsoid.cpp)
 target_sources(ellipsoid PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
   ${PROJECT_SOURCE_DIR}/mplot/RodVisual.cppm
   ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.cppm
 )
@@ -133,7 +38,7 @@ target_link_libraries(ellipsoid OpenGL::GL glfw Freetype::Freetype glad mplot_fo
 if(NOT APPLE)
   add_executable(geodesic geodesic.cpp)
   target_sources(geodesic PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-    FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
     ${PROJECT_SOURCE_DIR}/mplot/RodVisual.cppm
     ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.cppm
     ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.cppm
@@ -143,14 +48,14 @@ endif()
 
 add_executable(vectorvis vectorvis.cpp)
 target_sources(vectorvis PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
   ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.cppm
 )
 target_link_libraries(vectorvis OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
 add_executable(cray_eye cray_eye.cpp)
 target_sources(cray_eye PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
   ${PROJECT_SOURCE_DIR}/mplot/SphereVisual.cppm
   ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.cppm
   ${PROJECT_SOURCE_DIR}/maths/sm/winder.cppm
@@ -160,7 +65,7 @@ target_link_libraries(cray_eye OpenGL::GL glfw Freetype::Freetype glad mplot_fon
 
 add_executable(graph1 graph1.cpp)
 target_sources(graph1 PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
   ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
   ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
   ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
@@ -170,7 +75,7 @@ target_link_libraries(graph1 OpenGL::GL glfw Freetype::Freetype glad mplot_fontd
 # sm::grid visualization example
 add_executable(grid_simple grid_simple.cpp)
 target_sources(grid_simple PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
   ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
   ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
 )
@@ -180,7 +85,7 @@ if(NOT APPLE)
   # Instancing also not available on Apple (limited to OpenGL 4.1)
   add_executable(breadcrumbs breadcrumbs.cpp)
   target_sources(breadcrumbs PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-    FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
     ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.cppm
     ${PROJECT_SOURCE_DIR}/mplot/InstancedScatterVisual.cppm
   )
@@ -189,8 +94,8 @@ endif()
 
 add_executable(showcase showcase.cpp)
 target_sources(showcase PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
-  ${SM_HEXGRID_MODULES}
+  FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  ${MPLOT_MATHS_HEXGRID_MODULES}
   ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
   ${PROJECT_SOURCE_DIR}/mplot/TriaxesVisual.cppm
   ${PROJECT_SOURCE_DIR}/mplot/ScatterVisual.cppm
@@ -203,7 +108,7 @@ target_sources(showcase PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_D
 
   add_executable(hexgrid hexgrid.cpp)
   target_sources(hexgrid PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-    FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES} ${SM_HEXGRID_MODULES}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_HEXGRID_MODULES}
     ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
   )
   target_link_libraries(hexgrid OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)

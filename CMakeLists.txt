@@ -16,6 +16,9 @@ message(STATUS "  (This can be changed with `cmake -DCMAKE_INSTALL_PREFIX=/some/
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Add our cmake directory and our submodule maths's cmake dir to cmake modules path
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+
 # For future import std; support
 # set(CMAKE_CXX_EXTENSIONS ON)
 # Tell CMake that we explicitly want `import std`. This will initialize the
@@ -186,121 +189,16 @@ endif() # else we have it in a directory included by default in the path
 #
 # sebsjames/maths module groups
 #
-set(SM_CONSTEXPR_MATH_MODULES
-  ${PROJECT_SOURCE_DIR}/sm/mathconst.cppm
-  ${PROJECT_SOURCE_DIR}/sm/constexpr_math.cppm
-)
-set(SM_POLYSOLVE_MODULES
-  ${SM_CONSTEXPR_MATH_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/polysolve.cppm
-)
-set(SM_BESSEL_I0_MODULES
-  ${SM_POLYSOLVE_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/bessel_i0.cppm
-)
-set(SM_RANDOM_MODULES
-  ${SM_BESSEL_I0_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/random
-)
-set(SM_RANGE_MODULES
-  ${SM_CONSTEXPR_MATH_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/trait_tests.cppm
-  ${PROJECT_SOURCE_DIR}/sm/range.cppm
-)
-set(SM_VEC_MODULES
-  ${SM_RANGE_MODULES}
-  ${SM_RANDOM_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/vec.cppm
-)
-set(SM_VVEC_MODULES
-  ${SM_RANGE_MODULES}
-  ${SM_RANDOM_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/vvec.cppm
-)
-set(SM_SCALE_MODULES
-  ${SM_VVEC_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/scale.cppm
-)
-set(SM_UTIL_MODULES
-  ${PROJECT_SOURCE_DIR}/sm/trait_tests.cppm
-  ${PROJECT_SOURCE_DIR}/sm/util.cppm
-)
-set(SM_HDFDATA_MODULES
-  ${SM_VEC_MODULES}
-  ${SM_VVEC_MODULES}
-  ${SM_UTIL_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/hdfdata.cppm
-)
-set(SM_QUATERNION_MODULES
-  ${SM_VEC_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/quaternion.cppm
-)
-set(SM_MAT_MODULES
-  ${SM_QUATERNION_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/mat.cppm
-)
-set(SM_BEZCOORD_MODULES
-  ${SM_VEC_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/bezcoord.cppm
-)
-set(SM_HEX_MODULES
-  ${SM_BEZCOORD_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/hex.cppm
-)
-set(SM_WINDER_MODULES
-  ${SM_VEC_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/winder.cppm
-)
-set(SM_BOOTSTRAP_MODULES
-  ${SM_VEC_MODULES}
-  ${SM_VVEC_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/bootstrap.cppm
-)
-set(SM_GRID_MODULES
-  ${SM_VEC_MODULES}
-  ${SM_VVEC_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/grid.cppm
-)
-set(SM_ALGO_MODULES
-  ${SM_VEC_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/algo.cppm
-)
-set(SM_NM_SIMPLEX_MODULES
-  ${SM_ALGO_MODULES}
-  ${SM_VVEC_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/nm_simplex.cppm
-)
-set(SM_HISTO_MODULES
-  ${SM_VEC_MODULES}
-  ${SM_VVEC_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/histo.cppm
-)
-set(SM_BOXFILTER_MODULES
-  ${SM_VEC_MODULES}
-  ${SM_VVEC_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/boxfilter.cppm
-)
-set(SM_GEOMETRY_MODULES
-  ${SM_ALGO_MODULES}
-  ${SM_VVEC_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/geometry.cppm
-)
-set(SM_BEZCURVE_MODULES
-  ${SM_BEZCOORD_MODULES}
-  ${SM_MAT_MODULES}
-  ${SM_NM_SIMPLEX_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/binomial.cppm
-  ${PROJECT_SOURCE_DIR}/sm/bezcurve.cppm
-)
-set(SM_BEZCURVEPATH_MODULES
-  ${SM_BEZCURVE_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/bezcurvepath.cppm
-)
-set(SM_HEXGRID_MODULES
-  ${SM_BEZCURVEPATH_MODULES}
-  ${SM_HEX_MODULES}
-  ${PROJECT_SOURCE_DIR}/sm/hexgrid.cppm
-)
+
+# Include maths module defs
+include(${PROJECT_SOURCE_DIR}/maths/cmake/module_definitions.cmake)
+setup_module_variables_for_maths (${PROJECT_SOURCE_DIR}/maths)
+
+# Include our own module defs
+include(${PROJECT_SOURCE_DIR}/cmake/module_definitions.cmake)
+setup_module_variables_for_mathplot_maths (${PROJECT_SOURCE_DIR}/maths)
+setup_module_variables_for_mathplot (${PROJECT_SOURCE_DIR})
+
 
 # All the mathplot headers are here
 add_subdirectory(mplot)
