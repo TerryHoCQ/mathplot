@@ -25,35 +25,35 @@ set(SM_CORE_MODULES
 )
 # Base modules for mathplot
 set(MPLOT_CORE_MODULES
-  ${PROJECT_SOURCE_DIR}/mplot/tools.h
-  ${PROJECT_SOURCE_DIR}/mplot/unicode.h
-  ${PROJECT_SOURCE_DIR}/mplot/loadpng.h
-  ${PROJECT_SOURCE_DIR}/mplot/gl/version.h
-  ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.h
-  ${PROJECT_SOURCE_DIR}/mplot/colour.h
-  ${PROJECT_SOURCE_DIR}/mplot/win_t.h
-  ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.h
-  ${PROJECT_SOURCE_DIR}/mplot/Visual.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualFace.h
-  ${PROJECT_SOURCE_DIR}/mplot/TextFeatures.h
-  ${PROJECT_SOURCE_DIR}/mplot/TextGeometry.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualResources.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualFont.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/NavMesh.h
-  ${PROJECT_SOURCE_DIR}/mplot/ColourMap.h
-  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.h
-  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.h
-  ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.h
-  ${PROJECT_SOURCE_DIR}/mplot/graphing.h
-  ${PROJECT_SOURCE_DIR}/mplot/graphstyles.h
-  ${PROJECT_SOURCE_DIR}/mplot/DatasetStyle.h
-  ${PROJECT_SOURCE_DIR}/mplot/VisualDataModel.h
-  ${PROJECT_SOURCE_DIR}/mplot/compoundray/Ommatidium.h
+  ${PROJECT_SOURCE_DIR}/mplot/tools.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/unicode.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/loadpng.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/gl/version.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/gl/util_mx.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/colour.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/win_t.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/CoordArrows.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/VisualOwnable.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/Visual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/VisualGlfw.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/VisualFace.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/TextFeatures.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/TextGeometry.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/VisualResources.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/VisualCommon.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/VisualFont.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/VisualTextModel.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/VisualModel.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/NavMesh.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/ColourMap.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_cet.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/colourmaps_crameri.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/ColourMap_Lists.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/graphing.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/graphstyles.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/DatasetStyle.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/VisualDataModel.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/compoundray/Ommatidium.cppm
 )
 
 # Maths used in individual VisualModels, but not the mathplot core
@@ -82,18 +82,18 @@ set(SM_HEXGRID_MODULES
 )
 
 set(MPLOT_VISUALMODEL_MODULES
-  ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/GridVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/RodVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/SphereVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/compoundray/EyeVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/InstancedScatterVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/TriaxesVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/ScatterVisual.h
+  ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/RodVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/SphereVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/compoundray/EyeVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/InstancedScatterVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/TriaxesVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/ScatterVisual.cppm
 )
 
 # Each C++ module file has to be listed here (as they don't have a .cppm or .ixx file suffix)
@@ -112,21 +112,21 @@ target_link_libraries(helloworld OpenGL::GL glfw Freetype::Freetype glad mplot_f
 
 add_executable(rod rod.cpp)
 target_sources(rod PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES} ${PROJECT_SOURCE_DIR}/mplot/RodVisual.h
+  FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES} ${PROJECT_SOURCE_DIR}/mplot/RodVisual.cppm
 )
 target_link_libraries(rod OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
 add_executable(rod_with_normals rod_with_normals.cpp)
 target_sources(rod_with_normals PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES} ${PROJECT_SOURCE_DIR}/mplot/RodVisual.h ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.h
+  FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES} ${PROJECT_SOURCE_DIR}/mplot/RodVisual.cppm ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.cppm
   )
 target_link_libraries(rod_with_normals OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
 add_executable(ellipsoid ellipsoid.cpp)
 target_sources(ellipsoid PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
-  ${PROJECT_SOURCE_DIR}/mplot/RodVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.h
+  ${PROJECT_SOURCE_DIR}/mplot/RodVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.cppm
 )
 target_link_libraries(ellipsoid OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
@@ -134,9 +134,9 @@ if(NOT APPLE)
   add_executable(geodesic geodesic.cpp)
   target_sources(geodesic PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
     FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
-    ${PROJECT_SOURCE_DIR}/mplot/RodVisual.h
-    ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.h
-    ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.h
+    ${PROJECT_SOURCE_DIR}/mplot/RodVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.cppm
 )
   target_link_libraries(geodesic OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 endif()
@@ -144,17 +144,17 @@ endif()
 add_executable(vectorvis vectorvis.cpp)
 target_sources(vectorvis PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
-  ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.h
+  ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.cppm
 )
 target_link_libraries(vectorvis OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
 add_executable(cray_eye cray_eye.cpp)
 target_sources(cray_eye PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
-  ${PROJECT_SOURCE_DIR}/mplot/SphereVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.h
+  ${PROJECT_SOURCE_DIR}/mplot/SphereVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.cppm
   ${PROJECT_SOURCE_DIR}/maths/sm/winder.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/compoundray/EyeVisual.h
+  ${PROJECT_SOURCE_DIR}/mplot/compoundray/EyeVisual.cppm
 )
 target_link_libraries(cray_eye OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
@@ -163,7 +163,7 @@ target_sources(graph1 PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR
   FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
   ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
   ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.h
+  ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
 )
 target_link_libraries(graph1 OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
@@ -172,7 +172,7 @@ add_executable(grid_simple grid_simple.cpp)
 target_sources(grid_simple PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
   ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/GridVisual.h
+  ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
 )
 target_link_libraries(grid_simple OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
@@ -181,8 +181,8 @@ if(NOT APPLE)
   add_executable(breadcrumbs breadcrumbs.cpp)
   target_sources(breadcrumbs PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
     FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
-    ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.h
-    ${PROJECT_SOURCE_DIR}/mplot/InstancedScatterVisual.h
+    ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/InstancedScatterVisual.cppm
   )
   target_link_libraries(breadcrumbs OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 endif()
@@ -191,20 +191,20 @@ add_executable(showcase showcase.cpp)
 target_sources(showcase PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES}
   ${SM_HEXGRID_MODULES}
-  ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/TriaxesVisual.h
-  ${PROJECT_SOURCE_DIR}/mplot/ScatterVisual.h
+  ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/TriaxesVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/ScatterVisual.cppm
   ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/GridVisual.h
+  ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
   ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.h
+  ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
 )
   target_link_libraries(showcase OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(hexgrid hexgrid.cpp)
   target_sources(hexgrid PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
     FILES ${SM_CORE_MODULES} ${MPLOT_CORE_MODULES} ${SM_HEXGRID_MODULES}
-    ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.h
+    ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
   )
   target_link_libraries(hexgrid OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
