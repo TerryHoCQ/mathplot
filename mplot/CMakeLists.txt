@@ -32,7 +32,7 @@ install(
   VisualDefaultShaders.h
 
   VisualFaceBase.h
-  VisualFace.h
+  VisualFaceAsm.hpp
 
   VisualResourcesBase.h
   VisualResources.h

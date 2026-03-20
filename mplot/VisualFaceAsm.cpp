@@ -100,7 +100,7 @@ INCBIN(dvsansbi, "./fonts/dejavu/DejaVuSans-BoldOblique.ttf");
 # error "Inline assembly code for including truetype fonts in the binary only work on Linux/MacOS (and then, probably only on Intel compatible compilers. Sorry about that!"
 #endif
 
-#include <mplot/VisualFaceAsm.h>
+#include <mplot/VisualFaceAsm.hpp>
 
 // Dummy function
 int meaningless::function() { return 42; }

@@ -26,11 +26,7 @@ module;
 #include <utility>
 #include <fstream>
 
-#include <mplot/VisualFaceAsm.h>
-
-/*
- * Module starts here
- */
+#include <mplot/VisualFaceAsm.hpp>
 
 export module mplot.visualface;
 
