@@ -1,4 +1,4 @@
-// See also VisualFaceAsm.c
+// See also VisualFaceAsm.cpp
 
 // These external pointers are set up by the inline assembly above
 #ifndef _MSC_VER
