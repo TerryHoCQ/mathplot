@@ -2,16 +2,16 @@
  * An example mplot::Visual scene, containing a HexGrid.
  */
 
+#include <memory>
 #include <iostream>
 #include <vector>
 #include <cmath>
 
-#include <sm/vec>
-#include <sm/hexgrid>
+import sm.vec;
+import sm.hexgrid;
 
-#include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/HexGridVisual.h>
+import mplot.visual;
+import mplot.hexgridvisual;
 
 int main()
 {
@@ -55,7 +55,7 @@ int main()
     // Add a HexGridVisual to display the hexgrid within the mplot::Visual scene
     sm::vec<float, 3> offset = { 0.0, -0.05, 0.0 };
     auto hgv = std::make_unique<mplot::HexGridVisual<float>>(&hg, offset);
-    v.bindmodel (hgv);
+    hgv->set_parent (v.get_id());
     hgv->setScalarData (&data);
     hgv->finalize();
     v.addVisualModel (hgv);

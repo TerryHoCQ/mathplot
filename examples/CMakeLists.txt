@@ -1,14 +1,14 @@
 # All #includes in test programs have to be #include <mplot/header.h>
 include_directories(BEFORE ${PROJECT_SOURCE_DIR})
 
-# Each C++ module file has to be listed here (as they don't have a .cppm or .ixx file suffix)
-set_source_files_properties (
-  ${MPLOT_MATHS_CORE_MODULES}
-  ${MPLOT_CORE_MODULES}
-  ${MPLOT_MATHS_VISUALMODEL_MODULES}
-  ${MPLOT_VISUALMODEL_MODULES}
-  PROPERTIES LANGUAGE CXX
-)
+# Each C++ module file has to be listed here (as they may not have a .cppm file suffix)
+#set_source_files_properties (
+#  ${MPLOT_MATHS_CORE_MODULES}
+#  ${MPLOT_MATHS_VISUALMODEL_MODULES}
+#  ${MPLOT_CORE_MODULES}
+#  ${MPLOT_VISUALMODEL_MODULES}
+#  PROPERTIES LANGUAGE CXX
+#)
 
 add_executable(helloworld helloworld.cpp)
 target_sources(helloworld PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
@@ -96,12 +96,12 @@ add_executable(showcase showcase.cpp)
 target_sources(showcase PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
   ${MPLOT_MATHS_HEXGRID_MODULES}
+  ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+  ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
   ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
   ${PROJECT_SOURCE_DIR}/mplot/TriaxesVisual.cppm
   ${PROJECT_SOURCE_DIR}/mplot/ScatterVisual.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
   ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
   ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
 )
   target_link_libraries(showcase OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
@@ -113,11 +113,17 @@ target_sources(showcase PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_D
   )
   target_link_libraries(hexgrid OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
-if(0) # During development
-
+if(BUILD_EXAMPLES_EXTRA)
   # Basic mplot::Visual class example
   add_executable(visual visual.cpp)
-  target_link_libraries(visual OpenGL::GL glfw Freetype::Freetype)
+  target_sources(visual PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_HEXGRID_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
+  )
+  target_link_libraries(visual OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+endif()
+
+if (0) # During development
 
   add_executable(convolve_rect convolve_rect.cpp)
   target_link_libraries(convolve_rect OpenGL::GL glfw Freetype::Freetype)

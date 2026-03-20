@@ -227,10 +227,12 @@ endif(BUILD_UTILS)
 add_subdirectory(fonts)
 
 # Example code (you can also see tests/ for examples)
+option(BUILD_EXAMPLES_EXTRA "Build extra examples" OFF)
 option(BUILD_EXAMPLES "Build examples" ON)
-if(BUILD_EXAMPLES)
+if(BUILD_EXAMPLES OR BUILD_EXAMPLES_EXTRA)
   add_subdirectory(examples)
-endif(BUILD_EXAMPLES)
+endif(BUILD_EXAMPLES OR BUILD_EXAMPLES_EXTRA)
+
 
 # Additional examples (requires BUILD_EXAMPLES ON)
 option(BUILD_DOC_SCREENSHOTS "Build documentation screenshot examples" OFF)
