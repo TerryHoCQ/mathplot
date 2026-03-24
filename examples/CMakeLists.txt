@@ -104,14 +104,22 @@ target_sources(showcase PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_D
   ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
   ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
 )
-  target_link_libraries(showcase OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+target_link_libraries(showcase OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
-  add_executable(hexgrid hexgrid.cpp)
-  target_sources(hexgrid PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_HEXGRID_MODULES}
-    ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
-  )
-  target_link_libraries(hexgrid OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+add_executable(hexgrid hexgrid.cpp)
+target_sources(hexgrid PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_HEXGRID_MODULES}
+  ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
+)
+target_link_libraries(hexgrid OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+add_executable(model_crawler model_crawler.cpp)
+target_sources(model_crawler PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_HEXGRID_MODULES}
+  ${PROJECT_SOURCE_DIR}/mplot/InstancedScatterVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.cppm
+)
+target_link_libraries(model_crawler OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
 if(BUILD_EXAMPLES_EXTRA)
   # Basic mplot::Visual class example
