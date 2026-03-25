@@ -2,17 +2,23 @@
  * Test Nelder Mead Simplex algorithm on the Rosenbrock banana function.
  */
 
-#include <sm/hexgrid>
-#include <sm/nm_simplex>
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/random>
-
-#include <mplot/Visual.h>
-#include <mplot/TriFrameVisual.h>
-#include <mplot/HexGridVisual.h>
+#include <cstdint>
 #include <iostream>
+#include <memory>
+#include <vector>
 #include <chrono>
+#include <limits>
+#include <cmath>
+
+import sm.hexgrid;
+import sm.nm_simplex;
+import sm.vec;
+import sm.vvec;
+import sm.random;
+
+import mplot.visual;
+import mplot.triframevisual;
+import mplot.hexgridvisual;
 
 // Here's the Rosenbrock banana function
 template<typename T>
@@ -46,7 +52,7 @@ int main()
     // Add a 'triangle visual' to be visualised as three rods
     sm::vec<float> _offset = {0,0,0};
     auto tfv = std::make_unique<mplot::TriFrameVisual<FLT>>(_offset);
-    v.bindmodel (tfv);
+    tfv->set_parent (v.get_id());
     tfv->radius = 0.01f;
     tfv->sradius = 0.01f;
     std::vector<FLT> tri_values(3, 0);
@@ -68,13 +74,13 @@ int main()
     sm::hexgrid hg (0.01, 10, 0);
     hg.setCircularBoundary (2.5);
     std::vector<FLT> banana_vals(hg.num(), 0.0f);
-    for (size_t i = 0; i < hg.num(); ++i) {
+    for (std::size_t i = 0; i < hg.num(); ++i) {
         banana_vals[i] = banana<FLT> (hg.d_x[i], hg.d_y[i]);
     }
     sm::range<FLT> mm = sm::range<FLT>::get_from (banana_vals);
     std::cout << "Banana surface range: " << mm << std::endl;
     auto hgv = std::make_unique<mplot::HexGridVisual<FLT>>(&hg, _offset);
-    v.bindmodel (hgv);
+    hgv->set_parent (v.get_id());
     hgv->hexVisMode = mplot::HexVisMode::Triangles;
     hgv->cm.setType (mplot::ColourMapType::Viridis);
     hgv->setScalarData (&banana_vals);
@@ -137,8 +143,8 @@ int main()
         v3 = { rng.get(), rng.get() };
         i_vertices = { v1, v2, v3 };
 
-        if (abs(thebest[0] - 1.0) < 1e-3 // Choose 1e-3 so that this will succeed with floats or doubles
-            && abs(thebest[1] - 1.0) < 1e-3) {
+        if (std::abs(thebest[0] - FLT{1}) < FLT{1e-3} // Choose 1e-3 so that this will succeed with floats or doubles
+            && std::abs(thebest[1] - FLT{1}) < FLT{1e-3}) {
             std::cout << "Test success" << std::endl;
             rtn = 0;
         } else {
