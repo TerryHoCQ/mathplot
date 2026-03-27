@@ -36,7 +36,7 @@ int main()
     // Create a HexGrid to show in the scene. Hexes outside the circular boundary will
     // all be discarded.
     sm::hexgrid hg(0.01f, 3.0f, 0.0f);
-    hg.setCircularBoundary (0.6f);
+    hg.set_circular_boundary (0.6f);
     std::cout << "Number of pixels in grid:" << hg.num() << std::endl;
 
 

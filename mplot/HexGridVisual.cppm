@@ -230,9 +230,9 @@ export namespace mplot
         {
             // Here's a complication. In a transformed grid, we can't rely on these. Should be able
             // to *compute* them though.
-            float sr = this->hg->getSR();
-            float vne = this->hg->getVtoNE();
-            float lr = this->hg->getLR();
+            float sr = this->hg->get_sr();
+            float vne = this->hg->get_v_to_ne();
+            float lr = this->hg->get_lr();
 
             uint32_t nhex = this->hg->num();
 
@@ -301,7 +301,7 @@ export namespace mplot
                 // Use a single colour for each hex, even though hex z positions are
                 // interpolated. Do the _colour_ scaling:
                 std::array<float, 3> clr = this->setColour (hi);
-                if (this->showboundary && (this->hg->vhexen[hi])->boundaryHex() == true) {
+                if (this->showboundary && (this->hg->vhexen[hi])->boundary_hex() == true) {
                     this->markHex (hi);
                 }
                 if (this->showcentre && _x == 0.0f && _y == 0.0f) {
@@ -580,9 +580,9 @@ export namespace mplot
         // rectangle of two triangles.
         void computeZerogridIndices()
         {
-            float sr = this->hg->getSR();
-            float vne = this->hg->getVtoNE();
-            float lr = this->hg->getLR();
+            float sr = this->hg->get_sr();
+            float vne = this->hg->get_v_to_ne();
+            float lr = this->hg->get_lr();
             uint32_t nhex = this->hg->num();
 
             sm::vec<float> vtx_0, vtx_1, vtx_2;
@@ -677,9 +677,9 @@ export namespace mplot
             std::array<float, 3> blk = { 0, 0, 0 };
             sm::vec<float, 3> uz = {0.0f, 0.0f, 1.0f};
 
-            float sw = this->hg->getd()/80.0f; // sphere radius (~width)
-            float lw = this->hg->getd()/40.0f; // line width
-            float lh = this->hg->getd()/60.0f; // line height
+            float sw = this->hg->get_d()/80.0f; // sphere radius (~width)
+            float lw = this->hg->get_d()/40.0f; // line width
+            float lh = this->hg->get_d()/60.0f; // line height
 
             // Vertices and lines of base hexagon
             this->computeSphere (this->hg->sw_loc.plus_one_dim(), clr, sw, 14, 12);
@@ -794,34 +794,34 @@ export namespace mplot
             clr = blk;
             if (!this->hg->p1.has_nan() && !this->hg->q1.has_nan()
                 && !this->hg->p2.has_nan() && !this->hg->q2.has_nan()) {
-                this->computeLine (this->hg->p1.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
-                                   this->hg->q1.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
+                this->computeLine (this->hg->p1.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
+                                   this->hg->q1.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
                                    uz, blk, blk, lw/2.0f, lh);
 
-                this->computeLine (this->hg->p2.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
-                                   this->hg->q2.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
+                this->computeLine (this->hg->p2.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
+                                   this->hg->q2.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
                                    uz, blk, blk, lw/2.0f, lh);
             }
 
             // finding i5
             if (!this->hg->p3.has_nan() && !this->hg->q3.has_nan()
                 && !this->hg->p4.has_nan() && !this->hg->q4.has_nan()) {
-                this->computeLine (this->hg->p3.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
-                                   this->hg->q3.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
+                this->computeLine (this->hg->p3.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
+                                   this->hg->q3.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
                                    uz, blk, blk, lw/2.0f, lh);
 
-                this->computeLine (this->hg->p4.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
-                                   this->hg->q4.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
+                this->computeLine (this->hg->p4.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
+                                   this->hg->q4.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
                                    uz, blk, blk, lw/2.0f, lh);
             }
 
             // intersection points
-            sw = this->hg->getd()/40.0f;
+            sw = this->hg->get_d()/40.0f;
             if (!this->hg->i1.has_nan()) {
                 clr = {1,0,0};
                 this->computeSphere (this->hg->i1.plus_one_dim(), clr, sw, 14, 12);
-                this->addLabel ("i1", (this->hg->i1).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->getd(),
-                                mplot::TextFeatures(0.1f * this->hg->getd(), 48, clr));
+                this->addLabel ("i1", (this->hg->i1).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->get_d(),
+                                mplot::TextFeatures(0.1f * this->hg->get_d(), 48, clr));
                 clr = {0,0,0};
             }
             if (!this->hg->i2.has_nan()) {
@@ -835,202 +835,202 @@ export namespace mplot
             }
             if (!this->hg->i5.has_nan()) {
                 this->computeSphere (this->hg->i5.plus_one_dim(), clr, sw, 14, 12);
-                this->addLabel ("i5", (this->hg->i5).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->getd(),
-                                mplot::TextFeatures(0.1f * this->hg->getd(), 48, clr));
+                this->addLabel ("i5", (this->hg->i5).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->get_d(),
+                                mplot::TextFeatures(0.1f * this->hg->get_d(), 48, clr));
             }
 
             // p/q points used to compute additional pgrams
             if (!this->hg->q2.has_nan()) {
                 clr = {0,0,1};
                 this->computeSphere (this->hg->q2.plus_one_dim(), clr, sw, 14, 12);
-                this->addLabel ("q2", (this->hg->q2).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->getd(),
-                                mplot::TextFeatures(0.1f * this->hg->getd(), 48, clr));
+                this->addLabel ("q2", (this->hg->q2).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->get_d(),
+                                mplot::TextFeatures(0.1f * this->hg->get_d(), 48, clr));
             }
             if (!this->hg->q1.has_nan()) {
                 clr = {0,1,0};
                 this->computeSphere (this->hg->q1.plus_one_dim(), clr, sw, 14, 12);
-                this->addLabel ("q1", (this->hg->q1).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->getd(),
-                                mplot::TextFeatures(0.1f * this->hg->getd(), 48, clr));
+                this->addLabel ("q1", (this->hg->q1).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->get_d(),
+                                mplot::TextFeatures(0.1f * this->hg->get_d(), 48, clr));
 
             }
             if (!this->hg->q3.has_nan()) {
                 clr = {0,0,1};
                 this->computeSphere (this->hg->q3.plus_one_dim(), clr, sw, 14, 12);
-                this->addLabel ("q3", (this->hg->q3).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->getd(),
-                                mplot::TextFeatures(0.1f * this->hg->getd(), 48, clr));
+                this->addLabel ("q3", (this->hg->q3).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->get_d(),
+                                mplot::TextFeatures(0.1f * this->hg->get_d(), 48, clr));
             }
             if (!this->hg->q4.has_nan()) {
                 clr = {0,1,0};
                 this->computeSphere (this->hg->q4.plus_one_dim(), clr, sw, 14, 12);
-                this->addLabel ("q4", (this->hg->q4).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->getd(),
-                                mplot::TextFeatures(0.1f * this->hg->getd(), 48, clr));
+                this->addLabel ("q4", (this->hg->q4).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->get_d(),
+                                mplot::TextFeatures(0.1f * this->hg->get_d(), 48, clr));
             }
             if (!this->hg->q5.has_nan()) {
                 clr = {0,1,0};
                 this->computeSphere (this->hg->q5.plus_one_dim(), clr, sw, 14, 12);
-                this->addLabel ("q5", (this->hg->q5).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->getd(),
-                                mplot::TextFeatures(0.1f * this->hg->getd(), 48, clr));
+                this->addLabel ("q5", (this->hg->q5).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->get_d(),
+                                mplot::TextFeatures(0.1f * this->hg->get_d(), 48, clr));
             }
             if (!this->hg->q6.has_nan()) {
                 clr = {0,1,0};
                 this->computeSphere (this->hg->q6.plus_one_dim(), clr, sw, 14, 12);
-                this->addLabel ("q6", (this->hg->q6).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->getd(),
-                                mplot::TextFeatures(0.1f * this->hg->getd(), 48, clr));
+                this->addLabel ("q6", (this->hg->q6).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->get_d(),
+                                mplot::TextFeatures(0.1f * this->hg->get_d(), 48, clr));
             }
             if (!this->hg->q7.has_nan()) {
                 clr = {0,1,0};
                 this->computeSphere (this->hg->q7.plus_one_dim(), clr, sw, 14, 12);
-                this->addLabel ("q7", (this->hg->q7).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->getd(),
-                                mplot::TextFeatures(0.1f * this->hg->getd(), 48, clr));
+                this->addLabel ("q7", (this->hg->q7).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->get_d(),
+                                mplot::TextFeatures(0.1f * this->hg->get_d(), 48, clr));
             }
             if (!this->hg->q8.has_nan()) {
                 clr = {0,1,0};
                 this->computeSphere (this->hg->q8.plus_one_dim(), clr, sw, 14, 12);
-                this->addLabel ("q8", (this->hg->q8).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->getd(),
-                                mplot::TextFeatures(0.1f * this->hg->getd(), 48, clr));
+                this->addLabel ("q8", (this->hg->q8).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->get_d(),
+                                mplot::TextFeatures(0.1f * this->hg->get_d(), 48, clr));
             }
 #if 1 // 60/300 units vectors
             if (!this->hg->i1.has_nan() && !this->hg->unit_60.has_nan()) {
                 clr = {1,0,0};
-                this->computeLine (this->hg->i1.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
-                                   (this->hg->i1+this->hg->unit_60).plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
+                this->computeLine (this->hg->i1.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
+                                   (this->hg->i1+this->hg->unit_60).plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
                                    uz, clr, clr, lw/2.0f, lh);
             }
             if (!this->hg->i5.has_nan() && !this->hg->unit_300.has_nan()) {
                 clr = {0,0,0};
-                this->computeLine (this->hg->i5.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
-                                   (this->hg->i5+this->hg->unit_300).plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
+                this->computeLine (this->hg->i5.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
+                                   (this->hg->i5+this->hg->unit_300).plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
                                    uz, clr, clr, lw/2.0f, lh);
             }
             if (!this->hg->i1.has_nan() && !this->hg->unit_120.has_nan()) {
                 clr = {1,0,0};
-                this->computeLine (this->hg->i1.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
-                                   (this->hg->i1+this->hg->unit_120).plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
+                this->computeLine (this->hg->i1.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
+                                   (this->hg->i1+this->hg->unit_120).plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
                                    uz, clr, clr, lw/2.0f, lh);
             }
 #endif
             if (!this->hg->p1.has_nan()) {
                 clr = {0,1,0};
                 this->computeSphere (this->hg->p1.plus_one_dim(), clr, sw, 14, 12);
-                this->addLabel ("p1", (this->hg->p1).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->getd(),
-                                mplot::TextFeatures(0.1f * this->hg->getd(), 48, clr));
+                this->addLabel ("p1", (this->hg->p1).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->get_d(),
+                                mplot::TextFeatures(0.1f * this->hg->get_d(), 48, clr));
             }
             if (!this->hg->p2.has_nan()) {
                 clr = {0,0,1};
                 this->computeSphere (this->hg->p2.plus_one_dim(), clr, sw, 14, 12);
-                this->addLabel ("p2", (this->hg->p2).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->getd(),
-                                mplot::TextFeatures(0.1f * this->hg->getd(), 48, clr));
+                this->addLabel ("p2", (this->hg->p2).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->get_d(),
+                                mplot::TextFeatures(0.1f * this->hg->get_d(), 48, clr));
             }
             if (!this->hg->p3.has_nan()) {
                 clr = {0,0,1};
                 this->computeSphere (this->hg->p3.plus_one_dim(), clr, sw, 14, 12);
-                this->addLabel ("p3", (this->hg->p3).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->getd(),
-                                mplot::TextFeatures(0.1f * this->hg->getd(), 48, clr));
+                this->addLabel ("p3", (this->hg->p3).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->get_d(),
+                                mplot::TextFeatures(0.1f * this->hg->get_d(), 48, clr));
             }
             if (!this->hg->p4.has_nan()) {
                 clr = {0,1,0};
                 this->computeSphere (this->hg->p4.plus_one_dim(), clr, sw, 14, 12);
-                this->addLabel ("p4", (this->hg->p4).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->getd(),
-                                mplot::TextFeatures(0.1f * this->hg->getd(), 48, clr));
+                this->addLabel ("p4", (this->hg->p4).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->get_d(),
+                                mplot::TextFeatures(0.1f * this->hg->get_d(), 48, clr));
             }
             if (!this->hg->p5.has_nan()) {
                 clr = {0,1,0};
                 this->computeSphere (this->hg->p5.plus_one_dim(), clr, sw, 14, 12);
-                this->addLabel ("p5", (this->hg->p5).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->getd(),
-                                mplot::TextFeatures(0.1f * this->hg->getd(), 48, clr));
+                this->addLabel ("p5", (this->hg->p5).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->get_d(),
+                                mplot::TextFeatures(0.1f * this->hg->get_d(), 48, clr));
             }
             if (!this->hg->p6.has_nan()) {
                 clr = {0,1,0};
                 this->computeSphere (this->hg->p6.plus_one_dim(), clr, sw, 14, 12);
-                this->addLabel ("p6", (this->hg->p6).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->getd(),
-                                mplot::TextFeatures(0.1f * this->hg->getd(), 48, clr));
+                this->addLabel ("p6", (this->hg->p6).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->get_d(),
+                                mplot::TextFeatures(0.1f * this->hg->get_d(), 48, clr));
             }
             if (!this->hg->p8.has_nan()) {
                 clr = {0,1,0};
                 this->computeSphere (this->hg->p8.plus_one_dim(), clr, sw, 14, 12);
-                this->addLabel ("p8", (this->hg->p8).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->getd(),
-                                mplot::TextFeatures(0.1f * this->hg->getd(), 48, clr));
+                this->addLabel ("p8", (this->hg->p8).plus_one_dim()+sm::vec<float>({sw,0,0.02}) * this->hg->get_d(),
+                                mplot::TextFeatures(0.1f * this->hg->get_d(), 48, clr));
             }
 
             // Draw grey triangles/rects for the relevant areas
             clr = {0.5f, 0.5f, 0.5f};
             // t1
             if (!this->hg->a1_tl.has_nan() && !this->hg->i1.has_nan() && !this->hg->i2.has_nan()) {
-                this->computeLine (this->hg->a1_tl.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
-                                   this->hg->i1.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
+                this->computeLine (this->hg->a1_tl.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
+                                   this->hg->i1.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
                                    uz, clr, clr, lw/2.0f, lh);
-                this->computeLine (this->hg->i1.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
-                                   this->hg->i2.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
+                this->computeLine (this->hg->i1.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
+                                   this->hg->i2.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
                                    uz, clr, clr, lw/2.0f, lh);
-                this->computeLine (this->hg->i2.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
-                                   this->hg->a1_tl.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
+                this->computeLine (this->hg->i2.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
+                                   this->hg->a1_tl.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
                                    uz, clr, clr, lw/2.0f, lh);
             }
             // t2
             if (!this->hg->a1_bl.has_nan() && !this->hg->i3.has_nan() && !this->hg->i4.has_nan()) {
-                this->computeLine (this->hg->a1_bl.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
-                                   this->hg->i3.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
+                this->computeLine (this->hg->a1_bl.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
+                                   this->hg->i3.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
                                    uz, clr, clr, lw/2.0f, lh);
-                this->computeLine (this->hg->i3.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
-                                   this->hg->i4.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
+                this->computeLine (this->hg->i3.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
+                                   this->hg->i4.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
                                    uz, clr, clr, lw/2.0f, lh);
-                this->computeLine (this->hg->i4.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
-                                   this->hg->a1_bl.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
+                this->computeLine (this->hg->i4.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
+                                   this->hg->a1_bl.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
                                    uz, clr, clr, lw/2.0f, lh);
             }
 
             // Sides of a1
             if (!this->hg->a1_bl.has_nan() && !this->hg->i2.has_nan() && !this->hg->i3.has_nan()) {
-                this->computeLine (this->hg->a1_bl.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
-                                   this->hg->a1_bl.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
+                this->computeLine (this->hg->a1_bl.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
+                                   this->hg->a1_bl.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
                                    uz, clr, clr, lw/2.0f, lh);
-                this->computeLine (this->hg->i2.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
-                                   this->hg->i3.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
+                this->computeLine (this->hg->i2.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
+                                   this->hg->i3.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
                                    uz, clr, clr, lw/2.0f, lh);
             }
 
             // Side of the central rectangle, from i5 and up
             if (!this->hg->i5.has_nan() && !this->hg->i6.has_nan()) {
-                this->computeLine (this->hg->i5.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
-                                   this->hg->i6.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->getd(),
+                this->computeLine (this->hg->i5.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
+                                   this->hg->i6.plus_one_dim()+sm::vec<float>({0,0,0.02}) * this->hg->get_d(),
                                    uz, clr, clr, lw/2.0f, lh);
             }
 
             // Parallel and rectangle vertices. Do vert cylinders
             if (!this->hg->pll1_top.has_nan()) {
                 clr = mplot::colour::magenta2;
-                this->computeTube (this->hg->pll1_top.plus_one_dim()+sm::vec<float>({0,0,0.1}) * this->hg->getd(),
-                                   this->hg->pll1_top.plus_one_dim()+sm::vec<float>({0,0,-0.1}) * this->hg->getd(),
+                this->computeTube (this->hg->pll1_top.plus_one_dim()+sm::vec<float>({0,0,0.1}) * this->hg->get_d(),
+                                   this->hg->pll1_top.plus_one_dim()+sm::vec<float>({0,0,-0.1}) * this->hg->get_d(),
                                    clr, clr, lw/4.0f);
             }
             if (!this->hg->pll1_br.has_nan()) {
                 clr = mplot::colour::deeppink2;
-                this->computeTube (this->hg->pll1_br.plus_one_dim()+sm::vec<float>({0,0,0.1}) * this->hg->getd(),
-                                   this->hg->pll1_br.plus_one_dim()+sm::vec<float>({0,0,-0.1}) * this->hg->getd(),
+                this->computeTube (this->hg->pll1_br.plus_one_dim()+sm::vec<float>({0,0,0.1}) * this->hg->get_d(),
+                                   this->hg->pll1_br.plus_one_dim()+sm::vec<float>({0,0,-0.1}) * this->hg->get_d(),
                                    clr, clr, lw/4.0f);
             }
             if (!this->hg->pll2_bot.has_nan()) {
                 clr = mplot::colour::dodgerblue2;
-                this->computeTube (this->hg->pll2_bot.plus_one_dim()+sm::vec<float>({0,0,0.1}) * this->hg->getd(),
-                                   this->hg->pll2_bot.plus_one_dim()+sm::vec<float>({0,0,-0.1}) * this->hg->getd(),
+                this->computeTube (this->hg->pll2_bot.plus_one_dim()+sm::vec<float>({0,0,0.1}) * this->hg->get_d(),
+                                   this->hg->pll2_bot.plus_one_dim()+sm::vec<float>({0,0,-0.1}) * this->hg->get_d(),
                                    clr, clr, lw/4.0f);
             }
             if (!this->hg->pll2_tr.has_nan()) {
                 clr = mplot::colour::darkgreen;
-                this->computeTube (this->hg->pll2_tr.plus_one_dim()+sm::vec<float>({0,0,0.1}) * this->hg->getd(),
-                                   this->hg->pll2_tr.plus_one_dim()+sm::vec<float>({0,0,-0.1}) * this->hg->getd(),
+                this->computeTube (this->hg->pll2_tr.plus_one_dim()+sm::vec<float>({0,0,0.1}) * this->hg->get_d(),
+                                   this->hg->pll2_tr.plus_one_dim()+sm::vec<float>({0,0,-0.1}) * this->hg->get_d(),
                                    clr, clr, lw/4.0f);
             }
             if (!this->hg->a1_tl.has_nan()) {
                 clr = mplot::colour::yellow;
-                this->computeTube (this->hg->a1_tl.plus_one_dim()+sm::vec<float>({0,0,0.1}) * this->hg->getd(),
-                                   this->hg->a1_tl.plus_one_dim()+sm::vec<float>({0,0,-0.1}) * this->hg->getd(),
+                this->computeTube (this->hg->a1_tl.plus_one_dim()+sm::vec<float>({0,0,0.1}) * this->hg->get_d(),
+                                   this->hg->a1_tl.plus_one_dim()+sm::vec<float>({0,0,-0.1}) * this->hg->get_d(),
                                    clr, clr, lw/4.0f);
             }
             if (!this->hg->a1_bl.has_nan()) {
                 clr = mplot::colour::green;
-                this->computeTube (this->hg->a1_bl.plus_one_dim()+sm::vec<float>({0,0,0.1}) * this->hg->getd(),
-                                   this->hg->a1_bl.plus_one_dim()+sm::vec<float>({0,0,-0.1}) * this->hg->getd(),
+                this->computeTube (this->hg->a1_bl.plus_one_dim()+sm::vec<float>({0,0,0.1}) * this->hg->get_d(),
+                                   this->hg->a1_bl.plus_one_dim()+sm::vec<float>({0,0,-0.1}) * this->hg->get_d(),
                                    clr, clr, lw/4.0f);
             }
        }

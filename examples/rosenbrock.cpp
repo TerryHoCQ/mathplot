@@ -72,7 +72,7 @@ int main()
 
     // Evaluate banana function and plot
     sm::hexgrid hg (0.01, 10, 0);
-    hg.setCircularBoundary (2.5);
+    hg.set_circular_boundary (2.5);
     std::vector<FLT> banana_vals(hg.num(), 0.0f);
     for (std::size_t i = 0; i < hg.num(); ++i) {
         banana_vals[i] = banana<FLT> (hg.d_x[i], hg.d_y[i]);
@@ -109,7 +109,7 @@ int main()
         std::chrono::steady_clock::time_point lastoptstep = std::chrono::steady_clock::now();
 
         // Now step until the algorithm is ready to finish
-        while (simp.state != sm::nm_simplex_state::ReadyToStop && !v.readyToFinish()) {
+        while (simp.state != sm::nm_simplex_state::ready_to_stop && !v.readyToFinish()) {
 
             // Perform optimisation steps slowly
             std::chrono::steady_clock::duration sinceoptstep = std::chrono::steady_clock::now() - lastoptstep;

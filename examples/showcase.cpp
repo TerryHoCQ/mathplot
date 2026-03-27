@@ -119,18 +119,18 @@ int main()
      */
     {
         sm::hexgrid hg(0.06f, 3.0f, 0.0f);
-        hg.setCircularBoundary (0.6f);
+        hg.set_circular_boundary (0.6f);
         // Make some dummy data (a sine wave) to make an interesting surface
         std::vector<float> data(hg.num(), 0.0f);
-        for (unsigned int ri=0; ri<hg.num(); ++ri) {
+        for (unsigned int ri = 0; ri < hg.num(); ++ri) {
             data[ri] = 0.05f + 0.15f*std::sin(10.0f*hg.d_x[ri]) * std::sin(1.8f*hg.d_y[ri]) ; // Range 0->1
         }
-        auto hgv = std::make_unique<mplot::HexGridVisual<float,mplot::gl::version_4_1>>(&hg, sm::vec<float>({-2,-0.5,0}));
+        auto hgv = std::make_unique<mplot::HexGridVisual<float, mplot::gl::version_4_1>>(&hg, sm::vec<float>{-2.0f, -0.5f, 0.0f});
         hgv->set_parent (v.get_id());
         hgv->setScalarData (&data);
         hgv->cm.setType (mplot::ColourMapType::Inferno);
         hgv->hexVisMode = mplot::HexVisMode::HexInterp; // Or mplot::HexVisMode::Triangles for a smoother surface plot
-        hgv->addLabel ("mplot::HexGridVisual", sm::vec<float>({0,-0.7,0}), mplot::TextFeatures(0.05));
+        hgv->addLabel ("mplot::HexGridVisual", sm::vec<float>{0.0f, -0.7f, 0.0f}, mplot::TextFeatures(0.05f));
         hgv->finalize();
         v.addVisualModel (hgv);
     }
