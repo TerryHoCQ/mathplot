@@ -91,7 +91,7 @@ export namespace mplot
             // Now scale the lengths for their size on screen. Do this with a linear or log scaling.
 
             // (if log) First replace zeros with NaNs so that log transform will work.
-            if (this->do_quiver_length_scaling == true && this->length_scale.get_type() == sm::scaling_function::Logarithmic) {
+            if (this->do_quiver_length_scaling == true && this->length_scale.get_type() == sm::scaling_function::logarithmic) {
                 dlengths.search_replace (Flt{0}, std::numeric_limits<Flt>::quiet_NaN());
             }
 
