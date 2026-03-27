@@ -81,6 +81,28 @@ export namespace mplot
             this->reinit();
         }
 
+        //! reinit just the colours based on vvec<T> data
+        void reinitColours()
+        {
+            std::size_t n_cfloats = this->vertexColors.size();
+            if (n_cfloats == 0u) { return; } // model doesn't exist yet
+
+            // Do start, then end
+            for (std::size_t i = 0; i < n_cfloats/2; i += 3) {
+                this->vertexColors[i]     = this->start_col[0];
+                this->vertexColors[i + 1] = this->start_col[1];
+                this->vertexColors[i + 2] = this->start_col[2];
+            }
+            for (std::size_t i = n_cfloats/2; i < n_cfloats; i += 3) {
+                this->vertexColors[i]     = this->end_col[0];
+                this->vertexColors[i + 1] = this->end_col[1];
+                this->vertexColors[i + 2] = this->end_col[2];
+            }
+
+            // Lastly, this call copies vertexColors (etc) into the OpenGL memory space
+            this->reinit_colour_buffer();
+        }
+
         //! The position of the start of the rod, given with respect to the parent's offset
         sm::vec<float, 3> start_coord = {0.0f, 0.0f, 0.0f};
         //! The position of the end of the rod, given with respect to the parent's offset
