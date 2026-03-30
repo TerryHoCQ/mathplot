@@ -7,12 +7,19 @@
  * Date: Nov 2020
  */
 module;
+#include <cstdint>
 #include <array>
 export module mplot.colour;
 
 export namespace mplot::colour
 {
     constexpr bool match (const std::array<float, 3>& c1, const std::array<float, 3>& c2) { return c1 == c2; }
+
+    // Convert hex colour value (e.g. 0x2971c3) into an array of floats in range [0, 1]. Same as ColourMap<>::rgb_array
+    constexpr std::array<float, 3> rgb_array (const std::uint32_t rgb)
+    {
+        return std::array<float,3>{ ((rgb >> 16) & 0xff) / 255.0f, ((rgb >> 8) & 0xff) / 255.0f, (rgb & 0xff) / 255.0f };
+    }
 
     constexpr std::array<float, 3> indian_red = {0.6901960784f,0.0901960784f,0.1215686275f};
     constexpr std::array<float, 3> crimson = {0.862745098f,0.0784313725f,0.2352941176f};

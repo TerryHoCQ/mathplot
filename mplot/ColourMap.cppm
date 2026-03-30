@@ -21,7 +21,7 @@ import sm.crc32;
 export namespace mplot
 {
     //! Different colour maps types.
-    enum class ColourMapType : uint32_t
+    enum class ColourMapType : std::uint32_t
     {
         // Python matplotlib maps
         Magma,
@@ -188,19 +188,19 @@ export namespace mplot
     // Define prefix increment and decrement operators for the ColourMapType enum class.
     mplot::ColourMapType& operator++(mplot::ColourMapType& t)
     {
-        t = static_cast<mplot::ColourMapType>((static_cast<uint32_t>(t) + 1u) % static_cast<uint32_t>(mplot::ColourMapType::N_entries));
+        t = static_cast<mplot::ColourMapType>((static_cast<std::uint32_t>(t) + 1u) % static_cast<std::uint32_t>(mplot::ColourMapType::N_entries));
         return t;
     }
     mplot::ColourMapType& operator--(mplot::ColourMapType& t)
     {
-        uint32_t ti = static_cast<uint32_t>(t);
-        ti = (ti == 0u ? static_cast<uint32_t>(mplot::ColourMapType::N_entries) - 1u : ti - 1u);
+        std::uint32_t ti = static_cast<std::uint32_t>(t);
+        ti = (ti == 0u ? static_cast<std::uint32_t>(mplot::ColourMapType::N_entries) - 1u : ti - 1u);
         t = static_cast<mplot::ColourMapType>(ti);
         return t;
     }
 
     // A flags class for ColourMaps, to flag features
-    enum class ColourMapFlags : uint32_t
+    enum class ColourMapFlags : std::uint32_t
     {
         one_d,
         two_d,
@@ -228,7 +228,7 @@ export namespace mplot
     sm::flags<mplot::ColourMapFlags> makeColourMapFlags (const mplot::ColourMapType t)
     {
         // Logic to create default flags
-        sm::flags<mplot::ColourMapFlags> f(uint32_t{0});
+        sm::flags<mplot::ColourMapFlags> f(std::uint32_t{0});
 
         // Dimensionality
         if (t == ColourMapType::DiscFourWhite
@@ -586,7 +586,7 @@ export namespace mplot
             ColourMapType cmt = mplot::ColourMapType::Plasma;
             std::string _s = s;
             mplot::tools::toLowerCase (_s);
-            uint32_t _s_crc = sm::crc32 (_s);
+            std::uint32_t _s_crc = sm::crc32 (_s);
             switch (_s_crc) {
             case sm::crc32 ("fixed"sv):
                 cmt = mplot::ColourMapType::Fixed; break;
@@ -1669,9 +1669,9 @@ export namespace mplot
         }
 
         //! How many colour datums does the colour map require?
-        static int numDatums (ColourMapType _t, bool _act_2d = false)
+        static std::int32_t numDatums (ColourMapType _t, bool _act_2d = false)
         {
-            int n = 0;
+            std::int32_t n = 0;
             switch (_t) {
             case ColourMapType::Trichrome:
             case ColourMapType::RGB:
@@ -1700,7 +1700,7 @@ export namespace mplot
 
             return n;
         }
-        int numDatums() const { return ColourMap::numDatums (this->type, this->act_2d); }
+        std::int32_t numDatums() const { return ColourMap::numDatums (this->type, this->act_2d); }
 
         //! The maximum number for the range of the datum to convert to a colour. 1 for
         //! floating point variables.
@@ -1715,12 +1715,12 @@ export namespace mplot
                 rm = 127;
             } else if constexpr (std::is_same<std::decay_t<T>, bool>::value == true) {
                 rm = true;
-            } else if constexpr (std::is_same<std::decay_t<T>, unsigned short>::value == true
-                                 || std::is_same<std::decay_t<T>, short>::value == true
-                                 || std::is_same<std::decay_t<T>, unsigned int>::value == true
-                                 || std::is_same<std::decay_t<T>, int>::value == true
-                                 || std::is_same<std::decay_t<T>, unsigned long long int>::value == true
-                                 || std::is_same<std::decay_t<T>, long long int>::value == true) {
+            } else if constexpr (std::is_same<std::decay_t<T>, std::uint16_t>::value == true
+                                 || std::is_same<std::decay_t<T>, std::int16_t>::value == true
+                                 || std::is_same<std::decay_t<T>, std::uint32_t>::value == true
+                                 || std::is_same<std::decay_t<T>, std::int32_t>::value == true
+                                 || std::is_same<std::decay_t<T>, std::uint64_t>::value == true
+                                 || std::is_same<std::decay_t<T>, std::int64_t>::value == true) {
                 // For long types, default to 8 bit input; user can change afterwards.
                 rm = 255;
             }
@@ -2924,7 +2924,7 @@ export namespace mplot
         }
 
         //! Set this->hue, sat and val from the passed in RGB hex value (e.g. 0xff00ff for magenta)
-        void setRGB (const uint32_t rgb) { this->setRGB (ColourMap<T>::rgb_array (rgb)); }
+        void setRGB (const std::uint32_t rgb) { this->setRGB (ColourMap<T>::rgb_array (rgb)); }
 
         //! Get the hue, in its most saturated form
         std::array<float, 3> getHueRGB() const { return ColourMap::hsv2rgb (this->hue, 1.0f, 1.0f); }
@@ -2981,7 +2981,7 @@ export namespace mplot
         static std::array<float,3> hsv2rgb (float h, float s, float v)
         {
             std::array<float, 3> rgb = { 0.0f, 0.0f, 0.0f };
-            int i = floor(h * 6);
+            std::int32_t i = floor(h * 6);
             float f = h * 6.0f - i;
             float p = v * (1.0f - s);
             float q = v * (1.0f - f * s);
@@ -3004,8 +3004,8 @@ export namespace mplot
             return ColourMap<T>::rgb2hsv (rgb[0], rgb[1], rgb[2]);
         }
 
-        //! Convert RGB (given as uint32_t) to HSV, receiving input and returning output as std::array
-        static std::array<float, 3> rgb2hsv (const uint32_t rgb)
+        //! Convert RGB (given as std::uint32_t) to HSV, receiving input and returning output as std::array
+        static std::array<float, 3> rgb2hsv (const std::uint32_t rgb)
         {
             return ColourMap<T>::rgb2hsv (ColourMap<T>::rgb_array (rgb));
         }
@@ -3018,8 +3018,8 @@ export namespace mplot
             return hsv;
         }
 
-        //! Convert RGB (given as uint32_t) to HSV, returning output as sm::vec
-        static sm::vec<float, 3> rgb2hsv_vec (const uint32_t rgb)
+        //! Convert RGB (given as std::uint32_t) to HSV, returning output as sm::vec
+        static sm::vec<float, 3> rgb2hsv_vec (const std::uint32_t rgb)
         {
             sm::vec<float, 3> hsv = {};
             hsv.set_from (ColourMap<T>::rgb2hsv (ColourMap<T>::rgb_array (rgb)));
@@ -3072,7 +3072,7 @@ export namespace mplot
         }
 
         // Convert hex colour value (e.g. 0x2971c3) into our usual array of floats in range [0, 1]
-        static std::array<float,3> rgb_array (const uint32_t rgb)
+        static std::array<float,3> rgb_array (const std::uint32_t rgb)
         {
             return std::array<float,3>{ ((rgb >> 16) & 0xff) / 255.0f, ((rgb >> 8) & 0xff) / 255.0f, (rgb & 0xff) / 255.0f };
         }
