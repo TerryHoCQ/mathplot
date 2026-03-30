@@ -12,6 +12,8 @@ export module mplot.colour;
 
 export namespace mplot::colour
 {
+    constexpr bool match (const std::array<float, 3>& c1, const std::array<float, 3>& c2) { return c1 == c2; }
+
     constexpr std::array<float, 3> indian_red = {0.6901960784f,0.0901960784f,0.1215686275f};
     constexpr std::array<float, 3> crimson = {0.862745098f,0.0784313725f,0.2352941176f};
     constexpr std::array<float, 3> lightpink = {1.0f,0.7137254902f,0.7568627451f};
