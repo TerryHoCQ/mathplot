@@ -13,7 +13,7 @@ message(STATUS "  (This can be changed with `cmake -DCMAKE_INSTALL_PREFIX=/some/
 #
 # We're firmly at C++20.
 #
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Add our cmake directory and our submodule maths's cmake dir to cmake modules path
