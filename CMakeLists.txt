@@ -213,6 +213,7 @@ endif(BUILD_TESTS)
 option(BUILD_BUGREP "Build bugrep" OFF)
 if(BUILD_BUGREP)
   # bug reproduction
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -freport-bug")
   add_subdirectory(bugrep)
 endif(BUILD_BUGREP)
 
