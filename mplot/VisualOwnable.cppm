@@ -2106,13 +2106,27 @@ export namespace mplot
             return true; // needs_render
         }
 
-        //! Extra key callback handling, making it easy for client programs to implement their own actions
         virtual void key_callback_extra ([[maybe_unused]] int key, [[maybe_unused]] int scancode,
-                                         [[maybe_unused]] int action, [[maybe_unused]] int mods) {}
+                                         [[maybe_unused]] int action, [[maybe_unused]] int mods)
+        {
+            // This code is a workaround for the bug in
+            // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=124483 Although the bug is fixed in
+            // gcc16, it is easy to workaround for gcc15 with this:
+            constexpr bool output_args = false;
+            if constexpr (output_args == true) {
+                std::cout << "args: " << key << ", " << scancode << ", " << action << ", " << mods << std::endl;
+            }
+        }
 
-        //! Extra mousebutton callback handling, making it easy for client programs to implement their own actions
         virtual void mouse_button_callback_extra ([[maybe_unused]] int button, [[maybe_unused]] int action,
-                                                  [[maybe_unused]] int mods) {}
+                                                  [[maybe_unused]] int mods)
+        {
+            // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=124483 workaround:
+            constexpr bool output_args = false;
+            if constexpr (output_args == true) {
+                std::cout << "args: " << button << ", " << action << ", " << mods << std::endl;
+            }
+        }
 
         //! A callback that client code can set so that it knows when user has signalled to
         //! mplot::Visual that it's quit time.
