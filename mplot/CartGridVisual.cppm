@@ -1,15 +1,8 @@
-#pragma once
+module;
 
 #include <iostream>
 #include <vector>
 #include <array>
-
-#include <sm/cartgrid>
-import sm.vec;
-
-#include <mplot/tools.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/ColourMap.h>
 
 #define R_NE(hi) (this->cg->d_ne[hi])
 #define R_HAS_NE(hi) (this->cg->d_ne[hi] == -1 ? false : true)
@@ -35,7 +28,16 @@ import sm.vec;
 #define R_NSW(hi) (this->cg->d_nsw[hi])
 #define R_HAS_NSW(hi) (this->cg->d_nsw[hi] == -1 ? false : true)
 
-namespace mplot
+export module mplot.cartgridvisual;
+
+import sm.cartgrid;
+import sm.vec;
+
+import mplot.tools;
+import mplot.visualdatamodel;
+export import mplot.colourmap;
+
+export namespace mplot
 {
     enum class CartVisMode
     {
@@ -53,7 +55,7 @@ namespace mplot
         CartGridVisual(const sm::cartgrid* _cg, const sm::vec<float> _offset)
         {
             // Set up...
-            sm::vec<float> pixel_offset = { _cg->getd()/2.0f, _cg->getv()/2.0f, 0.0f };
+            sm::vec<float> pixel_offset = { _cg->get_d()/2.0f, _cg->get_v()/2.0f, 0.0f };
             this->viewmatrix.translate (_offset + pixel_offset);
             // Defaults for z and colourScale
             this->zScale.set_params (1, 0);
@@ -95,13 +97,13 @@ namespace mplot
             if (this->showborder == true) {
                 // Draw around the outside.
                 sm::vec<float, 4> cg_extents = this->cg->get_extents(); // {xmin, xmax, ymin, ymax}
-                float bthick    = this->border_thickness_fixed ? this->border_thickness_fixed : this->cg->getd() * this->border_thickness;
-                float bz = this->cg->getd() / 10.0f;
+                float bthick    = this->border_thickness_fixed ? this->border_thickness_fixed : this->cg->get_d() * this->border_thickness;
+                float bz = this->cg->get_d() / 10.0f;
                 float half_bthick = bthick/2.0f;
-                float left  = cg_extents[0] - half_bthick - (this->cg->getd()/2.0f) + this->centering_offset[0];
-                float right = cg_extents[1] + half_bthick + (this->cg->getd()/2.0f) + this->centering_offset[0];
-                float bot   = cg_extents[2] - half_bthick - (this->cg->getv()/2.0f) + this->centering_offset[1];
-                float top   = cg_extents[3] + half_bthick + (this->cg->getv()/2.0f) + this->centering_offset[1];
+                float left  = cg_extents[0] - half_bthick - (this->cg->get_d()/2.0f) + this->centering_offset[0];
+                float right = cg_extents[1] + half_bthick + (this->cg->get_d()/2.0f) + this->centering_offset[0];
+                float bot   = cg_extents[2] - half_bthick - (this->cg->get_v()/2.0f) + this->centering_offset[1];
+                float top   = cg_extents[3] + half_bthick + (this->cg->get_v()/2.0f) + this->centering_offset[1];
                 sm::vec<float> lb = {{left, bot, bz}}; // z?
                 sm::vec<float> lt = {{left, top, bz}};
                 sm::vec<float> rt = {{right, top, bz}};
@@ -157,9 +159,9 @@ namespace mplot
         //! for each rectangle. Gives a smooth surface in which you can see the pixels.
         void initializeVerticesRectsInterpolated()
         {
-            float dx = this->cg->getd();
+            float dx = this->cg->get_d();
             float hx = 0.5f * dx;
-            float dy = this->cg->getv();
+            float dy = this->cg->get_v();
             float vy = 0.5f * dy;
 
             unsigned int nrect = this->cg->num();
@@ -420,7 +422,7 @@ namespace mplot
         // A centering offset to make sure that the Cartgrid is centred. This is
         // computed so that you *add* centering_offset to each computed x/y/z position
         // for a rectangle.
-        sm::vec<float, 3> centering_offset = { 0.0f, 0.0f, 0.0f };
+        sm::vec<float, 3> centering_offset = {};
     };
 
 } // namespace mplot

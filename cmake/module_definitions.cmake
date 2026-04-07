@@ -42,6 +42,19 @@ macro(setup_module_variables_for_mathplot_maths base_directory)
     ${base_directory}/sm/hexgrid.cppm
   )
 
+  # The modules required for cartgrids
+  set(MPLOT_MATHS_CARTGRID_MODULES
+    ${base_directory}/sm/nm_simplex.cppm
+    ${base_directory}/sm/binomial.cppm
+    ${base_directory}/sm/bezcoord.cppm
+    ${base_directory}/sm/bezcurve.cppm
+    ${base_directory}/sm/bezcurvepath.cppm
+    ${base_directory}/sm/boxfilter.cppm
+    ${base_directory}/sm/grid.cppm
+    ${base_directory}/sm/rect.cppm
+    ${base_directory}/sm/cartgrid.cppm
+  )
+
   # Maths used in individual VisualModels, but not the mathplot core
   set(MPLOT_MATHS_VISUALMODEL_MODULES
     ${base_directory}/sm/winder.cppm
