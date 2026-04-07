@@ -16,14 +16,13 @@ module;
 # include <mplot/glad/gl.h>
 #endif
 
-#include <iostream>
 #include <cstdint>
+#include <memory>
+#include <iostream>
 #include <string>
-#include <sstream>
 #include <vector>
 #include <array>
-#include <functional>
-#include <memory>
+#include <limits>
 
 export module mplot.visualtextmodel;
 
@@ -47,7 +46,7 @@ export namespace mplot
     /*!
      * This is the base class for VisualTextModel containing common code, but no GL function calls.
      */
-    template <int glver = mplot::gl::version_4_1>
+    template <std::int32_t glver = mplot::gl::version_4_1>
     struct VisualTextModel
     {
     public:
@@ -390,17 +389,7 @@ export namespace mplot
             return s;
         }
 
-        std::string debugText() const
-        {
-            std::stringstream ss;
-            for (auto c : txt) { ss << unicode::toUtf8 (c); }
-            ss << "--->\n"
-               << "parent_rotation= " << this->parent_rotation << "\n"
-               << "viewmatrix=\n" << this->viewmatrix << "\n"
-               << "scenematrix=\n" << this->scenematrix << "\n"
-               << "----------------------\n";
-            return ss.str();
-        }
+        std::string debugText() const { return this->getText(); }
 
     protected:
 
@@ -447,7 +436,7 @@ export namespace mplot
 
                 // Two triangles per quad
                 // qi * 4 + 1, 2 3 or 4
-                uint32_t ib = (uint32_t)qi*4;
+                std::uint32_t ib = static_cast<std::uint32_t>(qi) * 4u;
                 this->indices.push_back (ib++); // 0
                 this->indices.push_back (ib++); // 1
                 this->indices.push_back (ib);   // 2
@@ -468,12 +457,12 @@ export namespace mplot
         //! Line spacing, in multiples of the height of an 'h'
         float line_spacing = 1.4f;
         //! Parent Visual. The mplot::Visual ID to which I belong. max means unset.
-        uint32_t parentVis = std::numeric_limits<uint32_t>::max();
+        std::uint32_t parentVis = std::numeric_limits<std::uint32_t>::max();
 
         //! Setter for the parent pointer, parentVis
-        void set_parent (const uint32_t _vis)
+        void set_parent (const std::uint32_t _vis)
         {
-            if (this->parentVis != std::numeric_limits<uint32_t>::max()) {
+            if (this->parentVis != std::numeric_limits<std::uint32_t>::max()) {
                 throw std::runtime_error ("VisualTextModel: Set the parent pointer once only!");
             }
             this->parentVis = _vis;
@@ -515,13 +504,13 @@ export namespace mplot
         //! Position within vertex buffer object (if I use an array of VBO)
         enum VBOPos { posnVBO, normVBO, colVBO, idxVBO, textureVBO, numVBO };
         //! The OpenGL Vertex Array Object
-        uint32_t vao = 0;
+        std::uint32_t vao = 0;
         //! Single vbo to use as in example
-        uint32_t vbo = 0;
+        std::uint32_t vbo = 0;
         //! Vertex Buffer Objects stored in an array
-        std::unique_ptr<uint32_t[]> vbos;
+        std::unique_ptr<std::uint32_t[]> vbos;
         //! CPU-side data for indices
-        std::vector<uint32_t> indices = {};
+        std::vector<std::uint32_t> indices = {};
         //! CPU-side data for quad vertex positions
         std::vector<float> vertexPositions = {};
         //! CPU-side data for quad vertex normals
@@ -538,21 +527,24 @@ export namespace mplot
         //! Push three floats onto the vector of floats \a vp
         void vertex_push (const float& x, const float& y, const float& z, std::vector<float>& vp)
         {
-            vp.push_back (x);
-            vp.push_back (y);
-            vp.push_back (z);
+            vp.emplace_back (x);
+            vp.emplace_back (y);
+            vp.emplace_back (z);
         }
         //! Push array of 3 floats onto the vector of floats \a vp
         void vertex_push (const std::array<float, 3>& arr, std::vector<float>& vp)
         {
-            vp.push_back (arr[0]);
-            vp.push_back (arr[1]);
-            vp.push_back (arr[2]);
+            vp.emplace_back (arr[0]);
+            vp.emplace_back (arr[1]);
+            vp.emplace_back (arr[2]);
         }
         //! Push mplot::vec of 3 floats onto the vector of floats \a vp
-        void vertex_push (const sm::vec<float>& vec, std::vector<float>& vp)
+        template<std::size_t N = 3> requires (N == 3 || N == 4)
+        void vertex_push (const sm::vec<float, N>& vec, std::vector<float>& vp)
         {
-            std::copy (vec.begin(), vec.end(), std::back_inserter (vp));
+            vp.emplace_back (vec[0]);
+            vp.emplace_back (vec[1]);
+            vp.emplace_back (vec[2]);
         }
     };
 
