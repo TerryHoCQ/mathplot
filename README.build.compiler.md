@@ -1,65 +1,35 @@
 # Minimum compiler versions
 
-mathplog makes extensive use of C++-20. For this reason, there
-are minimum supported versions of common compilers to be able to
-compile the examples and any program against mathplog. The general rule is that the compiler should
-provide full C++-20 support.
-
-Note that some of the headers will have more relaxed compiler
-requirements. If you are only using a small subset of the
-headers in your code, you may get away with a compiler that does not
-fulfil the requirements given here.
-
+mathplot makes extensive use of C++-20, including C++ modules.
 
 ## Tested compiler versions
 
+mathplot will compile with clang-20 and up or gcc 16. At the time of writing, gcc 16 is not released and so it is necessary to compile gcc from the master branch.
+
 | OS           | Compiler | Version | Result and reason                        |
 | :-------:    | :------: | :-----: | ---------------------------------------- |
-| Ubuntu 24.04 | g++      | 10.5    | Fail: g++ 10.5 support for C++20 missing |
-| Ubuntu 24.04 | g++      | 11.4    | Pass (make && make test)                 |
-| Ubuntu 24.04 | g++      | 12.3    | Pass (make && make test)                 |
-| Ubuntu 24.04 | g++      | 13.2    | Pass (make && make test)                 |
-| Ubuntu 24.04 | clang++  | 14.0    | Fail: on colourmaps_mono target (`#include <format>` problem)  |
-| Ubuntu 24.04 | clang++  | 15.0    | Fail: (constexpr problems)               |
-| Ubuntu 24.04 | clang++  | 16.0    | Pass (make && make test)                 |
-| Ubuntu 24.04 | clang++  | 17      | Pass (make && make test)                 |
-| Ubuntu 24.04 | clang++  | 18.1    | Pass (make && make test)                 |
+| Ubuntu 24.04 | g++      | 16.0    | Ok |
+| Ubuntu 24.04 | clang++  | 20.0    | Ok |
 
-The build also succeeds on various versions of Mac OS with
-clang. Entries in the table for clang on Mac are to follow.
+I had hoped that mathplot would build with gcc 15, because this will be the default compiler on Ubuntu 25. At the moment, building on gcc 15 (on the *releases/gcc-15* branch) is blocked by the following issues:
 
-## Default compilers on different OS platforms
+[Bug 124470](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=124470)
 
-| OS           | Default Compiler Family | Version | Support |
-| :-------:    | :------:                | :-----: | :--:    |
-| Ubuntu 20.04 | gcc                     | 9       | No      |
-| Ubuntu 20.10 | gcc                     | 10      | No      |
-| Ubuntu 22.04 | gcc                     | 11      | Yes     |
-| Ubuntu 22.04 | gcc                     | 13      | Yes     |
-| Ubuntu 22.10 | gcc                     | 12      | Yes     |
-| Ubuntu 24.04 | gcc                     | 13      | Yes     |
-| Ubuntu 24.04 | gcc                     | 14      | Yes     |
-| Fedora 35    | gcc                     | 11      | Yes     |
-| Fedora 36    | gcc                     | 12      | Yes     |
-| Fedora 37    | gcc                     | 12      | Yes     |
-| Fedora 38    | gcc                     | 13      | Yes     |
-| Fedora 39    | gcc                     | 13      | Yes     |
-| Fedora 40    | gcc                     | 14      | Yes*    |
 
-*Well, probably/hopefully/presumably :)
-
-## Building with clang on Linux
-
-Install clang (which on Ubuntu provides clang++) and a suitable version of libstdc++.
-
-On Ubuntu 24, I used `clang-18` and `libstdc++-14-dev` together.
-
-You then call cmake with
+## Build with clang
 
 ```bash
 mkdir build_clang
 cd build_clang
-CC=clang CXX=clang++ cmake .. # Or maybe CC=clang-18 CXX=clang++-18
-make
+CC=clang-20 CXX=clang++-20 cmake .. -GNinja
+ninja
 ```
-(You probably don't need CC=clang)
+
+## Build with gcc
+
+```bash
+mkdir build_gcc
+cd build_gcc
+CC=/opt/gcc-master/bin/gcc CXX=/opt/gcc-master/bin/g++ cmake .. -GNinja
+ninja
+```
