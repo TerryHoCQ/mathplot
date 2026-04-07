@@ -146,12 +146,17 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(convolve_rect OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
+  add_executable(convolve convolve.cpp)
+  target_sources(convolve PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_HEXGRID_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
+  )
+  target_link_libraries(convolve OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
 endif()
 
 if (0) # During development
 
-  add_executable(convolve convolve.cpp)
-  target_link_libraries(convolve OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   # Adaptive Simulated Annealing algo on a made up objective
   add_executable(anneal_asa anneal_asa.cpp)
