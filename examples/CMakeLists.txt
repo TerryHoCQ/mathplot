@@ -153,6 +153,17 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(convolve OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
+  # Plots a surface, counts (and shows) the frames per second
+  add_executable(fps fps.cpp)
+  target_sources(fps PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_HEXGRID_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
+  )
+  if(OpenMP_CXX_FOUND)
+    target_link_libraries(fps OpenMP::OpenMP_CXX OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+  else()
+    target_link_libraries(fps OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+  endif()
 endif()
 
 if (0) # During development
@@ -171,13 +182,6 @@ if (0) # During development
   target_compile_definitions(anneal_boha PUBLIC USE_BOHACHEVSKY_FUNCTION VISUALISE)
   target_link_libraries(anneal_boha OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
-  # Plots a surface, counts (and shows) the frames per second
-  add_executable(fps fps.cpp)
-  if(OpenMP_CXX_FOUND)
-    target_link_libraries(fps OpenMP::OpenMP_CXX OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-  else()
-    target_link_libraries(fps OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-  endif()
 
   add_executable(fps_with_profiler fps_with_profiler.cpp)
   if(OpenMP_CXX_FOUND)
