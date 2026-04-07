@@ -4,6 +4,7 @@
  * landscape model, following the exact contour defined by the landscape's mesh.
  */
 
+#include <cstdint>
 #include <iostream>
 #include <fstream>
 #include <cmath>
