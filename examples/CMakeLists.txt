@@ -164,6 +164,19 @@ if(BUILD_EXAMPLES_EXTRA)
   else()
     target_link_libraries(fps OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
   endif()
+
+  add_executable(fps_with_profiler fps_with_profiler.cpp)
+  target_sources(fps_with_profiler PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_HEXGRID_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/fps/profiler.cppm
+  )
+  if(OpenMP_CXX_FOUND)
+    target_link_libraries(fps_with_profiler OpenMP::OpenMP_CXX OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+  else()
+    target_link_libraries(fps_with_profiler OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+  endif()
+
 endif()
 
 if (0) # During development
@@ -181,14 +194,6 @@ if (0) # During development
   add_executable(anneal_boha anneal_asa.cpp)
   target_compile_definitions(anneal_boha PUBLIC USE_BOHACHEVSKY_FUNCTION VISUALISE)
   target_link_libraries(anneal_boha OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-
-  add_executable(fps_with_profiler fps_with_profiler.cpp)
-  if(OpenMP_CXX_FOUND)
-    target_link_libraries(fps_with_profiler OpenMP::OpenMP_CXX OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-  else()
-    target_link_libraries(fps_with_profiler OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-  endif()
 
   add_executable(cartgrid cartgrid.cpp)
   target_link_libraries(cartgrid OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
