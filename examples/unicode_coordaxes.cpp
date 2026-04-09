@@ -3,22 +3,23 @@
  * unicode characters on your coordinate arrows.
  */
 
+#include <memory>
 #include <iostream>
 #include <vector>
 #include <cmath>
 
-#include <sm/vec>
-#include <sm/hexgrid>
+import sm.vec;
+import sm.hexgrid;
 
-#include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/HexGridVisual.h>
-
-#include <mplot/unicode.h>
-namespace uc =  mplot::unicode;
+import mplot.visual;
+import mplot.visualdatamodel;
+import mplot.hexgridvisual;
+import mplot.unicode;
 
 int main()
 {
+    namespace uc = mplot::unicode;
+
     // Contructor args are width, height, title
     mplot::Visual v(1600, 1000, "mplot::HexGridVisual");
     // You can set a field of view (in degrees)
@@ -39,7 +40,7 @@ int main()
     // Create a hexgrid to show in the scene. Hexes outside the circular boundary will
     // all be discarded.
     sm::hexgrid hg(0.01f, 3.0f, 0.0f);
-    hg.setCircularBoundary (0.6f);
+    hg.set_circular_boundary (0.6f);
     std::cout << "Number of pixels in grid:" << hg.num() << std::endl;
 
 
@@ -52,7 +53,7 @@ int main()
     // Add a HexGridVisual to display the hexgrid within the mplot::Visual scene
     sm::vec<float, 3> offset = { 0.0f, -0.05f, 0.0f };
     auto hgv = std::make_unique<mplot::HexGridVisual<float>>(&hg, offset);
-    v.bindmodel (hgv);
+    hgv->set_parent (v.get_id());
     hgv->setScalarData (&data);
     hgv->hexVisMode = mplot::HexVisMode::HexInterp; // Or mplot::HexVisMode::Triangles for a smoother surface plot
     hgv->finalize();
