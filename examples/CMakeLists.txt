@@ -139,6 +139,20 @@ if(BUILD_EXAMPLES_EXTRA)
   target_compile_definitions(rosenbrock PUBLIC FLT=float)
   target_link_libraries(rosenbrock OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
+  if(HDF5_FOUND) # anneal.cppm uses HDF5
+    add_executable(rosenbrock_asa rosenbrock_asa.cpp)
+    target_sources(rosenbrock_asa PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+      FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_HEXGRID_MODULES}
+      ${PROJECT_SOURCE_DIR}/maths/sm/anneal.cppm
+      ${PROJECT_SOURCE_DIR}/maths/sm/hdfdata.cppm
+      ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
+      ${PROJECT_SOURCE_DIR}/mplot/PolygonVisual.cppm
+      ${PROJECT_SOURCE_DIR}/mplot/TriFrameVisual.cppm
+    )
+    target_compile_definitions(rosenbrock_asa PUBLIC FLT=float VISUALISE)
+    target_link_libraries(rosenbrock_asa ${HDF5_LIBRARIES} OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+  endif()
+
   add_executable(convolve_rect convolve_rect.cpp)
   target_sources(convolve_rect PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
     FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_CARTGRID_MODULES}
@@ -285,10 +299,6 @@ if (0) # During development
 
   add_executable(scatter_hex_mercator scatter_hex_mercator.cpp)
   target_link_libraries(scatter_hex_mercator OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(rosenbrock_asa rosenbrock_asa.cpp)
-  target_compile_definitions(rosenbrock_asa PUBLIC FLT=float VISUALISE)
-  target_link_libraries(rosenbrock_asa OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   # Utility prog to test your .svg boundary files
   add_executable(show_svg_boundary show_svg_boundary.cpp)

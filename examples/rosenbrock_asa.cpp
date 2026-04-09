@@ -2,18 +2,19 @@
  * Test Simulated Annealing algorithm on the Rosenbrock banana function.
  */
 
+#include <memory>
 #include <iostream>
 #include <chrono>
 
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/hexgrid>
-#include <sm/anneal>
+import sm.vec;
+import sm.vvec;
+import sm.hexgrid;
+import sm.anneal;
 
-#include <mplot/Visual.h>
-#include <mplot/TriFrameVisual.h>
-#include <mplot/HexGridVisual.h>
-#include <mplot/PolygonVisual.h>
+import mplot.visual;
+import mplot.triframevisual;
+import mplot.hexgridvisual;
+import mplot.polygonvisual;
 
 // Here's the Rosenbrock banana function
 FLT banana (sm::vvec<FLT> xy) {
@@ -47,7 +48,7 @@ int main()
 
     sm::vec<float> offset = {0,0,0};
     sm::hexgrid hg (0.01, 10, 0);
-    hg.setCircularBoundary (2.5);
+    hg.set_circular_boundary (2.5);
     std::vector<FLT> banana_vals(hg.num(), 0.0f);
     for (size_t i = 0; i < hg.num(); ++i) {
         banana_vals[i] = banana ({hg.d_x[i], hg.d_y[i]});
@@ -55,7 +56,7 @@ int main()
     sm::range<FLT> mm = sm::range<FLT>::get_from (banana_vals);
     std::cout << "Banana surface range: " << mm << std::endl;
     auto hgv = std::make_unique<mplot::HexGridVisual<FLT>>(&hg, offset);
-    v.bindmodel (hgv);
+    hgv->set_parent (v.get_id());
     hgv->hexVisMode = mplot::HexVisMode::Triangles;
     hgv->cm.setType (mplot::ColourMapType::Viridis);
     hgv->setScalarData (&banana_vals);
@@ -70,19 +71,19 @@ int main()
     // One object for the 'candidate' position
     std::array<float, 3> col = { 0, 1, 0 };
     auto candup = std::make_unique<mplot::PolygonVisual<>>(offset, polypos, sm::vec<float>({1,0,0}), 0.005f, 0.4f, col, 20);
-    v.bindmodel (candup);
+    candup->set_parent (v.get_id());
     candup->finalize();
 
     // A second object for the 'best' position
     col = { 1, 0, 0 };
     auto bestup = std::make_unique<mplot::PolygonVisual<>>(offset, polypos, sm::vec<float>({1,0,0}), 0.001f, 0.8f, col, 10);
-    v.bindmodel (bestup);
+    bestup->set_parent (v.get_id());
     bestup->finalize();
 
     // A third object for the currently accepted position
     col = { 1, 0, 0.7f };
     auto currup = std::make_unique<mplot::PolygonVisual<>> (offset, polypos, sm::vec<float>({1,0,0}), 0.005f, 0.6f, col, 20);
-    v.bindmodel (currup);
+    currup->set_parent (v.get_id());
     currup->finalize();
 
     auto candp = v.addVisualModel (candup);
