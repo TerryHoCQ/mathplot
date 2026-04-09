@@ -233,20 +233,27 @@ if(BUILD_EXAMPLES_EXTRA)
 
   endif(HDF5_FOUND)
 
-endif()
-
-if (0) # During development
-
   # Like HexGrid::resampleImage, this one uses an omp call that only works on Mac with
   # libomp, so avoid compiling this example on a Mac.
   if(NOT APPLE)
     add_executable(grid_resampled_image grid_resampled_image.cpp)
+    target_sources(grid_resampled_image PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+      FILES  ${MPLOT_MATHS_CORE_MODULES}
+      ${MPLOT_MATHS_VISUALMODEL_MODULES}
+      ${MPLOT_CORE_MODULES}
+      ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
+      ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
+    )
     if(OpenMP_CXX_FOUND)
       target_link_libraries(grid_resampled_image OpenMP::OpenMP_CXX OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
     else()
       target_link_libraries(grid_resampled_image OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
     endif()
   endif()
+
+endif()
+
+if (0) # During development
 
   add_executable(unicode_coordaxes unicode_coordaxes.cpp)
   target_link_libraries(unicode_coordaxes OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
