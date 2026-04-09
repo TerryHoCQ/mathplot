@@ -1,4 +1,4 @@
-#pragma once
+export module mplot.keys;
 
 // Key codes, mods and actions. These are chosen to match GLFW definitions so that
 // Qt/wx/other key codes can be passed in to mplot::Visual. The names mostly match,
@@ -6,7 +6,7 @@
 // numeric keys are slightly different. GLFW_KEY_0 is mplot::key::n0, GLFW_KEY_1 is
 // mplot::key::n1 etc. (because mplot::key::1 would be illegal C++ code).
 
-namespace mplot
+export namespace mplot
 {
     struct key
     {
@@ -157,7 +157,7 @@ namespace mplot
         static constexpr int num_lock       = 0x0020;
     };
 
-    // GLFW_PRESS is mplot::keyaction::PRESS etc
+    // GLFW_PRESS is mplot::keyaction::press etc
     struct keyaction
     {
         static constexpr int release = 0;

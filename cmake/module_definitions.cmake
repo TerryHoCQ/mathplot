@@ -75,6 +75,8 @@ macro(setup_module_variables_for_mathplot base_directory)
   # Base modules for mathplot. With these (and
   # MPLOT_MATHS_CORE_MODULES) you can build helloworld
   set(MPLOT_CORE_MODULES
+    ${base_directory}/mplot/keys.cppm
+    ${base_directory}/mplot/version.cppm
     ${base_directory}/mplot/tools.cppm
     ${base_directory}/mplot/unicode.cppm
     ${base_directory}/mplot/loadpng.cppm

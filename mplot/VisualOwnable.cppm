@@ -33,13 +33,12 @@ module;
 
 #include <mplot/gl/shaders.h>
 #include <mplot/gl/loadshaders_mx.h>
-#include <mplot/keys.h>
-#include <mplot/version.h>
 
 #include <mplot/VisualDefaultShaders.h>
 
 export module mplot.visualownable;
 
+export import mplot.version;
 export import mplot.visualmodel;
 export import mplot.win_t;
 export import mplot.visualcommon;
@@ -52,6 +51,7 @@ export import mplot.gl.version;
 import mplot.gl.util;
 import mplot.tools;
 import mplot.loadpng; // Use Lode Vandevenne's PNG encoder
+export import mplot.keys;
 
 import sm.mathconst;
 export import sm.vec;

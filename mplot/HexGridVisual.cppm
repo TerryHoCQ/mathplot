@@ -11,7 +11,7 @@ export module mplot.hexgridvisual;
 
 import sm.vec;
 import sm.vvec;
-import sm.hexgrid;
+export import sm.hexgrid;
 import sm.scale;
 
 export import mplot.gl.version;

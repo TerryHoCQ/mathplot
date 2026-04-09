@@ -1,4 +1,8 @@
-#pragma once
+module;
+
+#include <string>
+
+export module mplot.version;
 
 /*!
  * This header defines a simple major/minor version for mathplot.
@@ -7,13 +11,11 @@
  * \date April 2024
  */
 
-#include <string>
-
-namespace mplot
+export namespace mplot
 {
     //! A version definition for the whole of mathplot
-    static constexpr unsigned int version_major = 1;
-    static constexpr unsigned int version_minor = 0;
+    constexpr unsigned int version_major = 1;
+    constexpr unsigned int version_minor = 0;
     //! Returns a string for the version of the mathplot library
     std::string version_string()
     {

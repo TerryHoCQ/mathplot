@@ -259,16 +259,29 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(unicode_coordaxes OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
+  add_executable(colourbar colourbar.cpp)
+  target_sources(colourbar PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${MPLOT_MATHS_HEXGRID_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/ColourBarVisual.cppm
+  )
+  target_link_libraries(colourbar OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(colourbar_interactive colourbar_interactive.cpp)
+  target_sources(colourbar_interactive PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${MPLOT_MATHS_HEXGRID_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/ColourBarVisual.cppm
+  )
+  target_link_libraries(colourbar_interactive OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
 endif()
 
 if (0) # During development
 
 
-  add_executable(colourbar colourbar.cpp)
-  target_link_libraries(colourbar OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(colourbar_interactive colourbar_interactive.cpp)
-  target_link_libraries(colourbar_interactive OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(scatter_hex_mercator scatter_hex_mercator.cpp)
   target_link_libraries(scatter_hex_mercator OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
