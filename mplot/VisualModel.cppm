@@ -1161,7 +1161,11 @@ export namespace mplot
                 throw std::runtime_error ("set_instance_data: pass some instance positions in");
             }
             if (position.size() > this->max_instances) {
-                throw std::runtime_error ("set_instance_data: Haven't reserved enough space for that");
+                std::string ee1 = "set_instance_data: Haven't reserved enough space for that. position.size() = ";
+                std::string ee2 = std::to_string (position.size());
+                std::string ee3 = " > max_instances = ";
+                std::string ee4 = std::to_string (max_instances);
+                throw std::runtime_error (ee1 + ee2 + ee3 + ee4);
             }
             if (colour.size() != scale.size() || colour.size() != alpha.size()) {
                 throw std::runtime_error ("set_instance_data: params vvecs should all have same size (colour, rotn, scale)");
