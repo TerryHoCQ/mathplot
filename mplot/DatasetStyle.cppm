@@ -22,6 +22,7 @@ export namespace mplot
         thickness_fixed,
         show_zeros,
         marker_sphere,
+        colour_fixed,
         num
     };
 
@@ -79,6 +80,8 @@ export namespace mplot
             this->quiver_flagset.set (quiver_flags::show_zeros, true);
             //! If true then show a markersize sphere drawn on the coordinate location
             this->quiver_flagset.set (quiver_flags::marker_sphere, false);
+            //! If true, then use linecolour for the quiver colour, rather than the colourmap
+            this->quiver_flagset.set (quiver_flags::colour_fixed, false);
         }
         //! Allows user to linearly scale the size of the quivers that are plotted.
         float quiver_length_gain = 1.0f;

@@ -34,10 +34,10 @@ import sm.grid;
 import sm.trait_tests;
 
 import mplot.tools;
-import mplot.colour;
+export import mplot.colour;
 import mplot.gl.version;
 import mplot.visualmodel;
-import mplot.colourmap;
+export import mplot.colourmap;
 import mplot.visualtextmodel;
 import mplot.visualfont;
 
@@ -1141,7 +1141,9 @@ export namespace mplot
                         this->bar ((*this->graphDataCoords[dsi])[i], this->datastyles[dsi]);
                     }
 
-                } else if (this->datastyles[dsi].markerstyle == markerstyle::quiver) { // Markers are quivers
+                } else if (this->datastyles[dsi].markerstyle == markerstyle::quiver
+                           || this->datastyles[dsi].markerstyle == markerstyle::quiver_fromcoord
+                           || this->datastyles[dsi].markerstyle == markerstyle::quiver_tocoord) { // Markers are quivers
 
                     // Check quivers exist and then proceed with code adapted from mplot::QuiverVisual
                     uint64_t nquiv = this->quivers.size();
@@ -1198,8 +1200,14 @@ export namespace mplot
                         if (static_cast<uint64_t>(coords_end) > nquiv) {
                             throw std::runtime_error ("GraphVisual::drawDataCommon: coords_end is off the end of quivers");
                         }
+                        std::array<float, 3> clr = this->datastyles[dsi].linecolour;
                         for (unsigned int i = coords_start; i < coords_end; ++i) {
-                            this->quiver ((*this->graphDataCoords[dsi])[i], final_quivers[i], colour_qlengths[i], this->datastyles[dsi]);
+                            if (this->within_axes ((*this->graphDataCoords[dsi])[i])) {
+                                if (this->datastyles[dsi].quiver_flagset.test (mplot::quiver_flags::colour_fixed) == false) {
+                                    clr = this->datastyles[dsi].quiver_colourmap.convert (colour_qlengths[i]);
+                                }
+                                this->quiver ((*this->graphDataCoords[dsi])[i], final_quivers[i], clr, this->datastyles[dsi]);
+                            }
                         }
 
                     } else {
@@ -1699,7 +1707,7 @@ export namespace mplot
 
         //! Draw a single quiver at point coords_i with direction/magnitude quiv.
         void quiver (sm::vec<float>& coords_i, sm::vec<Flt, 3>& quiv,
-                     const Flt lengthcolour, const mplot::DatasetStyle& style)
+                     const std::array<float, 3>& clr, const mplot::DatasetStyle& style)
         {
             sm::vec<Flt> halfquiv, half = { Flt{0.5}, Flt{0.5}, Flt{0.5} };
             sm::vec<float> start, end;
@@ -1708,9 +1716,17 @@ export namespace mplot
             if ((std::isnan(dlength) || dlength == Flt{0})
                 && style.quiver_flagset.test(mplot::quiver_flags::show_zeros) == true) {
                 // NaNs denote zero vectors when the lengths have been log scaled.
-                this->computeSphere (coords_i, style.quiver_zero_colour,
-                                     style.markersize * style.quiver_thickness_gain);
+                this->computeSphere (coords_i, style.quiver_zero_colour, style.markersize * style.quiver_thickness_gain);
+
             } else { // Not a zero marker, draw a quiver
+
+                // Account for the graph size (which may have been set with setsize()) to change the size of quiv
+                if (style.axisside == mplot::axisside::left) {
+                    quiv[1] *= this->ord1_scale.get_params(0);
+                } else {
+                    quiv[1] *= this->ord2_scale.get_params(0);
+                }
+                quiv[0] *= this->abscissa_scale.get_params(0);
 
                 if (style.markerstyle == mplot::markerstyle::quiver_fromcoord) {
                     start = coords_i;
@@ -1729,17 +1745,9 @@ export namespace mplot
                 float quiv_thick = style.quiver_flagset.test(mplot::quiver_flags::thickness_fixed)
                 ? style.linewidth * style.quiver_thickness_gain : quiv.length() * 0.1f * style.quiver_thickness_gain;
 
-                // The right way to draw an arrow.
-                sm::vec<float> arrow_line = end - start;
-                sm::vec<float> cone_start = arrow_line.shorten (quiv.length() * style.quiver_arrowhead_prop);
-                cone_start += start;
                 constexpr int shapesides = 12;
-                std::array<float, 3> clr = style.quiver_colourmap.convert (lengthcolour);
-                this->computeTube (start, cone_start, clr, clr, quiv_thick, shapesides);
-                float conelen = (end-cone_start).length();
-                if (arrow_line.length() > conelen) {
-                    this->computeCone (cone_start, end, 0.0f, clr, quiv_thick * style.quiver_conewidth, shapesides);
-                }
+
+                this->computeArrow (start, end, clr, quiv_thick, style.quiver_arrowhead_prop, quiv_thick * style.quiver_conewidth, shapesides);
 
                 if (style.quiver_flagset.test(mplot::quiver_flags::marker_sphere) == true) {
                     // Draw a sphere on the coordinate:

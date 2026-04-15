@@ -336,6 +336,7 @@ int main()
     // Plot quivs within graphvisual
     ds.datalabel = "quivs";
     ds.quiver_gain = { 0.08f, 0.8f, 1.0f };
+    ds.quiver_gain *= 12.0f;
     gp->quiver_setlog();
     ds.quiver_colourmap.setType (mplot::ColourMapType::Jet);
     ds.quiver_conewidth = 1.8f;

@@ -2880,7 +2880,15 @@ export namespace mplot
         //! but for fixed, it allows you to have white, with hue=anything, sat=0, val=1
         void setSat (const float& _s)
         {
-            if (this->type != ColourMapType::Fixed && this->type != ColourMapType::Monochrome && this->type != ColourMapType::Monoval) {
+            if (this->type != ColourMapType::Fixed
+                && this->type != ColourMapType::Monochrome
+                && this->type != ColourMapType::MonochromeRed
+                && this->type != ColourMapType::MonochromeGreen
+                && this->type != ColourMapType::MonochromeBlue
+                && this->type != ColourMapType::Monoval
+                && this->type != ColourMapType::MonovalRed
+                && this->type != ColourMapType::MonovalGreen
+                && this->type != ColourMapType::MonovalBlue) {
                 throw std::runtime_error ("Only ColourMapType::Fixed ::Monochrome and ::Monoval allow setting of saturation");
             }
             this->sat = _s;
@@ -2889,8 +2897,16 @@ export namespace mplot
         //! Set just the colour's value (ColourMapType::Fixed/HSV only)
         void setVal (const float& _v)
         {
-            if (this->type != ColourMapType::Fixed && this->type != ColourMapType::HSV
-                && this->type != ColourMapType::Monochrome && this->type != ColourMapType::Monoval) {
+            if (this->type != ColourMapType::Fixed
+                && this->type != ColourMapType::HSV
+                && this->type != ColourMapType::Monochrome
+                && this->type != ColourMapType::MonochromeRed
+                && this->type != ColourMapType::MonochromeGreen
+                && this->type != ColourMapType::MonochromeBlue
+                && this->type != ColourMapType::Monoval
+                && this->type != ColourMapType::MonovalRed
+                && this->type != ColourMapType::MonovalGreen
+                && this->type != ColourMapType::MonovalBlue) {
                 throw std::runtime_error ("Only ColourMapType::Fixed ::HSV ::Monochrome and ::Monoval allow setting of value");
             }
             this->val = _v;
@@ -2903,7 +2919,15 @@ export namespace mplot
         //! Set the colour by hue, saturation and value (ColourMapType::Fixed only)
         void setHSV (const float& h, const float& s, const float& v)
         {
-            if (this->type != ColourMapType::Fixed && this->type != ColourMapType::Monochrome && this->type != ColourMapType::Monoval) {
+            if (this->type != ColourMapType::Fixed
+                && this->type != ColourMapType::Monochrome
+                && this->type != ColourMapType::MonochromeRed
+                && this->type != ColourMapType::MonochromeGreen
+                && this->type != ColourMapType::MonochromeBlue
+                && this->type != ColourMapType::Monoval
+                && this->type != ColourMapType::MonovalRed
+                && this->type != ColourMapType::MonovalGreen
+                && this->type != ColourMapType::MonovalBlue) {
                 throw std::runtime_error ("Only ColourMapType::Fixed/Monochrome/Monoval allows setting of saturation/value");
             }
             this->hue = h;
