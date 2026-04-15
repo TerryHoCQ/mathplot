@@ -364,6 +364,74 @@ export namespace mplot
             this->setdata (absc, ord, name, axisside);
         }
 
+        //! setdata overload that plots quivers at the 2D coordinates
+        void setdata (const sm::vvec<sm::vec<Flt, 2>>& _coords, const sm::vvec<sm::vec<Flt, 2>>& _quivs,
+                      const DatasetStyle& ds)
+        {
+            if (_quivs.size() != _coords.size()) {
+              std::stringstream ee;
+              ee << "GraphVisual::setdata: Size mismatch. quiver coordinates has " << _coords.size()
+                 << " elements but there are " << _quivs.size() << " quivers";
+              throw std::runtime_error (ee.str());
+            }
+
+            std::uint32_t dsize = _quivs.size();
+
+            if (ds.markerstyle != mplot::markerstyle::quiver
+                && ds.markerstyle != mplot::markerstyle::quiver_fromcoord
+                && ds.markerstyle != mplot::markerstyle::quiver_tocoord) {
+                throw std::runtime_error ("GraphVisual::setdata: markerstyle must be "
+                                          "mplot::markerstyle::quiver(_fromcoord/_tocoord)"
+                                          " for this setdata() overload");
+            }
+
+            // Copy _quivs and create temporary _abscissae and _data
+            this->quivers.resize (dsize, { Flt{0}, Flt{0}, Flt{0} });
+            sm::vvec<Flt> _abscissae (dsize);
+            sm::vvec<Flt> _data (dsize);
+
+            for (std::uint32_t i = 0; i < dsize; ++i) {
+                this->quivers[i][0] = _quivs[i][0];
+                this->quivers[i][1] = _quivs[i][1];
+                _abscissae[i] = _coords[i][0];
+                _data[i] = _coords[i][1];
+            }
+
+            if (ds.axisside == mplot::axisside::left) {
+                this->absc1.set_from (_abscissae);
+                this->ord1.set_from (_data);
+                this->ds_ord1 = ds;
+            } else {
+                this->absc2.set_from (_abscissae);
+                this->ord2.set_from (_data);
+                this->ds_ord2 = ds;
+            }
+
+            std::uint32_t didx = this->graphDataCoords.size();
+            this->graphDataCoords.push_back (std::make_unique<std::vector<sm::vec<float>>>(dsize, sm::vec<float>{}));
+            this->datastyles.push_back (ds);
+
+            // Compute the ord1_scale and asbcissa_scale for the first added dataset only
+            if (ds.axisside == mplot::axisside::left) {
+                if (this->ord1_scale.ready() == false) { this->compute_scaling (_abscissae, _data, ds.axisside); }
+            } else {
+                if (this->ord2_scale.ready() == false) { this->compute_scaling (_abscissae, _data, ds.axisside); }
+            }
+
+            std::vector<Flt> ad (dsize, Flt{0});
+            this->abscissa_scale.transform (_abscissae, ad);
+            std::vector<Flt> sd (dsize, Flt{0});
+            if (ds.axisside == mplot::axisside::left) {
+                this->ord1_scale.transform (_data, sd);
+            } else {
+                this->ord2_scale.transform (_data, sd);
+            }
+
+            for (unsigned int i = 0; i < dsize; ++i) {
+                this->graphDataCoords[didx].get()->at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
+            }
+        }
+
         //! setdata overload that plots quivers on a grid, scaling the grid's coordinates suitably?
         void setdata (const sm::grid<unsigned int, Flt>& g, const sm::vvec<sm::vec<Flt, 2>>& _quivs,
                       const DatasetStyle& ds)
@@ -1077,6 +1145,7 @@ export namespace mplot
 
                     // Check quivers exist and then proceed with code adapted from mplot::QuiverVisual
                     uint64_t nquiv = this->quivers.size();
+
                     if ((*this->graphDataCoords[dsi]).size() == nquiv) {
 
                         // Prepare scaling functions
@@ -1093,7 +1162,11 @@ export namespace mplot
                         // Compute the length of each quiver
                         for (uint64_t i = 0; i < nquiv; ++i) {
                             //raw_qlengths[i] = this->quivers[i].length();
-                            userscaled_qlengths[i] = (this->quivers[i] * this->datastyles[dsi].quiver_gain * (Flt{0.5} * this->quiver_grid_spacing)).length();
+                            if (this->quiver_grid_spacing.length() > Flt{0}) {
+                                userscaled_qlengths[i] = (this->quivers[i] * this->datastyles[dsi].quiver_gain * (Flt{0.5} * this->quiver_grid_spacing)).length();
+                            } else {
+                                userscaled_qlengths[i] = (this->quivers[i] * this->datastyles[dsi].quiver_gain).length();
+                            }
                         }
                         // Transform the user scaled lengths into a length 0->1, possibly with a log transform
                         this->quiver_length_scale.transform (userscaled_qlengths, renorm_qlengths);
@@ -1107,7 +1180,11 @@ export namespace mplot
                         sm::vvec<Flt> final_qlengths (nquiv, Flt{0});
                         sm::vvec<sm::vec<Flt, 3>> final_quivers (this->quivers);
                         for (uint64_t i = 0; i < nquiv; ++i) {
-                            final_quivers[i] *= this->datastyles[dsi].quiver_gain * (Flt{0.5} * this->quiver_grid_spacing) * lfactor[i];
+                            if (this->quiver_grid_spacing.length() > Flt{0}) {
+                                final_quivers[i] *= this->datastyles[dsi].quiver_gain * (Flt{0.5} * this->quiver_grid_spacing) * lfactor[i];
+                            } else {
+                                final_quivers[i] *= this->datastyles[dsi].quiver_gain * lfactor[i];
+                            }
                             final_qlengths[i] = final_quivers[i].length();
                         }
                         // Replace any zero lengths with the value of the minimum length to ensure colour range goes from min to max not 0 to max
@@ -1925,7 +2002,7 @@ export namespace mplot
         sm::scale<float> quiver_linear_scale;
         sm::scale<float> quiver_colour_scale;
         //! The dx from the sm::grid, but scaled with abscissa_scale and ord1_scale to be in 'VisualModel units'
-        sm::vec<Flt, 3> quiver_grid_spacing;
+        sm::vec<Flt, 3> quiver_grid_spacing = {};
         //! A scaling for the abscissa.
         sm::scale<Flt> abscissa_scale;
         //! A scaling for the first (left hand) ordinate
