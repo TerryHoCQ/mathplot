@@ -328,6 +328,26 @@ Note that the axis colour is applied to the axis box/cross/L, the axis ticks, ax
 
 ### Controlling the size of the axes
 
+The default graph size is 1 x 1 in model units.
+You can change this with a call to `setsize()`. This call has to come before any data is set into the graph with `setdata`.
+For example, to make a graph that has width 3 and height 2, use `setsize (3, 2)`:
+
+```c++
+    auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<>{});
+    gv->set_parent (v.get_id());
+
+    // set size before first call to setdata
+    gv->setsize (3, 2);
+
+    gv->setdata (csv_positions, ds);
+    gv->finalize();
+```
+
+Here are the graphs you'd get for `setsize (3, 2)`, `setsize (1, 1)` and `setsize (1.33, 2)`:
+
+![Screenshot of graphs after different setsize calls](https://github.com/sebsjames/mathplot/blob/main/docs/images/graphvisual_setsize.png?raw=true)
+
+
 ### Controlling the data limits
 
 ### The fonts
