@@ -389,6 +389,56 @@ export namespace mplot
             this->setdata (absc, ord, name, axisside);
         }
 
+        // Process coordinates and quivers data into the GraphVisual model space. dsi is the dataset index
+        void setup_quivers (const std::uint32_t dsi)
+        {
+            // Prepare scaling functions
+            if (!this->quiver_colour_scale.ready()) { this->quiver_colour_scale.do_autoscale = true; }
+            if (!this->quiver_linear_scale.ready()) { this->quiver_linear_scale.do_autoscale = true; }
+            if (!this->quiver_length_scale.ready()) { this->quiver_length_scale.do_autoscale = true; }
+
+            std::uint64_t nquiv = this->quivers.size();
+
+            // Have to derive some scaling info from the quivers first.
+            sm::vvec<Flt> userscaled_qlengths (nquiv, Flt{0});    // 'user-scaled' quiver lengths (may exaggerate one axis)
+            sm::vvec<Flt> renorm_qlengths (nquiv, Flt{0});        // renormalized user-scaled quiver lengths with linear OR log scaling
+            sm::vvec<Flt> renorm_linear_qlengths (nquiv, Flt{0}); // renormalized user-scaled quiver lengths with linear scaling
+
+            // Compute the length of each quiver
+            for (std::uint64_t i = 0; i < nquiv; ++i) {
+                if (this->quiver_grid_spacing.length() > Flt{0}) {
+                    userscaled_qlengths[i] = (this->quivers[i] * this->datastyles[dsi].quiver_gain * (Flt{0.5} * this->quiver_grid_spacing)).length();
+                } else {
+                    userscaled_qlengths[i] = (this->quivers[i] * this->datastyles[dsi].quiver_gain).length();
+                }
+            }
+            // Transform the user scaled lengths into a length 0->1, possibly with a log transform
+            this->quiver_length_scale.transform (userscaled_qlengths, renorm_qlengths);
+            // Also create a guaranteed linearly renormalized vvec of lengths
+            this->quiver_linear_scale.transform (userscaled_qlengths, renorm_linear_qlengths);
+            // Compute a scaling factor from these to apply to the final quiver lengths
+            sm::vvec<Flt> lfactor = renorm_qlengths / renorm_linear_qlengths;
+            for (auto& lf : lfactor) { lf = lf < Flt{0} ? Flt{0} : lf; } // replace any negative factors with 0
+
+            // 'final' quivers, with scaling applied. From these computed final_qlengths which will give colours
+            sm::vvec<Flt> final_qlengths (nquiv, Flt{0});
+            this->graphData[dsi]->vectors.resize (nquiv);
+            for (std::uint64_t i = 0; i < nquiv; ++i) {
+                if (this->quiver_grid_spacing.length() > Flt{0}) {
+                    this->graphData[dsi]->vectors[i] = this->quivers[i] * this->datastyles[dsi].quiver_gain * (Flt{0.5} * this->quiver_grid_spacing) * lfactor[i];
+                } else {
+                    this->graphData[dsi]->vectors[i] = this->quivers[i] * this->datastyles[dsi].quiver_gain * lfactor[i];
+                }
+                final_qlengths[i] = this->graphData[dsi]->vectors[i].length();
+            }
+            // Replace any zero lengths with the value of the minimum length to ensure colour range goes from min to max not 0 to max
+            Flt fqlmin = final_qlengths.prune_zero().min();
+            final_qlengths.search_replace (Flt{0}, fqlmin);
+            // Then scaled the final_qlengths to range [0-1]
+            this->graphData[dsi]->scalars.resize (nquiv);
+            this->quiver_colour_scale.transform (final_qlengths, this->graphData[dsi]->scalars);
+        }
+
         //! setdata overload that plots quivers at the 2D coordinates
         void setdata (const sm::vvec<sm::vec<Flt, 2>>& _coords, const sm::vvec<sm::vec<Flt, 2>>& _quivs,
                       const DatasetStyle& ds)
@@ -455,7 +505,31 @@ export namespace mplot
             for (unsigned int i = 0; i < dsize; ++i) {
                 this->graphData[didx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
             }
+
+            this->setup_quivers (didx);
         }
+
+        // Allows user to specify colours with a scalar (assumed in range [0, 1])
+        void setdata (const sm::vvec<sm::vec<Flt, 2>>& _coords,
+                      const sm::vvec<sm::vec<Flt, 2>>& _quivs,
+                      const sm::vvec<Flt>& _clrs,
+                      const DatasetStyle& ds)
+        {
+            this->setdata (_coords, _quivs, ds);
+            // Now update colours
+            std::uint32_t dsi = this->graphData.size() - 1;
+            std::uint32_t dsize = this->graphData[dsi]->coords.size();
+            if (_clrs.size() != dsize) { return; }
+            this->graphData[dsi]->scalars.resize (dsize, 0.0f);
+            this->quiver_colour_scale.reset();
+            this->quiver_colour_scale.do_autoscale = false;
+            this->quiver_colour_scale.compute_scaling_from_data (_clrs); // fails ?!?
+            //this->quiver_colour_scale.compute_scaling (_clrs.range()); // ok
+            //this->quiver_colour_scale.compute_scaling (_clrs.range<true>()); // not ok
+            this->quiver_colour_scale.transform (_clrs, this->graphData[dsi]->scalars); // not ok, because like compute_scaling (_clrs.range<true>());
+            std::cout << "quiver_colour_scale: " << this->quiver_colour_scale << std::endl;
+        }
+
 
         //! setdata overload that plots quivers on a grid, scaling the grid's coordinates suitably?
         void setdata (const sm::grid<unsigned int, Flt>& g, const sm::vvec<sm::vec<Flt, 2>>& _quivs,
@@ -541,6 +615,8 @@ export namespace mplot
                     this->graphData[didx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
                 }
             }
+
+            this->setup_quivers (didx);
         }
 
         //! Set a dataset into the graph. Provide abscissa and ordinate and a dataset
@@ -1170,74 +1246,22 @@ export namespace mplot
                            || this->datastyles[dsi].markerstyle == markerstyle::quiver_fromcoord
                            || this->datastyles[dsi].markerstyle == markerstyle::quiver_tocoord) { // Markers are quivers
 
-                    // Check quivers exist and then proceed with code adapted from mplot::QuiverVisual
-                    uint64_t nquiv = this->quivers.size();
-
-                    if (this->graphData[dsi]->coords.size() == nquiv) {
-
-                        // Prepare scaling functions
-                        if (!this->quiver_colour_scale.ready()) { this->quiver_colour_scale.do_autoscale = true; }
-                        if (!this->quiver_linear_scale.ready()) { this->quiver_linear_scale.do_autoscale = true; }
-                        if (!this->quiver_length_scale.ready()) { this->quiver_length_scale.do_autoscale = true; }
-
-                        // Have to derive some scaling info from the quivers first.
-                        //sm::vvec<Flt> raw_qlengths (nquiv, Flt{0});           // 'raw' quiver lengths
-                        sm::vvec<Flt> userscaled_qlengths (nquiv, Flt{0});    // 'user-scaled' quiver lengths (may exaggerate one axis)
-                        sm::vvec<Flt> renorm_qlengths (nquiv, Flt{0});        // renormalized user-scaled quiver lengths with linear OR log scaling
-                        sm::vvec<Flt> renorm_linear_qlengths (nquiv, Flt{0}); // renormalized user-scaled quiver lengths with linear scaling
-
-                        // Compute the length of each quiver
-                        for (uint64_t i = 0; i < nquiv; ++i) {
-                            //raw_qlengths[i] = this->quivers[i].length();
-                            if (this->quiver_grid_spacing.length() > Flt{0}) {
-                                userscaled_qlengths[i] = (this->quivers[i] * this->datastyles[dsi].quiver_gain * (Flt{0.5} * this->quiver_grid_spacing)).length();
-                            } else {
-                                userscaled_qlengths[i] = (this->quivers[i] * this->datastyles[dsi].quiver_gain).length();
+                    // loop thru coords, drawing a quiver for each
+                    auto ce = static_cast<std::uint64_t>(coords_end);
+                    if (ce > this->graphData[dsi]->vectors.size()
+                        || ce > this->graphData[dsi]->coords.size()
+                        || (this->datastyles[dsi].quiver_flagset.test (mplot::quiver_flags::colour_fixed) == false
+                            && ce > this->graphData[dsi]->scalars.size())) {
+                        throw std::runtime_error ("GraphVisual::drawDataCommon: coords_end is off the end of quivers");
+                    }
+                    std::array<float, 3> clr = this->datastyles[dsi].linecolour;
+                    for (unsigned int i = coords_start; i < coords_end; ++i) {
+                        if (this->within_axes (this->graphData[dsi]->coords[i])) {
+                            if (this->datastyles[dsi].quiver_flagset.test (mplot::quiver_flags::colour_fixed) == false) {
+                                clr = this->datastyles[dsi].quiver_colourmap.convert (this->graphData[dsi]->scalars[i]);
                             }
+                            this->quiver (this->graphData[dsi]->coords[i], this->graphData[dsi]->vectors[i], clr, this->datastyles[dsi]);
                         }
-                        // Transform the user scaled lengths into a length 0->1, possibly with a log transform
-                        this->quiver_length_scale.transform (userscaled_qlengths, renorm_qlengths);
-                        // Also create a guaranteed linearly renormalized vvec of lengths
-                        this->quiver_linear_scale.transform (userscaled_qlengths, renorm_linear_qlengths);
-                        // Compute a scaling factor from these to apply to the final quiver lengths
-                        sm::vvec<Flt> lfactor = renorm_qlengths / renorm_linear_qlengths;
-                        for (auto& lf : lfactor) { lf = lf < Flt{0} ? Flt{0} : lf; } // replace any negative factors with 0
-
-                        // 'final' quivers, with scaling applied. From these computed final_qlengths which will give colours
-                        sm::vvec<Flt> final_qlengths (nquiv, Flt{0});
-                        sm::vvec<sm::vec<Flt, 3>> final_quivers (this->quivers);
-                        for (uint64_t i = 0; i < nquiv; ++i) {
-                            if (this->quiver_grid_spacing.length() > Flt{0}) {
-                                final_quivers[i] *= this->datastyles[dsi].quiver_gain * (Flt{0.5} * this->quiver_grid_spacing) * lfactor[i];
-                            } else {
-                                final_quivers[i] *= this->datastyles[dsi].quiver_gain * lfactor[i];
-                            }
-                            final_qlengths[i] = final_quivers[i].length();
-                        }
-                        // Replace any zero lengths with the value of the minimum length to ensure colour range goes from min to max not 0 to max
-                        Flt fqlmin = final_qlengths.prune_zero().min();
-                        final_qlengths.search_replace (Flt{0}, fqlmin);
-                        // Then scaled the final_qlengths to range [0-1]
-                        sm::vvec<Flt> colour_qlengths (nquiv, Flt{0});
-                        this->quiver_colour_scale.transform (final_qlengths, colour_qlengths);
-
-                        // Finally loop thru coords, drawing a quiver for each
-                        if (static_cast<uint64_t>(coords_end) > nquiv) {
-                            throw std::runtime_error ("GraphVisual::drawDataCommon: coords_end is off the end of quivers");
-                        }
-                        std::array<float, 3> clr = this->datastyles[dsi].linecolour;
-                        for (unsigned int i = coords_start; i < coords_end; ++i) {
-                            if (this->within_axes (this->graphData[dsi]->coords[i])) {
-                                if (this->datastyles[dsi].quiver_flagset.test (mplot::quiver_flags::colour_fixed) == false) {
-                                    clr = this->datastyles[dsi].quiver_colourmap.convert (colour_qlengths[i]);
-                                }
-                                this->quiver (this->graphData[dsi]->coords[i], final_quivers[i], clr, this->datastyles[dsi]);
-                            }
-                        }
-
-                    } else {
-                        std::cout << "this->graphData[dsi]->coords.size() = "  << this->graphData[dsi]->coords.size()
-                                  << " does not match quivers size: " << quivers.size() << std::endl;
                     }
 
                 } else { // Regular data markers
@@ -1731,14 +1755,14 @@ export namespace mplot
         }
 
         //! Draw a single quiver at point coords_i with direction/magnitude quiv.
-        void quiver (sm::vec<float>& coords_i, sm::vec<Flt, 3>& quiv,
+        void quiver (sm::vec<float>& coords_i, sm::vec<float, 3>& quiv,
                      const std::array<float, 3>& clr, const mplot::DatasetStyle& style)
         {
-            sm::vec<Flt> halfquiv, half = { Flt{0.5}, Flt{0.5}, Flt{0.5} };
+            sm::vec<float> halfquiv, half = { 0.5f, 0.5f, 0.5f };
             sm::vec<float> start, end;
 
-            Flt dlength = quiv.length();
-            if ((std::isnan(dlength) || dlength == Flt{0})
+            float dlength = quiv.length();
+            if ((std::isnan(dlength) || dlength == 0.0f)
                 && style.quiver_flagset.test(mplot::quiver_flags::show_zeros) == true) {
                 // NaNs denote zero vectors when the lengths have been log scaled.
                 this->computeSphere (coords_i, style.quiver_zero_colour, style.markersize * style.quiver_thickness_gain);
@@ -1755,14 +1779,14 @@ export namespace mplot
 
                 if (style.markerstyle == mplot::markerstyle::quiver_fromcoord) {
                     start = coords_i;
-                    std::transform (coords_i.begin(), coords_i.end(), quiv.begin(), end.begin(), std::plus<Flt>());
+                    std::transform (coords_i.begin(), coords_i.end(), quiv.begin(), end.begin(), std::plus<float>());
                 } else if (style.markerstyle == mplot::markerstyle::quiver_tocoord) {
-                    std::transform (coords_i.begin(), coords_i.end(), quiv.begin(), start.begin(), std::minus<Flt>());
+                    std::transform (coords_i.begin(), coords_i.end(), quiv.begin(), start.begin(), std::minus<float>());
                     end = coords_i;
                 } else /* default is on-coord */ {
-                    std::transform (half.begin(), half.end(), quiv.begin(), halfquiv.begin(), std::multiplies<Flt>());
-                    std::transform (coords_i.begin(), coords_i.end(), halfquiv.begin(), start.begin(), std::minus<Flt>());
-                    std::transform (coords_i.begin(), coords_i.end(), halfquiv.begin(), end.begin(), std::plus<Flt>());
+                    std::transform (half.begin(), half.end(), quiv.begin(), halfquiv.begin(), std::multiplies<float>());
+                    std::transform (coords_i.begin(), coords_i.end(), halfquiv.begin(), start.begin(), std::minus<float>());
+                    std::transform (coords_i.begin(), coords_i.end(), halfquiv.begin(), end.begin(), std::plus<float>());
                 }
 
                 // Quiver thickness is either the linewidth (* user-supplied thickness_gain) or a
@@ -1997,8 +2021,8 @@ export namespace mplot
 
     public:
         /*!
-         * Graph data coordinates. A vector of vectors of unique pointers to data, with
-         * one pointer for each graph in the model.
+         * Graph data. A vector of unique pointers to GraphData objects, with one pointer
+         * for each dataset in the model.
          *
          * The current scheme for GraphVisual is that this structure holds the data that
          * is displayed in the GraphVisual. These coords are scaled into
@@ -2021,8 +2045,8 @@ export namespace mplot
          * this, there are runtime exceptions that guide you to call setlimits_x before
          * setdata.
          */
-        //std::vector<std::unique_ptr<std::vector<sm::vec<float>>>> graphDataCoords;
         std::vector<std::unique_ptr<GraphData<float>>> graphData;
+
         //! Quiver data, if used. Limitation: You can ONLY have ONE quiver field per
         //! GraphVisual. Note that the quivers can point in three dimensions. That's intentional,
         //! even though 2D quivers are going to be used most. The locations for the quivers for
@@ -2038,6 +2062,7 @@ export namespace mplot
         sm::scale<float> quiver_colour_scale;
         //! The dx from the sm::grid, but scaled with abscissa_scale and ord1_scale to be in 'VisualModel units'
         sm::vec<Flt, 3> quiver_grid_spacing = {};
+
         //! A scaling for the abscissa.
         sm::scale<Flt> abscissa_scale;
         //! A scaling for the first (left hand) ordinate
