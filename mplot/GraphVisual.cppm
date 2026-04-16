@@ -43,6 +43,31 @@ import mplot.visualfont;
 
 export namespace mplot
 {
+    // Data structure for a dataset in a GraphVisual
+    template <typename F>
+    struct GraphData
+    {
+        GraphData() {}
+        GraphData (const std::uint32_t dsz)
+        {
+            this->coords.resize (dsz, sm::vec<F, 3>{});
+        }
+
+        // Coordinates of the graph data points
+        sm::vvec<sm::vec<F, 3>> coords;
+        // Directions of the data points (if required for a quiver plot)
+        sm::vvec<sm::vec<F, 3>> vectors;
+        // Scalars for the data points. Can be converted to, e.g. colours via a colourmap in a DatasetStyle
+        sm::vvec<F> scalars;
+
+        void clear()
+        {
+            this->coords.clear();
+            this->vectors.clear();
+            this->scalars.clear();
+        }
+    };
+
     /*!
      * A VisualModel for showing a 2D graph.
      */
@@ -65,7 +90,7 @@ export namespace mplot
         static constexpr bool gv_debug = false;
 
         //! Append a single datum onto the relevant graph. Build on existing data in
-        //! graphDataCoords. Finish up with a call to completeAppend(). didx is the data
+        //! graphData. Finish up with a call to completeAppend(). didx is the data
         //! index and counts up from 0. Have to save _abscissa and _ordinate in a local
         //! copy of the data to be able to rescale.
         void append (const Flt& _abscissa, const Flt& _ordinate, const unsigned int didx)
@@ -103,12 +128,12 @@ export namespace mplot
 
             // Now sd and ad can be used to construct dataCoords x/y. They are used to
             // set the position of each datum into dataCoords
-            if (graphDataCoords.size() < didx + 1) {
-                // Need to add an additional graphDataCoords to receive data. This can occur after
+            if (graphData.size() < didx + 1) {
+                // Need to add an additional graphData entry to receive data. This can occur after
                 // appending the first data point of a first dataset and then appending the first
                 // data point of a second dataset to an otherwise empty graph.
-                this->graphDataCoords.push_back (std::make_unique<std::vector<sm::vec<float>>>(0u, sm::vec<float>{0,0,0}));
-                // As well as creating a new, empty graphDataCoords, we have to add the right datastyle
+                this->graphData.push_back (std::make_unique<GraphData<float>>());
+                // As well as creating a new, empty graphData, we have to add the right datastyle
                 if (this->datastyles[didx].axisside == mplot::axisside::left) {
                     this->datastyles.push_back (this->ds_ord1);
                 } else {
@@ -116,9 +141,9 @@ export namespace mplot
                 }
             }
 
-            unsigned int oldsz = this->graphDataCoords[didx]->size();
-            (this->graphDataCoords[didx])->resize (oldsz+1);
-            this->graphDataCoords[didx].get()->at(oldsz) = sm::vec<float>{ static_cast<float>(a), static_cast<float>(o), float{0} };
+            unsigned int oldsz = this->graphData[didx]->coords.size();
+            this->graphData[didx]->coords.resize (oldsz + 1);
+            this->graphData[didx]->coords.at (oldsz) = sm::vec<float>{ static_cast<float>(a), static_cast<float>(o), float{0} };
             int redraw_plot = 0;
             sm::range<Flt> xrange = this->datarange_x;
             sm::range<Flt> yrange = this->datarange_y;
@@ -140,7 +165,7 @@ export namespace mplot
                 this->clear_graph_data();
 
                 // setdata or this function will re-add these
-                this->graphDataCoords.clear();
+                this->graphData.clear();
                 this->datastyles.clear();
 
                 this->pendingAppended = true; // as the graph will be re-drawn
@@ -169,7 +194,7 @@ export namespace mplot
         void render()
         {
             if (this->pendingAppended == true) {
-                // After adding to graphDataCoords, we have to create the new OpenGL
+                // After adding to graphData, we have to create the new OpenGL
                 // vertices (CPU side) and update the OpenGL buffers.
                 this->drawAppendedData();
                 this->reinit_buffers();
@@ -182,9 +207,9 @@ export namespace mplot
         //! Clear all the coordinate data for the graph, but leave the containers in place.
         void clear_graph_data()
         {
-            unsigned int dsize = this->graphDataCoords.size();
+            unsigned int dsize = this->graphData.size();
             for (unsigned int i = 0; i < dsize; ++i) {
-                this->graphDataCoords[i]->clear();
+                this->graphData[i]->coords.clear();
             }
             this->reinit();
         }
@@ -202,13 +227,13 @@ export namespace mplot
                 throw std::runtime_error ("GraphVisual::update: size mismatch");
             }
 
-            if (data_idx >= this->graphDataCoords.size()) {
-                std::cout << "Can't add data at graphDataCoords index " << data_idx << std::endl;
+            if (data_idx >= this->graphData.size()) {
+                std::cout << "Can't add data at graphData index " << data_idx << std::endl;
                 return;
             }
 
             // Ensure the vector at data_idx has enough capacity for the updated data
-            this->graphDataCoords[data_idx]->resize (dsize);
+            this->graphData[data_idx]->coords.resize (dsize);
 
             // Are we auto-rescaling the x axis?
             if (this->auto_rescale_x) {
@@ -268,7 +293,7 @@ export namespace mplot
             // Now sd and ad can be used to construct dataCoords x/y. They are used to
             // set the position of each datum into dataCoords
             for (unsigned int i = 0; i < dsize; ++i) {
-                this->graphDataCoords[data_idx].get()->at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
+                this->graphData[data_idx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
             }
 
             this->clearTexts(); // VisualModel::clearTexts()
@@ -295,7 +320,7 @@ export namespace mplot
                      const Container<T, Allocator>& _data, std::string datalabel, const unsigned int data_idx)
         {
             if (data_idx >= this->datastyles.size()) {
-                std::cout << "Can't add change data label at graphDataCoords index " << data_idx << std::endl;
+                std::cout << "Can't add change data label at graphData index " << data_idx << std::endl;
                 return;
             }
             this->datastyles[data_idx].datalabel = datalabel;
@@ -345,7 +370,7 @@ export namespace mplot
             DatasetStyle ds(this->policy);
             ds.axisside = axisside;
             if (!name.empty()) { ds.datalabel = name; }
-            unsigned int data_index = static_cast<unsigned int>(this->graphDataCoords.size());
+            unsigned int data_index = static_cast<unsigned int>(this->graphData.size());
             this->setstyle (ds, DatasetStyle::datacolour(data_index), DatasetStyle::datamarkerstyle (data_index));
             this->setdata (_abscissae, _data, ds);
         }
@@ -407,8 +432,8 @@ export namespace mplot
                 this->ds_ord2 = ds;
             }
 
-            std::uint32_t didx = this->graphDataCoords.size();
-            this->graphDataCoords.push_back (std::make_unique<std::vector<sm::vec<float>>>(dsize, sm::vec<float>{}));
+            std::uint32_t didx = this->graphData.size();
+            this->graphData.push_back (std::make_unique<GraphData<float>>(dsize));
             this->datastyles.push_back (ds);
 
             // Compute the ord1_scale and asbcissa_scale for the first added dataset only
@@ -428,7 +453,7 @@ export namespace mplot
             }
 
             for (unsigned int i = 0; i < dsize; ++i) {
-                this->graphDataCoords[didx].get()->at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
+                this->graphData[didx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
             }
         }
 
@@ -462,7 +487,7 @@ export namespace mplot
             auto _abscissae = g.get_abscissae();
             auto _data = g.get_ordinates();
 
-            // From g.v_c we get coordinates. These have to be copied into graphDataCoords
+            // From g.v_c we get coordinates. These have to be copied into graphData
             // with the appropriate scaling.
             // from grid get absc1 and ord1
             if (ds.axisside == mplot::axisside::left) {
@@ -476,8 +501,8 @@ export namespace mplot
             }
 
             unsigned int dsize = _quivs.size();
-            unsigned int didx = this->graphDataCoords.size();
-            this->graphDataCoords.push_back (std::make_unique<std::vector<sm::vec<float>>>(dsize, sm::vec<float>{ 0.0f, 0.0f, 0.0f }));
+            unsigned int didx = this->graphData.size();
+            this->graphData.push_back (std::make_unique<GraphData<float>>(dsize));
             this->datastyles.push_back (ds);
 
             // Compute the ord1_scale and asbcissa_scale for the first added dataset only
@@ -513,14 +538,14 @@ export namespace mplot
                 // Now sd and ad can be used to construct dataCoords x/y. They are used to
                 // set the position of each datum into dataCoords
                 for (unsigned int i = 0; i < dsize; ++i) {
-                    this->graphDataCoords[didx].get()->at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
+                    this->graphData[didx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
                 }
             }
         }
 
         //! Set a dataset into the graph. Provide abscissa and ordinate and a dataset
         //! style. The locations of the markers for each dataset are computed and stored
-        //! in this->graphDataCoords, one vector for each dataset.
+        //! in this->graphData, one vector for each dataset.
         template <typename Ctnr1, typename Ctnr2>
         std::enable_if_t<sm::is_copyable_container<Ctnr1>::value
                          && sm::is_copyable_container<Ctnr2>::value, void>
@@ -544,11 +569,11 @@ export namespace mplot
             }
 
             uint64_t dsize = _data.size();
-            unsigned int didx = static_cast<unsigned int>(this->graphDataCoords.size());
+            unsigned int didx = static_cast<unsigned int>(this->graphData.size());
 
             // Allocate memory for the new data coords, add the data style info and the
             // starting index for dataCoords
-            this->graphDataCoords.push_back (std::make_unique<std::vector<sm::vec<float>>>(dsize, sm::vec<float>{0,0,0}));
+            this->graphData.push_back (std::make_unique<GraphData<float>>(dsize));
 
             this->datastyles.push_back (ds);
 
@@ -573,7 +598,7 @@ export namespace mplot
                 // Now sd and ad can be used to construct dataCoords x/y. They are used to
                 // set the position of each datum into dataCoords
                 for (uint64_t i = 0; i < dsize; ++i) {
-                    this->graphDataCoords[didx].get()->at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
+                    this->graphData[didx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
                 }
             }
         }
@@ -612,7 +637,7 @@ export namespace mplot
             // User may wish to change these by calling the setdata (const histo&, DatasetStyle&) overload
             ds.showlines = true;
             ds.linewidth = ds.markersize / 10.0f;
-            unsigned int data_index = this->graphDataCoords.size();
+            unsigned int data_index = this->graphData.size();
             ds.markercolour = DatasetStyle::datacolour(data_index);
             ds.linecolour = mplot::colour::black;
 
@@ -915,7 +940,7 @@ export namespace mplot
         //! Setter for the dataaxisdist attribute
         void setdataaxisdist (float proportion)
         {
-            if (!this->graphDataCoords.empty()) {
+            if (!this->graphData.empty()) {
                 throw std::runtime_error ("GraphVisual::setdataaxisdist: Call this function *before* using setdata to set the data");
             }
             this->dataaxisdist = proportion;
@@ -944,7 +969,7 @@ export namespace mplot
         //! any manual setlimits calls.
         void setsize (float _width, float _height)
         {
-            if (!this->graphDataCoords.empty()) {
+            if (!this->graphData.empty()) {
                 throw std::runtime_error ("GraphVisual::setsize: Set the size of your graph with setsize *before* using setdata to set the data");
             }
             this->resetsize (_width, _height);
@@ -954,7 +979,7 @@ export namespace mplot
         // factor. Call before finalize() and setdata() and any manual setlimits calls.
         void zoomgraph (Flt factor)
         {
-            if (!this->graphDataCoords.empty()) {
+            if (!this->graphData.empty()) {
                 throw std::runtime_error ("GraphVisual::zoomgraph: Set the size of your graph with zoomgraph *before* using setdata to set the data");
             }
             float _w = this->width;
@@ -982,7 +1007,7 @@ export namespace mplot
         //! after setsize/zoomgraph, but before setdata and finalize.
         void setlimits_x (const sm::range<Flt>& range_x, bool force = false)
         {
-            if (!force && !this->graphDataCoords.empty()) {
+            if (!force && !this->graphData.empty()) {
                 throw std::runtime_error ("GraphVisual::setlimits_x: Set your axis limits *before* using setdata to set the data");
             }
             this->scalingpolicy_x = mplot::scalingpolicy::manual;
@@ -1000,7 +1025,7 @@ export namespace mplot
         //! Set manual limits for the x axis (abscissa) passing by sm::range
         void setlimits_y (const sm::range<Flt>& range_y, bool force = false)
         {
-            if (!force && !this->graphDataCoords.empty()) {
+            if (!force && !this->graphData.empty()) {
                 throw std::runtime_error ("GraphVisual::setlimits_y: Set your axis limits *before* using setdata to set the data");
             }
             this->scalingpolicy_y = mplot::scalingpolicy::manual;
@@ -1018,7 +1043,7 @@ export namespace mplot
         //! Set manual limits for the x axis (abscissa) passing by sm::range
         void setlimits_y2 (const sm::range<Flt>& range_y2, bool force = false)
         {
-            if (!force && !this->graphDataCoords.empty()) {
+            if (!force && !this->graphData.empty()) {
                 throw std::runtime_error ("GraphVisual::setlimits_y2: Set your axis limits *before* using setdata to set the data");
             }
             this->scalingpolicy_y = mplot::scalingpolicy::manual; // scalingpolicy_y common to both left and right axes?
@@ -1040,7 +1065,7 @@ export namespace mplot
         // Set axis limits for x/y passing by sm::range
         void setlimits (const sm::range<Flt>& range_x, const sm::range<Flt>& range_y)
         {
-            if (!this->graphDataCoords.empty()) {
+            if (!this->graphData.empty()) {
                 throw std::runtime_error ("GraphVisual::setlimits: Set your axis limits *before* using setdata to set the data");
             }
 
@@ -1068,7 +1093,7 @@ export namespace mplot
         void setlimits (const sm::range<Flt>& range_x,
                         const sm::range<Flt>& range_y, const sm::range<Flt>& range_y2)
         {
-            if (!this->graphDataCoords.empty()) {
+            if (!this->graphData.empty()) {
                 throw std::runtime_error ("GraphVisual::setlimits: Set your axis limits *before* using setdata to set the data");
             }
 
@@ -1095,8 +1120,8 @@ export namespace mplot
 
     protected:
 
-        //! Stores the length of each entry in graphDataCoords - i.e how many data
-        //! points are in each graph curve
+        //! Stores the length of each entry in graphData - i.e how many data
+        //! points are in each graph curve. FIXME may not need to be here.
         std::vector<unsigned int> coords_lengths;
 
         //! Is there pending appended data that needs to be converted into OpenGL shapes?
@@ -1138,7 +1163,7 @@ export namespace mplot
                 if (this->datastyles[dsi].markerstyle == markerstyle::bar) { // Data markers are bars
 
                     for (unsigned int i = coords_start; i < coords_end; ++i) {
-                        this->bar ((*this->graphDataCoords[dsi])[i], this->datastyles[dsi]);
+                        this->bar (this->graphData[dsi]->coords[i], this->datastyles[dsi]);
                     }
 
                 } else if (this->datastyles[dsi].markerstyle == markerstyle::quiver
@@ -1148,7 +1173,7 @@ export namespace mplot
                     // Check quivers exist and then proceed with code adapted from mplot::QuiverVisual
                     uint64_t nquiv = this->quivers.size();
 
-                    if ((*this->graphDataCoords[dsi]).size() == nquiv) {
+                    if (this->graphData[dsi]->coords.size() == nquiv) {
 
                         // Prepare scaling functions
                         if (!this->quiver_colour_scale.ready()) { this->quiver_colour_scale.do_autoscale = true; }
@@ -1202,24 +1227,24 @@ export namespace mplot
                         }
                         std::array<float, 3> clr = this->datastyles[dsi].linecolour;
                         for (unsigned int i = coords_start; i < coords_end; ++i) {
-                            if (this->within_axes ((*this->graphDataCoords[dsi])[i])) {
+                            if (this->within_axes (this->graphData[dsi]->coords[i])) {
                                 if (this->datastyles[dsi].quiver_flagset.test (mplot::quiver_flags::colour_fixed) == false) {
                                     clr = this->datastyles[dsi].quiver_colourmap.convert (colour_qlengths[i]);
                                 }
-                                this->quiver ((*this->graphDataCoords[dsi])[i], final_quivers[i], clr, this->datastyles[dsi]);
+                                this->quiver (this->graphData[dsi]->coords[i], final_quivers[i], clr, this->datastyles[dsi]);
                             }
                         }
 
                     } else {
-                        std::cout << "(*this->graphDataCoords[dsi]).size() = "  << (*this->graphDataCoords[dsi]).size()
+                        std::cout << "this->graphData[dsi]->coords.size() = "  << this->graphData[dsi]->coords.size()
                                   << " does not match quivers size: " << quivers.size() << std::endl;
                     }
 
                 } else { // Regular data markers
 
                     for (unsigned int i = coords_start; i < coords_end; ++i) {
-                        if (this->within_axes ((*this->graphDataCoords[dsi])[i])) {
-                            this->marker ((*this->graphDataCoords[dsi])[i], this->datastyles[dsi]);
+                        if (this->within_axes (this->graphData[dsi]->coords[i])) {
+                            this->marker (this->graphData[dsi]->coords[i], this->datastyles[dsi]);
                         } // else marker is outside graph axes so don't draw it
                     }
                 }
@@ -1234,21 +1259,21 @@ export namespace mplot
                 for (unsigned int i = coords_start+1; i < coords_end; ++i) {
                     // Draw tube from location -1 to location 0.
                     if (this->draw_beyond_axes == true
-                        || (this->within_axes ((*this->graphDataCoords[dsi])[i-1])
-                            && this->within_axes ((*this->graphDataCoords[dsi])[i]))) {
+                        || (this->within_axes (this->graphData[dsi]->coords[i-1])
+                            && this->within_axes (this->graphData[dsi]->coords[i]))) {
 
                         if (this->datastyles[dsi].markergap > 0.0f) {
-                            auto point_to_point = (*this->graphDataCoords[dsi])[i] - (*this->graphDataCoords[dsi])[i-1];
+                            auto point_to_point = this->graphData[dsi]->coords[i] - this->graphData[dsi]->coords[i-1];
                             if (point_to_point.length() > this->datastyles[dsi].markergap * 2.0f) {
                                 // Draw solid lines between marker points with gaps between line and marker
-                                this->computeFlatLine ((*this->graphDataCoords[dsi])[i-1], (*this->graphDataCoords[dsi])[i], sm::vec<>::uz(),
+                                this->computeFlatLine (this->graphData[dsi]->coords[i-1], this->graphData[dsi]->coords[i], sm::vec<>::uz(),
                                                        this->datastyles[dsi].linecolour,
                                                        this->datastyles[dsi].linewidth, this->datastyles[dsi].markergap);
                             }
                         } else if (appending == true) {
                             // We are appending a line to an existing graph, so compute a single line with rounded ends
-                            this->computeFlatLineRnd ((*this->graphDataCoords[dsi])[i-1], // start
-                                                      (*this->graphDataCoords[dsi])[i],   // end
+                            this->computeFlatLineRnd (this->graphData[dsi]->coords[i-1], // start
+                                                      this->graphData[dsi]->coords[i],   // end
                                                       sm::vec<>::uz(),
                                                       this->datastyles[dsi].linecolour,
                                                       this->datastyles[dsi].linewidth, 0.0f, true, false);
@@ -1260,30 +1285,30 @@ export namespace mplot
                             // and draw the alt colour (which may be bg colour) between the dashes.
                             if (i == 1+coords_start && (coords_end-coords_start)==2) {
                                 // First and only line
-                                this->computeFlatLine ((*this->graphDataCoords[dsi])[i-1], // start
-                                                       (*this->graphDataCoords[dsi])[i],   // end
+                                this->computeFlatLine (this->graphData[dsi]->coords[i-1], // start
+                                                       this->graphData[dsi]->coords[i],   // end
                                                        sm::vec<>::uz(),
                                                        this->datastyles[dsi].linecolour,
                                                        this->datastyles[dsi].linewidth);
                             } else if (i == 1+coords_start) {
                                 // First line
-                                this->computeFlatLineN ((*this->graphDataCoords[dsi])[i-1], // start
-                                                        (*this->graphDataCoords[dsi])[i],   // end
-                                                        (*this->graphDataCoords[dsi])[i+1], // next
+                                this->computeFlatLineN (this->graphData[dsi]->coords[i-1], // start
+                                                        this->graphData[dsi]->coords[i],   // end
+                                                        this->graphData[dsi]->coords[i+1], // next
                                                         sm::vec<>::uz(),
                                                         this->datastyles[dsi].linecolour,
                                                         this->datastyles[dsi].linewidth);
                             } else if (i == (coords_end-1)) {
                                 // last line
-                                this->computeFlatLineP ((*this->graphDataCoords[dsi])[i-1], (*this->graphDataCoords[dsi])[i],
-                                                        (*this->graphDataCoords[dsi])[i-2],
+                                this->computeFlatLineP (this->graphData[dsi]->coords[i-1], this->graphData[dsi]->coords[i],
+                                                        this->graphData[dsi]->coords[i-2],
                                                         sm::vec<>::uz(),
                                                         this->datastyles[dsi].linecolour,
                                                         this->datastyles[dsi].linewidth);
                             } else {
                                 // An intermediate line
-                                this->computeFlatLine ((*this->graphDataCoords[dsi])[i-1], (*this->graphDataCoords[dsi])[i],
-                                                       (*this->graphDataCoords[dsi])[i-2], (*this->graphDataCoords[dsi])[i+1],
+                                this->computeFlatLine (this->graphData[dsi]->coords[i-1], this->graphData[dsi]->coords[i],
+                                                       this->graphData[dsi]->coords[i-2], this->graphData[dsi]->coords[i+1],
                                                        sm::vec<>::uz(),
                                                        this->datastyles[dsi].linecolour,
                                                        this->datastyles[dsi].linewidth);
@@ -1301,10 +1326,10 @@ export namespace mplot
         //! Draw markers and lines for data points that are being appended to a graph
         void drawAppendedData()
         {
-            for (unsigned int dsi = 0; dsi < this->graphDataCoords.size(); ++dsi) {
+            for (unsigned int dsi = 0; dsi < this->graphData.size(); ++dsi) {
                 // Start is old end:
                 unsigned int coords_start = this->coords_lengths[dsi];
-                unsigned int coords_end = static_cast<unsigned int>(this->graphDataCoords[dsi]->size());
+                unsigned int coords_end = static_cast<unsigned int>(this->graphData[dsi]->coords.size());
                 this->coords_lengths[dsi] = coords_end;
                 this->drawDataCommon (dsi, coords_start, coords_end, appending_data);
             }
@@ -1314,9 +1339,9 @@ export namespace mplot
         void drawData()
         {
             unsigned int coords_start = 0;
-            this->coords_lengths.resize (this->graphDataCoords.size());
-            for (unsigned int dsi = 0; dsi < static_cast<unsigned int>(this->graphDataCoords.size()); ++dsi) {
-                unsigned int coords_end = this->graphDataCoords[dsi]->size();
+            this->coords_lengths.resize (this->graphData.size());
+            for (unsigned int dsi = 0; dsi < static_cast<unsigned int>(this->graphData.size()); ++dsi) {
+                unsigned int coords_end = this->graphData[dsi]->coords.size();
                 // Record coords length for future appending:
                 this->coords_lengths[dsi] = coords_end;
                 this->drawDataCommon (dsi, coords_start, coords_end);
@@ -1326,7 +1351,7 @@ export namespace mplot
         //! Draw the graph legend, above the graph, rather than inside it (so much simpler!)
         void drawLegend()
         {
-            unsigned int num_legends_max = static_cast<unsigned int>(this->graphDataCoords.size());
+            unsigned int num_legends_max = static_cast<unsigned int>(this->graphData.size());
 
             // Text offset from marker to text
             sm::vec<float> toffset = {this->fontsize, 0.0f, 0.0f};
@@ -1759,8 +1784,9 @@ export namespace mplot
         //! Generate vertices for a bar of a bar graph, with p1 and p2 defining the top
         //! left and right corners of the bar. bottom left and right assumed to be on x
         //! axis.
-        void bar (sm::vec<float>& p, const mplot::DatasetStyle& style)
+        void bar (const sm::vec<float>& _p, const mplot::DatasetStyle& style)
         {
+            sm::vec<float> p = _p;
             // To update the z position of the data, must also add z thickness to p[2]
             p[2] += thickness;
 
@@ -1984,23 +2010,24 @@ export namespace mplot
          * datarange_x/y/y2 to the model space which is the graph width and height.
          *
          * Any time you change the graph width or height (setsize/resetsize), or update
-         * the data, you might have to re-compute graphDataCoords.
+         * the data, you might have to re-compute graphData.coords.
          *
          * For this reason, there are points in the usual set up of a GraphVisual where
          * you cannot setlimits - you cannot simply call setlimits anytime before you
          * call GraphVisual::finalize(). For example, if you setdata (x_data, y_data)
-         * then in order to populated graphDataCoords, the abscissa_scale and ord1_scale
-         * are determined. If you subsequently call setlimits_x, the graphDataCoords
+         * then in order to populate graphData.coords, the abscissa_scale and ord1_scale
+         * are determined. If you subsequently call setlimits_x, the graphData.coords
          * would need to be re-computed based on the new x limits. Instead of doing
          * this, there are runtime exceptions that guide you to call setlimits_x before
          * setdata.
          */
-        std::vector<std::unique_ptr<std::vector<sm::vec<float>>>> graphDataCoords;
+        //std::vector<std::unique_ptr<std::vector<sm::vec<float>>>> graphDataCoords;
+        std::vector<std::unique_ptr<GraphData<float>>> graphData;
         //! Quiver data, if used. Limitation: You can ONLY have ONE quiver field per
         //! GraphVisual. Note that the quivers can point in three dimensions. That's intentional,
         //! even though 2D quivers are going to be used most. The locations for the quivers for
         //! dataset i are stored in graphDataCoords, like normal points in a non-quiver graph.
-        sm::vvec<sm::vec<Flt, 3>> quivers;
+        sm::vvec<sm::vec<Flt, 3>> quivers; // becomes graphData.dirns
         //! The input vectors are scaled in length to the range [0, 1], which is then modified by the
         //! user using quiver_length_gain. This scaling can be made logarithmic by calling
         //! GraphVisual::quiver_setlog() before calling finalize(). The scaling can be ignored by calling
