@@ -754,6 +754,9 @@ export namespace mplot
                 GLint loc_a = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("alpha"));
                 if (loc_a != -1) { glfn->Uniform1f (loc_a, this->alpha); }
 
+                GLint loc_gr = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("greyscale"));
+                if (loc_gr != -1) { glfn->Uniform1i (loc_gr, (this->flags.test (vm_bools::greyscale) ? 1 : 0)); }
+
                 // The scene-view matrix
                 GLint loc_v = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("v_matrix"));
                 if (loc_v != -1) { glfn->UniformMatrix4fv (loc_v, 1, GL_FALSE, this->scenematrix.arr.data()); }
@@ -1200,6 +1203,7 @@ export namespace mplot
             _flags.set (vm_bools::twodimensional, false);
             _flags.set (vm_bools::hide, false);
             _flags.set (vm_bools::wireframe, false);
+            _flags.set (vm_bools::greyscale, false);
             _flags.set (vm_bools::show_bb, false);
             _flags.set (vm_bools::compute_bb, true);
             return _flags;
@@ -1221,6 +1225,9 @@ export namespace mplot
 
         void wireframe (const bool val) { this->flags.set (vm_bools::wireframe, val); }
         bool wireframe() const { return this->flags.test (vm_bools::wireframe); }
+
+        void greyscale (const bool val) { this->flags.set (vm_bools::greyscale, val); }
+        bool greyscale() const { return this->flags.test (vm_bools::greyscale); }
 
         void instanced (const bool val) { this->flags.set (vm_bools::instanced, val); }
         bool instanced() const { return this->flags.test (vm_bools::instanced); }
