@@ -465,7 +465,7 @@ namespace mplot
                 float mmf = std::atof (mm.c_str());
                 // dl is the length of the scale bar line
                 float dl = 0.0f;
-                dl = this->linePath.getEndToEnd();
+                dl = this->linePath.get_end_to_end();
                 // Having found the length of the line from the <line> or
                 // <path>, compute lineToMillimetres
                 this->lineToMillimetres[0] = 1;
@@ -622,8 +622,8 @@ namespace mplot
                             } else {
                                 f = { v[i], v[i+1] };
                             }
-                            sm::bezcurve<float> c(currentCoordinate, f);
-                            curves.addCurve (c);
+                            sm::bezcurve<float, 3> c(sm::vvec<sm::vec<float, 2>>{currentCoordinate, f});
+                            curves.add_curve (c);
                             currentCoordinate = f;
                         }
                     }
@@ -648,8 +648,8 @@ namespace mplot
                             } else {
                                 f = { v[i], currentCoordinate[1] };
                             }
-                            sm::bezcurve<float> c(currentCoordinate, f);
-                            curves.addCurve (c);
+                            sm::bezcurve<float, 3> c(sm::vvec<sm::vec<float, 2>>{currentCoordinate, f});
+                            curves.add_curve (c);
                             currentCoordinate = f;
                         }
                     }
@@ -672,14 +672,14 @@ namespace mplot
                             if (cmd == 'v') { // delta coordinates
                                 if (v[i] != 0.0f) {
                                     f = { currentCoordinate[0], currentCoordinate[1] + v[i] };
-                                    sm::bezcurve<float> c(currentCoordinate, f);
-                                    curves.addCurve (c);
+                                    sm::bezcurve<float, 3> c(sm::vvec<sm::vec<float, 2>>{currentCoordinate, f});
+                                    curves.add_curve (c);
                                     currentCoordinate = f;
                                 }
                             } else {
                                 f = { currentCoordinate[0], v[i] };
-                                sm::bezcurve<float> c(currentCoordinate, f);
-                                curves.addCurve (c);
+                                sm::bezcurve<float, 3> c(sm::vvec<sm::vec<float, 2>>{currentCoordinate, f});
+                                curves.add_curve (c);
                                 currentCoordinate = f;
                             }
                         }
@@ -706,7 +706,7 @@ namespace mplot
                             currentCoordinate = { v[0], v[1] };
                         }
                         firstCoordinate = currentCoordinate;
-                        curves.initialCoordinate = currentCoordinate;
+                        curves.initial_coordinate = currentCoordinate;
 
                         if (v.size() == 2) {
                             // Just 2 coords means it's a move command; nothing further to do
@@ -718,8 +718,8 @@ namespace mplot
                                 } else {
                                     f = { v[i], v[i+1] };
                                 }
-                                sm::bezcurve<float> c(currentCoordinate, f);
-                                curves.addCurve (c);
+                                sm::bezcurve<float, 3> c(sm::vvec<sm::vec<float, 2>>{currentCoordinate, f});
+                                curves.add_curve (c);
                                 currentCoordinate = f;
                             }
                         }
@@ -750,8 +750,8 @@ namespace mplot
                             c2 = { v[2],v[3] };
                             f = { v[4],v[5] };
                         }
-                        sm::bezcurve<float> c(currentCoordinate, f, c1, c2);
-                        curves.addCurve (c);
+                        sm::bezcurve<float, 3> c(currentCoordinate, f, c1, c2);
+                        curves.add_curve (c);
                         currentCoordinate = f;
                     }
                     break;
@@ -779,8 +779,8 @@ namespace mplot
                             c2 = { v[0], v[1] };
                             f =  { v[2], v[3] };
                         }
-                        sm::bezcurve<float> c(currentCoordinate, f, c1, c2);
-                        curves.addCurve (c);
+                        sm::bezcurve<float, 3> c(currentCoordinate, f, c1, c2);
+                        curves.add_curve (c);
                         currentCoordinate = f;
                     }
                     break;
@@ -802,8 +802,8 @@ namespace mplot
                 case 'z': // straight line from current position to first point of path.
                 {
                     if (currentCoordinate != firstCoordinate) {
-                        sm::bezcurve<float> c(currentCoordinate, firstCoordinate);
-                        curves.addCurve (c);
+                        sm::bezcurve<float, 3> c(sm::vvec<sm::vec<float, 2>>{currentCoordinate, firstCoordinate});
+                        curves.add_curve (c);
                         currentCoordinate = firstCoordinate;
                     }
                     break;
@@ -875,10 +875,10 @@ namespace mplot
             sm::vec<float, 2> p2;
             p2[0] = static_cast<float>(std::atof (x2.c_str()));
             p2[1] = static_cast<float>(std::atof (y2.c_str()));
-            sm::bezcurve<float> linecurve (p1, p2);
+            sm::bezcurve<float, 3> linecurve (sm::vvec<sm::vec<float, 2>>{p1, p2});
             this->linePath.reset();
-            this->linePath.initialCoordinate = p1;
-            this->linePath.addCurve (linecurve);
+            this->linePath.initial_coordinate = p1;
+            this->linePath.add_curve (linecurve);
 
             this->setupScaling (layerName);
         }
@@ -892,10 +892,10 @@ namespace mplot
             if (this->lineToMillimetres[1] == 0.0f) {
                 throw std::runtime_error ("Failed to obtain scaling from the scale bar.");
             }
-            this->corticalPath.setScale (this->lineToMillimetres[1]);
+            this->corticalPath.set_scale (this->lineToMillimetres[1]);
             typename std::list<sm::bezcurvepath<float>>::iterator ei = this->enclosedRegions.begin();
             while (ei != this->enclosedRegions.end()) {
-                ei->setScale (this->lineToMillimetres[1]);
+                ei->set_scale (this->lineToMillimetres[1]);
                 ++ei;
             }
             // Scale the centre points of the circles:

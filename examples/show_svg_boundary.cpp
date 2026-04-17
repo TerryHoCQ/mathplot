@@ -15,15 +15,16 @@
 #include <vector>
 #include <fstream>
 #include <cstdlib>
-
-#include <sm/bezcoord>
-#include <sm/hexgrid>
-
+#include <memory>
 #include <mplot/ReadCurves.h>
-#include <mplot/tools.h>
-#include <mplot/ColourMap.h>
-#include <mplot/Visual.h>
-#include <mplot/HexGridVisual.h>
+
+import sm.bezcoord;
+import sm.hexgrid;
+
+import mplot.tools;
+import mplot.colourmap;
+import mplot.visual;
+import mplot.hexgridvisual;
 
 int main(int argc, char** argv)
 {
@@ -55,11 +56,11 @@ int main(int argc, char** argv)
         sm::hexgrid hg(hexdia, gridspan, 0);
         // Apply the curves as a boundary
         std::cout << "Number of hexes before setting boundary: " << hg.num() << std::endl;
-        hg.setBoundary (r.getCorticalPath());
+        hg.set_boundary (r.getCorticalPath());
 
         std::cout << "hexgrid extent:" << std::endl;
-        std::cout << "  x range: " << hg.getXmin() << " to " << hg.getXmax() << std::endl;
-        std::cout << "  y range: " << hg.getXmin(90) << " to " << hg.getXmax(90) << std::endl;
+        std::cout << "  x range: " << hg.get_x_min() << " to " << hg.get_x_max() << std::endl;
+        std::cout << "  y range: " << hg.get_x_min(90) << " to " << hg.get_x_max(90) << std::endl;
         std::cout << "Scaling is " << r.getScale_mmpersvg() << " mm per SVG unit, or "
                   << r.getScale_svgpermm() << " units/mm" << std::endl;
         std::cout << "Number of hexes within the boundary: " << hg.num() << std::endl;
@@ -69,7 +70,7 @@ int main(int argc, char** argv)
         v.lightingEffects();
         sm::vec<float, 3> offset = { 0.0f, -0.0f, 0.0f };
         auto hgv = std::make_unique<mplot::HexGridVisual<float>>(&hg, offset);
-        v.bindmodel (hgv);
+        hgv->set_parent (v.get_id());
         // Set up data for the HexGridVisual and colour hexes according to their state as being boundary/inside/domain, etc
         std::vector<float> colours (hg.num(), 0.0f);
         static constexpr float cl_boundary_and_in = 0.9f;
@@ -77,13 +78,13 @@ int main(int argc, char** argv)
         static constexpr float cl_domain = 0.5f;
         static constexpr float cl_inside = 0.15f;
         for (auto h : hg.hexen) {
-            if (h.boundaryHex() && h.insideBoundary()) {
+            if (h.boundary_hex() && h.inside_boundary()) {
                 // red is boundary hex AND inside boundary
                 colours[h.vi] = cl_boundary_and_in;
-            } else if (h.boundaryHex()) {
+            } else if (h.boundary_hex()) {
                 // orange is boundary ONLY
                 colours[h.vi] = cl_bndryonly;
-            } else if (h.insideBoundary()) {
+            } else if (h.inside_boundary()) {
                 // Inside boundary -  blue
                 colours[h.vi] = cl_inside;
             } else {
