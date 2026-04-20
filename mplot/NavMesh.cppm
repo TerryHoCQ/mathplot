@@ -1307,6 +1307,8 @@ export namespace mplot
         /*!
          * A version of position camera that aligns the camera direction (i.e. where it is looking - its 'forwards')
          * as closely as possible with the passed-in vector
+         *
+         * What if fwds is 0,0,0?
          */
         sm::mat<float, 4> position_camera (const sm::vec<float>& hp_scene, const sm::mat<float, 4>& model_to_scene,
                                            const float hoverheight, const sm::vec<float>& fwds)
@@ -1314,6 +1316,11 @@ export namespace mplot
             // Let's 'draw' the camera towards the model and then arrange its normal upwards wrt to the normal of the model.
             if (this->ti0 == std::numeric_limits<uint32_t>::max()) {
                 std::cout << __func__ << ": No hit/triangle normal\n";
+                return sm::mat<float, 4>{};
+            }
+
+            if (fwds.length_sq() == 0.0f) {
+                std::cout << __func__ << ": fwds must be non-zero length\n";
                 return sm::mat<float, 4>{};
             }
 
