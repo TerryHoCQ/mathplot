@@ -4,6 +4,10 @@
 module;
 
 #include <array>
+#include <deque>
+#include <string>
+#include <cmath>
+#include <utility>
 
 export module mplot.hsvwheelvisual;
 
@@ -11,7 +15,8 @@ import sm.mathconst;
 import sm.vec;
 
 import mplot.visualmodel;
-import mplot.graphvisual;
+import mplot.colourmap;
+import mplot.textgeometry;
 
 export namespace mplot
 {
