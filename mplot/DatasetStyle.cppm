@@ -93,10 +93,14 @@ export namespace mplot
         float quiver_arrowhead_prop = 0.25f;
         //! How many times thicker than the quiver width should the arrowhead cone be?
         float quiver_conewidth = 2.0f;
-        //! User can choose a colour
-        std::array<float, 3> quiver_zero_colour = mplot::colour::crimson;
-        //! Colourmap for selecting quiver length based colour
-        mplot::ColourMap<float> quiver_colourmap;
+        //! User can choose a colour to represent zeros when using scalar colourmap or quivers
+        std::array<float, 3> zero_colour = mplot::colour::crimson;
+        ///@}
+
+        //! Scalar colour parameters
+        ///@{
+        //! Colourmap to define colour via a scalar (using GraphData::scalars)
+        mplot::ColourMap<float> colourmap;
         ///@}
 
         //! A setter to set both colours to the same value

@@ -343,52 +343,6 @@ export namespace mplot
             }
         }
 
-        //! Prepare an as-yet empty dataset.
-        void prepdata (const std::string name = "", const mplot::axisside axisside = mplot::axisside::left)
-        {
-            std::vector<Flt> emptyabsc;
-            std::vector<Flt> emptyord;
-            this->setdata (emptyabsc, emptyord, name, axisside);
-        }
-
-        //! Prepare an as-yet empty dataset with a specified DatasetStyle.
-        void prepdata (const DatasetStyle& ds)
-        {
-            std::vector<Flt> emptyabsc;
-            std::vector<Flt> emptyord;
-            this->setdata (emptyabsc, emptyord, ds);
-        }
-
-        //! Set a dataset into the graph using default styles, incrementing colour and
-        //! marker shape as more datasets are included in the graph.
-        template <typename Ctnr1, typename Ctnr2>
-        std::enable_if_t<sm::is_copyable_container<Ctnr1>::value
-                         && sm::is_copyable_container<Ctnr2>::value, void>
-        setdata (const Ctnr1& _abscissae, const Ctnr2& _data,
-                 const std::string name = "", const mplot::axisside axisside = mplot::axisside::left)
-        {
-            DatasetStyle ds(this->policy);
-            ds.axisside = axisside;
-            if (!name.empty()) { ds.datalabel = name; }
-            unsigned int data_index = static_cast<unsigned int>(this->graphData.size());
-            this->setstyle (ds, DatasetStyle::datacolour(data_index), DatasetStyle::datamarkerstyle (data_index));
-            this->setdata (_abscissae, _data, ds);
-        }
-
-        //! setdata overload that accepts vvec of coords (as sm::vec<Flt, 2>)
-        void setdata (const sm::vvec<sm::vec<Flt, 2>>& _coords,
-                      const std::string name = "", const mplot::axisside axisside = mplot::axisside::left)
-        {
-            // Split coords into two vectors then call setdata() overload
-            std::vector<Flt> absc (_coords.size(), Flt{0});
-            std::vector<Flt> ord (_coords.size(), Flt{0});
-            for (unsigned int i = 0; i < _coords.size(); ++i) {
-                absc[i] = _coords[i][0];
-                ord[i] = _coords[i][1];
-            }
-            this->setdata (absc, ord, name, axisside);
-        }
-
         // Process coordinates and quivers data into the GraphVisual model space. dsi is the dataset index
         void setup_quivers (const std::uint32_t dsi)
         {
@@ -439,10 +393,191 @@ export namespace mplot
             this->quiver_colour_scale.transform (final_qlengths, this->graphData[dsi]->scalars);
         }
 
+        //! There are many many setdata overloads. If you need to know which one is being called,
+        //! compile with this set to true.
+        static constexpr bool debug_setdata = false;
+
+        //! Prepare an as-yet empty dataset.
+        void prepdata (const std::string name = "", const mplot::axisside axisside = mplot::axisside::left)
+        {
+            if constexpr (debug_setdata) { std::cout << "prepdata (string name, axisside) called\n"; }
+            std::vector<Flt> emptyabsc;
+            std::vector<Flt> emptyord;
+            this->setdata (emptyabsc, emptyord, name, axisside);
+        }
+
+        //! Prepare an as-yet empty dataset with a specified DatasetStyle.
+        void prepdata (const DatasetStyle& ds)
+        {
+            if constexpr (debug_setdata) { std::cout << "prepdata (DatasetStyle) called\n"; }
+            std::vector<Flt> emptyabsc;
+            std::vector<Flt> emptyord;
+            this->setdata (emptyabsc, emptyord, ds);
+        }
+
+        //! Set a dataset into the graph using default styles, incrementing colour and
+        //! marker shape as more datasets are included in the graph.
+        template <typename Ctnr1, typename Ctnr2>
+        std::enable_if_t<sm::is_copyable_container<Ctnr1>::value && sm::is_copyable_container<Ctnr2>::value, void>
+        setdata (const Ctnr1& _abscissae, const Ctnr2& _data,
+                 const std::string name = "", const mplot::axisside axisside = mplot::axisside::left)
+        {
+            if constexpr (debug_setdata) { std::cout << "setdata (Cntr1 abs, Cntr2 data, string name, axisside) called\n"; }
+            DatasetStyle ds(this->policy);
+            ds.axisside = axisside;
+            if (!name.empty()) { ds.datalabel = name; }
+            unsigned int data_index = static_cast<unsigned int>(this->graphData.size());
+            this->setstyle (ds, DatasetStyle::datacolour(data_index), DatasetStyle::datamarkerstyle (data_index));
+            this->setdata (_abscissae, _data, ds);
+        }
+
+        //! Set a dataset into the graph. Provide abscissa and ordinate and a dataset
+        //! style. The locations of the markers for each dataset are computed and stored
+        //! in this->graphData, one vector for each dataset.
+        template <typename Ctnr1, typename Ctnr2>
+        std::enable_if_t<sm::is_copyable_container<Ctnr1>::value && sm::is_copyable_container<Ctnr2>::value, void>
+        setdata (const Ctnr1& _abscissae, const Ctnr2& _data, const DatasetStyle& ds)
+        {
+            if constexpr (debug_setdata) { std::cout << "setdata (Ctnr1 abs, Ctnr2 data, DatasetStyle) called\n"; }
+
+            if (_abscissae.size() != _data.size()) {
+                std::stringstream ee;
+                ee << "GraphVisual::setdata: size mismatch. abscissa size " << _abscissae.size() << " and data size: " << _data.size();
+                throw std::runtime_error (ee.str());
+            }
+
+            // Save data first
+            if (ds.axisside == mplot::axisside::left) {
+                this->absc1.set_from (_abscissae);
+                this->ord1.set_from (_data);
+                this->ds_ord1 = ds;
+            } else {
+                this->absc2.set_from (_abscissae);
+                this->ord2.set_from (_data);
+                this->ds_ord2 = ds;
+            }
+
+            uint64_t dsize = _data.size();
+            unsigned int didx = static_cast<unsigned int>(this->graphData.size());
+
+            // Allocate memory for the new data coords, add the data style info and the
+            // starting index for dataCoords
+            this->graphData.push_back (std::make_unique<GraphData<float>>(dsize));
+
+            this->datastyles.push_back (ds);
+
+            // Compute the ord1_scale and asbcissa_scale for the first added dataset only
+            if (ds.axisside == mplot::axisside::left) {
+                if (this->ord1_scale.ready() == false) { this->compute_scaling (_abscissae, _data, ds.axisside); }
+            } else {
+                if (this->ord2_scale.ready() == false) { this->compute_scaling (_abscissae, _data, ds.axisside); }
+            }
+
+            if (dsize > 0) {
+                // Transform the data into temporary containers sd and ad
+                sm::vvec<Flt> ad (dsize, Flt{0});
+                sm::vvec<Flt> sd (dsize, Flt{0});
+                if (ds.axisside == mplot::axisside::left) {
+                    this->ord1_scale.transform (_data, sd);
+                } else {
+                    this->ord2_scale.transform (_data, sd);
+                }
+                this->abscissa_scale.transform (_abscissae, ad);
+
+                // Now sd and ad can be used to construct dataCoords x/y. They are used to
+                // set the position of each datum into dataCoords
+                for (uint64_t i = 0; i < dsize; ++i) {
+                    this->graphData[didx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
+                }
+            }
+        }
+
+        template <typename Ctnr1, typename Ctnr2>
+        std::enable_if_t<sm::is_copyable_container<Ctnr1>::value && sm::is_copyable_container<Ctnr2>::value, void>
+        setdata (const Ctnr1& _abscissae, const Ctnr2& _data, const sm::vvec<Flt>& _clrs, const DatasetStyle& ds)
+        {
+            if constexpr (debug_setdata) { std::cout << "setdata (Ctnr1 abs, Ctnr2 data, vvec<> clr_scalars, DatasetStyle) called\n"; }
+
+            if (_abscissae.size() != _data.size()) {
+                std::stringstream ee;
+                ee << "GraphVisual::setdata: size mismatch. abscissa size " << _abscissae.size() << " and data size: " << _data.size();
+                throw std::runtime_error (ee.str());
+            }
+
+            // Save data first
+            if (ds.axisside == mplot::axisside::left) {
+                this->absc1.set_from (_abscissae);
+                this->ord1.set_from (_data);
+                this->ds_ord1 = ds;
+            } else {
+                this->absc2.set_from (_abscissae);
+                this->ord2.set_from (_data);
+                this->ds_ord2 = ds;
+            }
+
+            uint64_t dsize = _data.size();
+            unsigned int didx = static_cast<unsigned int>(this->graphData.size());
+
+            // Allocate memory for the new data coords, add the data style info and the
+            // starting index for dataCoords
+            this->graphData.push_back (std::make_unique<GraphData<float>>(dsize));
+
+            this->datastyles.push_back (ds);
+
+            // Compute the ord1_scale and asbcissa_scale for the first added dataset only
+            if (ds.axisside == mplot::axisside::left) {
+                if (this->ord1_scale.ready() == false) { this->compute_scaling (_abscissae, _data, ds.axisside); }
+            } else {
+                if (this->ord2_scale.ready() == false) { this->compute_scaling (_abscissae, _data, ds.axisside); }
+            }
+
+            if (dsize > 0) {
+                // Transform the data into temporary containers sd and ad
+                sm::vvec<Flt> ad (dsize, Flt{0});
+                sm::vvec<Flt> sd (dsize, Flt{0});
+                if (ds.axisside == mplot::axisside::left) {
+                    this->ord1_scale.transform (_data, sd);
+                } else {
+                    this->ord2_scale.transform (_data, sd);
+                }
+                this->abscissa_scale.transform (_abscissae, ad);
+
+                this->graphData[didx]->scalars = _clrs;
+
+                // Now sd and ad can be used to construct dataCoords x/y. They are used to
+                // set the position of each datum into dataCoords
+                for (uint64_t i = 0; i < dsize; ++i) {
+                    this->graphData[didx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
+                }
+            }
+        }
+
+        //! setdata overload that accepts vvec of coords (as sm::vec<Flt, 2>)
+        void setdata (const sm::vvec<sm::vec<Flt, 2>>& _coords,
+                      const std::string name = "", const mplot::axisside axisside = mplot::axisside::left)
+        {
+            if constexpr (debug_setdata) { std::cout << "setdata (vvec<vec<>> coords, string name, axisside) called\n"; }
+            // Split coords into two vectors then call setdata() overload
+            std::vector<Flt> absc (_coords.size(), Flt{0});
+            std::vector<Flt> ord (_coords.size(), Flt{0});
+            for (unsigned int i = 0; i < _coords.size(); ++i) {
+                absc[i] = _coords[i][0];
+                ord[i] = _coords[i][1];
+            }
+            DatasetStyle ds(this->policy);
+            ds.axisside = axisside;
+            if (!name.empty()) { ds.datalabel = name; }
+            unsigned int data_index = static_cast<unsigned int>(this->graphData.size());
+            this->setstyle (ds, DatasetStyle::datacolour(data_index), DatasetStyle::datamarkerstyle (data_index));
+            this->setdata (absc, ord, ds);
+        }
+
         //! setdata overload that plots quivers at the 2D coordinates
         void setdata (const sm::vvec<sm::vec<Flt, 2>>& _coords, const sm::vvec<sm::vec<Flt, 2>>& _quivs,
                       const DatasetStyle& ds)
         {
+            if constexpr (debug_setdata) { std::cout << "setdata (vvec<vec<>> coords, vvec<vec<>> quivs, DatasetStyle) called\n"; }
+
             if (_quivs.size() != _coords.size()) {
               std::stringstream ee;
               ee << "GraphVisual::setdata: Size mismatch. quiver coordinates has " << _coords.size()
@@ -510,11 +645,10 @@ export namespace mplot
         }
 
         // Allows user to specify colours with a scalar (assumed in range [0, 1])
-        void setdata (const sm::vvec<sm::vec<Flt, 2>>& _coords,
-                      const sm::vvec<sm::vec<Flt, 2>>& _quivs,
-                      const sm::vvec<Flt>& _clrs,
-                      const DatasetStyle& ds)
+        void setdata (const sm::vvec<sm::vec<Flt, 2>>& _coords, const sm::vvec<sm::vec<Flt, 2>>& _quivs,
+                      const sm::vvec<Flt>& _clrs, const DatasetStyle& ds)
         {
+            if constexpr (debug_setdata) { std::cout << "setdata (vvec<vec<>> coords, vvec<vec<>> quivs, vvec<Flt> clr_scalars, DatasetStyle) called\n"; }
             this->setdata (_coords, _quivs, ds);
             // Now update colours
             std::uint32_t dsi = this->graphData.size() - 1;
@@ -523,11 +657,8 @@ export namespace mplot
             this->graphData[dsi]->scalars.resize (dsize, 0.0f);
             this->quiver_colour_scale.reset();
             this->quiver_colour_scale.do_autoscale = false;
-            this->quiver_colour_scale.compute_scaling_from_data (_clrs); // fails ?!?
-            //this->quiver_colour_scale.compute_scaling (_clrs.range()); // ok
-            //this->quiver_colour_scale.compute_scaling (_clrs.range<true>()); // not ok
-            this->quiver_colour_scale.transform (_clrs, this->graphData[dsi]->scalars); // not ok, because like compute_scaling (_clrs.range<true>());
-            std::cout << "quiver_colour_scale: " << this->quiver_colour_scale << std::endl;
+            this->quiver_colour_scale.compute_scaling_from_data (_clrs);
+            this->quiver_colour_scale.transform (_clrs, this->graphData[dsi]->scalars);
         }
 
 
@@ -535,6 +666,7 @@ export namespace mplot
         void setdata (const sm::grid<unsigned int, Flt>& g, const sm::vvec<sm::vec<Flt, 2>>& _quivs,
                       const DatasetStyle& ds)
         {
+            if constexpr (debug_setdata) { std::cout << "setdata (sm::grid, vvec<vec<>> quivs, DatasetStyle) called\n"; }
             // _quivs should have same size as g.n()
             if (_quivs.size() != g.n()) {
                 std::stringstream ee;
@@ -619,69 +751,10 @@ export namespace mplot
             this->setup_quivers (didx);
         }
 
-        //! Set a dataset into the graph. Provide abscissa and ordinate and a dataset
-        //! style. The locations of the markers for each dataset are computed and stored
-        //! in this->graphData, one vector for each dataset.
-        template <typename Ctnr1, typename Ctnr2>
-        std::enable_if_t<sm::is_copyable_container<Ctnr1>::value
-                         && sm::is_copyable_container<Ctnr2>::value, void>
-        setdata (const Ctnr1& _abscissae, const Ctnr2& _data, const DatasetStyle& ds)
-        {
-            if (_abscissae.size() != _data.size()) {
-                std::stringstream ee;
-                ee << "GraphVisual::setdata: size mismatch. abscissa size " << _abscissae.size() << " and data size: " << _data.size();
-                throw std::runtime_error (ee.str());
-            }
-
-            // Save data first
-            if (ds.axisside == mplot::axisside::left) {
-                this->absc1.set_from (_abscissae);
-                this->ord1.set_from (_data);
-                this->ds_ord1 = ds;
-            } else {
-                this->absc2.set_from (_abscissae);
-                this->ord2.set_from (_data);
-                this->ds_ord2 = ds;
-            }
-
-            uint64_t dsize = _data.size();
-            unsigned int didx = static_cast<unsigned int>(this->graphData.size());
-
-            // Allocate memory for the new data coords, add the data style info and the
-            // starting index for dataCoords
-            this->graphData.push_back (std::make_unique<GraphData<float>>(dsize));
-
-            this->datastyles.push_back (ds);
-
-            // Compute the ord1_scale and asbcissa_scale for the first added dataset only
-            if (ds.axisside == mplot::axisside::left) {
-                if (this->ord1_scale.ready() == false) { this->compute_scaling (_abscissae, _data, ds.axisside); }
-            } else {
-                if (this->ord2_scale.ready() == false) { this->compute_scaling (_abscissae, _data, ds.axisside); }
-            }
-
-            if (dsize > 0) {
-                // Transform the data into temporary containers sd and ad
-                sm::vvec<Flt> ad (dsize, Flt{0});
-                sm::vvec<Flt> sd (dsize, Flt{0});
-                if (ds.axisside == mplot::axisside::left) {
-                    this->ord1_scale.transform (_data, sd);
-                } else {
-                    this->ord2_scale.transform (_data, sd);
-                }
-                this->abscissa_scale.transform (_abscissae, ad);
-
-                // Now sd and ad can be used to construct dataCoords x/y. They are used to
-                // set the position of each datum into dataCoords
-                for (uint64_t i = 0; i < dsize; ++i) {
-                    this->graphData[didx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
-                }
-            }
-        }
-
         //! Set data using two ranges as input
         void setdata (const sm::range<Flt> xx, const sm::range<Flt> yy, const DatasetStyle& ds)
         {
+            if constexpr (debug_setdata) { std::cout << "setdata (range<> xx, range<> yy, DatasetStyle) called\n"; }
             sm::vvec<Flt> xxvv = { xx.min, xx.max };
             sm::vvec<Flt> yyvv = { yy.min, yy.max };
             this->setdata (xxvv, yyvv, ds);
@@ -690,6 +763,7 @@ export namespace mplot
         //! setdata overload that accepts vvec of coords (as sm::vec<Flt, 2>)
         void setdata (const sm::vvec<sm::vec<Flt, 2>>& _coords, const DatasetStyle& ds)
         {
+            if constexpr (debug_setdata) { std::cout << "setdata (vvec<vec<>> coords, DatasetStyle) called\n"; }
             // Split coords into two vectors then call setdata() overload
             std::vector<Flt> absc (_coords.size(), Flt{0});
             std::vector<Flt> ord (_coords.size(), Flt{0});
@@ -700,10 +774,26 @@ export namespace mplot
             this->setdata (absc, ord, ds);
         }
 
+        //! Set data for a vvec of coords with an associated vvec of colour scalar values (these
+        //! will be converted to acutal colour with the datasetstyle's colourmap)
+        void setdata (const sm::vvec<sm::vec<Flt, 2>>& _coords, const sm::vvec<Flt>& _clrs, const DatasetStyle& ds)
+        {
+            if constexpr (debug_setdata) { std::cout << "setdata (vvec<vec<>> coords, vvec<> clr_scalars, DatasetStyle) called\n"; }
+            // Split coords into two vectors then call setdata() overload
+            std::vector<Flt> absc (_coords.size(), Flt{0});
+            std::vector<Flt> ord (_coords.size(), Flt{0});
+            for (unsigned int i = 0; i < _coords.size(); ++i) {
+                absc[i] = _coords[i][0];
+                ord[i] = _coords[i][1];
+            }
+            this->setdata (absc, ord, _clrs, ds);
+        }
+
         //! Special setdata for a sm::histo object
         template<typename H>
         void setdata (const sm::histo<H, Flt>& h, const std::string name = "", const mplot::histo_view hv = mplot::histo_view::proportions)
         {
+            if constexpr (debug_setdata) { std::cout << "setdata (sm::histo, mplot::histo_view) called\n"; }
             DatasetStyle ds(mplot::stylepolicy::bar);
             if (!name.empty()) { ds.datalabel = name; }
             // Because this overload of setdata sets bargraph data, I want it to force the graph to be stylepolicy::bar
@@ -740,6 +830,8 @@ export namespace mplot
         template<typename H, bool bar_width_auto = true>
         void setdata (const sm::histo<H, Flt>& h, mplot::DatasetStyle& ds, const mplot::histo_view hv = mplot::histo_view::proportions)
         {
+            if constexpr (debug_setdata) { std::cout << "setdata (sm::histo, DatasetStyle, mplot::histo_view) called\n"; }
+
             if (ds.policy != mplot::stylepolicy::bar) {
                 throw std::runtime_error ("GraphVisual::setdata(histo, DatasetStyle): Your DatasetStyle policy must be mplot::stylepolicy::bar");
             }
@@ -1258,7 +1350,7 @@ export namespace mplot
                     for (unsigned int i = coords_start; i < coords_end; ++i) {
                         if (this->within_axes (this->graphData[dsi]->coords[i])) {
                             if (this->datastyles[dsi].quiver_flagset.test (mplot::quiver_flags::colour_fixed) == false) {
-                                clr = this->datastyles[dsi].quiver_colourmap.convert (this->graphData[dsi]->scalars[i]);
+                                clr = this->datastyles[dsi].colourmap.convert (this->graphData[dsi]->scalars[i]);
                             }
                             this->quiver (this->graphData[dsi]->coords[i], this->graphData[dsi]->vectors[i], clr, this->datastyles[dsi]);
                         }
@@ -1268,7 +1360,11 @@ export namespace mplot
 
                     for (unsigned int i = coords_start; i < coords_end; ++i) {
                         if (this->within_axes (this->graphData[dsi]->coords[i])) {
-                            this->marker (this->graphData[dsi]->coords[i], this->datastyles[dsi]);
+                            if (this->graphData[dsi]->scalars.empty()) {
+                                this->marker (this->graphData[dsi]->coords[i], this->datastyles[dsi]);
+                            } else {
+                                this->marker (this->graphData[dsi]->coords[i], this->graphData[dsi]->scalars[i], this->datastyles[dsi]);
+                            }
                         } // else marker is outside graph axes so don't draw it
                     }
                 }
@@ -1455,7 +1551,10 @@ export namespace mplot
                         // For bar graph, show a small square (or rect?) with the colour
                         this->bar_symbol (lpos, this->datastyles[dsi]);
                     } else {
-                        this->marker (lpos, this->datastyles[dsi]);
+                        mplot::DatasetStyle ds = this->datastyles[dsi];
+                        ds.markersize = this->width / 100.0f; // fix markersize
+                        ds.linewidth = this->height / 200.0f;
+                        this->marker (lpos, ds);
                     }
                 }
                 legtexts[dsi]->setupText (this->datastyles[dsi].datalabel, lpos + toffset + this->viewmatrix.translation(), this->axiscolour);
@@ -1765,7 +1864,7 @@ export namespace mplot
             if ((std::isnan(dlength) || dlength == 0.0f)
                 && style.quiver_flagset.test(mplot::quiver_flags::show_zeros) == true) {
                 // NaNs denote zero vectors when the lengths have been log scaled.
-                this->computeSphere (coords_i, style.quiver_zero_colour, style.markersize * style.quiver_thickness_gain);
+                this->computeSphere (coords_i, style.zero_colour, style.markersize * style.quiver_thickness_gain);
 
             } else { // Not a zero marker, draw a quiver
 
@@ -1868,6 +1967,14 @@ export namespace mplot
                 this->computeFlatLineRnd (p2,  p2b, sm::vec<>::uz(), style.linecolour, outline_width, 0.0f, true, true);
                 this->computeFlatLineRnd (p2b, p1b, sm::vec<>::uz(), style.linecolour, outline_width, 0.0f, true, true);
             }
+        }
+
+        // Overload that replaces the colour
+        void marker (sm::vec<float>& p, const float clr, const mplot::DatasetStyle& style)
+        {
+            mplot::DatasetStyle _style = style;
+            _style.markercolour = _style.colourmap.convert (clr);
+            this->marker (p, _style);
         }
 
         //! Generate vertices for a marker of the given style at location p
