@@ -858,6 +858,14 @@ export namespace mplot
             this->d_to_rotation_centre = -this->scenetrans_default[2];
         }
 
+        void setSceneview (const sm::mat<float, 4>& sv)
+        {
+            this->lastSceneview = this->sceneview;
+            this->sceneview = sv;
+            this->sceneview_tr.set_identity();
+            this->sceneview_tr.translate (sv.translation());
+        }
+
         //! Set the scene's x and y values at the same time.
         void setSceneTransXY (const float _x, const float _y)
         {
@@ -1527,6 +1535,7 @@ export namespace mplot
                           << "Ctrl-a: Reset default view\n"
                           << "Ctrl-o: Reduce field of view\n"
                           << "Ctrl-p: Increase field of view\n"
+                          << "Ctrl-e: Sceneview matrix to stdout\n"
                           << "Ctrl-y: Cycle perspective\n"
                           << "Ctrl-k: Toggle rotate about central model or scene origin\n"
                           << "Ctrl-b: Toggle between 'rotate about vertical', or 'mathplot tilt'\n"
@@ -1545,6 +1554,10 @@ export namespace mplot
             if (_key == key::l && (mods & keymod::control) && action == keyaction::press) {
                 this->state.flip (visual_state::sceneLocked);
                 std::cout << "Scene is now " << (this->state.test (visual_state::sceneLocked) ? "" : "un-") << "locked\n";
+            }
+
+            if (_key == key::e && (mods & keymod::control) && action == keyaction::press) {
+                std::cout << "Sceneview matrix array:\n" << this->sceneview.str_arr() << std::endl;
             }
 
             if (_key == key::v && (mods & keymod::control) && action == keyaction::press) {
