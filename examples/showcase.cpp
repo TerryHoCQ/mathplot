@@ -338,7 +338,7 @@ int main()
     ds.quiver_gain = { 0.08f, 0.8f, 1.0f };
     ds.quiver_gain *= 12.0f;
     gp->quiver_setlog();
-    ds.quiver_colourmap.setType (mplot::ColourMapType::Jet);
+    ds.colourmap.setType (mplot::ColourMapType::Jet);
     ds.quiver_conewidth = 1.8f;
     //ds.quiver_thickness_gain = 0.6f; // make arrows a bit thinner
     ds.markerstyle = mplot::markerstyle::quiver;

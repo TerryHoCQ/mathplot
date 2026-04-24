@@ -213,6 +213,7 @@ if(BUILD_EXAMPLES_EXTRA)
       ${PROJECT_SOURCE_DIR}/maths/sm/anneal.cppm
       ${PROJECT_SOURCE_DIR}/maths/sm/hdfdata.cppm
       ${PROJECT_SOURCE_DIR}/maths/sm/config.cppm
+      ${PROJECT_SOURCE_DIR}/json/src/modules/json.cppm
       ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
       ${PROJECT_SOURCE_DIR}/mplot/PolygonVisual.cppm
       ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
@@ -234,6 +235,7 @@ if(BUILD_EXAMPLES_EXTRA)
       ${PROJECT_SOURCE_DIR}/maths/sm/anneal.cppm
       ${PROJECT_SOURCE_DIR}/maths/sm/hdfdata.cppm
       ${PROJECT_SOURCE_DIR}/maths/sm/config.cppm
+      ${PROJECT_SOURCE_DIR}/json/src/modules/json.cppm
     )
     target_link_libraries(anneal_asa_novis ${HDF5_LIBRARIES})
 

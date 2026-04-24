@@ -196,7 +196,7 @@ endif() # else we have it in a directory included by default in the path
 
 # Include maths module defs
 include(${PROJECT_SOURCE_DIR}/maths/cmake/module_definitions.cmake)
-setup_module_variables_for_maths (${PROJECT_SOURCE_DIR}/maths)
+setup_module_variables_for_maths (${PROJECT_SOURCE_DIR}/maths ${PROJECT_SOURCE_DIR}/json)
 
 # Include our own module defs
 include(${PROJECT_SOURCE_DIR}/cmake/module_definitions.cmake)
