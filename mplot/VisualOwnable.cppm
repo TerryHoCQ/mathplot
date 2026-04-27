@@ -28,6 +28,7 @@ module;
 #include <memory>
 #include <functional>
 #include <cstddef>
+#include <chrono>
 
 #include <nlohmann/json.hpp>
 
@@ -170,7 +171,7 @@ export namespace mplot
         orthographic
     };
 
-    //! Automated sceneview transforms, i.e. 'film direction' events
+    //! Automated sceneview transforms, i.e. 'film direction' events. enumerated type of event.
     enum class direction_event : std::uint32_t
     {
         sceneview,
@@ -180,13 +181,15 @@ export namespace mplot
         unknown
     };
 
+    //! Automated sceneview transforms, i.e. 'film direction' events. This holds the data for an event.
     struct direction_data
     {
         direction_event event = direction_event::unknown;
         sm::mat<float, 4> sceneview;         // an instantaneous sceneview to move to
         sm::vec<float, 3> translation = {};  // A translation to apply to sceneview over time transform_time
         sm::quaternion<float> rotation;      // A rotation to apply to sceneview over time transform_time
-        float transform_time = 0.0f;         // A time period for a scenview transformation
+        float transform_time = 0.0f;         // A time period for a scenview transformation in seconds.
+        std::chrono::steady_clock::time_point start = {};  // Record the start time here
     };
 
     /*!
@@ -947,15 +950,39 @@ export namespace mplot
         // What is the scene view's current translation?
         sm::vec<float> getSceneTranslation() const { return this->sceneview.translation(); }
 
+        // API for client code to set a 'film direction' event
+        void setCurrentDirectionEvent (const mplot::direction_data& dirn)
+        {
+            if (dirn.event == mplot::direction_event::sceneview) {
+                // Make an immediate sceneview change
+                this->setSceneview (dirn.sceneview);
+
+            } else if (dirn.event == mplot::direction_event::timed_translation) {
+                // Start timed translation.
+                this->timedSceneviewTranslation (dirn.translation, dirn.transform_time);
+
+            } else if (dirn.event == mplot::direction_event::timed_rotation) {
+                // writeme
+
+            } else if (dirn.event == mplot::direction_event::timed_transform) {
+                // writeme
+            }
+        }
+
         void timedSceneviewTranslation (const sm::vec<float>& trans, const float transform_time)
         {
             // Behave like a scrollwheel spin or a mouse movement
-#if 0 // something like:
             this->state.set (visual_state::viewAutomation);
-            this->autoSceneviewStart = time_now; // somehow
-            this->autoSceneviewType = auto_sceneview::translation;
-            this->autoSceneviewTransformTime = transform_time;
-#endif
+            this->currentAutoSceneviewChange.event = direction_event::timed_translation;
+            this->currentAutoSceneviewChange.start = std::chrono::steady_clock::now();
+            this->currentAutoSceneviewChange.transform_time = transform_time;
+            this->currentAutoSceneviewChange.translation = trans;
+
+            // Auto translation behaves like a mouse-press then mouse-drag; computing a delta from a savedSceneview
+            this->savedSceneview = this->sceneview;
+            this->savedSceneview_tr = this->sceneview_tr;
+            this->scenetrans_delta.zero();
+            this->rotation_delta.reset();
         }
 
         void lightingEffects (const bool effects_on = true)
@@ -1308,6 +1335,8 @@ export namespace mplot
         // This is called every time render() is called
         void computeSceneview()
         {
+            constexpr bool debug_film_direction = false;
+
             if (this->options.test (visual_options::viewFollowsVMBehind) && this->followedVM != nullptr) {
 
                 if (this->state.test (visual_state::viewFollowsModeChanged)) {
@@ -1357,8 +1386,42 @@ export namespace mplot
                         this->state.reset (visual_state::viewTransition);
                     }
                 } else if (this->state.test (visual_state::viewAutomation)) {
-                    // We're in an 'automation mode'.
-                    std::cout << "Automation mode (writeme)\n";
+                    // We're in an 'automation mode'. use this->currentAutoSceneviewChange
+                    std::chrono::steady_clock::duration since_start = std::chrono::steady_clock::now() - this->currentAutoSceneviewChange.start;
+                    float since_f = std::chrono::duration_cast<std::chrono::microseconds>(since_start).count() / 1000000.0f;
+                    if (this->currentAutoSceneviewChange.event == direction_event::timed_translation) {
+                        if (since_f > this->currentAutoSceneviewChange.transform_time) {
+                            // Completed movement time
+                            this->scenetrans_delta = this->currentAutoSceneviewChange.translation;
+                            if constexpr (debug_film_direction) {
+                                std::cout << "Completed movement at " << this->scenetrans_delta << "\n";
+                            }
+
+                            this->computeSceneview_about_rotation_centre();
+                            this->state.set (visual_state::viewAutomation, false);
+                            this->scenetrans_delta.zero();
+
+                        } else {
+                            // Shift the view
+                            this->scenetrans_delta = ((since_f / this->currentAutoSceneviewChange.transform_time) * this->currentAutoSceneviewChange.translation);
+                            if constexpr (debug_film_direction) {
+                                std::cout << "Shift the view to " << since_f  << " / " << this->currentAutoSceneviewChange.transform_time
+                                          << " * " << this->currentAutoSceneviewChange.translation << " = "
+                                          << this->scenetrans_delta << "\n";
+                            }
+                            this->computeSceneview_about_rotation_centre();
+                        }
+                    } else if (this->currentAutoSceneviewChange.event == direction_event::timed_rotation) {
+                        std::cout << "Timed rotation (writeme)\n";
+                        this->state.set (visual_state::viewAutomation, false);
+                    } else if (this->currentAutoSceneviewChange.event == direction_event::timed_transform) { // translation and rotation
+                        std::cout << "Timed translation + rotation (writeme)\n";
+                        this->state.set (visual_state::viewAutomation, false);
+                    } else {
+                        std::cout << "Unknown direction_event\n";
+                        this->state.set (visual_state::viewAutomation, false);
+                    }
+
                 } else {
 
                     if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
@@ -1522,6 +1585,9 @@ export namespace mplot
         sm::mat<float, 4> lastSceneview;
         //! translation only version of lastSceneview
         sm::mat<float, 4> lastSceneview_tr;
+
+        // auto sceneview change. Active if visual_state::viewAutomation is set true in this->state.
+        mplot::direction_data currentAutoSceneviewChange;
 
     public:
 
