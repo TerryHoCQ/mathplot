@@ -950,7 +950,8 @@ export namespace mplot
         // What is the scene view's current translation?
         sm::vec<float> getSceneTranslation() const { return this->sceneview.translation(); }
 
-        // API for client code to set a 'film direction' event
+        // API for client code to set a 'film direction' event. This may change teh sceneview
+        // immediately, or start a timed sequence of changes to animate the sceneview.
         void setCurrentDirectionEvent (const mplot::direction_data& dirn)
         {
             if (dirn.event == mplot::direction_event::sceneview) {
@@ -958,17 +959,17 @@ export namespace mplot
                 this->setSceneview (dirn.sceneview);
 
             } else if (dirn.event == mplot::direction_event::timed_translation) {
-                // Start timed translation.
                 this->timedSceneviewTranslation (dirn.translation, dirn.transform_time);
 
             } else if (dirn.event == mplot::direction_event::timed_rotation) {
-                // writeme
+                this->timedSceneviewRotation (dirn.rotation, dirn.transform_time);
 
             } else if (dirn.event == mplot::direction_event::timed_transform) {
                 // writeme
             }
         }
 
+        // Initiate a timed sceneview translation
         void timedSceneviewTranslation (const sm::vec<float>& trans, const float transform_time)
         {
             // Behave like a scrollwheel spin or a mouse movement
@@ -977,6 +978,23 @@ export namespace mplot
             this->currentAutoSceneviewChange.start = std::chrono::steady_clock::now();
             this->currentAutoSceneviewChange.transform_time = transform_time;
             this->currentAutoSceneviewChange.translation = trans;
+
+            // Auto translation behaves like a mouse-press then mouse-drag; computing a delta from a savedSceneview
+            this->savedSceneview = this->sceneview;
+            this->savedSceneview_tr = this->sceneview_tr;
+            this->scenetrans_delta.zero();
+            this->rotation_delta.reset();
+        }
+
+        // Initiate a timed sceneview rotation
+        void timedSceneviewRotation (const sm::quaternion<float>& rtn, const float transform_time)
+        {
+            // Behave like a scrollwheel spin or a mouse movement
+            this->state.set (visual_state::viewAutomation);
+            this->currentAutoSceneviewChange.event = direction_event::timed_rotation;
+            this->currentAutoSceneviewChange.start = std::chrono::steady_clock::now();
+            this->currentAutoSceneviewChange.transform_time = transform_time;
+            this->currentAutoSceneviewChange.rotation = rtn;
 
             // Auto translation behaves like a mouse-press then mouse-drag; computing a delta from a savedSceneview
             this->savedSceneview = this->sceneview;
@@ -1400,9 +1418,11 @@ export namespace mplot
                             this->computeSceneview_about_rotation_centre();
                             this->state.set (visual_state::viewAutomation, false);
                             this->scenetrans_delta.zero();
+                            this->savedSceneview = this->sceneview;
+                            this->savedSceneview_tr = this->sceneview_tr;
 
                         } else {
-                            // Shift the view
+                            // Translate by an increment
                             this->scenetrans_delta = ((since_f / this->currentAutoSceneviewChange.transform_time) * this->currentAutoSceneviewChange.translation);
                             if constexpr (debug_film_direction) {
                                 std::cout << "Shift the view to " << since_f  << " / " << this->currentAutoSceneviewChange.transform_time
@@ -1412,8 +1432,24 @@ export namespace mplot
                             this->computeSceneview_about_rotation_centre();
                         }
                     } else if (this->currentAutoSceneviewChange.event == direction_event::timed_rotation) {
-                        std::cout << "Timed rotation (writeme)\n";
-                        this->state.set (visual_state::viewAutomation, false);
+                        if (since_f > this->currentAutoSceneviewChange.transform_time) {
+                            // Apply full rotation
+                            this->rotation_delta = this->currentAutoSceneviewChange.rotation;
+                            this->computeSceneview_about_rotation_centre();
+                            this->state.set (visual_state::viewAutomation, false);
+                            this->rotation_delta.reset();
+                            this->savedSceneview = this->sceneview;
+                            this->savedSceneview_tr = this->sceneview_tr;
+
+                        } else {
+                            // Rotate by an increment
+                            // make rotation_delta from this->currentAutoSceneviewChange.rotation and apply
+                            const float prop = since_f / this->currentAutoSceneviewChange.transform_time;
+                            sm::quaternion<float> q;
+                            this->rotation_delta = q.slerp (this->currentAutoSceneviewChange.rotation, prop);
+                        }
+                        this->computeSceneview_about_rotation_centre();
+
                     } else if (this->currentAutoSceneviewChange.event == direction_event::timed_transform) { // translation and rotation
                         std::cout << "Timed translation + rotation (writeme)\n";
                         this->state.set (visual_state::viewAutomation, false);
