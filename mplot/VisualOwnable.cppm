@@ -94,7 +94,9 @@ export namespace mplot
         //! set to signal to computeSceneview that the lastSceneview should be saved or restored to.
         viewFollowsModeChanged,
         //! Set true while the sceneview is 'zooming back' to the overview mode (or the whereever-you-left-it mode)
-        viewTransition
+        viewTransition,
+        //! Set true if we're in the middle of a scripted sceneview change, such as zooming in over a period of time
+        viewAutomation
     };
 
     //! Boolean options - similar to state, but more likely to be modified by client code
@@ -166,6 +168,25 @@ export namespace mplot
     {
         perspective,
         orthographic
+    };
+
+    //! Automated sceneview transforms, i.e. 'film direction' events
+    enum class direction_event : std::uint32_t
+    {
+        sceneview,
+        timed_translation,
+        timed_rotation,
+        timed_transform,  // rotation and translation together
+        unknown
+    };
+
+    struct direction_data
+    {
+        direction_event event = direction_event::unknown;
+        sm::mat<float, 4> sceneview;         // an instantaneous sceneview to move to
+        sm::vec<float, 3> translation = {};  // A translation to apply to sceneview over time transform_time
+        sm::quaternion<float> rotation;      // A rotation to apply to sceneview over time transform_time
+        float transform_time = 0.0f;         // A time period for a scenview transformation
     };
 
     /*!
@@ -926,6 +947,17 @@ export namespace mplot
         // What is the scene view's current translation?
         sm::vec<float> getSceneTranslation() const { return this->sceneview.translation(); }
 
+        void timedSceneviewTranslation (const sm::vec<float>& trans, const float transform_time)
+        {
+            // Behave like a scrollwheel spin or a mouse movement
+#if 0 // something like:
+            this->state.set (visual_state::viewAutomation);
+            this->autoSceneviewStart = time_now; // somehow
+            this->autoSceneviewType = auto_sceneview::translation;
+            this->autoSceneviewTransformTime = transform_time;
+#endif
+        }
+
         void lightingEffects (const bool effects_on = true)
         {
             this->ambient_intensity = effects_on ? 0.4f : 1.0f;
@@ -1292,72 +1324,75 @@ export namespace mplot
                 this->scenetrans_delta.zero();
                 if (this->state.test (visual_state::scrolling)) { this->state.reset (visual_state::scrolling); }
                 this->computeSceneview_for_follower();
-                return;
-            }
 
-            if (this->state.test (visual_state::viewFollowsModeChanged)) {
-                // Changed back to normal, non-follower mode. Zoom back, so set viewTransition
-                std::cout << "viewFollowsModeChanged back to \"non-follow\"\n";
-                this->state.set (visual_state::viewTransition);
-                this->state.reset (visual_state::viewFollowsModeChanged);
-            }
-
-            // if sceneview is not close to lastSceneview and we have no commanded rotations
-            // (scenetrans_delta and rotation_delta are 0) then we make changes to return to
-            // lastSceneview:
-            if (this->followedVM != nullptr
-                && std::abs(this->scenetrans_delta.sum()) == 0.0f
-                && this->rotation_delta.is_zero_rotation() == true
-                && this->state.test (visual_state::viewTransition)) {
-                // zoom towards lastSceneview:
-                this->computeSceneview_for_overcam();
-                // Update d_to_rotation_centre with distance to followedVM
-                // scene view in world frame
-                constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
-                sm::mat<float, 4> sv_viewmatrix = this->sceneview.inverse() * rotn_y;
-                // followed vm
-                sm::mat<float, 4> fvm = this->followedVM->getViewMatrix();
-
-                this->d_to_rotation_centre = (fvm.translation() - sv_viewmatrix.translation()).length();
-
-                // Did we get there? If so, set viewTransition false
-                if ((this->sceneview.translation() - this->lastSceneview.translation()).length() < 0.001f) {
-                    this->state.reset (visual_state::viewTransition);
-                }
             } else {
 
-                if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
-                    // Calculate model view transformation - transforming from "model space" to "worldspace".
-                    //std::cout << "standard view, call computeSceneview_about_rotation_centre\n";
-                    this->computeSceneview_about_rotation_centre();
-                    // As we had a commanded movement, cancel the viewTransition
-                    this->state.reset (visual_state::viewTransition);
-                } // else don't change sceneview
-                //else { std::cout << "No changing sceneview...\n"; }
-
-                if (this->state.test (visual_state::scrolling)) {
-                    this->scenetrans_delta.zero();
-                    this->state.reset (visual_state::scrolling);
+                if (this->state.test (visual_state::viewFollowsModeChanged)) {
+                    // Changed back to normal, non-follower mode. Zoom back, so set viewTransition
+                    std::cout << "viewFollowsModeChanged back to \"non-follow\"\n";
+                    this->state.set (visual_state::viewTransition);
+                    this->state.reset (visual_state::viewFollowsModeChanged);
                 }
-            }
 
-            if (this->options.test (visual_options::viewFollowsVMTranslations)
-                && this->followedVM != nullptr
-                && this->followedLastViewMatrix != this->followedVM->getViewMatrix()) {
+                // if sceneview is not close to lastSceneview and we have no commanded rotations
+                // (scenetrans_delta and rotation_delta are 0) then we make changes to return to
+                // lastSceneview:
+                if (this->state.test (visual_state::viewTransition)
+                    && this->followedVM != nullptr
+                    && std::abs(this->scenetrans_delta.sum()) == 0.0f
+                    && this->rotation_delta.is_zero_rotation() == true) {
+                    // zoom towards lastSceneview:
+                    this->computeSceneview_for_overcam();
+                    // Update d_to_rotation_centre with distance to followedVM
+                    // scene view in world frame
+                    constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
+                    sm::mat<float, 4> sv_viewmatrix = this->sceneview.inverse() * rotn_y;
+                    // followed vm
+                    sm::mat<float, 4> fvm = this->followedVM->getViewMatrix();
 
-                // Move camera the difference between followedLastViewMatrix and
-                // followedVM->getViewMatrix() in the screen frame of reference.
-                sm::vec<float> fol_screenframe = (this->sceneview * followedLastViewMatrix.translation()
-                                                  - this->sceneview * followedVM->getViewMatrix().translation()).less_one_dim();
+                    this->d_to_rotation_centre = (fvm.translation() - sv_viewmatrix.translation()).length();
 
-                this->sceneview.pretranslate (fol_screenframe);
-                this->sceneview_tr.pretranslate (fol_screenframe);
-                this->savedSceneview.pretranslate (fol_screenframe);
-                this->savedSceneview_tr.pretranslate (fol_screenframe);
-                this->lastSceneview.pretranslate (fol_screenframe);
-                this->lastSceneview_tr.pretranslate (fol_screenframe);
+                    // Did we get there? If so, set viewTransition false
+                    if ((this->sceneview.translation() - this->lastSceneview.translation()).length() < 0.001f) {
+                        this->state.reset (visual_state::viewTransition);
+                    }
+                } else if (this->state.test (visual_state::viewAutomation)) {
+                    // We're in an 'automation mode'.
+                    std::cout << "Automation mode (writeme)\n";
+                } else {
 
-                this->followedLastViewMatrix = this->followedVM->getViewMatrix();
+                    if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
+                        // Calculate model view transformation - transforming from "model space" to "worldspace".
+                        //std::cout << "standard view, call computeSceneview_about_rotation_centre\n";
+                        this->computeSceneview_about_rotation_centre();
+                        // As we had a commanded movement, cancel the viewTransition
+                        this->state.reset (visual_state::viewTransition);
+                    } // else don't change sceneview
+
+                    if (this->state.test (visual_state::scrolling)) {
+                        this->scenetrans_delta.zero();
+                        this->state.reset (visual_state::scrolling);
+                    }
+                }
+
+                if (this->options.test (visual_options::viewFollowsVMTranslations)
+                    && this->followedVM != nullptr
+                    && this->followedLastViewMatrix != this->followedVM->getViewMatrix()) {
+
+                    // Move camera the difference between followedLastViewMatrix and
+                    // followedVM->getViewMatrix() in the screen frame of reference.
+                    sm::vec<float> fol_screenframe = (this->sceneview * followedLastViewMatrix.translation()
+                                                      - this->sceneview * followedVM->getViewMatrix().translation()).less_one_dim();
+
+                    this->sceneview.pretranslate (fol_screenframe);
+                    this->sceneview_tr.pretranslate (fol_screenframe);
+                    this->savedSceneview.pretranslate (fol_screenframe);
+                    this->savedSceneview_tr.pretranslate (fol_screenframe);
+                    this->lastSceneview.pretranslate (fol_screenframe);
+                    this->lastSceneview_tr.pretranslate (fol_screenframe);
+
+                    this->followedLastViewMatrix = this->followedVM->getViewMatrix();
+                }
             }
         }
 
