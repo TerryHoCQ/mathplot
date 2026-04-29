@@ -192,6 +192,8 @@ export namespace mplot
         float tilt_angle = 0.0f;
         float transform_time = 0.0f;         // A time period for a scenview transformation in seconds.
         std::chrono::steady_clock::time_point start = {};  // Record the start time here
+        std::uint32_t transform_time_frames = 0u; // Specify transform time in frames, if preferred. If non-zero, this overrides transform_time.
+        std::uint32_t start_frame = std::numeric_limits<std::uint32_t>::max();
     };
 
     /*!
@@ -428,6 +430,8 @@ export namespace mplot
         //! Render the scene
         void render() noexcept
         {
+            ++this->render_counter;
+
             this->setContext();
 
             this->glfn->UseProgram (this->shaders.gprog);
@@ -714,6 +718,11 @@ export namespace mplot
         //! Strength of the diffuse light source
         float diffuse_intensity = 0.0f;
 
+        // Track how many calls to render have been made. At 1000 FPS this overflows at 10^17 seconds which is about 10^9 years.
+        std::uint64_t render_counter = 0u;
+        // A move counter. May be incremented in step with render_counter, or it may not (for example, it may restart)
+        std::uint64_t move_counter = 0u;
+
         //! Compute position and rotation of coordinate arrows in the bottom left of the screen
         void positionCoordArrows()
         {
@@ -978,7 +987,9 @@ export namespace mplot
             this->state.set (visual_state::viewAutomation);
             this->currentAutoSceneviewChange.event = direction_event::timed_translation;
             this->currentAutoSceneviewChange.start = std::chrono::steady_clock::now();
+            this->currentAutoSceneviewChange.start_frame = this->render_counter;
             this->currentAutoSceneviewChange.transform_time = dirn.transform_time;
+            this->currentAutoSceneviewChange.transform_time_frames = dirn.transform_time_frames;
             this->currentAutoSceneviewChange.translation = dirn.translation;
 
             // Auto translation behaves like a mouse-press then mouse-drag; computing a delta from a savedSceneview
@@ -995,7 +1006,9 @@ export namespace mplot
             this->state.set (visual_state::viewAutomation);
             this->currentAutoSceneviewChange.event = direction_event::timed_rotation;
             this->currentAutoSceneviewChange.start = std::chrono::steady_clock::now();
+            this->currentAutoSceneviewChange.start_frame = this->render_counter;
             this->currentAutoSceneviewChange.transform_time = dirn.transform_time;
+            this->currentAutoSceneviewChange.transform_time_frames = dirn.transform_time_frames;
             this->currentAutoSceneviewChange.rotation = dirn.rotation;
             this->currentAutoSceneviewChange.about_vert_angle = dirn.about_vert_angle;
             this->currentAutoSceneviewChange.tilt_angle = dirn.tilt_angle;
@@ -1413,8 +1426,20 @@ export namespace mplot
                     // We're in an 'automation mode'. use this->currentAutoSceneviewChange
                     std::chrono::steady_clock::duration since_start = std::chrono::steady_clock::now() - this->currentAutoSceneviewChange.start;
                     float since_f = std::chrono::duration_cast<std::chrono::microseconds>(since_start).count() / 1000000.0f;
+                    std::uint32_t since_frames = this->render_counter - this->currentAutoSceneviewChange.start_frame;
+
+                    float propn = 0.0f;
+                    if (this->currentAutoSceneviewChange.transform_time_frames) {
+                        propn = (static_cast<float>(since_frames) / static_cast<float>(this->currentAutoSceneviewChange.transform_time_frames));
+                    } else {
+                        propn = (since_f / this->currentAutoSceneviewChange.transform_time);
+                    }
+
                     if (this->currentAutoSceneviewChange.event == direction_event::timed_translation) {
-                        if (since_f > this->currentAutoSceneviewChange.transform_time) {
+                        if ((this->currentAutoSceneviewChange.transform_time_frames && since_frames > this->currentAutoSceneviewChange.transform_time_frames)
+                            ||
+                            (this->currentAutoSceneviewChange.transform_time_frames == 0 && since_f > this->currentAutoSceneviewChange.transform_time)
+                            ) {
                             // Completed movement time
                             this->scenetrans_delta = this->currentAutoSceneviewChange.translation;
                             if constexpr (debug_film_direction) {
@@ -1429,17 +1454,22 @@ export namespace mplot
 
                         } else {
                             // Translate by an increment
-                            this->scenetrans_delta = ((since_f / this->currentAutoSceneviewChange.transform_time) * this->currentAutoSceneviewChange.translation);
-                            if constexpr (debug_film_direction) {
-                                std::cout << "Shift the view to " << since_f  << " / " << this->currentAutoSceneviewChange.transform_time
-                                          << " * " << this->currentAutoSceneviewChange.translation << " = "
-                                          << this->scenetrans_delta << "\n";
-                            }
+                            this->scenetrans_delta = propn * this->currentAutoSceneviewChange.translation;
                             this->computeSceneview_about_rotation_centre();
                         }
+                        if (this->followedVM != nullptr) {
+                            constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
+                            sm::mat<float, 4> sv_viewmatrix = this->sceneview.inverse() * rotn_y;
+                            sm::mat<float, 4> fvm = this->followedVM->getViewMatrix();
+                            this->d_to_rotation_centre = (fvm.translation() - sv_viewmatrix.translation()).length();
+                        }
+
                     } else if (this->currentAutoSceneviewChange.event == direction_event::timed_rotation) {
                         sm::vec<float> mod_up = this->savedSceneview.rotation() * this->scene_up;
-                        if (since_f > this->currentAutoSceneviewChange.transform_time) {
+                        if ((this->currentAutoSceneviewChange.transform_time_frames && since_frames > this->currentAutoSceneviewChange.transform_time_frames)
+                            ||
+                            (this->currentAutoSceneviewChange.transform_time_frames == 0 && since_f > this->currentAutoSceneviewChange.transform_time)
+                            ) {
                             // Apply full rotation
                             sm::quaternion<float> r1 (mod_up, -this->currentAutoSceneviewChange.about_vert_angle);
                             sm::quaternion<float> r2 (this->scene_right, -this->currentAutoSceneviewChange.tilt_angle);
@@ -1454,11 +1484,16 @@ export namespace mplot
                         } else {
                             // Rotate by an increment
                             // make rotation_delta from this->currentAutoSceneviewChange.rotation and apply
-                            const float prop = since_f / this->currentAutoSceneviewChange.transform_time;
-                            sm::quaternion<float> r1 (mod_up, -prop * this->currentAutoSceneviewChange.about_vert_angle);
-                            sm::quaternion<float> r2 (this->scene_right, -prop * this->currentAutoSceneviewChange.tilt_angle);
+                            sm::quaternion<float> r1 (mod_up, -propn * this->currentAutoSceneviewChange.about_vert_angle);
+                            sm::quaternion<float> r2 (this->scene_right, -propn * this->currentAutoSceneviewChange.tilt_angle);
                             this->rotation_delta = r2 * r1;
                             this->computeSceneview_about_rotation_centre();
+                        }
+                        if (this->followedVM != nullptr) {
+                            constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
+                            sm::mat<float, 4> sv_viewmatrix = this->sceneview.inverse() * rotn_y;
+                            sm::mat<float, 4> fvm = this->followedVM->getViewMatrix();
+                            this->d_to_rotation_centre = (fvm.translation() - sv_viewmatrix.translation()).length();
                         }
 
                     } else if (this->currentAutoSceneviewChange.event == direction_event::timed_transform) { // translation and rotation
