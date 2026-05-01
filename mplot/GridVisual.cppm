@@ -12,9 +12,9 @@ import sm.grid;
 export import sm.vec;
 import sm.flags;
 
-import mplot.gl.version;
-import mplot.colourmap;
-import mplot.colour;
+export import mplot.gl.version;
+export import mplot.colourmap;
+export import mplot.colour;
 export import mplot.visualmodel;
 export import mplot.visualdatamodel;
 
