@@ -1718,6 +1718,10 @@ export namespace mplot
                           << "Ctrl-a: Reset default view\n"
                           << "Ctrl-o: Reduce field of view\n"
                           << "Ctrl-p: Increase field of view\n"
+                          << "Ctrl-7: Decrease ambient light intensity\n"
+                          << "Ctrl-8: Increase ambient light intensity\n"
+                          << "Ctrl-9: Decrease diffuse light intensity\n"
+                          << "Ctrl-0: Increase diffuse light intensity\n"
                           << "Ctrl-e: Sceneview matrix to stdout\n"
                           << "Ctrl-y: Cycle perspective\n"
                           << "Ctrl-k: Toggle rotate about central model or scene origin\n"
@@ -1866,6 +1870,29 @@ export namespace mplot
             }
             if (_key == key::right && (action == keyaction::press || action == keyaction::repeat) && (mods & keymod::shift)) {
                 if (!this->vm.empty()) { this->vm[this->selectedVisualModel]->incAlpha(); }
+            }
+
+            // Ambient and diffuse lighting intensity
+            if (_key == key::n9 && action == keyaction::press && (mods & keymod::control)) {
+                // decrease diffuse intensity
+                this->diffuse_intensity -= 0.05f;
+                if (this->diffuse_intensity <= 0.0f) { this->diffuse_intensity = 0.0f; }
+                std::cout << "diffuse_intensity is now " << this->diffuse_intensity << std::endl;
+            } else if (_key == key::n0 && action == keyaction::press && (mods & keymod::control)) {
+                // increase diffuse intensity
+                this->diffuse_intensity += 0.05f;
+                if (this->diffuse_intensity > 10.0f) { this->diffuse_intensity = 10.0f; }
+                std::cout << "diffuse_intensity is now " << this->diffuse_intensity << std::endl;
+            } else if (_key == key::n7 && action == keyaction::press && (mods & keymod::control)) {
+                // decrease ambient intensity
+                this->ambient_intensity -= 0.05f;
+                if (this->ambient_intensity <= 0.0f) { this->ambient_intensity = 0.0f; }
+                std::cout << "ambient_intensity is now " << this->ambient_intensity << std::endl;
+            } else if (_key == key::n8 && action == keyaction::press && (mods & keymod::control)) {
+                // increase ambient intensity
+                this->ambient_intensity += 0.05f;
+                if (this->ambient_intensity > 10.0f) { this->ambient_intensity = 10.0f; }
+                std::cout << "ambient_intensity is now " << this->ambient_intensity << std::endl;
             }
 
             // Reset view to default
