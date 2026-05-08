@@ -1368,6 +1368,9 @@ export namespace mplot
 
             } else {
 
+                // A constexpr rotation matrix, used below
+                constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
+
                 if (this->state.test (visual_state::viewFollowsModeChanged)) {
                     // Changed back to normal, non-follower mode. Zoom back, so set viewTransition
                     std::cout << "viewFollowsModeChanged back to \"non-follow\"\n";
@@ -1386,7 +1389,6 @@ export namespace mplot
                     this->computeSceneview_for_overcam();
                     // Update d_to_rotation_centre with distance to followedVM
                     // scene view in world frame
-                    constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
                     sm::mat<float, 4> sv_viewmatrix = this->sceneview.inverse() * rotn_y;
                     // followed vm
                     sm::mat<float, 4> fvm = this->followedVM->getViewMatrix();
@@ -1433,7 +1435,6 @@ export namespace mplot
                             this->computeSceneview_about_rotation_centre();
                         }
                         if (this->followedVM != nullptr) {
-                            constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
                             sm::mat<float, 4> sv_viewmatrix = this->sceneview.inverse() * rotn_y;
                             sm::mat<float, 4> fvm = this->followedVM->getViewMatrix();
                             this->d_to_rotation_centre = (fvm.translation() - sv_viewmatrix.translation()).length();
@@ -1465,7 +1466,6 @@ export namespace mplot
                             this->computeSceneview_about_rotation_centre();
                         }
                         if (this->followedVM != nullptr) {
-                            constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
                             sm::mat<float, 4> sv_viewmatrix = this->sceneview.inverse() * rotn_y;
                             sm::mat<float, 4> fvm = this->followedVM->getViewMatrix();
                             this->d_to_rotation_centre = (fvm.translation() - sv_viewmatrix.translation()).length();
@@ -1476,28 +1476,29 @@ export namespace mplot
                         if ((this->currentAutoSceneviewChange.transform_time_frames && since_frames > this->currentAutoSceneviewChange.transform_time_frames)
                             ||
                             (this->currentAutoSceneviewChange.transform_time_frames == 0 && since_f > this->currentAutoSceneviewChange.transform_time)
-                            ) {
-                            // done
+                            ) { // transform is done
+
                             this->state.set (visual_state::viewAutomation, false);
                             this->scenetrans_delta.zero();
                             this->rotation_delta.reset();
                             this->savedSceneview = this->sceneview;
                             this->savedSceneview_tr = this->sceneview_tr;
 
-                        } else {
-                            // do, incrementally
+                        } else { // transform, incrementally
+
                             // Translate by an increment
                             std::cout << "this->currentAutoSceneviewChange.translation : " << this->currentAutoSceneviewChange.translation << std::endl;
                             this->scenetrans_delta = propn * this->currentAutoSceneviewChange.translation;
 
                             // Rotate...
-                            this->rotation_delta = this->savedSceneview.rotation().inverse() * this->currentAutoSceneviewChange.rotation_start.slerp (this->currentAutoSceneviewChange.rotation, propn);
-
-                            std::cout << "scenetrans_delta = " << this->scenetrans_delta <<"  and rotation_delta = " << this->rotation_delta << "; propn = " << propn << std::endl;
+                            sm::quaternion<float> slerped =
+                            this->currentAutoSceneviewChange.rotation_start.slerp (currentAutoSceneviewChange.rotation, propn);
+                            this->rotation_delta = this->savedSceneview.rotation().inverse() * slerped;
+                            std::cout << " scenetrans_delta = " << this->scenetrans_delta << " and rotation_delta = "
+                                      << this->rotation_delta << "; propn = " << propn << std::endl;
                             this->computeSceneview_about_rotation_centre();
                         }
                         if (this->followedVM != nullptr) {
-                            constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
                             sm::mat<float, 4> sv_viewmatrix = this->sceneview.inverse() * rotn_y;
                             sm::mat<float, 4> fvm = this->followedVM->getViewMatrix();
                             this->d_to_rotation_centre = (fvm.translation() - sv_viewmatrix.translation()).length();
