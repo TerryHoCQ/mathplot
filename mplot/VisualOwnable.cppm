@@ -969,6 +969,9 @@ export namespace mplot
             if (dirn.event == mplot::direction_event::sceneview) {
                 // Make an immediate sceneview change
                 this->setSceneview (dirn.sceneview);
+                std::cout << "After setSceneview from dirn.sceneview, Sceneview matrix array:\n" << this->sceneview.str_arr() << std::endl;
+                // Well, it's correct here...
+
             } else {
                 // timed translation/rotation/transform are all 'viewAutomations'
                 this->state.set (visual_state::viewAutomation);
@@ -987,10 +990,13 @@ export namespace mplot
                     // Find the start and end translation
                     this->currentAutoSceneviewChange.translation = dirn.sceneview.translation() - this->sceneview.translation();
                     // Find the start and end rotation
+                    std::cout << __func__ << ":sceneview determinant: " << this->sceneview.determinant() << " and scaling: " << this->sceneview.scaling_vec() << std::endl;
                     this->currentAutoSceneviewChange.rotation_start = this->sceneview.rotation(); // rotation at start
-                    std::cout << "start rotation: " << this->currentAutoSceneviewChange.rotation_start << std::endl;
+                    std::cout << __func__ << ": start rotation: " << this->currentAutoSceneviewChange.rotation_start
+                              << " is normal? " << (this->currentAutoSceneviewChange.rotation_start.checkunit() ? "T":"F") << std::endl;
+                    std::cout << __func__ << ":target sceneview determinant: " << dirn.sceneview.determinant()  << " and scaling: " << dirn.sceneview.scaling_vec() << std::endl;
                     this->currentAutoSceneviewChange.rotation = dirn.sceneview.rotation(); // rotation at end
-                    std::cout << "end rotation: " << this->currentAutoSceneviewChange.rotation << std::endl;
+                    std::cout <<  __func__ << ": end rotation: " << this->currentAutoSceneviewChange.rotation << std::endl;
                     // auto qr = dirn.rotation_start.slerp (dirn.rotation, proportion);
                     this->find_rotation_centre();
                 }
@@ -1478,6 +1484,8 @@ export namespace mplot
                             (this->currentAutoSceneviewChange.transform_time_frames == 0 && since_f > this->currentAutoSceneviewChange.transform_time)
                             ) { // transform is done
 
+                            std::cout << this->title << ": final sceneview\n" << this->sceneview.str_arr();
+
                             this->state.set (visual_state::viewAutomation, false);
                             this->scenetrans_delta.zero();
                             this->rotation_delta.reset();
@@ -1487,16 +1495,33 @@ export namespace mplot
                         } else { // transform, incrementally
 
                             // Translate by an increment
-                            std::cout << "this->currentAutoSceneviewChange.translation : " << this->currentAutoSceneviewChange.translation << std::endl;
+                            //std::cout << "this->currentAutoSceneviewChange.translation : " << this->currentAutoSceneviewChange.translation << std::endl;
+                            // somehow need to factor in lastSceneview...
                             this->scenetrans_delta = propn * this->currentAutoSceneviewChange.translation;
 
                             // Rotate...
                             sm::quaternion<float> slerped =
                             this->currentAutoSceneviewChange.rotation_start.slerp (currentAutoSceneviewChange.rotation, propn);
-                            this->rotation_delta = this->savedSceneview.rotation().inverse() * slerped;
-                            std::cout << " scenetrans_delta = " << this->scenetrans_delta << " and rotation_delta = "
-                                      << this->rotation_delta << "; propn = " << propn << std::endl;
-                            this->computeSceneview_about_rotation_centre();
+                            this->rotation_delta = this->savedSceneview.inverse().rotation() * slerped;
+                            //std::cout << " scenetrans_delta = " << this->scenetrans_delta << " and rotation_delta = "
+                            //          << this->rotation_delta << "; propn = " << propn << std::endl;
+
+                            //this->computeSceneview_about_rotation_centre();
+                            {
+                                sm::mat<float, 4> sv_tr;
+                                sm::mat<float, 4> sv_rot;
+                                sv_tr.translate (this->savedSceneview.translation());
+                                sv_tr.translate (this->scenetrans_delta);
+                                // A rotation delta in world frame about the 'screen centre'
+                                //sv_rot.translate (this->rotation_centre);
+                                ///sv_rot.rotate (this->rotation_delta);
+                                sv_rot.rotate (slerped);
+                                //sv_rot.translate (-this->rotation_centre);
+                                this->sceneview = sv_tr * sv_rot /* * this->savedSceneview*/;
+                                //this->sceneview_tr = sv_tr * this->savedSceneview_tr; // ??
+                            }
+
+                            //std::cout << "                    to: " << this->sceneview.str_arr();
                         }
                         if (this->followedVM != nullptr) {
                             sm::mat<float, 4> sv_viewmatrix = this->sceneview.inverse() * rotn_y;
@@ -1527,6 +1552,7 @@ export namespace mplot
 
                 if (this->options.test (visual_options::viewFollowsVMTranslations)
                     && this->followedVM != nullptr
+                    && this->state.test (visual_state::viewAutomation) == false
                     && this->followedLastViewMatrix != this->followedVM->getViewMatrix()) {
 
                     // Move camera the difference between followedLastViewMatrix and
