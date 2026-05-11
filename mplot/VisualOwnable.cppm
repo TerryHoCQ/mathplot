@@ -388,7 +388,14 @@ export namespace mplot
         //! failure. Set transparent_bg to get a transparent background.
         sm::vec<int, 2> saveImage (const std::string& img_filename, const bool transparent_bg = false)
         {
+            using namespace std::chrono;
+            using sc = std::chrono::steady_clock;
+            constexpr bool profile_saveimage = false;
+            sc::time_point t0, t1, t2;
+
             this->setContext();
+
+            if constexpr (profile_saveimage) { t0 = sc::now(); }
 
             int32_t viewport[4]; // current viewport
             this->glfn->GetIntegerv (GL_VIEWPORT, viewport);
@@ -419,7 +426,28 @@ export namespace mplot
                     }
                 }
             }
-            uint32_t error = mplot::png_encode (img_filename, rbits.get(), dims[0], dims[1]);
+
+            if constexpr (profile_saveimage) { t1 = sc::now(); }
+
+            uint32_t error = 0;
+
+            // If filename ends with pnm, then save in pnm format; otherwise save as PNG
+            bool pnm_save = false;
+            if (img_filename.find ("pnm") == img_filename.size() - 3) { pnm_save = true; }
+            if (pnm_save == true) {
+                error = mplot::pnm_encode (img_filename, rbits.get(), dims[0], dims[1]);
+            } else {
+                error = mplot::png_encode (img_filename, rbits.get(), dims[0], dims[1]); // Need alternative
+            }
+
+            if constexpr (profile_saveimage) {
+                t2 = sc::now();
+                sc::duration t_d = t1 - t0;
+                sc::duration t_d2 = t2 - t1;
+                std::cout << "Bit-collection: " << duration_cast<milliseconds>(t_d).count() << " ms"
+                          << " and png/pnm_encode: " << duration_cast<milliseconds>(t_d2).count() << " ms\n";
+            }
+
             if (error) {
                 std::cerr << "encoder error " << error << ": " << mplot::png_error_text (error) << std::endl;
                 dims.set_from (-1);
