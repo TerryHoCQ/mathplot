@@ -962,7 +962,7 @@ export namespace mplot
         // What is the scene view's current translation?
         sm::vec<float> getSceneTranslation() const { return this->sceneview.translation(); }
 
-        // API for client code to set a 'film direction' event. This may change teh sceneview
+        // API for client code to set a 'film direction' event. This may change the sceneview
         // immediately, or start a timed sequence of changes to animate the sceneview.
         void setCurrentDirectionEvent (const mplot::direction_data& dirn)
         {
@@ -978,6 +978,7 @@ export namespace mplot
                 this->currentAutoSceneviewChange = dirn;
                 this->currentAutoSceneviewChange.start = std::chrono::steady_clock::now();
                 this->currentAutoSceneviewChange.start_frame = this->render_counter;
+                std::cout << __func__ << " event for frame " << this->currentAutoSceneviewChange.start_frame << std::endl;
                 // Auto translation behaves like a mouse-press then mouse-drag; computing a delta from a savedSceneview
                 this->savedSceneview = this->sceneview;
                 this->savedSceneview_tr = this->sceneview_tr;
@@ -990,13 +991,10 @@ export namespace mplot
                     // Find the start and end translation
                     this->currentAutoSceneviewChange.translation = dirn.sceneview.translation() - this->sceneview.translation();
                     // Find the start and end rotation
-                    std::cout << __func__ << ":sceneview determinant: " << this->sceneview.determinant() << " and scaling: " << this->sceneview.scaling_vec() << std::endl;
                     this->currentAutoSceneviewChange.rotation_start = this->sceneview.rotation(); // rotation at start
-                    std::cout << __func__ << ": start rotation: " << this->currentAutoSceneviewChange.rotation_start
-                              << " is normal? " << (this->currentAutoSceneviewChange.rotation_start.checkunit() ? "T":"F") << std::endl;
-                    std::cout << __func__ << ":target sceneview determinant: " << dirn.sceneview.determinant()  << " and scaling: " << dirn.sceneview.scaling_vec() << std::endl;
+                    this->currentAutoSceneviewChange.rotation_start.renormalize();
                     this->currentAutoSceneviewChange.rotation = dirn.sceneview.rotation(); // rotation at end
-                    std::cout <<  __func__ << ": end rotation: " << this->currentAutoSceneviewChange.rotation << std::endl;
+                    this->currentAutoSceneviewChange.rotation.renormalize();
                     // auto qr = dirn.rotation_start.slerp (dirn.rotation, proportion);
                     this->find_rotation_centre();
                 }
@@ -1239,6 +1237,7 @@ export namespace mplot
             // rvel is radpersec delta/tc
             T prop = rvel * tc;
             rvel += force * tc;
+            if (r_cur0.checkunit() == false) { throw std::runtime_error ("r_cur0 is not a unit quaternion (could renormalize here)"); }
             sm::quaternion<T> newpos = r_cur0.slerp (r_targ0, prop);
             return newpos; // rather than prop, as in get_cam_movement
         }
@@ -1391,6 +1390,7 @@ export namespace mplot
                     && this->followedVM != nullptr
                     && std::abs(this->scenetrans_delta.sum()) == 0.0f
                     && this->rotation_delta.is_zero_rotation() == true) {
+
                     // zoom towards lastSceneview:
                     this->computeSceneview_for_overcam();
                     // Update d_to_rotation_centre with distance to followedVM
@@ -1435,6 +1435,8 @@ export namespace mplot
                             this->savedSceneview = this->sceneview;
                             this->savedSceneview_tr = this->sceneview_tr;
 
+                            this->followedLastViewMatrix = this->followedVM->getViewMatrix();
+
                         } else {
                             // Translate by an increment
                             this->scenetrans_delta = propn * this->currentAutoSceneviewChange.translation;
@@ -1462,6 +1464,8 @@ export namespace mplot
                             this->rotation_delta.reset();
                             this->savedSceneview = this->sceneview;
                             this->savedSceneview_tr = this->sceneview_tr;
+
+                            this->followedLastViewMatrix = this->followedVM->getViewMatrix();
 
                         } else {
                             // Rotate by an increment
@@ -1492,36 +1496,27 @@ export namespace mplot
                             this->savedSceneview = this->sceneview;
                             this->savedSceneview_tr = this->sceneview_tr;
 
+                            // Update followedLastViewMatrix now!
+                            this->followedLastViewMatrix = this->followedVM->getViewMatrix();
+
                         } else { // transform, incrementally
 
                             // Translate by an increment
-                            //std::cout << "this->currentAutoSceneviewChange.translation : " << this->currentAutoSceneviewChange.translation << std::endl;
-                            // somehow need to factor in lastSceneview...
                             this->scenetrans_delta = propn * this->currentAutoSceneviewChange.translation;
-
                             // Rotate...
-                            sm::quaternion<float> slerped =
-                            this->currentAutoSceneviewChange.rotation_start.slerp (currentAutoSceneviewChange.rotation, propn);
-                            this->rotation_delta = this->savedSceneview.inverse().rotation() * slerped;
-                            //std::cout << " scenetrans_delta = " << this->scenetrans_delta << " and rotation_delta = "
-                            //          << this->rotation_delta << "; propn = " << propn << std::endl;
-
-                            //this->computeSceneview_about_rotation_centre();
+                            sm::quaternion<float> slerped = this->currentAutoSceneviewChange.rotation_start.slerp (currentAutoSceneviewChange.rotation, propn);
+                            // this->rotation_delta = this->savedSceneview.inverse().rotation() * slerped; // unused?
                             {
+                                // rather than computeSceneview_about_rotation_centre, we compute
+                                // translation and rotation right here (this could probably be consolidated to use fewer mats)
                                 sm::mat<float, 4> sv_tr;
                                 sm::mat<float, 4> sv_rot;
                                 sv_tr.translate (this->savedSceneview.translation());
                                 sv_tr.translate (this->scenetrans_delta);
-                                // A rotation delta in world frame about the 'screen centre'
-                                //sv_rot.translate (this->rotation_centre);
-                                ///sv_rot.rotate (this->rotation_delta);
                                 sv_rot.rotate (slerped);
-                                //sv_rot.translate (-this->rotation_centre);
-                                this->sceneview = sv_tr * sv_rot /* * this->savedSceneview*/;
-                                //this->sceneview_tr = sv_tr * this->savedSceneview_tr; // ??
+                                this->sceneview = sv_tr * sv_rot;
+                                this->sceneview_tr = sv_tr;
                             }
-
-                            //std::cout << "                    to: " << this->sceneview.str_arr();
                         }
                         if (this->followedVM != nullptr) {
                             sm::mat<float, 4> sv_viewmatrix = this->sceneview.inverse() * rotn_y;
@@ -1538,7 +1533,6 @@ export namespace mplot
 
                     if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
                         // Calculate model view transformation - transforming from "model space" to "worldspace".
-                        //std::cout << "standard view, call computeSceneview_about_rotation_centre\n";
                         this->computeSceneview_about_rotation_centre();
                         // As we had a commanded movement, cancel the viewTransition
                         this->state.reset (visual_state::viewTransition);
