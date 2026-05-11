@@ -1313,9 +1313,10 @@ export namespace mplot
             if (this->followedVM == nullptr) { return sm::mat<float, 4>::identity(); }
             // Target view from the followedVM
             sm::mat<float, 4> rmat;
-            rmat.rotate (folcam_offset_rot);
+            rmat.rotate (this->folcam_offset_rot);
+            // To smooth this, I need to keep a time-average of followedVM->getViewMatrix()...
             sm::mat<float, 4> fol_targ = this->followedVM->getViewMatrix() * rmat;
-            fol_targ.translate (folcam_offset_tr);
+            fol_targ.translate (this->folcam_offset_tr);
             // FIXME: I may want to update the lastSceneview matrix as fol_targ moves.
             return update_viewmatrix_towards_target (fol_targ);
         }
