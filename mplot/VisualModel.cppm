@@ -1921,6 +1921,13 @@ export namespace mplot
         }
 
 
+        void computeFlatQuad (sm::vec<float, 4> c1, sm::vec<float, 4> c2,
+                              sm::vec<float, 4> c3, sm::vec<float, 4> c4,
+                              std::array<float, 3> col)
+        {
+            this->computeFlatQuad (c1.less_one_dim(), c2.less_one_dim(), c3.less_one_dim(), c4.less_one_dim(), col);
+        }
+
         //! Compute a Quad from 4 arbitrary corners which must be ordered clockwise around the quad.
         void computeFlatQuad (sm::vec<float> c1, sm::vec<float> c2,
                               sm::vec<float> c3, sm::vec<float> c4,
@@ -2038,11 +2045,12 @@ export namespace mplot
          * \param segments Number of tube segments used to render the ring
          */
         void computeRing (sm::vec<float> ro, std::array<float, 3> rc, float r = 1.0f,
-                          float t = 0.1f, int segments = 12)
+                          float t = 0.1f, int segments = 12,
+                          const sm::mat<float, 4> tfm = sm::mat<float, 4>::identity())
         {
             float r_in = r - (t * 0.5f);
             float r_out = r + (t * 0.5f);
-            this->computeRingInOut (ro, rc, r_in, r_out, segments);
+            this->computeRingInOut (ro, rc, r_in, r_out, segments, tfm);
         }
 
         /*!
@@ -2055,7 +2063,8 @@ export namespace mplot
          * \param segments Number of tube segments used to render the ring
          */
         void computeRingInOut (sm::vec<float> ro, std::array<float, 3> rc,
-                               float r_in = 1.0f, float r_out = 2.0f, int segments = 12)
+                               float r_in = 1.0f, float r_out = 2.0f, int segments = 12,
+                               const sm::mat<float, 4> tfm = sm::mat<float, 4>::identity())
         {
             for (int j = 0; j < segments; j++) {
                 float segment = sm::mathconst<float>::two_pi * static_cast<float>(j) / segments;
@@ -2076,7 +2085,7 @@ export namespace mplot
                 sm::vec<float> c3 = { xout, yout, 0.0f };
                 sm::vec<float> c2 = { xout_n, yout_n, 0.0f };
                 sm::vec<float> c1 = { xin_n, yin_n, 0.0f };
-                this->computeFlatQuad (ro + c1, ro + c2, ro + c3, ro + c4, rc);
+                this->computeFlatQuad (tfm * (ro + c1), tfm * (ro + c2), tfm * (ro + c3), tfm * (ro + c4), rc);
             }
         }
 
