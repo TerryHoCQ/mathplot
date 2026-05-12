@@ -837,12 +837,25 @@ export namespace mplot
 
         /*
          * User-settable projection values for the near clipping distance, the far clipping distance
-         * and the field of view of the camera.
          */
 
         float zNear = 0.001f;
         float zFar = 300.0f;
+        /*
+         * User settable field of view of the camera in degrees. Note that the field of view is
+         * measured from the top of the field to the bottom of the field (rather than from the left
+         * to the right).
+         */
         float fov = 30.0f;
+
+        //! Setter for fov
+        void set_vertical_fov (const float vfov) { this->fov = vfov; }
+        //! Setter for fov, if you want to specify horizontal field of view
+        void set_horizontal_fov (const float hfov)
+        {
+            float aspect = static_cast<float>(this->window_w) / static_cast<float>(this->window_h ? this->window_h : 1);
+            this->fov = hfov / aspect;
+        }
 
         //! Time constants for the way the camera moves between a follow-me view and a
         //! drone-view. One for translation, the other for rotation.
@@ -1808,7 +1821,10 @@ export namespace mplot
             }
 
             if (_key == key::e && (mods & keymod::control) && action == keyaction::press) {
-                std::cout << "Sceneview matrix array:\n" << this->sceneview.str_arr() << std::endl;
+                constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
+                sm::mat<float, 4> effective_viewmatrix = this->sceneview.inverse() * rotn_y;
+                std::cout << this->title << " window:\n  Sceneview effective camera location is " << (effective_viewmatrix * sm::vec<>{}) << std::endl;
+                std::cout << "  Sceneview matrix array:\n" << this->sceneview.str_arr() << std::endl;
             }
 
             if (_key == key::v && (mods & keymod::control) && action == keyaction::press) {
