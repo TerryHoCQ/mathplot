@@ -449,7 +449,11 @@ export namespace mplot
             }
 
             if (error) {
-                std::cerr << "encoder error " << error << ": " << mplot::png_error_text (error) << std::endl;
+                if (pnm_save == true) {
+                    std::cerr << "pnm encoder error " << error << std::endl;
+                } else {
+                    std::cerr << "encoder error " << error << ": " << mplot::png_error_text (error) << std::endl;
+                }
                 dims.set_from (-1);
                 return dims;
             }
