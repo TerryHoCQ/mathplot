@@ -73,9 +73,9 @@ export namespace mplot::compoundray
         EyeVisual (const sm::vec<float, 3> _offset,
                    std::vector<std::array<float, 3>>* _ommData,
                    std::vector<mplot::compoundray::Ommatidium>* _ommatidia,
-                   const mplot::meshgroup* _head_mesh = nullptr, const bool _zero_eye = false)
+                   const mplot::meshgroup* _head_mesh = nullptr)
         {
-            this->init (_offset, _ommData, _ommatidia, _head_mesh, _zero_eye);
+            this->init (_offset, _ommData, _ommatidia, _head_mesh);
         }
 
         ~EyeVisual() {}
@@ -83,13 +83,12 @@ export namespace mplot::compoundray
         void init (const sm::vec<float, 3> _offset,
                    std::vector<std::array<float, 3>>* _ommData,
                    std::vector<mplot::compoundray::Ommatidium>* _ommatidia,
-                   const mplot::meshgroup* _head_mesh = nullptr, const bool _zero_eye = false)
+                   const mplot::meshgroup* _head_mesh = nullptr)
         {
             this->viewmatrix.translate (_offset);
             this->ommData = _ommData;
             this->ommatidia = _ommatidia;
             this->head_mesh = _head_mesh;
-            this->zero_to_eye_centroid = _zero_eye;
         }
 
         void reinitColours()
@@ -271,16 +270,6 @@ export namespace mplot::compoundray
             // Draw ommatidia
             size_t n_omm = ommData->size();
 
-            // If an eye pair is not zeroed about a point that is sensibly in-between the eyes, then
-            // we could zero them.
-            if (this->zero_to_eye_centroid == true) {
-                sm::vvec<sm::vec<float, 3>> ommpos (n_omm);
-                for (size_t i = 0u; i < n_omm; ++i) {
-                    ommpos[i] = (*ommatidia)[i].relativePosition;
-                }
-                this->eye_centroid = ommpos.mean();
-            }
-
             // Determine eye dimensions
             sm::range<sm::vec<float, 3>> ommrng = sm::range<sm::vec<float, 3>>::search_initialized();
             for (size_t i = 0u; i < n_omm; ++i) { ommrng.update ((*ommatidia)[i].relativePosition); }
@@ -319,7 +308,7 @@ export namespace mplot::compoundray
                     std::array<float, 3> colour = (*ommData)[i];
                     float angle = (*ommatidia)[i].acceptanceAngleRadians;
                     float focal_point = std::abs((*ommatidia)[i].focalPointOffset);
-                    sm::vec<float, 3> pos = (*ommatidia)[i].relativePosition - eye_centroid;
+                    sm::vec<float, 3> pos = (*ommatidia)[i].relativePosition;
                     sm::vec<float, 3> dir = (*ommatidia)[i].relativeDirection;
                     dir.renormalize();
                     // Tip of cone is 'behind' the position of the ommatidial face/lens
@@ -360,7 +349,7 @@ export namespace mplot::compoundray
                     std::array<float, 3> colour = (*ommData)[i];
                     float angle = (*ommatidia)[i].acceptanceAngleRadians;
                     // pos will be the tip of the cone in this case, and the centre of the disc
-                    sm::vec<float, 3> pos = (*ommatidia)[i].relativePosition - eye_centroid;
+                    sm::vec<float, 3> pos = (*ommatidia)[i].relativePosition;
                     sm::vec<float, 3> dir = (*ommatidia)[i].relativeDirection;
                     dir.renormalize();
 
@@ -453,15 +442,7 @@ export namespace mplot::compoundray
             }
 
             // Optional head
-            if (this->head_mesh != nullptr) {
-                if (this->zero_to_eye_centroid == true) {
-                    mplot::meshgroup hmcopy = *this->head_mesh;
-                    hmcopy.transform.pretranslate (-eye_centroid);
-                    this->computeMeshgroup (hmcopy);
-                } else {
-                    this->computeMeshgroup (*this->head_mesh);
-                }
-            }
+            if (this->head_mesh != nullptr) { this->computeMeshgroup (*this->head_mesh); }
         }
 
         void voronoi2d (uint32_t pri)
@@ -555,10 +536,6 @@ export namespace mplot::compoundray
             }
         }
 
-        // If true, then shift all the coordinates (ommatidia positions and the head mesh vertices)
-        // to the centroid of the ommatidial positions.
-        bool zero_to_eye_centroid = false;
-        sm::vec<float> eye_centroid = {};
         // If false, hide 3D representation (the ommatidial cones and discs)
         bool show_3d = true;
         // If true, show optical cones, if possible
