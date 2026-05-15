@@ -319,6 +319,25 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(graph_coords OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
+  add_executable(graph_twinax graph_twinax.cpp)
+  target_sources(graph_twinax PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(graph_twinax OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(graph_spline graph_spline.cpp)
+  target_sources(graph_spline PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/spline.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(graph_spline OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
 endif()
 
 if (0) # During development
@@ -486,9 +505,6 @@ if (0) # During development
 
   add_executable(graph_incoming_data_rescale graph_incoming_data_rescale.cpp)
   target_link_libraries(graph_incoming_data_rescale OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(graph_twinax graph_twinax.cpp)
-  target_link_libraries(graph_twinax OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(graph_rightaxis graph_rightaxis.cpp)
   target_link_libraries(graph_rightaxis OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
