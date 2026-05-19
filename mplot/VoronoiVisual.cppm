@@ -9,14 +9,18 @@
  * \author Seb James
  * \date 2024
  */
-#pragma once
+module;
 
 #include <iostream>
+#include <cstdint>
 #include <cstring>
+#include <cmath>
 #include <vector>
 #include <array>
 #include <map>
 #include <set>
+
+export module mplot.voronoivisual;
 
 import sm.vec;
 import sm.range;
@@ -24,12 +28,12 @@ import sm.quaternion;
 import sm.geometry;
 import sm.centroid;
 
-#include <mplot/tools.h>
-#include <mplot/VisualDataModel.h>
+import mplot.colourmap;
+import mplot.tools;
+import mplot.visualdatamodel;
+import jc.voronoi;
 
-#include <mplot/jcvoronoi/jc_voronoi.h>
-
-namespace mplot
+export namespace mplot
 {
     //! The template argument F is the type of the data which this VoronoiVisual
     //! will visualize.
@@ -295,7 +299,8 @@ namespace mplot
                     try {
                         zsum1 = edge_end_zsums.at(edge_1->pos[1]);
                     } catch (const std::out_of_range& e) {
-                        std::cout << "For edge_1: " << edge_1->pos[0] << " --- " <<  edge_1->pos[1] << std::endl;                   std::cout << "(zsum1) no edge_end_zsums.at (" << edge_1->pos[1] << ")\n";
+                        std::cout << "For edge_1: " << edge_1->pos[0] << " --- " <<  edge_1->pos[1] << std::endl;
+                        std::cout << "(zsum1) no edge_end_zsums.at (" << edge_1->pos[1] << ")\n";
                     }
                     //std::cout << "zsum0 = " << zsum0 << " and zsum1 = " << zsum1 << std::endl;
                     edge_1->pos[0][2] = zsum0;

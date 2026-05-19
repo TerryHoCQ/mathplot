@@ -10,7 +10,7 @@
 // namespaced (jcv) so that type names look like jcv::site instead of jcv_site; jcv::edge rather
 // than jcv_edge, and so on.
 
-#pragma once
+module;
 
 #include <stdlib.h> // qsort(), malloc() & free(). Seb hasn't altered the C-style memory allocation
                     // used when diagrams are generated
@@ -23,8 +23,10 @@
 #include <bitset>
 #include <functional>
 
-import sm.mathconst;
-import sm.vec;
+export module jc.voronoi;
+
+export import sm.mathconst;
+export import sm.vec;
 import sm.geometry;
 import sm.winder;
 
@@ -33,7 +35,7 @@ import sm.winder;
     #define JCV_EDGE_INTERSECT_THRESHOLD 1.0e-10F
 #endif
 
-namespace jcv
+export namespace jcv
 {
 #pragma pack(push, 1)
 
