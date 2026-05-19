@@ -161,7 +161,7 @@ export namespace mplot
         /*!
          * The view 'camera' rotates with the selected VM (followedModel)
          */
-        viewFollowsVMBehind,
+        viewFollowsVMBehind
     };
 
     //! Whether to render with perspective or orthographic
@@ -191,10 +191,12 @@ export namespace mplot
         sm::quaternion<float> rotation;      // A rotation of sceneview to acheive over time transform_time
         float about_vert_angle = 0.0f;       // A rotation about the scene's up axis (in degrees)
         float tilt_angle = 0.0f;
-        float transform_time = 0.0f;         // A time period for a scenview transformation in seconds.
+        float transform_time = 0.0f;         // A time period for a sceneview transformation in seconds.
+        bool min_jerk = true;                // Should the movement be minimum jerk, or linear?
         std::chrono::steady_clock::time_point start = {};  // Record the start time here
         std::uint32_t transform_time_frames = 0u; // Specify transform time in frames, if preferred. If non-zero, this overrides transform_time.
         std::uint32_t start_frame = std::numeric_limits<std::uint32_t>::max();
+        std::uint32_t id = std::numeric_limits<std::uint32_t>::max(); // An ID for this direction (could be tied to movement frame)
     };
 
     /*!
@@ -1023,7 +1025,8 @@ export namespace mplot
                 this->currentAutoSceneviewChange = dirn;
                 this->currentAutoSceneviewChange.start = std::chrono::steady_clock::now();
                 this->currentAutoSceneviewChange.start_frame = this->render_counter;
-                std::cout << __func__ << " event for frame " << this->currentAutoSceneviewChange.start_frame << std::endl;
+                std::cout << __func__ << " event id " << this->currentAutoSceneviewChange.id
+                          << " starting at frame " << this->currentAutoSceneviewChange.start_frame << std::endl;
                 // Auto translation behaves like a mouse-press then mouse-drag; computing a delta from a savedSceneview
                 this->savedSceneview = this->sceneview;
                 this->savedSceneview_tr = this->sceneview_tr;
@@ -1395,6 +1398,25 @@ export namespace mplot
             this->savedSceneview = this->sceneview;
         }
 
+        /*
+         * Compute the minimum jerk proportion of a movement at time t, where the movement is from 0
+         * to xf and it should take an amount of time tf (also starting from 0).
+         */
+        template<typename F>
+        F compute_min_jerk (const F tf, const F xf, const F t) const noexcept
+        {
+            sm::mat<F, 3> A = {
+                std::pow (tf, F{3}), F{3} * std::pow (tf, F{2}), F{6}  * tf,
+                std::pow (tf, F{4}), F{4} * std::pow (tf, F{3}), F{2}  * std::pow (tf, F{2}),
+                std::pow (tf, F{5}), F{5} * std::pow (tf, F{4}), F{20} * std::pow (tf, F{3})
+            };
+            sm::vec<F, 3> B = { xf, F{0}, F{0} };
+            sm::vec<F, 3> X = A.inverse() * B; // X are the min. jerk coefficients
+
+            F x = X[0] * t * t * t + X[1] * std::pow (t, F{4}) + X[2]  * std::pow (t, F{5});
+            return x / xf;
+        }
+
         // Choreographed sceneview changes (direction_event)
         void computeSceneview_for_automation()
         {
@@ -1436,6 +1458,12 @@ export namespace mplot
 
                 } else {
                     // Translate by an increment
+                    if (this->currentAutoSceneviewChange.min_jerk) {
+                        propn = this->compute_min_jerk (static_cast<float>(this->currentAutoSceneviewChange.transform_time_frames),
+                                                        this->currentAutoSceneviewChange.translation.length(),
+                                                        static_cast<float>(since_frames));
+                    }
+
                     this->scenetrans_delta = propn * this->currentAutoSceneviewChange.translation;
                     this->computeSceneview_about_rotation_centre();
                 }
@@ -1464,8 +1492,14 @@ export namespace mplot
 
                     this->followedLastViewMatrix = this->followedVM->getViewMatrix();
 
-                } else {
-                    // Rotate by an increment
+                } else { // Rotate by an increment
+
+                    if (this->currentAutoSceneviewChange.min_jerk) {
+                        propn = this->compute_min_jerk (static_cast<float>(this->currentAutoSceneviewChange.transform_time_frames),
+                                                        this->currentAutoSceneviewChange.about_vert_angle, // rotational min_jerk? Might be stretching it here
+                                                        static_cast<float>(since_frames));
+                    }
+
                     // make rotation_delta from this->currentAutoSceneviewChange.rotation and apply
                     sm::quaternion<float> r1 (mod_up, -propn * this->currentAutoSceneviewChange.about_vert_angle);
                     sm::quaternion<float> r2 (this->scene_right, -propn * this->currentAutoSceneviewChange.tilt_angle);
@@ -1479,13 +1513,11 @@ export namespace mplot
                 }
 
             } else if (this->currentAutoSceneviewChange.event == direction_event::timed_transform) { // translation and rotation
-                // auto qr = dirn.rotation_start.slerp (dirn.rotation, proportion);
+
                 if ((this->currentAutoSceneviewChange.transform_time_frames && since_frames > this->currentAutoSceneviewChange.transform_time_frames)
                     ||
                     (this->currentAutoSceneviewChange.transform_time_frames == 0 && since_f > this->currentAutoSceneviewChange.transform_time)
                     ) { // transform is done
-
-                    std::cout << this->title << ": final sceneview\n" << this->sceneview.str_arr();
 
                     this->state.set (visual_state::viewAutomation, false);
                     this->scenetrans_delta.zero();
@@ -1498,12 +1530,32 @@ export namespace mplot
 
                 } else { // transform, incrementally
 
+                    if (this->currentAutoSceneviewChange.min_jerk) {
+                        // propn is time from 0 to 1 of our movement. Compute min-jerk movement x(t) = a3 t^3 + a4 t^4 + a5 t^5
+                        propn = this->compute_min_jerk (static_cast<float>(this->currentAutoSceneviewChange.transform_time_frames),
+                                                        this->currentAutoSceneviewChange.translation.length(),
+                                                        static_cast<float>(since_frames));
+                    }
+
+                    // Ensure propn is in range before calling slerp
+                    if (propn > 1.0f) { propn = 1.0f; }
+                    if (propn < 0.0f) { propn = 0.0f; }
+
                     // Translate by an increment
                     this->scenetrans_delta = propn * this->currentAutoSceneviewChange.translation;
                     // Rotate...
                     sm::quaternion<float> slerped = this->currentAutoSceneviewChange.rotation_start.slerp (currentAutoSceneviewChange.rotation, propn);
-                    // this->rotation_delta = this->savedSceneview.inverse().rotation() * slerped; // unused?
                     {
+                        // Here's how to check the error information in the returned quaternion.
+                        if (slerped.w == std::numeric_limits<float>::max()) {
+                            std::cout << __func__ << ": propn = " << propn << " was out of the range [0, 1]\n";
+                        }
+                        if (slerped.x == std::numeric_limits<float>::max()) {
+                            std::cout << __func__ << ": rotation_start was not normalized\n";
+                        }
+                        if (slerped.y == std::numeric_limits<float>::max()) {
+                            std::cout << __func__ << ": rotation was not normalized\n";
+                        }
                         // rather than computeSceneview_about_rotation_centre, we compute
                         // translation and rotation right here (this could probably be consolidated to use fewer mats)
                         sm::mat<float, 4> sv_tr;
