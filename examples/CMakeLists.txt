@@ -59,7 +59,7 @@ target_sources(cray_eye PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_D
   ${PROJECT_SOURCE_DIR}/mplot/SphereVisual.cppm
   ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.cppm
   ${PROJECT_SOURCE_DIR}/maths/sm/winder.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/jcvoronoi/jc_voronoi.cppm  
+  ${PROJECT_SOURCE_DIR}/mplot/jcvoronoi/jc_voronoi.cppm
   ${PROJECT_SOURCE_DIR}/mplot/compoundray/EyeVisual.cppm
 )
 target_link_libraries(cray_eye OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
@@ -128,11 +128,10 @@ target_sources(voronoi_random PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SO
   ${MPLOT_MATHS_CORE_MODULES}
   ${MPLOT_CORE_MODULES}
   ${PROJECT_SOURCE_DIR}/maths/sm/winder.cppm
-  ${PROJECT_SOURCE_DIR}/mplot/jcvoronoi/jc_voronoi.cppm  
+  ${PROJECT_SOURCE_DIR}/mplot/jcvoronoi/jc_voronoi.cppm
   ${PROJECT_SOURCE_DIR}/mplot/VoronoiVisual.cppm
 )
 target_link_libraries(voronoi_random OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
 
 if(BUILD_EXAMPLES_EXTRA)
   # Basic mplot::Visual class example

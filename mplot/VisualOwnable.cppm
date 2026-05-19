@@ -1013,7 +1013,7 @@ export namespace mplot
         // immediately, or start a timed sequence of changes to animate the sceneview.
         void setCurrentDirectionEvent (const mplot::direction_data& dirn)
         {
-            constexpr bool debug_dirn_event = false;
+            constexpr bool debug_dirn_event = true;
 
             if (dirn.event == mplot::direction_event::sceneview) {
                 // Make an immediate sceneview change
@@ -1039,7 +1039,9 @@ export namespace mplot
                     this->find_rotation_centre();
                 } else if (dirn.event == direction_event::timed_transform) {
                     // Find the start and end translation
-                    this->currentAutoSceneviewChange.translation = dirn.sceneview.translation() - this->sceneview.translation();
+                    std::cout << "dirn.sceneview.translation() - this->sceneview.translation() is " <<  dirn.sceneview.translation() << " - " << this->sceneview.translation() << std::endl;
+                    this->currentAutoSceneviewChange.translation = dirn.sceneview.translation() - this->sceneview.translation(); // FIXME, something is up here
+                    std::cout << " currentAutoSceneviewChange.translation = " << currentAutoSceneviewChange.translation << std::endl;
                     // Find the start and end rotation
                     this->currentAutoSceneviewChange.rotation_start = this->sceneview.rotation(); // rotation at start
                     this->currentAutoSceneviewChange.rotation_start.renormalize();
@@ -1456,7 +1458,7 @@ export namespace mplot
                     this->savedSceneview = this->sceneview;
                     this->savedSceneview_tr = this->sceneview_tr;
 
-                    this->followedLastViewMatrix = this->followedVM->getViewMatrix();
+                    if (this->followedVM != nullptr) { this->followedLastViewMatrix = this->followedVM->getViewMatrix(); }
 
                 } else {
                     // Translate by an increment
@@ -1492,7 +1494,7 @@ export namespace mplot
                     this->savedSceneview = this->sceneview;
                     this->savedSceneview_tr = this->sceneview_tr;
 
-                    this->followedLastViewMatrix = this->followedVM->getViewMatrix();
+                    if (this->followedVM != nullptr) { this->followedLastViewMatrix = this->followedVM->getViewMatrix(); }
 
                 } else { // Rotate by an increment
 
@@ -1521,6 +1523,8 @@ export namespace mplot
                     (this->currentAutoSceneviewChange.transform_time_frames == 0 && since_f > this->currentAutoSceneviewChange.transform_time)
                     ) { // transform is done
 
+                    std::cout << "DONE sceneview is now " << this->sceneview.str_arr() << std::endl;
+
                     this->state.set (visual_state::viewAutomation, false);
                     this->scenetrans_delta.zero();
                     this->rotation_delta.reset();
@@ -1528,7 +1532,7 @@ export namespace mplot
                     this->savedSceneview_tr = this->sceneview_tr;
 
                     // Update followedLastViewMatrix now!
-                    this->followedLastViewMatrix = this->followedVM->getViewMatrix();
+                    if (this->followedVM != nullptr) { this->followedLastViewMatrix = this->followedVM->getViewMatrix(); }
 
                 } else { // transform, incrementally
 
@@ -1563,9 +1567,14 @@ export namespace mplot
                         sm::mat<float, 4> sv_tr;
                         sm::mat<float, 4> sv_rot;
                         sv_tr.translate (this->savedSceneview.translation());
+                        std::cout << "sv_tr1 " << sv_tr.str_arr() << std::endl;
+                        std::cout << "Translate sv_tr by scenetrans_delta = " << this->scenetrans_delta << std::endl;
                         sv_tr.translate (this->scenetrans_delta);
+                        std::cout << "sv_tr2 " << sv_tr.str_arr() << std::endl;
                         sv_rot.rotate (slerped);
+                        std::cout << "sv_rot " << sv_rot.str_arr() << std::endl;
                         this->sceneview = sv_tr * sv_rot;
+                        std::cout << "sceneview is now " << this->sceneview.str_arr() << std::endl;
                         this->sceneview_tr = sv_tr;
                     }
                 }
