@@ -1013,11 +1013,11 @@ export namespace mplot
         // immediately, or start a timed sequence of changes to animate the sceneview.
         void setCurrentDirectionEvent (const mplot::direction_data& dirn)
         {
+            constexpr bool debug_dirn_event = false;
+
             if (dirn.event == mplot::direction_event::sceneview) {
                 // Make an immediate sceneview change
                 this->setSceneview (dirn.sceneview);
-                std::cout << "After setSceneview from dirn.sceneview, Sceneview matrix array:\n" << this->sceneview.str_arr() << std::endl;
-                // Well, it's correct here...
 
             } else {
                 // timed translation/rotation/transform are all 'viewAutomations'
@@ -1025,8 +1025,10 @@ export namespace mplot
                 this->currentAutoSceneviewChange = dirn;
                 this->currentAutoSceneviewChange.start = std::chrono::steady_clock::now();
                 this->currentAutoSceneviewChange.start_frame = this->render_counter;
-                std::cout << __func__ << " event id " << this->currentAutoSceneviewChange.id
-                          << " starting at frame " << this->currentAutoSceneviewChange.start_frame << std::endl;
+                if constexpr (debug_dirn_event) {
+                    std::cout << __func__ << " event id " << this->currentAutoSceneviewChange.id
+                              << " starting at frame " << this->currentAutoSceneviewChange.start_frame << std::endl;
+                }
                 // Auto translation behaves like a mouse-press then mouse-drag; computing a delta from a savedSceneview
                 this->savedSceneview = this->sceneview;
                 this->savedSceneview_tr = this->sceneview_tr;
@@ -1413,7 +1415,7 @@ export namespace mplot
             sm::vec<F, 3> B = { xf, F{0}, F{0} };
             sm::vec<F, 3> X = A.inverse() * B; // X are the min. jerk coefficients
 
-            F x = X[0] * t * t * t + X[1] * std::pow (t, F{4}) + X[2]  * std::pow (t, F{5});
+            F x = X[0] * t * t * t + X[1] * std::pow (t, F{4}) + X[2] * std::pow (t, F{5});
             return x / xf;
         }
 

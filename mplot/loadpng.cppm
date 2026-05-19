@@ -21,7 +21,7 @@ import sm.vvec;
 
 export namespace mplot
 {
-    uint32_t pnm_encode (const std::string& img_filename, const unsigned char* raw, int32_t w, int32_t h)
+    std::uint32_t pnm_encode (const std::string& img_filename, const unsigned char* raw, std::int32_t w, std::int32_t h)
     {
         std::ofstream fout (img_filename, std::ios::out | std::ios::trunc);
         if (!fout.is_open()) {
@@ -32,9 +32,9 @@ export namespace mplot
              << "#mathplot frame size " << w << "x" << h << "\n"
              << w << " " << h << "\n255\n";
 
-        for (int32_t i = 0; i < h; ++i) {
-            int32_t for_line = i * 4 * w;
-            for (int32_t j = 0; j < 4 * w; ++j) {
+        for (std::int32_t i = 0; i < h; ++i) {
+            std::int32_t for_line = i * 4 * w;
+            for (std::int32_t j = 0; j < 4 * w; ++j) {
                 if (j % 4 != 3) {
                     // access raw[for_line + j];
                     fout.write (reinterpret_cast<const char*>(&raw[for_line + j]), 1);
@@ -47,13 +47,13 @@ export namespace mplot
         return 0u;
     }
 
-    uint32_t png_encode (const std::string& img_filename, const unsigned char* in, int32_t w, int32_t h)
+    std::uint32_t png_encode (const std::string& img_filename, const unsigned char* in, std::int32_t w, std::int32_t h)
     {
-        if (w < 0 || h < 0) { return std::numeric_limits<uint32_t>::max(); }
+        if (w < 0 || h < 0) { return std::numeric_limits<std::uint32_t>::max(); }
         return lodepng::encode (img_filename, in, w, h);
     }
 
-    std::string png_error_text (const uint32_t error) { return lodepng_error_text (error); }
+    std::string png_error_text (const std::uint32_t error) { return lodepng_error_text (error); }
 
     /*
      * Wrap lodepng::decode to load a PNG from file, placing the data into the
