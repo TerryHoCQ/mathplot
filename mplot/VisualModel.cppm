@@ -757,6 +757,9 @@ export namespace mplot
                 GLint loc_gr = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("greyscale"));
                 if (loc_gr != -1) { glfn->Uniform1i (loc_gr, (this->flags.test (vm_bools::greyscale) ? 1 : 0)); }
 
+                GLint loc_gam = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("gamma"));
+                if (loc_gam != -1) { glfn->Uniform1f (loc_gam, this->gamma); }
+
                 // The scene-view matrix
                 GLint loc_v = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("v_matrix"));
                 if (loc_v != -1) { glfn->UniformMatrix4fv (loc_v, 1, GL_FALSE, this->scenematrix.arr.data()); }
@@ -911,6 +914,9 @@ export namespace mplot
             this->alpha -= 0.1f;
             this->alpha = this->alpha < 0.0f ? 0.0f : this->alpha;
         }
+
+        void setGamma (const float _g) { this->gamma = _g; }
+        float getGamma () const { return this->gamma; }
 
         // The hide attribute accessors
         void setHide (const bool _h = true) { this->flags.set (vm_bools::hide, _h); }
@@ -1312,6 +1318,9 @@ export namespace mplot
 
         //! A model-wide alpha value for the shader
         float alpha = 1.0f;
+
+        //! A per-model gamma value to interpret the colours in the model. Applied in the vertex shader.
+        float gamma = 1.0f;
 
         // The mplot::VisualBase in which this model exists.
         std::uint32_t parentVis = std::numeric_limits<std::uint32_t>::max();

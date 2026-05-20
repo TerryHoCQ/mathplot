@@ -155,6 +155,7 @@ export namespace mplot::compoundray
             }
             auto vertvm = std::make_unique<mplot::VerticesVisual<glver>> (tfm, ind, posn, norm, colr);
             vertvm->set_parent (thevisual->get_id());
+            vertvm->setGamma (0.45f);
             vertvm->name = mymeshes[mi]->name;
             if (make_navmeshes == true) { vertvm->make_navmesh(); }
             vertvm->finalize();
