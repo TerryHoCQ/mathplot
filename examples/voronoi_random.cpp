@@ -6,8 +6,11 @@
  * This shows you how to use VoronoiVisual to visualize a surface from a non regular
  * grid (i.e. non mplot::Grid or mplot::HexGrid or mplot::HealpixVisual ordered values)
  *
+ * It also shows how to automate the sceneview using mplot::direction_data objects.
+ *
  * Author Seb James
  * Date 2024
+ * Direction updates 2026
  */
 #include <iostream>
 #include <memory>
@@ -63,20 +66,26 @@ int main()
     sm::mat<float, 4> sv4 = { -0.0563805, 0.974664, -0.216453, 0, -0.969398, -0.0015572, 0.245492, 0, 0.238935, 0.22367, 0.944924, 0, 0, 0, -16.0835, 1 };
     sm::vec<sm::mat<float, 4>, 4> svv = { sv1, sv2, sv3, sv4 };
 
-    int fcount = 0;
-    int svcount = 0;
+    int fcount = 0;  // frame count
+    int svcount = 0; // sceneview change count
     while (!v.readyToFinish()) {
-        if (fcount++% 600 == 0) {
+
+        // Periodic changes every 300 frames
+        if (fcount++% 100 == 0) {
+
+            // Change the colour map
             vorvp->cm.setType (++cmap_t);
-            vorvp->reinitColours(); // Not quite working when I change the colourmap
-            // apply svv[svcount++ % 4]
+            vorvp->reinitColours();
+
+            // Apply the sceneview from svv[svcount++ % 4] as a
+            // direction_event::timed_transform. Create a direction_data object on the fly, setting
+            // the time for the transform to be 25 frames
             mplot::direction_data dirn;
-            dirn.id = svcount % 4;
-            dirn.transform_time_frames = 50;
-            std::cout << "svv[" << (svcount % 4) << "]\n";
-            dirn.sceneview = svv[svcount % 4];
             dirn.event = mplot::direction_event::timed_transform;
+            dirn.transform_time_frames = 25;
+            dirn.sceneview = svv[svcount % 4];
             v.setCurrentDirectionEvent (dirn);
+
             ++svcount;
         }
         v.waitevents(0.018);

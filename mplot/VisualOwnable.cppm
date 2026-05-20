@@ -1013,7 +1013,7 @@ export namespace mplot
         // immediately, or start a timed sequence of changes to animate the sceneview.
         void setCurrentDirectionEvent (const mplot::direction_data& dirn)
         {
-            constexpr bool debug_dirn_event = true;
+            constexpr bool debug_dirn_event = false;
 
             if (dirn.event == mplot::direction_event::sceneview) {
                 // Make an immediate sceneview change
@@ -1039,9 +1039,7 @@ export namespace mplot
                     this->find_rotation_centre();
                 } else if (dirn.event == direction_event::timed_transform) {
                     // Find the start and end translation
-                    std::cout << "dirn.sceneview.translation() - this->sceneview.translation() is " <<  dirn.sceneview.translation() << " - " << this->sceneview.translation() << std::endl;
-                    this->currentAutoSceneviewChange.translation = dirn.sceneview.translation() - this->sceneview.translation(); // FIXME, something is up here
-                    std::cout << " currentAutoSceneviewChange.translation = " << currentAutoSceneviewChange.translation << std::endl;
+                    this->currentAutoSceneviewChange.translation = dirn.sceneview.translation() - this->sceneview.translation();
                     // Find the start and end rotation
                     this->currentAutoSceneviewChange.rotation_start = this->sceneview.rotation(); // rotation at start
                     this->currentAutoSceneviewChange.rotation_start.renormalize();
@@ -1463,8 +1461,7 @@ export namespace mplot
                 } else {
                     // Translate by an increment
                     if (this->currentAutoSceneviewChange.min_jerk) {
-                        propn = this->compute_min_jerk (static_cast<float>(this->currentAutoSceneviewChange.transform_time_frames),
-                                                        this->currentAutoSceneviewChange.translation.length(),
+                        propn = this->compute_min_jerk (static_cast<float>(this->currentAutoSceneviewChange.transform_time_frames), 1.0f,
                                                         static_cast<float>(since_frames));
                     }
 
@@ -1499,8 +1496,7 @@ export namespace mplot
                 } else { // Rotate by an increment
 
                     if (this->currentAutoSceneviewChange.min_jerk) {
-                        propn = this->compute_min_jerk (static_cast<float>(this->currentAutoSceneviewChange.transform_time_frames),
-                                                        this->currentAutoSceneviewChange.about_vert_angle, // rotational min_jerk? Might be stretching it here
+                        propn = this->compute_min_jerk (static_cast<float>(this->currentAutoSceneviewChange.transform_time_frames), 1.0f,
                                                         static_cast<float>(since_frames));
                     }
 
@@ -1523,8 +1519,6 @@ export namespace mplot
                     (this->currentAutoSceneviewChange.transform_time_frames == 0 && since_f > this->currentAutoSceneviewChange.transform_time)
                     ) { // transform is done
 
-                    std::cout << "DONE sceneview is now " << this->sceneview.str_arr() << std::endl;
-
                     this->state.set (visual_state::viewAutomation, false);
                     this->scenetrans_delta.zero();
                     this->rotation_delta.reset();
@@ -1537,9 +1531,11 @@ export namespace mplot
                 } else { // transform, incrementally
 
                     if (this->currentAutoSceneviewChange.min_jerk) {
-                        // propn is time from 0 to 1 of our movement. Compute min-jerk movement x(t) = a3 t^3 + a4 t^4 + a5 t^5
-                        propn = this->compute_min_jerk (static_cast<float>(this->currentAutoSceneviewChange.transform_time_frames),
-                                                        this->currentAutoSceneviewChange.translation.length(),
+                        // propn is time from 0 to 1 of our movement. Compute min-jerk movement x(t)
+                        // = a3 t^3 + a4 t^4 + a5 t^5.  We always pass xf = 1, as we are getting a
+                        // proportion of the trajectory, regardless of the length (or amount of
+                        // rotation) of our sceneview move.)
+                        propn = this->compute_min_jerk (static_cast<float>(this->currentAutoSceneviewChange.transform_time_frames), 1.0f,
                                                         static_cast<float>(since_frames));
                     }
 
@@ -1567,14 +1563,9 @@ export namespace mplot
                         sm::mat<float, 4> sv_tr;
                         sm::mat<float, 4> sv_rot;
                         sv_tr.translate (this->savedSceneview.translation());
-                        std::cout << "sv_tr1 " << sv_tr.str_arr() << std::endl;
-                        std::cout << "Translate sv_tr by scenetrans_delta = " << this->scenetrans_delta << std::endl;
                         sv_tr.translate (this->scenetrans_delta);
-                        std::cout << "sv_tr2 " << sv_tr.str_arr() << std::endl;
                         sv_rot.rotate (slerped);
-                        std::cout << "sv_rot " << sv_rot.str_arr() << std::endl;
                         this->sceneview = sv_tr * sv_rot;
-                        std::cout << "sceneview is now " << this->sceneview.str_arr() << std::endl;
                         this->sceneview_tr = sv_tr;
                     }
                 }
