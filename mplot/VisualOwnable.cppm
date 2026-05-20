@@ -1401,8 +1401,8 @@ export namespace mplot
         }
 
         /*
-         * Compute the minimum jerk proportion of a movement at time t, where the movement is from 0
-         * to xf and it should take an amount of time tf (also starting from 0).
+         * For the time t, compute the location x of a 1D minimum-jerk trajectory from 0 to xf
+         * carried out in time tf.
          */
         template<typename F>
         F compute_min_jerk (const F tf, const F xf, const F t) const noexcept
@@ -1416,7 +1416,7 @@ export namespace mplot
             sm::vec<F, 3> X = A.inverse() * B; // X are the min. jerk coefficients
 
             F x = X[0] * t * t * t + X[1] * std::pow (t, F{4}) + X[2] * std::pow (t, F{5});
-            return x / xf;
+            return x;
         }
 
         // Choreographed sceneview changes (direction_event)
@@ -1573,6 +1573,8 @@ export namespace mplot
                     sm::mat<float, 4> sv_viewmatrix = this->sceneview.inverse() * rotn_y;
                     sm::mat<float, 4> fvm = this->followedVM->getViewMatrix();
                     this->d_to_rotation_centre = (fvm.translation() - sv_viewmatrix.translation()).length();
+                } else {
+                    this->d_to_rotation_centre = std::abs (this->sceneview[14]);
                 }
 
             } else {
@@ -1598,7 +1600,11 @@ export namespace mplot
                 // Use scenetrans_delta to shift the view with the scrollwheel
                 this->folcam_offset_tr += this->scenetrans_delta;
                 this->scenetrans_delta.zero();
-                if (this->state.test (visual_state::scrolling)) { this->state.reset (visual_state::scrolling); }
+                if (this->state.test (visual_state::scrolling)) {
+                    this->state.reset (visual_state::scrolling);
+                    // scrolling during a view automation should cancel the view automation
+                    this->state.reset (visual_state::viewAutomation);
+                }
                 this->computeSceneview_for_follower();
 
             } else {
@@ -1644,8 +1650,9 @@ export namespace mplot
                     if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
                         // Calculate model view transformation - transforming from "model space" to "worldspace".
                         this->computeSceneview_about_rotation_centre();
-                        // As we had a commanded movement, cancel the viewTransition
+                        // As we had a commanded movement, cancel the viewTransition and any viewAutomation
                         this->state.reset (visual_state::viewTransition);
+                        this->state.reset (visual_state::viewAutomation);
                     } // else don't change sceneview
 
                     if (this->state.test (visual_state::scrolling)) {

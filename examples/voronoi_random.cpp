@@ -71,7 +71,7 @@ int main()
     while (!v.readyToFinish()) {
 
         // Periodic changes every 300 frames
-        if (fcount++% 100 == 0) {
+        if (fcount++% 300 == 0) {
 
             // Change the colour map
             vorvp->cm.setType (++cmap_t);
@@ -82,7 +82,7 @@ int main()
             // the time for the transform to be 25 frames
             mplot::direction_data dirn;
             dirn.event = mplot::direction_event::timed_transform;
-            dirn.transform_time_frames = 25;
+            dirn.transform_time_frames = 60;
             dirn.sceneview = svv[svcount % 4];
             v.setCurrentDirectionEvent (dirn);
 
