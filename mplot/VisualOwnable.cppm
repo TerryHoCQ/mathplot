@@ -1017,41 +1017,47 @@ export namespace mplot
         {
             constexpr bool debug_dirn_event = false;
 
-            if (dirn.event == mplot::direction_event::sceneview) {
-                // Make an immediate sceneview change
-                this->setSceneview (dirn.sceneview);
-
-            } else {
-                // timed translation/rotation/transform are all 'viewAutomations'
-                this->state.set (visual_state::viewAutomation);
-                this->currentAutoSceneviewChange = dirn;
-                this->currentAutoSceneviewChange.start_frame = this->render_counter;
-                if constexpr (debug_dirn_event) {
-                    std::cout << __func__ << " event id " << this->currentAutoSceneviewChange.id
-                              << " starting at frame " << this->currentAutoSceneviewChange.start_frame << std::endl;
-                }
-                // Auto translation behaves like a mouse-press then mouse-drag; computing a delta from a savedSceneview
-                this->savedSceneview = this->sceneview;
-                this->savedSceneview_tr = this->sceneview_tr;
-                this->scenetrans_delta.zero();
-                this->rotation_delta.reset();
-                // If it's a rotation event, also need a rotation centre
-                if (dirn.event == direction_event::timed_rotation) {
-                    this->find_rotation_centre();
-                } else if (dirn.event == direction_event::timed_transform) {
-                    // Find the start and end translation
-                    this->currentAutoSceneviewChange.translation = dirn.sceneview.translation() - this->sceneview.translation();
-                    // Find the start and end rotation
-                    this->currentAutoSceneviewChange.rotation_start = this->sceneview.rotation(); // rotation at start
-                    this->currentAutoSceneviewChange.rotation_start.renormalize();
-                    this->currentAutoSceneviewChange.rotation = dirn.sceneview.rotation(); // rotation at end
-                    this->currentAutoSceneviewChange.rotation.renormalize();
-                    // auto qr = dirn.rotation_start.slerp (dirn.rotation, proportion);
-                    this->find_rotation_centre();
-                } else if (dirn.event == direction_event::timed_orbit) {
-                    // Might need this:
-                    this->currentAutoSceneviewChange.translation = dirn.sceneview.translation() - this->sceneview.translation();
-                }
+            // timed translation/rotation/transform are all 'viewAutomations'
+            this->state.set (visual_state::viewAutomation);
+            this->currentAutoSceneviewChange = dirn;
+            this->currentAutoSceneviewChange.start_frame = this->render_counter;
+            if constexpr (debug_dirn_event) {
+                std::cout << __func__ << " event id " << this->currentAutoSceneviewChange.id
+                          << " starting at frame " << this->currentAutoSceneviewChange.start_frame << std::endl;
+            }
+            // Auto translation behaves like a mouse-press then mouse-drag; computing a delta from a savedSceneview
+            this->savedSceneview = this->sceneview;
+            this->savedSceneview_tr = this->sceneview_tr;
+            this->scenetrans_delta.zero();
+            this->rotation_delta.reset();
+            // If it's a rotation event, also need a rotation centre
+            if (dirn.event == direction_event::timed_rotation) {
+                this->find_rotation_centre();
+            } else if (dirn.event == direction_event::timed_transform) {
+                // Find the start and end translation
+                this->currentAutoSceneviewChange.translation = dirn.sceneview.translation() - this->sceneview.translation();
+                // Find the start and end rotation
+                this->currentAutoSceneviewChange.rotation_start = this->sceneview.rotation(); // rotation at start
+                this->currentAutoSceneviewChange.rotation_start.renormalize();
+                this->currentAutoSceneviewChange.rotation = dirn.sceneview.rotation(); // rotation at end
+                this->currentAutoSceneviewChange.rotation.renormalize();
+                this->find_rotation_centre();
+            } else if (dirn.event == direction_event::sceneview) {
+                std::cout << "Set a sceneview event for current direction event" << std::endl;
+                // An immediate sceneview event is just a timed_transform with the time for the transform set to 1
+                this->currentAutoSceneviewChange.transform_time_frames = 2u;
+                this->currentAutoSceneviewChange.min_jerk = false;
+                // Find the start and end translation
+                this->currentAutoSceneviewChange.translation = dirn.sceneview.translation() - this->sceneview.translation();
+                // Find the start and end rotation
+                this->currentAutoSceneviewChange.rotation_start = this->sceneview.rotation(); // rotation at start
+                this->currentAutoSceneviewChange.rotation_start.renormalize();
+                this->currentAutoSceneviewChange.rotation = dirn.sceneview.rotation(); // rotation at end
+                this->currentAutoSceneviewChange.rotation.renormalize();
+                this->find_rotation_centre();
+            } else if (dirn.event == direction_event::timed_orbit) {
+                // Might need this:
+                this->currentAutoSceneviewChange.translation = dirn.sceneview.translation() - this->sceneview.translation();
             }
         }
 
@@ -1499,7 +1505,8 @@ export namespace mplot
                     this->d_to_rotation_centre = (fvm.translation() - sv_viewmatrix.translation()).length();
                 }
 
-            } else if (this->currentAutoSceneviewChange.event == direction_event::timed_transform) { // translation and rotation
+            } else if (this->currentAutoSceneviewChange.event == direction_event::timed_transform
+                       || this->currentAutoSceneviewChange.event == direction_event::sceneview) { // translation and rotation
 
                 if (this->autoSceneviewComplete (since_frames)) { // transform is done
                     this->state.set (visual_state::viewAutomation, false);
@@ -1566,19 +1573,11 @@ export namespace mplot
                     }
                     sm::mat<float, 4> orb_trans;
                     orb_trans.translate (this->currentAutoSceneviewChange.orbit_centre);
-                    //std::cout << "orb_trans:\n" << orb_trans << std::endl;
-
                     sm::mat<float, 4> orb_trans_back;
                     orb_trans_back.translate (-this->currentAutoSceneviewChange.orbit_centre);
-
                     sm::mat<float, 4> orb_rot;
                     orb_rot.rotate (this->currentAutoSceneviewChange.orbit_axis, propn * this->currentAutoSceneviewChange.orbit_angle);
-                    //std::cout << "orb_rot:\n" << orb_rot << std::endl;
-
-                    //std::cout << "savedSceneview:\n" << this->savedSceneview << std::endl;
-                    //this->sceneview = orb_trans * orb_rot * this->savedSceneview;
                     this->sceneview = this->savedSceneview * orb_trans * orb_rot * orb_trans_back;
-                    //std::cout << "sceneview:\n" << sceneview << std::endl;
                 }
             } else {
                 std::cout << "Unknown direction_event\n";
@@ -1617,7 +1616,6 @@ export namespace mplot
 
                 if (this->state.test (visual_state::viewFollowsModeChanged)) {
                     // Changed back to normal, non-follower mode. Zoom back, so set viewTransition
-                    std::cout << "viewFollowsModeChanged back to \"non-follow\"\n";
                     this->state.set (visual_state::viewTransition);
                     this->state.reset (visual_state::viewFollowsModeChanged);
                 }
