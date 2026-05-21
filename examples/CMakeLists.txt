@@ -133,6 +133,17 @@ target_sources(voronoi_random PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SO
 )
 target_link_libraries(voronoi_random OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
+add_executable(voronoi_random_orbit voronoi_random_orbit.cpp)
+target_sources(voronoi_random_orbit PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES
+  ${MPLOT_MATHS_CORE_MODULES}
+  ${MPLOT_CORE_MODULES}
+  ${PROJECT_SOURCE_DIR}/maths/sm/winder.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/jcvoronoi/jc_voronoi.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/VoronoiVisual.cppm
+)
+target_link_libraries(voronoi_random_orbit OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
 if(BUILD_EXAMPLES_EXTRA)
   # Basic mplot::Visual class example
   add_executable(visual visual.cpp)
