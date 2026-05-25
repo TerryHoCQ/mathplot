@@ -5,11 +5,11 @@
 #include <stdexcept>
 #include <string>
 #include <sstream>
+#include <memory>
 
-#include <sm/vec>
-
-#include <mplot/Visual.h>
-#include <mplot/ConeVisual.h>
+import sm.vec;
+import mplot.visual;
+import mplot.conevisual;
 
 int main()
 {
@@ -24,7 +24,7 @@ int main()
         // Draw several cones, demonstrating what 'ringoffset' does
         for (int i = 0; i < 6; ++i) {
             auto cvm = std::make_unique<mplot::ConeVisual<>> (offset);
-            v.bindmodel (cvm);
+            cvm->set_parent (v.get_id());
             cvm->ringoffset = 0.2f * i;
             cvm->clr = { (5-i) * 0.2f, 0.0f, i * 0.2f };
             std::stringstream ss;

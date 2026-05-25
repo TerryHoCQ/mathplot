@@ -1,15 +1,13 @@
-#pragma once
-
 /*!
  * \file Declares ConeVisual to visualize a simple cone
  */
+export module mplot.conevisual;
 
-#include <array>
 import sm.vec;
-#include <mplot/colour.h>
-#include <mplot/VisualModel.h>
+import mplot.colour;
+import mplot.visualmodel;
 
-namespace mplot
+export namespace mplot
 {
     //! A class to visualize a single vector
     template <int glver = mplot::gl::version_4_1>
