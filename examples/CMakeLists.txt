@@ -394,6 +394,21 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(ring OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
+  add_executable(pointrows pointrows.cpp)
+  target_sources(pointrows PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/PointRowsVisual.cppm
+  )
+  target_link_libraries(pointrows OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(pointrows_mesh pointrows.cpp)
+  target_compile_definitions(pointrows_mesh PUBLIC MESH=1)
+  target_sources(pointrows_mesh PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/PointRowsMeshVisual.cppm
+  )
+  target_link_libraries(pointrows_mesh OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
 endif()
 
 if (0) # During development
@@ -703,13 +718,6 @@ if (0) # During development
   add_executable(quadsmesh quads.cpp)
   target_compile_definitions(quadsmesh PUBLIC MESH=1)
   target_link_libraries(quadsmesh OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(pointrows pointrows.cpp)
-  target_link_libraries(pointrows OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(pointrows_mesh pointrows.cpp)
-  target_compile_definitions(pointrows_mesh PUBLIC MESH=1)
-  target_link_libraries(pointrows_mesh OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(randvec randvec.cpp)
   target_link_libraries(randvec OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)

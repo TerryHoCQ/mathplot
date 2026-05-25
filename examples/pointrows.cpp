@@ -5,16 +5,18 @@
 #include <fstream>
 #include <cmath>
 #include <array>
+#include <vector>
+#include <memory>
 
-#include <sm/scale>
-#include <sm/vec>
+import sm.scale;
+import sm.vec;
 
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
+import mplot.visual;
+import mplot.colourmap;
 #ifdef MESH
-#include <mplot/PointRowsMeshVisual.h>
+import mplot.pointrowsmeshvisual;
 #else
-#include <mplot/PointRowsVisual.h>
+import mplot.pointrowsvisual;
 #endif
 
 int main()
@@ -54,12 +56,12 @@ int main()
 #ifdef MESH
         auto prmv = std::make_unique<mplot::PointRowsMeshVisual<float>>(&points, offset, &data, scale, mplot::ColourMapType::Twilight,
                                                                         0.0f, 1.0f, 1.0f, 0.04f, mplot::ColourMapType::Jet, 0.0f, 1.0f, 1.0f, 0.1f);
-        v.bindmodel (prmv);
+        prmv->set_parent (v.get_id());
         prmv->finalize();
         v.addVisualModel (prmv);
 #else
         auto prv = std::make_unique<mplot::PointRowsVisual<float>>(&points, offset, &data, scale, mplot::ColourMapType::Twilight);
-        v.bindmodel (prv);
+        prv->set_parent (v.get_id());
         prv->finalize();
         v.addVisualModel (prv);
 #endif

@@ -1,17 +1,21 @@
-#pragma once
+module;
 
 #include <iostream>
 #include <vector>
 #include <array>
 #include <cstddef>
+#include <cmath>
+
+export module mplot.pointrowsvisual;
 
 import sm.scale;
 import sm.vec;
 
-#include <mplot/tools.h>
-#include <mplot/VisualDataModel.h>
+import mplot.tools;
+import mplot.visualdatamodel;
+import mplot.colourmap;
 
-namespace mplot
+export namespace mplot
 {
     /*!
      * The template argument Flt is the type of the data which this PointRowsVisual will visualize.
