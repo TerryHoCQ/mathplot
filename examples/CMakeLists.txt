@@ -387,6 +387,13 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(jsonconfig)
 
+  add_executable(ring ring.cpp)
+  target_sources(ring PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/RingVisual.cppm
+  )
+  target_link_libraries(ring OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
 endif()
 
 if (0) # During development
@@ -600,9 +607,6 @@ if (0) # During development
     add_executable(grating grating.cpp)
     target_link_libraries(grating OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
   endif()
-
-  add_executable(ring ring.cpp)
-  target_link_libraries(ring OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   # This sphere example uses constexpr code
   if(NOT APPLE)
