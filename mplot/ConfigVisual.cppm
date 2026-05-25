@@ -1,8 +1,7 @@
 /*!
  * \file Visualize the contents of a mplot::Config
  */
-
-#pragma once
+module;
 
 #include <string>
 #include <iostream>
@@ -10,15 +9,17 @@
 #include <array>
 #include <stdexcept>
 
+export module mplot.configvisual;
+
 import sm.vec;
-#include <sm/config>
+import sm.config;
 
-#include <mplot/VisualModel.h>
-#include <mplot/tools.h>
-#include <mplot/TextFeatures.h>
-#include <mplot/TextGeometry.h>
+import mplot.visualmodel;
+import mplot.tools;
+import mplot.textfeatures;
+import mplot.textgeometry;
 
-namespace mplot
+export namespace mplot
 {
     template<int glver = mplot::gl::version_4_1>
     class ConfigVisual : public VisualModel<glver>
