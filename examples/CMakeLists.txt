@@ -257,8 +257,8 @@ if(BUILD_EXAMPLES_EXTRA)
       ${MPLOT_MATHS_HEXGRID_MODULES}
       ${PROJECT_SOURCE_DIR}/maths/sm/anneal.cppm
       ${PROJECT_SOURCE_DIR}/maths/sm/hdfdata.cppm
-      ${PROJECT_SOURCE_DIR}/maths/sm/config.cppm
       ${PROJECT_SOURCE_DIR}/json/src/modules/json.cppm
+      ${PROJECT_SOURCE_DIR}/maths/sm/config.cppm
     )
     target_link_libraries(anneal_asa_novis ${HDF5_LIBRARIES})
 
@@ -378,6 +378,14 @@ if(BUILD_EXAMPLES_EXTRA)
     ${PROJECT_SOURCE_DIR}/mplot/HealpixVisual.cppm
   )
   target_link_libraries(healpix OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(jsonconfig jsonconfig.cpp)
+  target_sources(jsonconfig PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/json/src/modules/json.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/config.cppm
+  )
+  target_link_libraries(jsonconfig)
 
 endif()
 
@@ -698,9 +706,6 @@ if (0) # During development
   add_executable(pointrows_mesh pointrows.cpp)
   target_compile_definitions(pointrows_mesh PUBLIC MESH=1)
   target_link_libraries(pointrows_mesh OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(jsonconfig jsonconfig.cpp)
-  target_link_libraries(jsonconfig)
 
   add_executable(randvec randvec.cpp)
   target_link_libraries(randvec OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
