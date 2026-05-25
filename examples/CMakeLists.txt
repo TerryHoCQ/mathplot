@@ -368,6 +368,17 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(cone OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
+  add_executable(healpix healpix.cpp)
+  target_sources(healpix PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/winder.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/jcvoronoi/jc_voronoi.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/SphericalProjectionVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/healpix/healpix_bare.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/HealpixVisual.cppm
+  )
+  target_link_libraries(healpix OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
 endif()
 
 if (0) # During development
@@ -731,9 +742,6 @@ if (0) # During development
 
   add_executable(lighting_test lighting_test.cpp)
   target_link_libraries(lighting_test OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(healpix healpix.cpp)
-  target_link_libraries(healpix OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(lines lines.cpp)
   target_link_libraries(lines OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)

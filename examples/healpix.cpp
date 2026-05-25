@@ -7,10 +7,16 @@
 #include <cstdint>
 #include <cstdlib>
 #include <sstream>
-#include <sm/vec>
-#include <mplot/Visual.h>
-#include <mplot/HealpixVisual.h>
-#include <mplot/SphericalProjectionVisual.h>
+#include <memory>
+
+import sm.vec;
+import sm.vvec;
+import sm.geometry;
+import mplot.colourmap;
+import mplot.visual;
+import mplot.healpixvisual;
+import mplot.sphericalprojectionvisual;
+import hp.bare;
 
 int main (int argc, char** argv)
 {
@@ -20,7 +26,7 @@ int main (int argc, char** argv)
     mplot::Visual v(1024, 768, "Healpix");
 
     auto hpv = std::make_unique<mplot::HealpixVisual<float>> (sm::vec<float>{0,0,0});
-    v.bindmodel (hpv);
+    hpv->set_parent (v.get_id());
     hpv->indicate_axes = true;
     hpv->set_order (ord);
     hpv->cm.setType (mplot::ColourMapType::Plasma);
@@ -71,7 +77,7 @@ int main (int argc, char** argv)
 
     // Add two-dimensional projections
     auto spv = std::make_unique<mplot::SphericalProjectionVisual<float>> (sm::vec<float>{5,0,0});
-    v.bindmodel (spv);
+    spv->set_parent (v.get_id());
     spv->twodimensional (true);
     spv->proj_type = sm::geometry::spherical_projection::type::mercator;
     spv->latlong = latlong;
@@ -83,7 +89,7 @@ int main (int argc, char** argv)
     spvp->addLabel ("Mercator projection", sm::vec<>{ ext[0].min, ext[1].min - 0.16f, 0.0f }, mplot::TextFeatures(0.08f));
 
     spv = std::make_unique<mplot::SphericalProjectionVisual<float>> (sm::vec<float>{13,0,0});
-    v.bindmodel (spv);
+    spv->set_parent (v.get_id());
     spv->twodimensional (true);
     spv->proj_type = sm::geometry::spherical_projection::type::mercator;
     spv->latlong = latlong;
@@ -101,7 +107,7 @@ int main (int argc, char** argv)
                     sm::vec<>{ ext[0].min, ext[1].min - 0.16f, 0.0f }, mplot::TextFeatures(0.08f));
 
     spv = std::make_unique<mplot::SphericalProjectionVisual<float>> (sm::vec<float>{-5,-4,0});
-    v.bindmodel (spv);
+    spv->set_parent (v.get_id());
     spv->twodimensional (true);
     spv->proj_type = sm::geometry::spherical_projection::type::equirectangular;
     spv->latlong = latlong;
@@ -112,7 +118,7 @@ int main (int argc, char** argv)
     spvp->addLabel ("Equirectangular projection", sm::vec<>{ ext[0].min, ext[1].min - 0.16f, 0.0f }, mplot::TextFeatures(0.08f));
 
     spv = std::make_unique<mplot::SphericalProjectionVisual<float>> (sm::vec<float>{-5,-8,0});
-    v.bindmodel (spv);
+    spv->set_parent (v.get_id());
     spv->twodimensional (true);
     spv->lambda0 = sm::mathconst<float>::pi_over_4;
     //spv->phi0 = sm::mathconst<float>::pi_over_4; // Latitude offset
@@ -131,7 +137,7 @@ int main (int argc, char** argv)
     spvp->addLabel (ss2.str(), sm::vec<>{ ext[0].min, ext[1].min - 0.16f, 0.0f }, mplot::TextFeatures(0.08f));
 
     spv = std::make_unique<mplot::SphericalProjectionVisual<float>> (sm::vec<float>{-9,3,0});
-    v.bindmodel (spv);
+    spv->set_parent (v.get_id());
     spv->twodimensional (true);
     spv->proj_type = sm::geometry::spherical_projection::type::cassini;
     spv->latlong = latlong;
@@ -142,7 +148,7 @@ int main (int argc, char** argv)
     spvp->addLabel ("Cassini projection", sm::vec<>{ ext[0].min, ext[1].min - 0.16f, 0.0f }, mplot::TextFeatures(0.08f));
 
     spv = std::make_unique<mplot::SphericalProjectionVisual<float>> (sm::vec<float>{-4,3,0});
-    v.bindmodel (spv);
+    spv->set_parent (v.get_id());
     spv->twodimensional (true);
     spv->lambda0 = sm::mathconst<float>::pi_over_4;
     spv->proj_type = sm::geometry::spherical_projection::type::cassini;

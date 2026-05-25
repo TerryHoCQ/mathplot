@@ -1,7 +1,8 @@
 /* -----------------------------------------------------------------------------
  *
- * Adaptation of healpix_bare.c/h into a single header for simple inclusion (by Seb
- * James). Also adapted to be compiled by a C++ compiler (so that it can be namespaced)
+ * Adaptation of healpix_bare.c/h into a single header for simple inclusion (by Seb James). Also
+ * adapted to be compiled by a C++ compiler (so that it can be namespaced). Further adapted (May
+ * 2026) to compile as a C++ module.
  *
  *  Copyright (C) 1997-2019 Krzysztof M. Gorski, Eric Hivon, Martin Reinecke,
  *                          Benjamin D. Wandelt, Anthony J. Banday,
@@ -22,21 +23,23 @@
  *
  *----------------------------------------------------------------------------*/
 
-#pragma once
+module;
 
 #include <cmath>
 #include <cstdint>
 #include <cassert>
 #include <algorithm>
 
+export module hp.bare;
+
 import sm.mathconst;
 
 // The healpix namespace contains code from the HEALPix C library, slightly modified.
-namespace hp
+export namespace hp
 {
     // Lookup tables
-    static const int jrll[] = { 2,2,2,2,3,3,3,3,4,4,4,4 };
-    static const int jpll[] = { 1,3,5,7,0,2,4,6,1,3,5,7 };
+    constexpr int jrll[] = { 2,2,2,2,3,3,3,3,4,4,4,4 };
+    constexpr int jpll[] = { 1,3,5,7,0,2,4,6,1,3,5,7 };
 
     /*
      * Admissible values for theta (definition see below)
@@ -86,7 +89,7 @@ namespace hp
      */
     typedef struct { double x, y; int32_t f; } t_hpc;
 
-    static t_hpc loc2hpc (tloc loc)
+    t_hpc loc2hpc (tloc loc)
     {
         double za = std::fabs (loc.z);
         double x = loc.phi * sm::mathconst<double>::one_over_two_pi;
@@ -118,7 +121,7 @@ namespace hp
         return (loc.z >= 0) ? hp::t_hpc{ 1.0 - jm, 1.0 - jp, ntt } : hp::t_hpc{ jp, jm, ntt + 8 };
     }
 
-    static tloc hpc2loc (t_hpc hpc)
+    tloc hpc2loc (t_hpc hpc)
     {
         double jr = jrll[hpc.f] - hpc.x - hpc.y;
         if (jr < 1.0) {
@@ -142,19 +145,19 @@ namespace hp
         }
     }
 
-    static tloc ang2loc (t_ang ang)
+    tloc ang2loc (t_ang ang)
     {
         double cth = std::cos (ang.theta), sth = std::sin (ang.theta);
         if (sth < 0.0) { sth = -sth; ang.phi += sm::mathconst<double>::pi; }
         return tloc{ cth, sth, ang.phi };
     }
 
-    static t_ang loc2ang (tloc loc)
+    t_ang loc2ang (tloc loc)
     {
         return t_ang{ std::atan2 (loc.s, loc.z), loc.phi };
     }
 
-    static tloc vec2loc (t_vec vec)
+    tloc vec2loc (t_vec vec)
     {
         double vlen = std::sqrt (vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
         double cth = vec.z / vlen;
@@ -162,7 +165,7 @@ namespace hp
         return tloc{ cth, sth, std::atan2 (vec.y, vec.x) };
     }
 
-    static t_vec loc2vec (tloc loc)
+    t_vec loc2vec (tloc loc)
     {
         return t_vec{ loc.s * std::cos (loc.phi), loc.s * std::sin (loc.phi), loc.z };
     }
@@ -183,7 +186,7 @@ namespace hp
         return t_ang{ std::atan2( std::sqrt(vec.x * vec.x + vec.y * vec.y), vec.z), std::atan2 (vec.y, vec.x) };
     }
 
-    static int64_t isqrt (int64_t v)
+    int64_t isqrt (int64_t v)
     {
         int64_t res = std::sqrt (v + 0.5);
         if (v < ((int64_t)(1) << 50)) { return res; }
@@ -195,7 +198,7 @@ namespace hp
         return res;
     }
 
-    static int64_t spread_bits (int64_t v)
+    int64_t spread_bits (int64_t v)
     {
         int64_t res = v & 0xffffffff;
         res = (res^(res<<16)) & 0x0000ffff0000ffff;
@@ -206,7 +209,7 @@ namespace hp
         return res;
     }
 
-    static int64_t compress_bits (int64_t v)
+    int64_t compress_bits (int64_t v)
     {
         int64_t res = v & 0x5555555555555555;
         res = (res^(res>> 1)) & 0x3333333333333333;
@@ -217,12 +220,12 @@ namespace hp
         return res;
     }
 
-    static int64_t hpd2nest (int64_t nside, t_hpd hpd)
+    int64_t hpd2nest (int64_t nside, t_hpd hpd)
     {
         return (hpd.f * nside * nside) + hp::spread_bits(hpd.x) + (hp::spread_bits(hpd.y) << 1);
     }
 
-    static t_hpd nest2hpd (int64_t nside, int64_t pix)
+    t_hpd nest2hpd (int64_t nside, int64_t pix)
     {
         int64_t npface_ = nside * nside;
         int64_t p2 = pix & (npface_ - 1);
@@ -230,7 +233,7 @@ namespace hp
         return t_hpd{ hp::compress_bits(p2), hp::compress_bits(p2>>1), pix_over_npface };
     }
 
-    static int64_t hpd2ring (int64_t nside_, t_hpd hpd)
+    int64_t hpd2ring (int64_t nside_, t_hpd hpd)
     {
         int64_t nl4 = 4 * nside_;
         int64_t jr = (jrll[hpd.f] * nside_) - hpd.x - hpd.y - 1;
@@ -251,7 +254,7 @@ namespace hp
         }
     }
 
-    static t_hpd ring2hpd (int64_t nside_, int64_t pix)
+    t_hpd ring2hpd (int64_t nside_, int64_t pix)
     {
         int64_t ncap_ = 2 * nside_ * (nside_ - 1);
         int64_t npix_ = 12 * nside_ * nside_;
@@ -316,7 +319,7 @@ namespace hp
 
     /* mixed conversions */
 
-    static t_hpd loc2hpd (int64_t nside_, tloc loc)
+    t_hpd loc2hpd (int64_t nside_, tloc loc)
     {
         t_hpc tmp = hp::loc2hpc (loc);
         int32_t _f = tmp.f;
@@ -325,7 +328,7 @@ namespace hp
         return t_hpd{ _x, _y, _f };
     }
 
-    static tloc hpd2loc (int64_t nside_, t_hpd hpd)
+    tloc hpd2loc (int64_t nside_, t_hpd hpd)
     {
         double xns = 1.0 / nside_;
         t_hpc tmp = t_hpc{ (hpd.x + 0.5) * xns, (hpd.y + 0.5) * xns, hpd.f };

@@ -5,7 +5,6 @@ module;
 #include <array>
 #include <vector>
 #include <stdexcept>
-#include <mplot/jcvoronoi/jc_voronoi.h>
 
 export module mplot.sphericalprojectionvisual;
 
@@ -13,9 +12,11 @@ import sm.mathconst;
 import sm.vec;
 import sm.range;
 import sm.geometry;
+import sm.quaternion;
 
 import mplot.gl.version;
 import mplot.visualmodel;
+import jc.voronoi;
 
 export namespace mplot
 {
