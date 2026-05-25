@@ -1,10 +1,10 @@
-#pragma once
-
+module;
 #include <array>
+export module mplot.ringvisual;
 import sm.vec;
-#include <mplot/VisualModel.h>
+import mplot.visualmodel;
 
-namespace mplot
+export namespace mplot
 {
     // A simple ring class that uses the primitive VisualModel::computeRing
     template <int glver = mplot::gl::version_4_1>
