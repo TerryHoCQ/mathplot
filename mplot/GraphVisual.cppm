@@ -1303,8 +1303,10 @@ export namespace mplot
             this->drawAxes();
             this->drawData();
             if (this->legend == true) { this->drawLegend(); }
-            this->drawTickLabels(); // from which we can store the tick label widths
-            this->drawAxisLabels();
+            if (this->axisstyle != axisstyle::none) {
+                this->drawTickLabels(); // from which we can store the tick label widths
+                this->drawAxisLabels();
+            }
         }
 
         //! Is the passed in coordinate within the graph axes (in the x/y sense, ignoring z)?
@@ -1773,6 +1775,9 @@ export namespace mplot
         {
             // First, ensure that this->xtick_posns/xticks and this->ytick_posns/yticks are populated
             this->computeTickPositions();
+
+            // No axes?
+            if (this->axisstyle == axisstyle::none) { return; }
 
             if (this->axisstyle == axisstyle::cross) { return this->drawCrossAxes(); }
 

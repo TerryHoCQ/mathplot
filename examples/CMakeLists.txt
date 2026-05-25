@@ -59,6 +59,7 @@ target_sources(cray_eye PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_D
   ${PROJECT_SOURCE_DIR}/mplot/SphereVisual.cppm
   ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.cppm
   ${PROJECT_SOURCE_DIR}/maths/sm/winder.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/jcvoronoi/jc_voronoi.cppm
   ${PROJECT_SOURCE_DIR}/mplot/compoundray/EyeVisual.cppm
 )
 target_link_libraries(cray_eye OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
@@ -120,6 +121,28 @@ target_sources(model_crawler PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOU
   ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.cppm
 )
 target_link_libraries(model_crawler OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+add_executable(voronoi_random voronoi_random.cpp)
+target_sources(voronoi_random PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES
+  ${MPLOT_MATHS_CORE_MODULES}
+  ${MPLOT_CORE_MODULES}
+  ${PROJECT_SOURCE_DIR}/maths/sm/winder.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/jcvoronoi/jc_voronoi.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/VoronoiVisual.cppm
+)
+target_link_libraries(voronoi_random OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+add_executable(voronoi_random_orbit voronoi_random_orbit.cpp)
+target_sources(voronoi_random_orbit PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES
+  ${MPLOT_MATHS_CORE_MODULES}
+  ${MPLOT_CORE_MODULES}
+  ${PROJECT_SOURCE_DIR}/maths/sm/winder.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/jcvoronoi/jc_voronoi.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/VoronoiVisual.cppm
+)
+target_link_libraries(voronoi_random_orbit OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
 if(BUILD_EXAMPLES_EXTRA)
   # Basic mplot::Visual class example
@@ -596,9 +619,6 @@ if (0) # During development
   add_executable(triangle_intersect triangle_intersect.cpp)
   target_link_libraries(triangle_intersect OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
-  add_executable(voronoi_random voronoi_random.cpp)
-  target_link_libraries(voronoi_random OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
   add_executable(voronoi_boundary voronoi_boundary.cpp)
   target_link_libraries(voronoi_boundary OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
@@ -748,10 +768,6 @@ if (0) # During development
 
   add_executable(show_boundingboxes show_boundingboxes.cpp)
   target_link_libraries(show_boundingboxes OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  # if have compound-ray header
-  add_executable(cray_eye cray_eye.cpp)
-  target_link_libraries(cray_eye OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   if(0)
     # I made use of principle component analysis from arma in this example.

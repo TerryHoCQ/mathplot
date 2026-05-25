@@ -3,9 +3,13 @@
 //
 module;
 
+#include <cstdint>
+#include <iostream>
 #include <array>
 #include <vector>
-#include <mplot/jcvoronoi/jc_voronoi.h>
+#include <string>
+#include <fstream>
+#include <cmath>
 
 export module mplot.compoundray.eyevisual;
 
@@ -15,6 +19,7 @@ import sm.mat;
 import sm.range;
 import sm.geometry;
 import sm.centroid;
+import jc.voronoi;
 
 export import mplot.gl.version;
 export import mplot.visualmodel;

@@ -35,10 +35,6 @@ Mathplot can be **integrated with GUI frameworks** including [Qt](https://doc.qt
 * clang-21
 * clang-22
 * clang-23 (prerelease)
-
-Compilers that nearly work
-
-* clang-19 (ellipsoid example produces linker error)
 * gcc-16 (prerelease)
 
 This quick start shows dependency installation for Linux, because on this platform, it's a single call to apt (or your favourite package manager). If you're using a Mac, see [README.build.mac](https://github.com/sebsjames/mathplot/tree/main/README.build.mac.md) for help getting dependencies in place. It's [README.build.windows](https://github.com/sebsjames/mathplot/tree/main/README.build.windows.md) for Windows users. For notes on supported compilers, see [README.build.compiler](https://github.com/sebsjames/mathplot/tree/main/README.build.compiler.md)
@@ -50,8 +46,8 @@ sudo apt install build-essential cmake git ninja-build \
                  libxi-dev libglfw3-dev libfreetype-dev libhdf5-dev
 
 # Install a very up to date compiler
-sudo apt install clang-23 clang-tools-23 # You can't apt install clang-23, as it's currently pre-release
-sudo apt install gcc-16                  # this won't work either, but hopefully gcc16 will compile mathplot
+sudo apt install clang-20 clang-tools-20
+sudo apt install gcc-16 # this won't work right now, but gcc16 will be able to compile mathplot
 
 git clone --recurse-submodules git@github.com:sebsjames/mathplot   # Get your copy of the mathplot code
 cd mathplot

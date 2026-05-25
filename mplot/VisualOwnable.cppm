@@ -28,6 +28,7 @@ module;
 #include <memory>
 #include <functional>
 #include <cstddef>
+#include <chrono>
 
 #include <nlohmann/json.hpp>
 
@@ -94,7 +95,9 @@ export namespace mplot
         //! set to signal to computeSceneview that the lastSceneview should be saved or restored to.
         viewFollowsModeChanged,
         //! Set true while the sceneview is 'zooming back' to the overview mode (or the whereever-you-left-it mode)
-        viewTransition
+        viewTransition,
+        //! Set true if we're in the middle of a scripted sceneview change, such as zooming in over a period of time
+        viewAutomation
     };
 
     //! Boolean options - similar to state, but more likely to be modified by client code
@@ -158,7 +161,7 @@ export namespace mplot
         /*!
          * The view 'camera' rotates with the selected VM (followedModel)
          */
-        viewFollowsVMBehind,
+        viewFollowsVMBehind
     };
 
     //! Whether to render with perspective or orthographic
@@ -166,6 +169,36 @@ export namespace mplot
     {
         perspective,
         orthographic
+    };
+
+    //! Automated sceneview transforms, i.e. 'film direction' events. enumerated type of event.
+    enum class direction_event : std::uint32_t
+    {
+        sceneview,
+        timed_translation,
+        timed_rotation,
+        timed_transform,  // Move towards a given sceneview
+        timed_orbit,      // Starting from any sceneview, orbit a point
+        unknown
+    };
+
+    //! Automated sceneview transforms, i.e. 'film direction' events. This holds the data for an event.
+    struct direction_data
+    {
+        direction_event event = direction_event::unknown;
+        sm::mat<float, 4> sceneview;         // a sceneview to move to, either instantaneously, or over a period of time
+        sm::vec<float, 3> translation = {};  // A translation to apply to sceneview over time transform_time
+        sm::vec<float, 3> orbit_centre = {}; // Centre of the orbit for timed_orbit
+        sm::vec<float, 3> orbit_axis = sm::vec<float>::uz();
+        float orbit_angle = sm::mathconst<float>::pi;
+        sm::quaternion<float> rotation_start;// Holds the rotation of the sceneview at the start of the transform
+        sm::quaternion<float> rotation;      // A rotation of sceneview to achieve over time transform_time.
+        float about_vert_angle = 0.0f;       // A rotation about the scene's up axis (in degrees)
+        float tilt_angle = 0.0f;
+        bool min_jerk = true;                // Should the movement be minimum jerk, or linear?
+        std::uint32_t transform_time_frames = 0u; // Specify transform time in frames
+        std::uint32_t start_frame = std::numeric_limits<std::uint32_t>::max();
+        std::uint32_t id = std::numeric_limits<std::uint32_t>::max(); // An ID for this direction (could be tied to movement frame)
     };
 
     /*!
@@ -359,7 +392,14 @@ export namespace mplot
         //! failure. Set transparent_bg to get a transparent background.
         sm::vec<int, 2> saveImage (const std::string& img_filename, const bool transparent_bg = false)
         {
+            using namespace std::chrono;
+            using sc = std::chrono::steady_clock;
+            constexpr bool profile_saveimage = false;
+            sc::time_point t0, t1, t2;
+
             this->setContext();
+
+            if constexpr (profile_saveimage) { t0 = sc::now(); }
 
             int32_t viewport[4]; // current viewport
             this->glfn->GetIntegerv (GL_VIEWPORT, viewport);
@@ -390,9 +430,34 @@ export namespace mplot
                     }
                 }
             }
-            uint32_t error = mplot::png_encode (img_filename, rbits.get(), dims[0], dims[1]);
+
+            if constexpr (profile_saveimage) { t1 = sc::now(); }
+
+            uint32_t error = 0;
+
+            // If filename ends with pnm, then save in pnm format; otherwise save as PNG
+            bool pnm_save = false;
+            if (img_filename.find ("pnm") == img_filename.size() - 3) { pnm_save = true; }
+            if (pnm_save == true) {
+                error = mplot::pnm_encode (img_filename, rbits.get(), dims[0], dims[1]);
+            } else {
+                error = mplot::png_encode (img_filename, rbits.get(), dims[0], dims[1]); // Need alternative
+            }
+
+            if constexpr (profile_saveimage) {
+                t2 = sc::now();
+                sc::duration t_d = t1 - t0;
+                sc::duration t_d2 = t2 - t1;
+                std::cout << "Bit-collection: " << duration_cast<milliseconds>(t_d).count() << " ms"
+                          << " and png/pnm_encode: " << duration_cast<milliseconds>(t_d2).count() << " ms\n";
+            }
+
             if (error) {
-                std::cerr << "encoder error " << error << ": " << mplot::png_error_text (error) << std::endl;
+                if (pnm_save == true) {
+                    std::cerr << "pnm encoder error " << error << std::endl;
+                } else {
+                    std::cerr << "encoder error " << error << ": " << mplot::png_error_text (error) << std::endl;
+                }
                 dims.set_from (-1);
                 return dims;
             }
@@ -402,6 +467,8 @@ export namespace mplot
         //! Render the scene
         void render() noexcept
         {
+            ++this->render_counter;
+
             this->setContext();
 
             this->glfn->UseProgram (this->shaders.gprog);
@@ -688,6 +755,11 @@ export namespace mplot
         //! Strength of the diffuse light source
         float diffuse_intensity = 0.0f;
 
+        // Track how many calls to render have been made. At 1000 FPS this overflows at 10^17 seconds which is about 10^9 years.
+        std::uint64_t render_counter = 0u;
+        // A move counter. May be incremented in step with render_counter, or it may not (for example, it may restart)
+        std::uint64_t move_counter = 0u;
+
         //! Compute position and rotation of coordinate arrows in the bottom left of the screen
         void positionCoordArrows()
         {
@@ -773,12 +845,25 @@ export namespace mplot
 
         /*
          * User-settable projection values for the near clipping distance, the far clipping distance
-         * and the field of view of the camera.
          */
 
         float zNear = 0.001f;
         float zFar = 300.0f;
+        /*
+         * User settable field of view of the camera in degrees. Note that the field of view is
+         * measured from the top of the field to the bottom of the field (rather than from the left
+         * to the right).
+         */
         float fov = 30.0f;
+
+        //! Setter for fov
+        void set_vertical_fov (const float vfov) { this->fov = vfov; }
+        //! Setter for fov, if you want to specify horizontal field of view
+        void set_horizontal_fov (const float hfov)
+        {
+            float aspect = static_cast<float>(this->window_w) / static_cast<float>(this->window_h ? this->window_h : 1);
+            this->fov = hfov / aspect;
+        }
 
         //! Time constants for the way the camera moves between a follow-me view and a
         //! drone-view. One for translation, the other for rotation.
@@ -925,6 +1010,56 @@ export namespace mplot
         sm::quaternion<float> getSceneRotation() const { return this->sceneview.rotation(); }
         // What is the scene view's current translation?
         sm::vec<float> getSceneTranslation() const { return this->sceneview.translation(); }
+
+        // API for client code to set a 'film direction' event. This may change the sceneview
+        // immediately, or start a timed sequence of changes to animate the sceneview.
+        void setCurrentDirectionEvent (const mplot::direction_data& dirn)
+        {
+            constexpr bool debug_dirn_event = false;
+
+            // timed translation/rotation/transform are all 'viewAutomations'
+            this->state.set (visual_state::viewAutomation);
+            this->currentAutoSceneviewChange = dirn;
+            this->currentAutoSceneviewChange.start_frame = this->render_counter;
+            if constexpr (debug_dirn_event) {
+                std::cout << __func__ << " event id " << this->currentAutoSceneviewChange.id
+                          << " starting at frame " << this->currentAutoSceneviewChange.start_frame << std::endl;
+            }
+            // Auto translation behaves like a mouse-press then mouse-drag; computing a delta from a savedSceneview
+            this->savedSceneview = this->sceneview;
+            this->savedSceneview_tr = this->sceneview_tr;
+            this->scenetrans_delta.zero();
+            this->rotation_delta.reset();
+            // If it's a rotation event, also need a rotation centre
+            if (dirn.event == direction_event::timed_rotation) {
+                this->find_rotation_centre();
+            } else if (dirn.event == direction_event::timed_transform) {
+                // Find the start and end translation
+                this->currentAutoSceneviewChange.translation = dirn.sceneview.translation() - this->sceneview.translation();
+                // Find the start and end rotation
+                this->currentAutoSceneviewChange.rotation_start = this->sceneview.rotation(); // rotation at start
+                this->currentAutoSceneviewChange.rotation_start.renormalize();
+                this->currentAutoSceneviewChange.rotation = dirn.sceneview.rotation(); // rotation at end
+                this->currentAutoSceneviewChange.rotation.renormalize();
+                this->find_rotation_centre();
+            } else if (dirn.event == direction_event::sceneview) {
+                std::cout << "Set a sceneview event for current direction event" << std::endl;
+                // An immediate sceneview event is just a timed_transform with the time for the transform set to 1
+                this->currentAutoSceneviewChange.transform_time_frames = 2u;
+                this->currentAutoSceneviewChange.min_jerk = false;
+                // Find the start and end translation
+                this->currentAutoSceneviewChange.translation = dirn.sceneview.translation() - this->sceneview.translation();
+                // Find the start and end rotation
+                this->currentAutoSceneviewChange.rotation_start = this->sceneview.rotation(); // rotation at start
+                this->currentAutoSceneviewChange.rotation_start.renormalize();
+                this->currentAutoSceneviewChange.rotation = dirn.sceneview.rotation(); // rotation at end
+                this->currentAutoSceneviewChange.rotation.renormalize();
+                this->find_rotation_centre();
+            } else if (dirn.event == direction_event::timed_orbit) {
+                // Might need this:
+                this->currentAutoSceneviewChange.translation = dirn.sceneview.translation() - this->sceneview.translation();
+            }
+        }
 
         void lightingEffects (const bool effects_on = true)
         {
@@ -1162,6 +1297,7 @@ export namespace mplot
             // rvel is radpersec delta/tc
             T prop = rvel * tc;
             rvel += force * tc;
+            if (r_cur0.checkunit() == false) { throw std::runtime_error ("r_cur0 is not a unit quaternion (could renormalize here)"); }
             sm::quaternion<T> newpos = r_cur0.slerp (r_targ0, prop);
             return newpos; // rather than prop, as in get_cam_movement
         }
@@ -1237,9 +1373,10 @@ export namespace mplot
             if (this->followedVM == nullptr) { return sm::mat<float, 4>::identity(); }
             // Target view from the followedVM
             sm::mat<float, 4> rmat;
-            rmat.rotate (folcam_offset_rot);
+            rmat.rotate (this->folcam_offset_rot);
+            // To smooth this, I need to keep a time-average of followedVM->getViewMatrix()...
             sm::mat<float, 4> fol_targ = this->followedVM->getViewMatrix() * rmat;
-            fol_targ.translate (folcam_offset_tr);
+            fol_targ.translate (this->folcam_offset_tr);
             // FIXME: I may want to update the lastSceneview matrix as fol_targ moves.
             return update_viewmatrix_towards_target (fol_targ);
         }
@@ -1273,6 +1410,181 @@ export namespace mplot
             this->savedSceneview = this->sceneview;
         }
 
+        /*
+         * For the time t, compute the location x of a 1D minimum-jerk trajectory from 0 to xf
+         * carried out in time tf.
+         */
+        template<typename F>
+        F compute_min_jerk (const F tf, const F xf, const F t) const noexcept
+        {
+            sm::mat<F, 3> A = {
+                std::pow (tf, F{3}), F{3} * std::pow (tf, F{2}), F{6}  * tf,
+                std::pow (tf, F{4}), F{4} * std::pow (tf, F{3}), F{2}  * std::pow (tf, F{2}),
+                std::pow (tf, F{5}), F{5} * std::pow (tf, F{4}), F{20} * std::pow (tf, F{3})
+            };
+            sm::vec<F, 3> B = { xf, F{0}, F{0} };
+            sm::vec<F, 3> X = A.inverse() * B; // X are the min. jerk coefficients
+
+            F x = X[0] * t * t * t + X[1] * std::pow (t, F{4}) + X[2] * std::pow (t, F{5});
+            return x;
+        }
+
+        // Helper function. Is the automatic sceneview change complete after since_frames?
+        bool autoSceneviewComplete (const std::uint32_t since_frames)
+        {
+            return (since_frames > this->currentAutoSceneviewChange.transform_time_frames);
+        }
+
+        // Choreographed sceneview changes (direction_event)
+        void computeSceneview_for_automation()
+        {
+            // A constexpr rotation matrix, used below
+            constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
+
+            // We're in an 'automation mode'. use this->currentAutoSceneviewChange
+            std::uint32_t since_frames = this->render_counter - this->currentAutoSceneviewChange.start_frame;
+
+            // Determine how far, in time, as a proportion, we are into the automated sceneview movement
+            float propn = static_cast<float>(since_frames) / static_cast<float>(this->currentAutoSceneviewChange.transform_time_frames);
+
+            if (this->currentAutoSceneviewChange.event == direction_event::timed_translation) {
+
+                if (this->autoSceneviewComplete (since_frames)) {
+                    // Completed movement time
+                    this->scenetrans_delta = this->currentAutoSceneviewChange.translation;
+                    this->computeSceneview_about_rotation_centre();
+                    this->state.set (visual_state::viewAutomation, false);
+                    this->scenetrans_delta.zero();
+                    this->savedSceneview = this->sceneview;
+                    this->savedSceneview_tr = this->sceneview_tr;
+                    if (this->followedVM != nullptr) { this->followedLastViewMatrix = this->followedVM->getViewMatrix(); }
+                } else {
+                    // Translate by an increment
+                    if (this->currentAutoSceneviewChange.min_jerk) {
+                        propn = this->compute_min_jerk (static_cast<float>(this->currentAutoSceneviewChange.transform_time_frames), 1.0f,
+                                                        static_cast<float>(since_frames));
+                    }
+
+                    this->scenetrans_delta = propn * this->currentAutoSceneviewChange.translation;
+                    this->computeSceneview_about_rotation_centre();
+                }
+                if (this->followedVM != nullptr) {
+                    sm::mat<float, 4> sv_viewmatrix = this->sceneview.inverse() * rotn_y;
+                    sm::mat<float, 4> fvm = this->followedVM->getViewMatrix();
+                    this->d_to_rotation_centre = (fvm.translation() - sv_viewmatrix.translation()).length();
+                }
+
+            } else if (this->currentAutoSceneviewChange.event == direction_event::timed_rotation) {
+
+                sm::vec<float> mod_up = this->savedSceneview.rotation() * this->scene_up;
+                if (this->autoSceneviewComplete (since_frames)) {
+                    // Apply full rotation
+                    sm::quaternion<float> r1 (mod_up, -this->currentAutoSceneviewChange.about_vert_angle);
+                    sm::quaternion<float> r2 (this->scene_right, -this->currentAutoSceneviewChange.tilt_angle);
+                    this->rotation_delta = r2 * r1;
+                    this->computeSceneview_about_rotation_centre();
+                    this->state.set (visual_state::viewAutomation, false);
+                    this->rotation_delta.reset();
+                    this->savedSceneview = this->sceneview;
+                    this->savedSceneview_tr = this->sceneview_tr;
+                    if (this->followedVM != nullptr) { this->followedLastViewMatrix = this->followedVM->getViewMatrix(); }
+                } else { // Rotate by an increment
+                    if (this->currentAutoSceneviewChange.min_jerk) {
+                        propn = this->compute_min_jerk (static_cast<float>(this->currentAutoSceneviewChange.transform_time_frames), 1.0f,
+                                                        static_cast<float>(since_frames));
+                    }
+                    // make rotation_delta from this->currentAutoSceneviewChange.rotation and apply
+                    sm::quaternion<float> r1 (mod_up, -propn * this->currentAutoSceneviewChange.about_vert_angle);
+                    sm::quaternion<float> r2 (this->scene_right, -propn * this->currentAutoSceneviewChange.tilt_angle);
+                    this->rotation_delta = r2 * r1;
+                    this->computeSceneview_about_rotation_centre();
+                }
+                if (this->followedVM != nullptr) {
+                    sm::mat<float, 4> sv_viewmatrix = this->sceneview.inverse() * rotn_y;
+                    sm::mat<float, 4> fvm = this->followedVM->getViewMatrix();
+                    this->d_to_rotation_centre = (fvm.translation() - sv_viewmatrix.translation()).length();
+                }
+
+            } else if (this->currentAutoSceneviewChange.event == direction_event::timed_transform
+                       || this->currentAutoSceneviewChange.event == direction_event::sceneview) { // translation and rotation
+
+                if (this->autoSceneviewComplete (since_frames)) { // transform is done
+                    this->state.set (visual_state::viewAutomation, false);
+                    this->scenetrans_delta.zero();
+                    this->rotation_delta.reset();
+                    this->savedSceneview = this->sceneview;
+                    this->savedSceneview_tr = this->sceneview_tr;
+                    // Update followedLastViewMatrix now!
+                    if (this->followedVM != nullptr) { this->followedLastViewMatrix = this->followedVM->getViewMatrix(); }
+                } else { // transform, incrementally
+                    if (this->currentAutoSceneviewChange.min_jerk) {
+                        // propn is time from 0 to 1 of our movement. Compute min-jerk movement x(t)
+                        // = a3 t^3 + a4 t^4 + a5 t^5.  We always pass xf = 1, as we are getting a
+                        // proportion of the trajectory, regardless of the length (or amount of
+                        // rotation) of our sceneview move.)
+                        propn = this->compute_min_jerk (static_cast<float>(this->currentAutoSceneviewChange.transform_time_frames), 1.0f,
+                                                        static_cast<float>(since_frames));
+                    }
+                    // Ensure propn is in range before calling slerp
+                    if (propn > 1.0f) { propn = 1.0f; }
+                    if (propn < 0.0f) { propn = 0.0f; }
+                    // Translate by an increment
+                    this->scenetrans_delta = propn * this->currentAutoSceneviewChange.translation;
+                    // Rotate...
+                    sm::quaternion<float> slerped = this->currentAutoSceneviewChange.rotation_start.slerp (currentAutoSceneviewChange.rotation, propn);
+                    {
+                        // Here's how to check the error information in the returned quaternion.
+                        if (slerped.w == std::numeric_limits<float>::max()) { std::cout << __func__ << ": propn = " << propn << " was out of the range [0, 1]\n"; }
+                        if (slerped.x == std::numeric_limits<float>::max()) { std::cout << __func__ << ": rotation_start was not normalized\n"; }
+                        if (slerped.y == std::numeric_limits<float>::max()) { std::cout << __func__ << ": rotation was not normalized\n"; }
+
+                        // rather than computeSceneview_about_rotation_centre, we compute
+                        // translation and rotation right here (this could probably be consolidated to use fewer mats)
+                        sm::mat<float, 4> sv_tr;
+                        sm::mat<float, 4> sv_rot;
+                        sv_tr.translate (this->savedSceneview.translation());
+                        sv_tr.translate (this->scenetrans_delta);
+                        sv_rot.rotate (slerped);
+                        this->sceneview = sv_tr * sv_rot;
+                        this->sceneview_tr = sv_tr;
+                    }
+                }
+                if (this->followedVM != nullptr) {
+                    sm::mat<float, 4> sv_viewmatrix = this->sceneview.inverse() * rotn_y;
+                    sm::mat<float, 4> fvm = this->followedVM->getViewMatrix();
+                    this->d_to_rotation_centre = (fvm.translation() - sv_viewmatrix.translation()).length();
+                } else {
+                    this->d_to_rotation_centre = std::abs (this->sceneview[14]);
+                }
+
+            } else if (this->currentAutoSceneviewChange.event == direction_event::timed_orbit) {
+                if (this->autoSceneviewComplete (since_frames)) { // transform is done
+                    this->state.set (visual_state::viewAutomation, false);
+                    this->scenetrans_delta.zero();
+                    this->rotation_delta.reset();
+                    this->savedSceneview = this->sceneview;
+                    this->savedSceneview_tr = this->sceneview_tr;
+                    // Update followedLastViewMatrix now!
+                    if (this->followedVM != nullptr) { this->followedLastViewMatrix = this->followedVM->getViewMatrix(); }
+                } else { // orbit, incrementally
+                    if (this->currentAutoSceneviewChange.min_jerk) {
+                        propn = this->compute_min_jerk (static_cast<float>(this->currentAutoSceneviewChange.transform_time_frames), 1.0f,
+                                                        static_cast<float>(since_frames));
+                    }
+                    sm::mat<float, 4> orb_trans;
+                    orb_trans.translate (this->currentAutoSceneviewChange.orbit_centre);
+                    sm::mat<float, 4> orb_trans_back;
+                    orb_trans_back.translate (-this->currentAutoSceneviewChange.orbit_centre);
+                    sm::mat<float, 4> orb_rot;
+                    orb_rot.rotate (this->currentAutoSceneviewChange.orbit_axis, propn * this->currentAutoSceneviewChange.orbit_angle);
+                    this->sceneview = this->savedSceneview * orb_trans * orb_rot * orb_trans_back;
+                }
+            } else {
+                std::cout << "Unknown direction_event\n";
+                this->state.set (visual_state::viewAutomation, false);
+            }
+        }
+
         // This is called every time render() is called
         void computeSceneview()
         {
@@ -1290,74 +1602,85 @@ export namespace mplot
                 // Use scenetrans_delta to shift the view with the scrollwheel
                 this->folcam_offset_tr += this->scenetrans_delta;
                 this->scenetrans_delta.zero();
-                if (this->state.test (visual_state::scrolling)) { this->state.reset (visual_state::scrolling); }
-                this->computeSceneview_for_follower();
-                return;
-            }
-
-            if (this->state.test (visual_state::viewFollowsModeChanged)) {
-                // Changed back to normal, non-follower mode. Zoom back, so set viewTransition
-                std::cout << "viewFollowsModeChanged back to \"non-follow\"\n";
-                this->state.set (visual_state::viewTransition);
-                this->state.reset (visual_state::viewFollowsModeChanged);
-            }
-
-            // if sceneview is not close to lastSceneview and we have no commanded rotations
-            // (scenetrans_delta and rotation_delta are 0) then we make changes to return to
-            // lastSceneview:
-            if (this->followedVM != nullptr
-                && std::abs(this->scenetrans_delta.sum()) == 0.0f
-                && this->rotation_delta.is_zero_rotation() == true
-                && this->state.test (visual_state::viewTransition)) {
-                // zoom towards lastSceneview:
-                this->computeSceneview_for_overcam();
-                // Update d_to_rotation_centre with distance to followedVM
-                // scene view in world frame
-                constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
-                sm::mat<float, 4> sv_viewmatrix = this->sceneview.inverse() * rotn_y;
-                // followed vm
-                sm::mat<float, 4> fvm = this->followedVM->getViewMatrix();
-
-                this->d_to_rotation_centre = (fvm.translation() - sv_viewmatrix.translation()).length();
-
-                // Did we get there? If so, set viewTransition false
-                if ((this->sceneview.translation() - this->lastSceneview.translation()).length() < 0.001f) {
-                    this->state.reset (visual_state::viewTransition);
+                if (this->state.test (visual_state::scrolling)) {
+                    this->state.reset (visual_state::scrolling);
+                    // scrolling during a view automation should cancel the view automation
+                    this->state.reset (visual_state::viewAutomation);
                 }
+                this->computeSceneview_for_follower();
+
             } else {
 
-                if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
-                    // Calculate model view transformation - transforming from "model space" to "worldspace".
-                    //std::cout << "standard view, call computeSceneview_about_rotation_centre\n";
-                    this->computeSceneview_about_rotation_centre();
-                    // As we had a commanded movement, cancel the viewTransition
-                    this->state.reset (visual_state::viewTransition);
-                } // else don't change sceneview
-                //else { std::cout << "No changing sceneview...\n"; }
+                // A constexpr rotation matrix, used below
+                constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
 
-                if (this->state.test (visual_state::scrolling)) {
-                    this->scenetrans_delta.zero();
-                    this->state.reset (visual_state::scrolling);
+                if (this->state.test (visual_state::viewFollowsModeChanged)) {
+                    // Changed back to normal, non-follower mode. Zoom back, so set viewTransition
+                    this->state.set (visual_state::viewTransition);
+                    this->state.reset (visual_state::viewFollowsModeChanged);
                 }
-            }
 
-            if (this->options.test (visual_options::viewFollowsVMTranslations)
-                && this->followedVM != nullptr
-                && this->followedLastViewMatrix != this->followedVM->getViewMatrix()) {
+                // if sceneview is not close to lastSceneview and we have no commanded rotations
+                // (scenetrans_delta and rotation_delta are 0) then we make changes to return to
+                // lastSceneview:
+                if (this->state.test (visual_state::viewTransition)
+                    && this->followedVM != nullptr
+                    && std::abs(this->scenetrans_delta.sum()) == 0.0f
+                    && this->rotation_delta.is_zero_rotation() == true) {
 
-                // Move camera the difference between followedLastViewMatrix and
-                // followedVM->getViewMatrix() in the screen frame of reference.
-                sm::vec<float> fol_screenframe = (this->sceneview * followedLastViewMatrix.translation()
-                                                  - this->sceneview * followedVM->getViewMatrix().translation()).less_one_dim();
+                    // zoom towards lastSceneview:
+                    this->computeSceneview_for_overcam();
+                    // Update d_to_rotation_centre with distance to followedVM
+                    // scene view in world frame
+                    sm::mat<float, 4> sv_viewmatrix = this->sceneview.inverse() * rotn_y;
+                    // followed vm
+                    sm::mat<float, 4> fvm = this->followedVM->getViewMatrix();
 
-                this->sceneview.pretranslate (fol_screenframe);
-                this->sceneview_tr.pretranslate (fol_screenframe);
-                this->savedSceneview.pretranslate (fol_screenframe);
-                this->savedSceneview_tr.pretranslate (fol_screenframe);
-                this->lastSceneview.pretranslate (fol_screenframe);
-                this->lastSceneview_tr.pretranslate (fol_screenframe);
+                    this->d_to_rotation_centre = (fvm.translation() - sv_viewmatrix.translation()).length();
 
-                this->followedLastViewMatrix = this->followedVM->getViewMatrix();
+                    // Did we get there? If so, set viewTransition false
+                    if ((this->sceneview.translation() - this->lastSceneview.translation()).length() < 0.001f) {
+                        this->state.reset (visual_state::viewTransition);
+                    }
+                } else if (this->state.test (visual_state::viewAutomation)) {
+
+                    this->computeSceneview_for_automation();
+
+                } else {
+
+                    if (std::abs(this->scenetrans_delta.sum()) > 0.0f || this->rotation_delta.is_zero_rotation() == false) {
+                        // Calculate model view transformation - transforming from "model space" to "worldspace".
+                        this->computeSceneview_about_rotation_centre();
+                        // As we had a commanded movement, cancel the viewTransition and any viewAutomation
+                        this->state.reset (visual_state::viewTransition);
+                        this->state.reset (visual_state::viewAutomation);
+                    } // else don't change sceneview
+
+                    if (this->state.test (visual_state::scrolling)) {
+                        this->scenetrans_delta.zero();
+                        this->state.reset (visual_state::scrolling);
+                    }
+                }
+
+                if (this->options.test (visual_options::viewFollowsVMTranslations)
+                    && this->followedVM != nullptr
+                    && this->state.test (visual_state::viewAutomation) == false
+                    && this->followedLastViewMatrix != this->followedVM->getViewMatrix()) {
+
+                    // Move camera the difference between followedLastViewMatrix and
+                    // followedVM->getViewMatrix() in the screen frame of reference.
+                    sm::vec<float> fol_screenframe = (this->sceneview * followedLastViewMatrix.translation()
+                                                      - this->sceneview * followedVM->getViewMatrix().translation()).less_one_dim();
+
+                    this->sceneview.pretranslate (fol_screenframe);
+                    this->sceneview_tr.pretranslate (fol_screenframe);
+                    this->savedSceneview.pretranslate (fol_screenframe);
+                    this->savedSceneview_tr.pretranslate (fol_screenframe);
+                    this->lastSceneview.pretranslate (fol_screenframe);
+                    this->lastSceneview_tr.pretranslate (fol_screenframe);
+
+                    this->followedLastViewMatrix = this->followedVM->getViewMatrix();
+                }
             }
         }
 
@@ -1488,6 +1811,9 @@ export namespace mplot
         //! translation only version of lastSceneview
         sm::mat<float, 4> lastSceneview_tr;
 
+        // auto sceneview change. Active if visual_state::viewAutomation is set true in this->state.
+        mplot::direction_data currentAutoSceneviewChange;
+
     public:
 
         //! Getter for d_to_rotation_centre
@@ -1535,6 +1861,10 @@ export namespace mplot
                           << "Ctrl-a: Reset default view\n"
                           << "Ctrl-o: Reduce field of view\n"
                           << "Ctrl-p: Increase field of view\n"
+                          << "Ctrl-7: Decrease ambient light intensity\n"
+                          << "Ctrl-8: Increase ambient light intensity\n"
+                          << "Ctrl-9: Decrease diffuse light intensity\n"
+                          << "Ctrl-0: Increase diffuse light intensity\n"
                           << "Ctrl-e: Sceneview matrix to stdout\n"
                           << "Ctrl-y: Cycle perspective\n"
                           << "Ctrl-k: Toggle rotate about central model or scene origin\n"
@@ -1557,7 +1887,10 @@ export namespace mplot
             }
 
             if (_key == key::e && (mods & keymod::control) && action == keyaction::press) {
-                std::cout << "Sceneview matrix array:\n" << this->sceneview.str_arr() << std::endl;
+                constexpr sm::mat<float, 4> rotn_y = rotate_about_y();
+                sm::mat<float, 4> effective_viewmatrix = this->sceneview.inverse() * rotn_y;
+                std::cout << this->title << " window:\n  Sceneview effective camera location is " << (effective_viewmatrix * sm::vec<>{}) << std::endl;
+                std::cout << "  Sceneview matrix array:\n" << this->sceneview.str_arr() << std::endl;
             }
 
             if (_key == key::v && (mods & keymod::control) && action == keyaction::press) {
@@ -1683,6 +2016,29 @@ export namespace mplot
             }
             if (_key == key::right && (action == keyaction::press || action == keyaction::repeat) && (mods & keymod::shift)) {
                 if (!this->vm.empty()) { this->vm[this->selectedVisualModel]->incAlpha(); }
+            }
+
+            // Ambient and diffuse lighting intensity
+            if (_key == key::n9 && action == keyaction::press && (mods & keymod::control)) {
+                // decrease diffuse intensity
+                this->diffuse_intensity -= 0.05f;
+                if (this->diffuse_intensity <= 0.0f) { this->diffuse_intensity = 0.0f; }
+                std::cout << "diffuse_intensity is now " << this->diffuse_intensity << std::endl;
+            } else if (_key == key::n0 && action == keyaction::press && (mods & keymod::control)) {
+                // increase diffuse intensity
+                this->diffuse_intensity += 0.05f;
+                if (this->diffuse_intensity > 10.0f) { this->diffuse_intensity = 10.0f; }
+                std::cout << "diffuse_intensity is now " << this->diffuse_intensity << std::endl;
+            } else if (_key == key::n7 && action == keyaction::press && (mods & keymod::control)) {
+                // decrease ambient intensity
+                this->ambient_intensity -= 0.05f;
+                if (this->ambient_intensity <= 0.0f) { this->ambient_intensity = 0.0f; }
+                std::cout << "ambient_intensity is now " << this->ambient_intensity << std::endl;
+            } else if (_key == key::n8 && action == keyaction::press && (mods & keymod::control)) {
+                // increase ambient intensity
+                this->ambient_intensity += 0.05f;
+                if (this->ambient_intensity > 10.0f) { this->ambient_intensity = 10.0f; }
+                std::cout << "ambient_intensity is now " << this->ambient_intensity << std::endl;
             }
 
             // Reset view to default

@@ -6,7 +6,8 @@
  * This shows you how to use VoronoiVisual to visualize a surface from a non regular
  * grid (i.e. non mplot::Grid or mplot::HexGrid or mplot::HealpixVisual ordered values)
  *
- * It also shows how to automate the sceneview using mplot::direction_data objects.
+ * It also shows how to automate the sceneview using mplot::direction_data objects, in this case it
+ * does the orbit movement.
  *
  * Author Seb James
  * Date 2024
@@ -59,19 +60,17 @@ int main()
     vorv->finalize();
     auto vorvp = v.addVisualModel (vorv);
 
-    // Four scene views. Find your fave angle, and press Ctrl-e  to get a sceneview matrix array of your own!
-    sm::mat<float, 4> sv1 = { 0.999439, 0.0101956, 0.031891, 0, 0.020491, 0.56702, -0.823449, 0, -0.0264784, 0.823641, 0.566493, 0, 0, 0, -16.0835, 1 };
-    sm::mat<float, 4> sv2 = { 0.872552, -0.183199, 0.45287, 0, 0.34702, 0.88492, -0.310634, 0, -0.343846, 0.428199, 0.835713, 0, 0, 0, -16.0835, 1 };
-    sm::mat<float, 4> sv3 = { 0.749983, -0.22668, -0.621404, 0, -0.660984, -0.221256, -0.71704, 0, 0.025049, 0.948505, -0.31577, 0, 0, 0, -16.0835, 1 };
-    sm::mat<float, 4> sv4 = { -0.0563805, 0.974664, -0.216453, 0, -0.969398, -0.0015572, 0.245492, 0, 0.238935, 0.22367, 0.944924, 0, 0, 0, -16.0835, 1 };
-    sm::vec<sm::mat<float, 4>, 4> svv = { sv1, sv2, sv3, sv4 };
+    // I'm going to rotate the Voronoi surface so that it's like a landscape. Rotate -90 degrees about x axis
+    sm::mat<float, 4> rot (sm::quaternion<float>(sm::vec<float>::ux(), -sm::mathconst<float>::pi_over_2));
+    vorvp->setViewMatrix (rot);
+
+    // Initial scene view. Find your fave angle, and press Ctrl-e  to get a sceneview matrix array of your own!
 
     int fcount = 0;  // frame count
-    int svcount = 0; // sceneview change count
     while (!v.readyToFinish()) {
 
         // Periodic changes every 300 frames
-        if (fcount++% 300 == 0) {
+        if (fcount++% 2000 == 0) {
 
             // Change the colour map
             vorvp->cm.setType (++cmap_t);
@@ -81,12 +80,13 @@ int main()
             // direction_event::timed_transform. Create a direction_data object on the fly, setting
             // the time for the transform to be 25 frames
             mplot::direction_data dirn;
-            dirn.event = mplot::direction_event::timed_transform;
-            dirn.transform_time_frames = 60;
-            dirn.sceneview = svv[svcount % 4];
+            dirn.event = mplot::direction_event::timed_orbit;
+            dirn.transform_time_frames = 1500;
+            dirn.min_jerk = true;
+            dirn.orbit_centre = sm::vec<>{0,0,0};
+            dirn.orbit_axis = v.scene_up;
+            dirn.orbit_angle = sm::mathconst<float>::two_pi;
             v.setCurrentDirectionEvent (dirn);
-
-            ++svcount;
         }
         v.waitevents(0.018);
         v.render();

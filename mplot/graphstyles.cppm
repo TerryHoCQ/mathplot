@@ -76,6 +76,7 @@ export namespace mplot
         cross,      // a cross of bars at the zero axes
         boxcross,   // A box AND the zero axes
         twinax,     // A box which has two y axes, the first on the left and the second on the right
+        none,       // No axes at all
         numstyles
     };
 
