@@ -493,14 +493,18 @@ if(BUILD_EXAMPLES_EXTRA)
     FILES ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_CORE_MODULES})
   target_link_libraries(myvisual OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
+  add_executable(grid_flat_dynamic grid_flat_dynamic.cpp)
+  target_sources(grid_flat_dynamic PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES  ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_MATHS_VISUALMODEL_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
+  )
+  target_link_libraries(grid_flat_dynamic OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
 endif()
 
 if (0) # During development
-
-
-
-  add_executable(grid_flat_dynamic grid_flat_dynamic.cpp)
-  target_link_libraries(grid_flat_dynamic OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(colourmap_test colourmap_test.cpp)
   target_link_libraries(colourmap_test OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
