@@ -2,19 +2,17 @@
  * Visualize a test surface
  */
 #include <iostream>
-#include <fstream>
-#include <cmath>
 #include <array>
+#include <vector>
+#include <stdexcept>
+#include <memory>
 
-#include <sm/scale>
-#include <sm/vec>
+import sm.scale;
+import sm.vec;
 
-#include <mplot/Visual.h>
-#ifdef MESH
-# include <mplot/QuadsMeshVisual.h>
-#else
-# include <mplot/QuadsVisual.h>
-#endif
+import mplot.visual;
+import mplot.quadsvisual;
+import mplot.quadsmeshvisual;
 
 int main()
 {
@@ -61,12 +59,12 @@ int main()
 
 #ifdef MESH
         auto qmv = std::make_unique<mplot::QuadsMeshVisual<float>> (&surfBoxes, offset, &data, scale1, mplot::ColourMapType::Plasma);
-        v.bindmodel (qmv);
+        qmv->set_parent (v.get_id());
         qmv->finalize();
         v.addVisualModel (qmv);
 #else
         auto qv = std::make_unique<mplot::QuadsVisual<float>> (&surfBoxes, offset, &data, scale1, mplot::ColourMapType::Monochrome);
-        v.bindmodel (qv);
+        qv->set_parent (v.get_id());
         qv->finalize();
         v.addVisualModel (qv);
 #endif

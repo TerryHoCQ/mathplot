@@ -430,6 +430,24 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(geodesic_ce OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
+  add_executable(quads quads.cpp)
+  target_sources(quads PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/QuadsVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/QuadsMeshVisual.cppm
+  )
+  target_link_libraries(quads OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(quadsmesh quads.cpp)
+  target_compile_definitions(quadsmesh PUBLIC MESH=1)
+  target_sources(quadsmesh PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/QuadsVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/QuadsMeshVisual.cppm
+  )
+  target_link_libraries(quadsmesh OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+
 endif()
 
 if (0) # During development
@@ -727,13 +745,6 @@ if (0) # During development
 
   add_executable(cubetrans2 cubetrans2.cpp)
   target_link_libraries(cubetrans2 OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(quads quads.cpp)
-  target_link_libraries(quads OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(quadsmesh quads.cpp)
-  target_compile_definitions(quadsmesh PUBLIC MESH=1)
-  target_link_libraries(quadsmesh OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(randvec randvec.cpp)
   target_link_libraries(randvec OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)

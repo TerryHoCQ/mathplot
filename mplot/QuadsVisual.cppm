@@ -1,4 +1,4 @@
-#pragma once
+module;
 
 #include <memory>
 #include <iostream>
@@ -6,13 +6,15 @@
 #include <array>
 #include <stdexcept>
 
+export module mplot.quadsvisual;
+
 import sm.scale;
 import sm.vec;
+import mplot.tools;
+export import mplot.visualdatamodel;
+export import mplot.colourmap;
 
-#include <mplot/tools.h>
-#include <mplot/VisualDataModel.h>
-
-namespace mplot
+export namespace mplot
 {
     template <typename Flt, int glver = mplot::gl::version_4_1>
     class QuadsVisual : public VisualDataModel<Flt, glver>
