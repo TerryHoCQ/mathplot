@@ -5,6 +5,7 @@ module;
 #include <vector>
 #include <array>
 #include <unordered_map>
+#include <format>
 
 export module mplot.gridvisual;
 
@@ -369,12 +370,14 @@ export namespace mplot
             if (this->scalarData != nullptr) {
                 // Check scalar data has same size as Grid
                 if (this->scalarData->size() != static_cast<std::size_t>(this->grid->n())) {
-                    throw std::runtime_error ("GridVisual error: grid size does not match scalarData size");
+                    throw std::runtime_error (std::format("GridVisual error: grid size ({}) does not match scalarData size ({})",
+                                                          this->grid->n(), this->scalarData->size()));
                 }
             } else if (this->vectorData != nullptr) {
                 // Check vector data matches grid
                 if (this->vectorData->size() != static_cast<std::size_t>(this->grid->n())) {
-                    throw std::runtime_error ("GridVisual error: grid size does not match vectorData size");
+                    throw std::runtime_error (std::format("GridVisual error: grid size ({}) does not match vectorData size ({})",
+                                                          this->grid->n(), this->vectorData->size()));
                 }
             }
             // Now call the parent function
