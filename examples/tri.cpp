@@ -2,9 +2,11 @@
  * Visualize a triangle
  */
 #include <iostream>
-#include <sm/vec>
-#include <mplot/Visual.h>
-#include <mplot/TriangleVisual.h>
+#include <memory>
+
+import sm.vec;
+import mplot.visual;
+import mplot.trianglevisual;
 
 int main()
 {
@@ -28,7 +30,7 @@ int main()
         sm::vec<float, 3> colour1 = { 1.0f, 0.0f, 0.0f };
 
         auto tv = std::make_unique<mplot::TriangleVisual<>> (offset, c1, c2, c3, colour1);
-        v.bindmodel (tv);
+        tv->set_parent (v.get_id());
         tv->finalize();
         v.addVisualModel (tv);
 
