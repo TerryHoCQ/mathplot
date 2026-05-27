@@ -1,11 +1,14 @@
-#pragma once
+module;
 
 #include <array>
-import sm.vec;
-#include <mplot/VisualModel.h>
-#include <mplot/ColourMap.h>
 
-namespace mplot
+export module mplot.geodesicvisualce;
+
+import sm.vec;
+export import mplot.visualmodel;
+export import mplot.colourmap;
+
+export namespace mplot
 {
     /*!
      * This class creates the vertices for an geodesic polyhedron in a 3D scene using

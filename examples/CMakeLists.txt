@@ -423,6 +423,13 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(tri OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
+  add_executable(geodesic_ce geodesic_ce.cpp)
+  target_sources(geodesic_ce PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisualCE.cppm
+  )
+  target_link_libraries(geodesic_ce OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
 endif()
 
 if (0) # During development
@@ -659,8 +666,6 @@ if (0) # During development
     add_executable(geodesic_with_normals geodesic_with_normals.cpp)
     target_link_libraries(geodesic_with_normals OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
-    add_executable(geodesic_ce geodesic_ce.cpp)
-    target_link_libraries(geodesic_ce OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
   endif()
 
   add_executable(draw_triangles draw_triangles.cpp)
