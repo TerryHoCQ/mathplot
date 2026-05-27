@@ -2,9 +2,8 @@
  * How to create your own mplot::Visual to either add additional keypress actions, or to
  * override the default actions.
  */
-
-#include <mplot/gl/version.h>
-#include <mplot/Visual.h>
+#include <iostream>
+import mplot.visual;
 
 // You can choose an OpenGL version to pass as template arg to mplot::Visual
 constexpr int my_gl_version = mplot::gl::version_4_1;
@@ -22,13 +21,13 @@ protected:
     {
         // Here, I've omitted all the normal keypress actions in Visual::key_callback,
         // except for one to close the program and one for help output:
-        if (key == mplot::key::x && action == mplot::keyaction::press) {
+        if (key == mplot::key::q && action == mplot::keyaction::press) {
             std::cout << "User requested exit.\n";
             this->state.set (mplot::visual_state::readyToFinish);
         }
         if (key == mplot::key::h && action == mplot::keyaction::press) {
             std::cout << "Help:\n";
-            std::cout << "x: Exit program\n";
+            std::cout << "q: Exit program\n";
             std::cout << "h: This help\n";
         }
         // Then call the 'extra function', defined below
@@ -49,7 +48,7 @@ protected:
 
         if (key == mplot::key::h && action == mplot::keyaction::press) {
             std::cout << "myvisual extra help:\n";
-            std::cout << "m: Start moving\n";
+            std::cout << "f: 'move'\n";
         }
     }
 };
@@ -57,11 +56,11 @@ protected:
 int main()
 {
     myvisual v(600, 400, "Custom Visual: myvisual");
-    v.addLabel ("Hello World!", {0,0,0});
+    v.addLabel ("Hello World! Try the key 'f' (then look at stdout)", {0,0,0});
     while (!v.readyToFinish()) {
         v.waitevents (0.018);
         if (v.moving == true) {
-            std::cout << "Keep on moving...\n";
+            std::cout << "I moved...\n";
             v.moving = false;
         }
         v.render();
