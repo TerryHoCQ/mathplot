@@ -1,6 +1,5 @@
-#pragma once
-
 // Add some text as a VisualModel
+module;
 
 #include <string>
 #include <iostream>
@@ -8,13 +7,14 @@
 #include <array>
 #include <stdexcept>
 
+export module mplot.txtvisual;
+
 import sm.vec;
+import mplot.visualmodel;
+import mplot.tools;
+export import mplot.textfeatures;
 
-#include <mplot/VisualModel.h>
-#include <mplot/tools.h>
-#include <mplot/TextFeatures.h>
-
-namespace mplot
+export namespace mplot
 {
     template<int glver = mplot::gl::version_4_1>
     class TxtVisual : public VisualModel<glver>
@@ -32,7 +32,7 @@ namespace mplot
         void initializeVertices()
         {
             // No op, but add text
-            this->addLabel (this->text, sm::vec<float>({0,0,0}), this->tfeatures);
+            this->addLabel (this->text, sm::vec<float>{}, this->tfeatures);
         }
 
         std::string text;

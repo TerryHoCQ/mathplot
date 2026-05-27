@@ -409,6 +409,13 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(pointrows_mesh OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
+  add_executable(txt txt.cpp)
+  target_sources(txt PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/TxtVisual.cppm
+  )
+  target_link_libraries(txt OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
 endif()
 
 if (0) # During development
@@ -765,10 +772,6 @@ if (0) # During development
 
   add_executable(line line.cpp)
   target_link_libraries(line OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(txt txt.cpp)
-  target_link_libraries(txt OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-  target_compile_definitions(txt PUBLIC GLAD_OPTION_MX=1)
 
   add_executable(maketicks maketicks.cpp)
 
