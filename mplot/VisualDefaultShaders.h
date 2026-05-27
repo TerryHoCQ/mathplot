@@ -16,9 +16,9 @@ namespace mplot
     "uniform float alpha;\n";
     const char* defaultVtxShader_instance_uniforms =
     "uniform mat4 s_matrix;\n" // scaling matrix
-    "uniform int instance_count = 0;\n"
-    "uniform int instance_start = -1;\n"
-    "uniform int instparam_count = 0;\n";
+    "uniform int instance_count;\n"
+    "uniform int instance_start;\n"
+    "uniform int instparam_count;\n";
     const char* defaultVtxShader_part1b =
     "layout(location = 0) in vec4 position;\n"
     "layout(location = 1) in vec4 normalin;\n"
@@ -50,7 +50,11 @@ namespace mplot
     "{\n"
     "    if (instance_count > 0) {\n"
     "        int ipos_i = instance_start * 3 + gl_InstanceID * 3;\n"
-    "        vec4 iposv = { ipos[ipos_i], ipos[ipos_i + 1], ipos[ipos_i + 2], 0 };\n"
+    "        vec4 iposv;\n"
+    "        iposv[0] = ipos[ipos_i];\n"
+    "        iposv[1] = ipos[ipos_i + 1];\n"
+    "        iposv[2] = ipos[ipos_i + 2];\n"
+    "        iposv[3] = 0.0;\n"
     "        if (instparam_count > 0) {\n"
     "            int idx = gl_InstanceID % instparam_count;\n"
     "            int ippos_i = instance_start * 5;\n"
