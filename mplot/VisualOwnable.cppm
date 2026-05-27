@@ -35,7 +35,7 @@ module;
 #include <mplot/gl/shaders.h>
 #include <mplot/gl/loadshaders_mx.h>
 
-#include <mplot/VisualDefaultShaders.h>
+#include <mplot/VisualDefaultShaders.hpp>
 
 export module mplot.visualownable;
 

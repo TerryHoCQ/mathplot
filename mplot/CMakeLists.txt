@@ -29,7 +29,7 @@ install(
 
   VisualCommon.h
   VisualFont.h
-  VisualDefaultShaders.h
+  VisualDefaultShaders.hpp
 
   VisualFaceBase.h
   VisualFaceAsm.hpp
