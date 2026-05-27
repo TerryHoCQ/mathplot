@@ -82,6 +82,67 @@ target_sources(grid_simple PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURC
 )
 target_link_libraries(grid_simple OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
+# grid_simple, but orthographic view is the default
+add_executable(grid_ortho grid_simple.cpp)
+target_compile_definitions(grid_ortho PUBLIC ORTHOGRAPHIC=1)
+target_sources(grid_ortho PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
+)
+target_link_libraries(grid_ortho OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+# similar to grid_simple but with a random value for the pixel which highlight better the different perspective
+# mplot::Grid is runtime-configured
+add_executable(grid_simple_rand grid_simple_rand.cpp)
+target_sources(grid_simple_rand PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
+)
+target_link_libraries(grid_simple_rand OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+# grid_simple_rand, but orthographic view is the default
+add_executable(grid_ortho_rand grid_simple_rand.cpp)
+target_compile_definitions(grid_ortho_rand PUBLIC ORTHOGRAPHIC=1)
+target_sources(grid_ortho_rand PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
+)
+target_link_libraries(grid_ortho_rand OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+add_executable(grid_image grid_image.cpp)
+target_sources(grid_image PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
+)
+target_link_libraries(grid_image OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+add_executable(grid_border grid_border.cpp)
+target_sources(grid_border PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
+)
+target_link_libraries(grid_border OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+add_executable(grid_border2 grid_border2.cpp)
+target_sources(grid_border2 PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.cppm
+)
+target_link_libraries(grid_border2 OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+add_executable(grid_layout grid_layout.cpp)
+target_sources(grid_layout PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES ${MPLOT_MATHS_CORE_MODULES}
+  ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+)
+
 if(NOT APPLE)
   # Instancing also not available on Apple (limited to OpenGL 4.1)
   add_executable(breadcrumbs breadcrumbs.cpp)
@@ -502,65 +563,102 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(grid_flat_dynamic OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
-endif()
-
-if (0) # During development
-
   add_executable(colourmap_test colourmap_test.cpp)
+  target_sources(colourmap_test PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_MATHS_VISUALMODEL_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
+  )
   target_link_libraries(colourmap_test OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(colourmap_browser colourmap_browser.cpp)
+  target_sources(colourmap_browser PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_MATHS_VISUALMODEL_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/CyclicColourVisual.cppm
+  )
   target_link_libraries(colourmap_browser OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
-  # grid_simple, but orthographic view is the default
-  add_executable(grid_ortho grid_simple.cpp)
-  target_compile_definitions(grid_ortho PUBLIC ORTHOGRAPHIC=1)
-  target_link_libraries(grid_ortho OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  # similar to grid_simple but with a random value for the pixel which highlight better the different perspective
-  # mplot::Grid is runtime-configured
-  add_executable(grid_simple_rand grid_simple_rand.cpp)
-  target_link_libraries(grid_simple_rand OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  # grid_simple_rand, but orthographic view is the default
-  add_executable(grid_ortho_rand grid_simple_rand.cpp)
-  target_compile_definitions(grid_ortho_rand PUBLIC ORTHOGRAPHIC=1)
-  target_link_libraries(grid_ortho_rand OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(grid_image grid_image.cpp)
-  target_link_libraries(grid_image OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(grid_border grid_border.cpp)
-  target_link_libraries(grid_border OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(grid_border2 grid_border2.cpp)
-  target_link_libraries(grid_border2 OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(grid_layout grid_layout.cpp)
-
   add_executable(hsvwheel hsvwheel.cpp)
+  target_sources(hsvwheel PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_MATHS_VISUALMODEL_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/HSVWheelVisual.cppm
+  )
   target_link_libraries(hsvwheel OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(cyclic_colour cyclic_colour.cpp)
+  target_sources(cyclic_colour PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_MATHS_VISUALMODEL_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/CyclicColourVisual.cppm
+  )
   target_link_libraries(cyclic_colour OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(colourmaps_desaturating colourmaps_desaturating.cpp)
+  target_sources(colourmaps_desaturating PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_MATHS_VISUALMODEL_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/HSVWheelVisual.cppm
+  )
   target_link_libraries(colourmaps_desaturating OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(colourmaps_other colourmaps_other.cpp)
+  target_sources(colourmaps_other PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_MATHS_VISUALMODEL_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/ColourBarVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
+  )
   target_link_libraries(colourmaps_other OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(colourmaps_crameri colourmaps_crameri.cpp)
+  target_sources(colourmaps_crameri PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_MATHS_VISUALMODEL_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/ColourBarVisual.cppm
+  )
   target_link_libraries(colourmaps_crameri OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(colourmaps_cet colourmaps_cet.cpp)
+  target_sources(colourmaps_cet PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_MATHS_VISUALMODEL_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/ColourBarVisual.cppm
+  )
   target_link_libraries(colourmaps_cet OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(colourmaps_lenthe colourmaps_lenthe.cpp)
+  target_sources(colourmaps_lenthe PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_MATHS_VISUALMODEL_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/ColourBarVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
+  )
   target_link_libraries(colourmaps_lenthe OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(colourmaps_matplotlib colourmaps_matplotlib.cpp)
+  target_sources(colourmaps_matplotlib PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_MATHS_VISUALMODEL_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/ColourBarVisual.cppm
+  )
   target_link_libraries(colourmaps_matplotlib OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+endif()
+
+if (0) # During development
 
   if(HAVE_STD_FORMAT)
     add_executable(colourmaps_mono colourmaps_mono.cpp)

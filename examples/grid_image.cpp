@@ -1,15 +1,14 @@
+#include <memory>
 #include <iostream>
-#include <vector>
-#include <cmath>
+#include <string>
 
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/grid>
+import sm.vec;
+import sm.vvec;
+import sm.grid;
 
-#include <mplot/loadpng.h>
-#include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/GridVisual.h>
+import mplot.visual;
+import mplot.gridvisual;
+import mplot.loadpng;
 
 int main()
 {
@@ -41,7 +40,7 @@ int main()
 
     // Now visualise with a GridVisual
     auto gv1 = std::make_unique<mplot::GridVisual<float>>(&g1, sm::vec<float>({0,0,0}));
-    v.bindmodel (gv1);
+    gv1->set_parent (v.get_id());
     gv1->gridVisMode = mplot::GridVisMode::Triangles;
     gv1->setScalarData (&image_data_tlbr);
     gv1->cm.setType (mplot::ColourMapType::GreyscaleInv); // inverse greyscale is good for a monochrome image
@@ -50,7 +49,7 @@ int main()
     v.addVisualModel (gv1);
 
     auto gv2 = std::make_unique<mplot::GridVisual<float>>(&g2, sm::vec<float>({6,0,0}));
-    v.bindmodel (gv2);
+    gv2->set_parent (v.get_id());
     gv2->gridVisMode = mplot::GridVisMode::Triangles;
     gv2->setScalarData (&image_data_bltr);
     gv2->cm.setType (mplot::ColourMapType::GreyscaleInv);
@@ -59,7 +58,7 @@ int main()
     v.addVisualModel (gv2);
 
     auto gv3 = std::make_unique<mplot::GridVisual<float>>(&g3, sm::vec<float>({0,1.6,0}));
-    v.bindmodel (gv3);
+    gv3->set_parent (v.get_id());
     gv3->gridVisMode = mplot::GridVisMode::RectInterp;
     gv3->setScalarData (&image_data_tlbr);
     gv3->cm.setType (mplot::ColourMapType::GreyscaleInv);
@@ -68,7 +67,7 @@ int main()
     v.addVisualModel (gv3);
 
     auto gv4 = std::make_unique<mplot::GridVisual<float>>(&g4, sm::vec<float>({6,1.6,0}));
-    v.bindmodel (gv4);
+    gv4->set_parent (v.get_id());
     gv4->gridVisMode = mplot::GridVisMode::RectInterp;
     gv4->setScalarData (&image_data_bltr);
     gv4->cm.setType (mplot::ColourMapType::GreyscaleInv);

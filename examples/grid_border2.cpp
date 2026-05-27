@@ -3,19 +3,20 @@
  * debugging/demonstrating grid borders. see aso grid_border.cpp
  */
 
+#include <memory>
 #include <iostream>
 #include <vector>
 #include <cmath>
-#include <chrono>
+#include <string>
+#include <cstdlib>
 
-#include <sm/mathconst>
-#include <sm/vec>
-#include <sm/grid>
+import sm.vec;
+import sm.vvec;
+import sm.grid;
 
-#include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/GridVisual.h>
-#include <mplot/NormalsVisual.h>
+import mplot.visual;
+import mplot.gridvisual;
+import mplot.normalsvisual;
 
 int main()
 {
@@ -49,7 +50,7 @@ int main()
 
     // Grid with border
     auto gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::Pixels;
     gv->setScalarData (&data);
     gv->cm.setType (mplot::ColourMapType::Cork);
@@ -69,7 +70,7 @@ int main()
     // Grid with no border
     offset[0] += grid.width_of_pixels() * 1.2f;
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::RectInterp;
     gv->setScalarData (&data);
     gv->cm.setType (mplot::ColourMapType::Cork);
@@ -85,7 +86,7 @@ int main()
 
     offset[0] += grid.width_of_pixels() * 1.2f;
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::RectInterp;
     gv->setScalarData (&data);
     gv->cm.setType (mplot::ColourMapType::Cork);
@@ -103,7 +104,7 @@ int main()
     // Selected pix
     offset[0] += grid.width_of_pixels() * 1.2f;
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::Pixels;
     gv->setScalarData (&data);
     gv->cm.setType (mplot::ColourMapType::Cork);
@@ -131,7 +132,7 @@ int main()
 
     offset[1] -= grid.height_of_pixels() * 1.2f;
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::Pixels;
     gv->setScalarData (&data);
     gv->cm.setType (mplot::ColourMapType::Cork);
@@ -158,7 +159,7 @@ int main()
 
     offset[0] += grid.width_of_pixels() * 1.2f;
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::Triangles;
     gv->setScalarData (&data);
     gv->cm.setType (mplot::ColourMapType::Cork);
@@ -177,7 +178,7 @@ int main()
 
     offset[0] += grid.width_of_pixels() * 1.2f;
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::Triangles;
     gv->setScalarData (&data);
     gv->cm.setType (mplot::ColourMapType::Cork);
@@ -196,7 +197,7 @@ int main()
 
     // Add a Normals visual for the last one, too
     auto nrm = std::make_unique<mplot::NormalsVisual<>> (gvp);
-    v.bindmodel (nrm);
+    nrm->set_parent (v.get_id());
     nrm->options.set (mplot::normalsvisual_flags::show_halfedges);
     nrm->options.set (mplot::normalsvisual_flags::show_boundary_next);
     nrm->options.set (mplot::normalsvisual_flags::show_boundary_prev);

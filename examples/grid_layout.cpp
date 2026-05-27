@@ -2,8 +2,9 @@
  * An example program showing you how the indices are arranged in Grids with different orders. This
  * prints out the grid to stdout for inspection.
  */
-#include <sm/grid>
 #include <iostream>
+import sm.vec;
+import sm.grid;
 
 int main()
 {

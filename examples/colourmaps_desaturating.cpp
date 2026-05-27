@@ -2,16 +2,16 @@
  * Illustrate use of unsaturating 1D map
  */
 
+#include <memory>
 #include <iostream>
-#include <vector>
-#include <cmath>
+#include <array>
+#include <string>
 
-#include <sm/mathconst>
-#include <sm/vec>
+import sm.vec;
 
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/HSVWheelVisual.h>
+import mplot.visual;
+import mplot.colourmap;
+import mplot.hsvwheelvisual;
 
 struct myvisual final : public mplot::Visual<>
 {
@@ -101,7 +101,7 @@ int main()
 
     // This is addmap
     auto hsv_vis = std::make_unique<SquareGridVisual>(sm::vec<float>{ 0.0f, 0.0f, 0.0f }, v.curr_map_type);
-    v.bindmodel (hsv_vis);
+    hsv_vis->set_parent (v.get_id());
     hsv_vis->addLabel (hsv_vis->colourMap.getTypeStr() + std::string(" (") + hsv_vis->colourMap.getFlagsStr() + std::string(")"),
                        sm::vec<float>({0,-1,0}), mplot::TextFeatures(0.24f, mplot::colour::white));
     hsv_vis->finalize();
@@ -120,7 +120,7 @@ int main()
                 v.removeVisualModel (gvp);
 
                 auto hsv_vis = std::make_unique<SquareGridVisual>(sm::vec<float>{ 0.0f, 0.0f, 0.0f }, v.curr_map_type);
-                v.bindmodel (hsv_vis);
+                hsv_vis->set_parent (v.get_id());
                 hsv_vis->addLabel (hsv_vis->colourMap.getTypeStr() + std::string(" (") + hsv_vis->colourMap.getFlagsStr() + std::string(")"),
                                    sm::vec<float>({0,-1,0}), mplot::TextFeatures(0.24f, mplot::colour::white));
                 hsv_vis->finalize();

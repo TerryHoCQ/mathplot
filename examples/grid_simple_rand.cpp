@@ -2,17 +2,15 @@
  * An example mplot::Visual scene, containing a Gridv, and using GridvVisual
  */
 
+#include <memory>
 #include <iostream>
-#include <vector>
-#include <cmath>
 
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/grid>
+import sm.vec;
+import sm.vvec;
+import sm.grid;
 
-#include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/GridVisual.h>
+import mplot.visual;
+import mplot.gridvisual;
 
 int main()
 {
@@ -44,7 +42,7 @@ int main()
     sm::vec<float, 3> offset = { -step * grid.width(), -step * grid.width(), 0.0f };
 
     auto gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::Triangles;
     gv->setScalarData (&data);
     gv->cm.setType (mplot::ColourMapType::Twilight);
@@ -54,7 +52,7 @@ int main()
 
     offset = { step * grid.width(), -step * grid.width(), 0.0f };
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::RectInterp;
     gv->setScalarData (&data);
     gv->cm.setType (mplot::ColourMapType::Twilight);
@@ -64,7 +62,7 @@ int main()
 
     offset = { -step * grid.width(), step * grid.width(), 0.0f };
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::Columns;
     gv->interpolate_colour_sides (true);
     gv->setScalarData (&data);
@@ -75,7 +73,7 @@ int main()
 
     offset = { step * grid.width(), step * grid.width(), 0.0f };
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::Columns;
     //gv->interpolate_colour_sides = false; // default
     //gv->clr_east_column = mplot::colour::black; // These are defaults but you can change them
@@ -88,7 +86,7 @@ int main()
 
     offset = { 3 * step * grid.width(), step * grid.width(), 0.0f };
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::Pixels;
     gv->setScalarData (&data);
     gv->cm.setType (mplot::ColourMapType::Twilight);

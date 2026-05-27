@@ -6,16 +6,15 @@
  * of the data.
  */
 
-#include <iostream>
+#include <memory>
 #include <vector>
 #include <cmath>
 
-#include <sm/vec>
-#include <sm/grid>
+import sm.vec;
+import sm.grid;
 
-#include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/GridVisual.h>
+import mplot.visual;
+import mplot.gridvisual;
 
 int main()
 {
@@ -59,7 +58,7 @@ int main()
     sm::vec<float, 3> offset = { -step * grid.width(), -step * grid.height(), 0.0f };
     for (auto cmtype : cmtypes) {
         auto gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-        v.bindmodel (gv);
+        gv->set_parent (v.get_id());
         gv->gridVisMode = mplot::GridVisMode::Triangles;
         gv->setScalarData (&data);
         gv->cm.setType (cmtype);

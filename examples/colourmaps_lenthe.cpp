@@ -2,15 +2,17 @@
  * Many 2D colourbars to show all our different ColourMaps.
  */
 
-#include <iostream>
+#include <memory>
 #include <vector>
 #include <string>
-#include <sm/scale>
-#include <sm/vec>
-#include <sm/grid>
-#include <mplot/Visual.h>
-#include <mplot/ColourBarVisual.h>
-#include <mplot/GridVisual.h>
+
+import sm.scale;
+import sm.vec;
+import sm.grid;
+
+import mplot.visual;
+import mplot.colourbarvisual;
+import mplot.gridvisual;
 
 int main()
 {
@@ -44,7 +46,7 @@ int main()
         ++i;
         cm1.setType (cmap_type);
         auto cbv =  std::make_unique<mplot::ColourBarVisual<float>>(offset);
-        v.bindmodel (cbv);
+        cbv->set_parent (v.get_id());
         cbv->orientation = mplot::colourbar_orientation::vertical;
         cbv->tickside = mplot::colourbar_tickside::right_or_below;
         cbv->cm = cm1;
@@ -84,7 +86,7 @@ int main()
     for (auto cmap_type : cmap_2d_types) {
 
         auto gv = std::make_unique<mplot::GridVisual<float, int>>(&grid, offset);
-        v.bindmodel (gv);
+        gv->set_parent (v.get_id());
         gv->gridVisMode = mplot::GridVisMode::Triangles;
         gv->setVectorData (&data);
         gv->cm.setType (cmap_type);

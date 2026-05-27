@@ -7,16 +7,17 @@
  */
 
 #include <iostream>
+#include <memory>
 #include <vector>
+#include <string>
 #include <cmath>
 
-#include <sm/vec>
-#include <sm/grid>
+import sm.vec;
+import sm.grid;
 
-#include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/GridVisual.h>
-#include <mplot/CyclicColourVisual.h>
+import mplot.visual;
+import mplot.gridvisual;
+import mplot.cycliccolourvisual;
 
 struct myvisual final : public mplot::Visual<>
 {
@@ -49,7 +50,7 @@ mplot::VisualModel<>* addmap (myvisual& v, mplot::ColourMapType display_map_type
     if (nextmap.flags.test(mplot::ColourMapFlags::cyclic) == true) {
         sm::vec<float, 3> offset = {0,0,0};
         auto cv = std::make_unique<mplot::CyclicColourVisual<float>>(offset);
-        v.bindmodel (cv);
+        cv->set_parent (v.get_id());
         cv->outer_radius = 0.6;
         cv->inner_radius = 0.2;
         cv->numsegs = Nside_w;
@@ -63,7 +64,7 @@ mplot::VisualModel<>* addmap (myvisual& v, mplot::ColourMapType display_map_type
     } else {
         sm::vec<float, 3> offset = { -0.5f * grid.width(), -0.5f * grid.height(), 0.0f };
         auto gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-        v.bindmodel (gv);
+        gv->set_parent (v.get_id());
         gv->gridVisMode = mplot::GridVisMode::Triangles;
         gv->twodimensional (true);
         gv->setScalarData (&data);

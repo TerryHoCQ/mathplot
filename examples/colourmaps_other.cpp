@@ -2,17 +2,17 @@
  * Many 2D colourbars to show all our different ColourMaps.
  */
 
-#include <iostream>
+#include <memory>
 #include <vector>
 #include <string>
 
-#include <sm/scale>
-#include <sm/vec>
-#include <sm/grid>
+import sm.scale;
+import sm.vec;
+import sm.grid;
 
-#include <mplot/Visual.h>
-#include <mplot/ColourBarVisual.h>
-#include <mplot/GridVisual.h>
+import mplot.visual;
+import mplot.colourbarvisual;
+import mplot.gridvisual;
 
 int main()
 {
@@ -40,7 +40,7 @@ int main()
         ++i;
         cm1.setType (cmap_type);
         auto cbv =  std::make_unique<mplot::ColourBarVisual<float>>(offset);
-        v.bindmodel (cbv);
+        cbv->set_parent (v.get_id());
         cbv->orientation = mplot::colourbar_orientation::vertical;
         cbv->tickside = mplot::colourbar_tickside::right_or_below;
         cbv->cm = cm1;
@@ -61,7 +61,7 @@ int main()
         ++i;
         cm1.setType (mplot::ColourMapType::HSV1D);
         auto cbv =  std::make_unique<mplot::ColourBarVisual<float>>(offset);
-        v.bindmodel (cbv);
+        cbv->set_parent (v.get_id());
         cbv->orientation = mplot::colourbar_orientation::vertical;
         cbv->tickside = mplot::colourbar_tickside::right_or_below;
         cbv->cm = cm1;
@@ -101,7 +101,7 @@ int main()
     }
 
     auto gv = std::make_unique<mplot::GridVisual<float, int>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::Triangles;
     gv->setVectorData (&data);
     gv->cm.setType (cmap_2d_types[0]);
@@ -114,7 +114,7 @@ int main()
     offset[0] += 0.8f;
 
     gv = std::make_unique<mplot::GridVisual<float, int>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::Triangles;
     gv->setVectorData (&data);
     gv->cm.setType (cmap_2d_types[1]);
@@ -127,7 +127,7 @@ int main()
     offset[0] += 0.8f;
 
     gv = std::make_unique<mplot::GridVisual<float, int>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::Triangles;
     gv->setVectorData (&data);
     gv->cm.setType (cmap_2d_types[1]);

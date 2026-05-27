@@ -4,6 +4,9 @@
 module;
 
 #include <deque>
+#include <string>
+#include <array>
+#include <cmath>
 
 export module mplot.cycliccolourvisual;
 
@@ -12,6 +15,7 @@ import sm.vec;
 
 import mplot.unicode;
 import mplot.visualmodel;
+import mplot.colourmap;
 
 export namespace mplot
 {
