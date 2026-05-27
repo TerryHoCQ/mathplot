@@ -6,18 +6,18 @@
  * \date June 2024
  */
 
+#include <memory>
 #include <iostream>
-#include <vector>
+#include <string>
 #include <cmath>
 
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/hexgrid>
+import sm.vec;
+import sm.vvec;
+import sm.hexgrid;
 
-#include <mplot/loadpng.h>
-#include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/HexGridVisual.h>
+import mplot.loadpng;
+import mplot.visual;
+import mplot.hexgridvisual;
 
 enum class spherical_projection
 {
@@ -41,11 +41,11 @@ int main()
     constexpr float hex_span = mc::two_pi * r_sph;
     sm::hexgrid hg(hex_d, 2.0f * hex_span, 0.0f);
     if constexpr (proj == spherical_projection::splodge) {
-        hg.setCircularBoundary (0.95f * r_sph);
+        hg.set_circular_boundary (0.95f * r_sph);
     } else {
-        hg.setCircularBoundary (0.5f * mc::pi * r_sph);
+        hg.set_circular_boundary (0.5f * mc::pi * r_sph);
         // You can set a rectangular boundary too:
-        //hg.setRectangularBoundary (0.5f * mc::pi * r_sph, 0.5f * mc::pi * r_sph);
+        //hg.set_rectangular_boundary (0.5f * mc::pi * r_sph, 0.5f * mc::pi * r_sph);
     }
 
     // Load an image with mplot::loadpng()
@@ -63,7 +63,7 @@ int main()
     sm::vec<float,2> image_offset = {0.0f, 0.0f};
 
     // Here's the HexGrid method that will resample the square pixel grid onto the hex grid
-    sm::vvec<float> hex_image_data = hg.resampleImage (image_data, dims[0], image_scale, image_offset);
+    sm::vvec<float> hex_image_data = hg.resample_image (image_data, dims[0], image_scale, image_offset);
 
     // hg has d_x and d_y. Can make up a new container of 3D locations for each hex.
     sm::vvec<sm::vec<float, 3>> sphere_coords(hg.num());
@@ -124,7 +124,7 @@ int main()
 
     // Now visualise with a HexGridVisual
     auto hgv = std::make_unique<mplot::HexGridVisual<float>>(&hg, sm::vec<float>{1.5,0,0});
-    v.bindmodel (hgv);
+    hgv->set_parent (v.get_id());
     // Set the image data as the scalar data for the HexGridVisual
     hgv->setScalarData (&hex_image_data);
     // This will make it a spherical projection (these coords will override the 2D coords in the hexgrid)
@@ -137,7 +137,7 @@ int main()
 
     // Let's have a flat one alongside for comparison
     hgv = std::make_unique<mplot::HexGridVisual<float>>(&hg, sm::vec<float>{-1.5,0,-1});
-    v.bindmodel (hgv);
+    hgv->set_parent (v.get_id());
     hgv->setScalarData (&hex_image_data);
     // The only real difference is that this has no hgv->setDataCoords(&sphere_coords) call.
     hgv->cm.setType (mplot::ColourMapType::Inferno);

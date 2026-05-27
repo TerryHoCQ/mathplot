@@ -1,6 +1,5 @@
-#include <mplot/version.h>
-#include <mplot/Visual.h>
 #include <string>
+import mplot.visual;
 
 int main()
 {

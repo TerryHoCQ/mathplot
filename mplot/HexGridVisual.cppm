@@ -17,7 +17,7 @@ import sm.scale;
 export import mplot.gl.version;
 export import mplot.colourmap;
 import mplot.tools;
-import mplot.visualdatamodel;
+export import mplot.visualdatamodel;
 
 export namespace mplot
 {

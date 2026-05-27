@@ -447,39 +447,51 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(quadsmesh OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
+  add_executable(hexgrid_image hexgrid_image.cpp)
+  target_sources(hexgrid_image PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${MPLOT_MATHS_HEXGRID_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
+  )
+  if(OpenMP_CXX_FOUND)
+    target_link_libraries(hexgrid_image OpenMP::OpenMP_CXX OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+  else()
+    target_link_libraries(hexgrid_image OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+  endif()
+
+  add_executable(hexgrid_image_rect hexgrid_image_rect.cpp)
+  target_sources(hexgrid_image_rect PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${MPLOT_MATHS_HEXGRID_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
+  )
+  if(OpenMP_CXX_FOUND)
+    target_link_libraries(hexgrid_image_rect OpenMP::OpenMP_CXX OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+  else()
+    target_link_libraries(hexgrid_image_rect OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+  endif()
+
+  add_executable(hexgrid_image_onsphere hexgrid_image_onsphere.cpp)
+  target_sources(hexgrid_image_onsphere PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${MPLOT_MATHS_HEXGRID_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
+  )
+  if(OpenMP_CXX_FOUND)
+    target_link_libraries(hexgrid_image_onsphere OpenMP::OpenMP_CXX OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+  else()
+    target_link_libraries(hexgrid_image_onsphere OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+  endif()
+
+  add_executable(helloversion helloversion.cpp)
+  target_sources(helloversion PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_CORE_MODULES})
+  target_link_libraries(helloversion OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
 endif()
 
 if (0) # During development
 
-
-  # HexGrid::resampleImage uses an omp call that only works on Mac with
-  # libomp, so avoid compiling this example on a Mac.
-  if(NOT APPLE)
-    add_executable(hexgrid_image hexgrid_image.cpp)
-    if(OpenMP_CXX_FOUND)
-      target_link_libraries(hexgrid_image OpenMP::OpenMP_CXX OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-    else()
-      target_link_libraries(hexgrid_image OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-    endif()
-
-    add_executable(hexgrid_image_rect hexgrid_image_rect.cpp)
-    if(OpenMP_CXX_FOUND)
-      target_link_libraries(hexgrid_image_rect OpenMP::OpenMP_CXX OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-    else()
-      target_link_libraries(hexgrid_image_rect OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-    endif()
-
-    add_executable(hexgrid_image_onsphere hexgrid_image_onsphere.cpp)
-    if(OpenMP_CXX_FOUND)
-      target_link_libraries(hexgrid_image_onsphere OpenMP::OpenMP_CXX OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-    else()
-      target_link_libraries(hexgrid_image_onsphere OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-    endif()
-  endif(NOT APPLE)
-
-  add_executable(helloversion helloversion.cpp)
-  target_link_libraries(helloversion OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(myvisual myvisual.cpp)
   target_link_libraries(myvisual OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
