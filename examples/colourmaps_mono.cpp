@@ -2,14 +2,17 @@
  * Showing hue-variable 1D colour maps.
  */
 
-#include <iostream>
+#include <memory>
+#include <format>
+#include <array>
 #include <vector>
 #include <string>
-#include <format>
-#include <sm/scale>
-#include <sm/vec>
-#include <mplot/Visual.h>
-#include <mplot/ColourBarVisual.h>
+
+import sm.scale;
+import sm.vec;
+
+import mplot.visual;
+import mplot.colourbarvisual;
 
 int main()
 {
@@ -52,7 +55,7 @@ int main()
         ++i;
         cm1.setType (cmap_type);
         auto cbv =  std::make_unique<mplot::ColourBarVisual<float>>(offset);
-        v.bindmodel (cbv);
+        cbv->set_parent (v.get_id());
         cbv->orientation = mplot::colourbar_orientation::vertical;
         cbv->tickside = mplot::colourbar_tickside::right_or_below;
         cbv->cm = cm1;
@@ -100,7 +103,7 @@ int main()
         cm1.setType (cmap_type);
         cm1.setRGB (clrs[j++]);
         auto cbv =  std::make_unique<mplot::ColourBarVisual<float>>(offset);
-        v.bindmodel (cbv);
+        cbv->set_parent (v.get_id());
         cbv->orientation = mplot::colourbar_orientation::vertical;
         cbv->tickside = mplot::colourbar_tickside::right_or_below;
         cbv->cm = cm1;

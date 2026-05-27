@@ -1,16 +1,14 @@
 /*
  * Visualize an example quiver field
  */
+#include <memory>
 #include <iostream>
-#include <array>
+#include <vector>
+#include <cmath>
 #include <stdexcept>
-#include <string>
 
-#include <sm/vec>
-
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/QuiverVisual.h>
+import mplot.visual;
+import mplot.quivervisual;
 
 int main()
 {
@@ -56,7 +54,7 @@ int main()
             }
         }
         auto vmp = std::make_unique<mplot::QuiverVisual<float>>(&coords, offset, &quivs, mplot::ColourMapType::MonochromeGreen);
-        v.bindmodel (vmp);
+        vmp->set_parent (v.get_id());
         vmp->quiver_length_gain = 0.4f; // Scale the length of the quivers on screen
         vmp->quiver_thickness_gain = 0.05f; // Scale thickness of the quivers
         // vmp->fixed_quiver_thickness = 0.003f; // Also possible to request a fixed thickness

@@ -656,23 +656,44 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(colourmaps_matplotlib OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
-endif()
+  add_executable(colourmaps_mono colourmaps_mono.cpp)
+  target_sources(colourmaps_mono PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_MATHS_VISUALMODEL_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/ColourBarVisual.cppm
+  )
+  target_link_libraries(colourmaps_mono OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
-if (0) # During development
-
-  if(HAVE_STD_FORMAT)
-    add_executable(colourmaps_mono colourmaps_mono.cpp)
-    target_link_libraries(colourmaps_mono OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-    add_executable(colourmaps_hsv1d colourmaps_hsv1d.cpp)
-    target_link_libraries(colourmaps_hsv1d OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-  endif()
+  add_executable(colourmaps_hsv1d colourmaps_hsv1d.cpp)
+  target_sources(colourmaps_hsv1d PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_MATHS_VISUALMODEL_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/ColourBarVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/HSVWheelVisual.cppm
+  )
+  target_link_libraries(colourmaps_hsv1d OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(logisticmap logisticmap.cpp)
+  target_sources(logisticmap PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
   target_link_libraries(logisticmap OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(quiver quiver.cpp)
+  target_sources(quiver PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/QuiverVisual.cppm
+  )
   target_link_libraries(quiver OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+endif()
+
+if (0) # During development
 
   add_executable(rotating_models rotating_models.cpp)
   target_link_libraries(rotating_models OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)

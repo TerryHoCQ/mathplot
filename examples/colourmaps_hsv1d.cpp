@@ -2,16 +2,17 @@
  * Showing HSV and HSV1D maps
  */
 
-#include <iostream>
+#include <memory>
+#include <format>
 #include <vector>
 #include <string>
-#include <format>
-#include <sm/mathconst>
-#include <sm/scale>
-#include <sm/vec>
-#include <mplot/Visual.h>
-#include <mplot/ColourBarVisual.h>
-#include <mplot/HSVWheelVisual.h>
+
+import sm.scale;
+import sm.vec;
+
+import mplot.visual;
+import mplot.colourbarvisual;
+import mplot.hsvwheelvisual;
 
 int main()
 {
@@ -41,7 +42,7 @@ int main()
     woffset[0] -= 0.5f;
     woffset[1] += 0.25f;
     auto hsvw_vis = std::make_unique<mplot::HSVWheelVisual<float>>(woffset);
-    v.bindmodel (hsvw_vis);
+    hsvw_vis->set_parent (v.get_id());
     hsvw_vis->setColour (mplot::colour::black);
     hsvw_vis->radius = 0.25f;
     hsvw_vis->tf.fontsize = 0.05f;
@@ -57,7 +58,7 @@ int main()
         ++i;
         cm1.setType (cmap_type);
         auto cbv =  std::make_unique<mplot::ColourBarVisual<float>>(offset);
-        v.bindmodel (cbv);
+        cbv->set_parent (v.get_id());
         cbv->orientation = mplot::colourbar_orientation::vertical;
         cbv->tickside = mplot::colourbar_tickside::right_or_below;
         cbv->cm = cm1;
@@ -75,7 +76,6 @@ int main()
             offset[1] -= 1.0f;
         }
     }
-
 
     v.keepOpen();
 
