@@ -96,8 +96,7 @@ export namespace mplot
         void append (const Flt& _abscissa, const Flt& _ordinate, const unsigned int didx)
         {
             this->pendingAppended = true;
-
-            // Transform the data into variables o and a.
+            // Transfor the data into temporary containers sd and ad
             Flt o = Flt{0};
             if (this->datastyles[didx].axisside == mplot::axisside::left) {
                 this->ord1.push_back (_ordinate);
@@ -127,47 +126,6 @@ export namespace mplot
                 throw e;
             }
 
-            // Check if the new datum will require us to redraw the rest of the graph - did the data
-            // point (pre-scaling) go outside of the current graph limits?
-            int redraw_plot = 0;
-            sm::range<Flt> xrange = this->datarange_x;
-            sm::range<Flt> yrange = this->datarange_y;
-            sm::range<Flt> y2range = this->datarange_y2;
-            // check x axis
-            if (this->auto_rescale_x) { redraw_plot += xrange.update (_abscissa) ? 1 : 0; }
-            // check y axis
-            if (this->auto_rescale_y) {
-                if (this->datastyles[didx].axisside == mplot::axisside::left) {
-                    redraw_plot += yrange.update (this->ord1.back()) ? 1 : 0;
-                } else {
-                    redraw_plot += y2range.update (this->ord2.back()) ? 1 : 0;
-                }
-            }
-
-            // Re-draw the existing graph with new limits if necessary
-            if (redraw_plot > 0) {
-
-                if (didx == 0) { this->abscissa_scale.reset(); }
-                if (this->datastyles[didx].axisside == mplot::axisside::left) {
-                    this->ord1_scale.reset();
-                } else {
-                    this->ord2_scale.reset();
-                }
-
-                constexpr bool allow_for_nonempty = true;
-                this->setlimits (xrange, yrange, y2range, allow_for_nonempty);
-
-                // Need to update abscissa and ordinate scales now.
-                this->abscissa_scale.compute_scaling (xrange);
-                if (this->datastyles[didx].axisside == mplot::axisside::left) {
-                    this->ord1_scale.compute_scaling (yrange.min, yrange.max);
-                } else {
-                    this->ord2_scale.compute_scaling (y2range.min, y2range.max);
-                }
-
-                this->reinit();
-            }
-
             // Now sd and ad can be used to construct dataCoords x/y. They are used to
             // set the position of each datum into dataCoords
             if (graphData.size() < didx + 1) {
@@ -186,6 +144,47 @@ export namespace mplot
             unsigned int oldsz = this->graphData[didx]->coords.size();
             this->graphData[didx]->coords.resize (oldsz + 1);
             this->graphData[didx]->coords.at (oldsz) = sm::vec<float>{ static_cast<float>(a), static_cast<float>(o), float{0} };
+            int redraw_plot = 0;
+            sm::range<Flt> xrange = this->datarange_x;
+            sm::range<Flt> yrange = this->datarange_y;
+            sm::range<Flt> y2range = this->datarange_y2;
+            // check x axis
+            if (this->auto_rescale_x) { redraw_plot += xrange.update (_abscissa) ? 1 : 0; }
+
+            // check y axis
+            if (this->auto_rescale_y) {
+                if (this->datastyles[didx].axisside == mplot::axisside::left) {
+                    redraw_plot += yrange.update (this->ord1.back()) ? 1 : 0;
+                } else {
+                    redraw_plot += y2range.update (this->ord2.back()) ? 1 : 0;
+                }
+            }
+
+            // update graph if necessary
+            if (redraw_plot > 0) {
+                this->clear_graph_data();
+
+                // setdata or this function will re-add these
+                this->graphData.clear();
+                this->datastyles.clear();
+
+                this->pendingAppended = true; // as the graph will be re-drawn
+                if (didx == 0) { this->abscissa_scale.reset(); }
+                if (this->datastyles[didx].axisside == mplot::axisside::left) {
+                    this->ord1_scale.reset();
+                } else {
+                    this->ord2_scale.reset();
+                }
+                this->setlimits (xrange, yrange, y2range);
+
+                if (!this->ord1.empty()) {
+                    // vvec, vvec, datasetstyle
+                    this->setdata (this->absc1, this->ord1, this->ds_ord1);
+                }
+                if (!this->ord2.empty()) {
+                    this->setdata (this->absc2, this->ord2, this->ds_ord2);
+                }
+            }
 
             VisualModel<glver>::clear(); // Get rid of the vertices.
             this->initializeVertices(); // Re-build
@@ -1260,9 +1259,9 @@ export namespace mplot
 
         //! setlimits overload that sets BOTH left and right axes limits, passing by sm::range
         void setlimits (const sm::range<Flt>& range_x,
-                        const sm::range<Flt>& range_y, const sm::range<Flt>& range_y2, const bool allow_for_nonempty = false)
+                        const sm::range<Flt>& range_y, const sm::range<Flt>& range_y2)
         {
-            if (!this->graphData.empty() && !allow_for_nonempty) {
+            if (!this->graphData.empty()) {
                 throw std::runtime_error ("GraphVisual::setlimits: Set your axis limits *before* using setdata to set the data");
             }
 
@@ -1443,6 +1442,9 @@ export namespace mplot
             }
         }
 
+        // Defines a boolean 'true' that can be provided as arg to drawDataCommon()
+        static constexpr bool appending_data = true;
+
         //! Draw markers and lines for data points that are being appended to a graph
         void drawAppendedData()
         {
@@ -1451,8 +1453,6 @@ export namespace mplot
                 unsigned int coords_start = this->coords_lengths[dsi];
                 unsigned int coords_end = static_cast<unsigned int>(this->graphData[dsi]->coords.size());
                 this->coords_lengths[dsi] = coords_end;
-                // Defines a boolean 'true' that can be provided as arg to drawDataCommon()
-                constexpr bool appending_data = true;
                 this->drawDataCommon (dsi, coords_start, coords_end, appending_data);
             }
         }
