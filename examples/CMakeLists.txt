@@ -1,15 +1,6 @@
 # All #includes in test programs have to be #include <mplot/header.h>
 include_directories(BEFORE ${PROJECT_SOURCE_DIR})
 
-# Each C++ module file has to be listed here (as they may not have a .cppm file suffix)
-#set_source_files_properties (
-#  ${MPLOT_MATHS_CORE_MODULES}
-#  ${MPLOT_MATHS_VISUALMODEL_MODULES}
-#  ${MPLOT_CORE_MODULES}
-#  ${MPLOT_VISUALMODEL_MODULES}
-#  PROPERTIES LANGUAGE CXX
-#)
-
 add_executable(helloworld helloworld.cpp)
 target_sources(helloworld PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_CORE_MODULES})
@@ -440,6 +431,125 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(graph_incoming_data_rescale OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
+  add_executable(graph_line graph_line.cpp)
+  target_sources(graph_line PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(graph_line OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(graph_line_xcross graph_line_xcross.cpp)
+  target_sources(graph_line_xcross PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(graph_line_xcross OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(graph_histo graph_histo.cpp)
+  target_sources(graph_histo PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(graph_histo OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(graph_distributions graph_distributions.cpp)
+  target_sources(graph_distributions PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(graph_distributions OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(graph_dynamic_x2 graph_dynamic_x2.cpp)
+  target_sources(graph_dynamic_x2 PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(graph_dynamic_x2 OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(graph_fouraxes graph_fouraxes.cpp)
+  target_sources(graph_fouraxes PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(graph_fouraxes OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(graph_rightaxis graph_rightaxis.cpp)
+  target_sources(graph_rightaxis PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(graph_rightaxis OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(graph_dynamic_sine graph_dynamic_sine.cpp)
+  target_sources(graph_dynamic_sine PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(graph_dynamic_sine OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(graph_dynamic_sine_rescale graph_dynamic_sine_rescale.cpp)
+  target_sources(graph_dynamic_sine_rescale PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(graph_dynamic_sine_rescale OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  # Next one to do:
+  add_executable(graph_change_xaxis graph_change_xaxis.cpp)
+  target_sources(graph_change_xaxis PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(graph_change_xaxis OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(graph_bar graph_bar.cpp)
+  target_sources(graph_bar PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(graph_bar OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(graph_logist graph_logist.cpp)
+  target_sources(graph_logist PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(graph_logist OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(graph_logist2 graph_logist2.cpp)
+  target_sources(graph_logist2 PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(graph_logist2 OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+  ##### End graph examples
+
   add_executable(cone cone.cpp)
   target_sources(cone PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
     FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
@@ -742,50 +852,6 @@ if (0) # During development
 
   add_executable(duochrome duochrome.cpp)
   target_link_libraries(duochrome OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(graph1 graph1.cpp)
-  target_link_libraries(graph1 OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  if(HAVE_STD_FORMAT)
-    add_executable(graph_line graph_line.cpp)
-    target_link_libraries(graph_line OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-    add_executable(graph_line_xcross graph_line_xcross.cpp)
-    target_link_libraries(graph_line_xcross OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-    add_executable(graph_histo graph_histo.cpp)
-    target_link_libraries(graph_histo OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-    add_executable(graph_distributions graph_distributions.cpp)
-    target_link_libraries(graph_distributions OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-  endif()
-
-  add_executable(graph_dynamic_x2 graph_dynamic_x2.cpp)
-  target_link_libraries(graph_dynamic_x2 OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(graph_fouraxes graph_fouraxes.cpp)
-  target_link_libraries(graph_fouraxes OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(graph_rightaxis graph_rightaxis.cpp)
-  target_link_libraries(graph_rightaxis OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(graph_dynamic_sine graph_dynamic_sine.cpp)
-  target_link_libraries(graph_dynamic_sine OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(graph_dynamic_sine_rescale graph_dynamic_sine_rescale.cpp)
-  target_link_libraries(graph_dynamic_sine_rescale OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(graph_change_xaxis graph_change_xaxis.cpp)
-  target_link_libraries(graph_change_xaxis OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(graph_bar graph_bar.cpp)
-  target_link_libraries(graph_bar OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(graph_logist graph_logist.cpp)
-  target_link_libraries(graph_logist OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(graph_logist2 graph_logist2.cpp)
-  target_link_libraries(graph_logist2 OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(linregr linregr.cpp)
   target_link_libraries(linregr OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)

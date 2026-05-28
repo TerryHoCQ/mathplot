@@ -1,17 +1,13 @@
 /*
  * Visualize a graph
  */
+#include <memory>
 #include <iostream>
-#include <fstream>
-#include <cmath>
-#include <array>
+#include <vector>
+#include <stdexcept>
 
-#include <sm/vec>
-#include <sm/vvec>
-
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/GraphVisual.h>
+import mplot.visual;
+import mplot.graphvisual;
 
 int main()
 {
@@ -34,7 +30,7 @@ int main()
         mplot::DatasetStyle ds;
 
         auto gv = std::make_unique<mplot::GraphVisual<float>>(sm::vec<float>({0,0,0}));
-        v.bindmodel (gv);
+        gv->set_parent (v.get_id());
         sm::vvec<float> data = absc.pow(3);
         sm::vec<float, 14> ardata;
         ardata.set_from (static_cast<std::vector<float>>(data));
@@ -57,7 +53,7 @@ int main()
         v.addVisualModel (gv);
 
         gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({step,0,0}));
-        v.bindmodel (gv);
+        gv->set_parent (v.get_id());
         sm::vvec<float> data2 = absc.pow(2);
         ds.linecolour = {0.0, 0.0, 1.0};
         ds.markerstyle = mplot::markerstyle::hexagon;
@@ -71,7 +67,7 @@ int main()
         v.addVisualModel (gv);
 
         gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({0,-row2,0}));
-        v.bindmodel (gv);
+        gv->set_parent (v.get_id());
         sm::vvec<float> data3 = absc.pow(4);
         gv->setsize (1,0.8);
         ds.linecolour = {0.0, 1.0, 0.0};
@@ -89,7 +85,7 @@ int main()
         v.addVisualModel (gv);
 
         gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({step,-row2,0}));
-        v.bindmodel (gv);
+        gv->set_parent (v.get_id());
         absc.resize(1000, 0.0f);
         for (int i = 0; i < 1000; ++i) {
             absc[i] = static_cast<float>(i-500) * 0.01f;

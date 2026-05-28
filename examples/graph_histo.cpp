@@ -2,14 +2,15 @@
  * Histogram example
  */
 
+#include <memory>
 #include <iostream>
+#include <cmath>
 #include <format>
-#include <sm/mathconst>
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/histo>
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
+#include <sstream>
+
+import sm.vvec;
+import mplot.visual;
+import mplot.graphvisual;
 
 int main()
 {
@@ -42,7 +43,8 @@ int main()
     // Create a new GraphVisual. Note the type for the GraphVisual has to match the *second*
     // template type for the histo.
     auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>{-gw});
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
+
     // 3rd argument to setdata (histo,...) allows you to choose what will be plotted
     gv->setdata (h, "", mplot::histo_view::counts);
     gv->ylabel = std::format("Counts (sum {})", h.counts.sum()) ;
@@ -51,7 +53,7 @@ int main()
     v.addVisualModel (gv);
 
     gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>{0});
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     // In this graph, plot probabilty densities (== proportions / bin_width)
     gv->setdata (h, "", mplot::histo_view::densities);
     gv->ylabel = std::format("Prob. density (sum {})", h.densities.sum());
@@ -60,7 +62,7 @@ int main()
     v.addVisualModel (gv);
 
     gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>{gw});
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     // gv->setdata (h) is equivalent to gv->setdata (h, "", mplot::histo_view::proportions)
     gv->setdata (h);
     gv->ylabel = "Count proportions";

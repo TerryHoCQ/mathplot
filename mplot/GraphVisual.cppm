@@ -29,8 +29,8 @@ import sm.range;
 export import sm.vec;
 export import sm.vvec;
 import sm.quaternion;
-import sm.histo;
-import sm.grid;
+export import sm.histo;
+export import sm.grid;
 import sm.trait_tests;
 
 import mplot.tools;

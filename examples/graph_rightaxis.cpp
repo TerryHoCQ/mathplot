@@ -1,9 +1,11 @@
 // A graph with the axis on the right
-#include <sm/vec>
-#include <sm/vvec>
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
-#include <mplot/unicode.h>
+#include <memory>
+#include <string>
+
+import mplot.visual;
+import mplot.graphvisual;
+import mplot.unicode;
+
 namespace uc = mplot::unicode;
 
 int main()
@@ -12,7 +14,7 @@ int main()
     mplot::Visual v(1024, 768, "Right-axis only GraphVisual example");
     // Create a new GraphVisual with offset within the scene of 0,0,0
     auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float, 3>{0.0f});
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->axisstyle = mplot::axisstyle::twinax; // axisstyle::twinax is like ::box, but it allows you to display a right hand ylabel2
     // Data for the x axis. A vvec is like std::vector, but with built-in maths methods
     sm::vvec<double> x;

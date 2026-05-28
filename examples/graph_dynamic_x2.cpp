@@ -1,14 +1,14 @@
 /*
  * Visualize a graph
  */
+
+#include <memory>
 #include <iostream>
-#include <fstream>
-#include <cmath>
-#include <array>
-#include <sm/vvec>
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/GraphVisual.h>
+#include <deque>
+#include <algorithm>
+
+import mplot.visual;
+import mplot.graphvisual;
 
 int main()
 {
@@ -37,7 +37,7 @@ int main()
         std::deque<float> absc (_absc.size());
         std::copy (_absc.begin(), _absc.end(), absc.begin());
         auto gvup = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float, 3>{0.0f});
-        v.bindmodel (gvup);
+        gvup->set_parent (v.get_id());
 
         // Here, we change the size of the graph and range of the axes (this is optional
         gvup->setsize (1.33, 1);
