@@ -422,6 +422,24 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(graph_spline OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
+  add_executable(graph_incoming_data graph_incoming_data.cpp)
+  target_sources(graph_incoming_data PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(graph_incoming_data OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(graph_incoming_data_rescale graph_incoming_data_rescale.cpp)
+  target_sources(graph_incoming_data_rescale PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(graph_incoming_data_rescale OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
   add_executable(cone cone.cpp)
   target_sources(cone PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
     FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
@@ -747,12 +765,6 @@ if (0) # During development
 
   add_executable(graph_fouraxes graph_fouraxes.cpp)
   target_link_libraries(graph_fouraxes OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(graph_incoming_data graph_incoming_data.cpp)
-  target_link_libraries(graph_incoming_data OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(graph_incoming_data_rescale graph_incoming_data_rescale.cpp)
-  target_link_libraries(graph_incoming_data_rescale OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(graph_rightaxis graph_rightaxis.cpp)
   target_link_libraries(graph_rightaxis OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
