@@ -50,9 +50,15 @@ export namespace mplot
         GraphData() {}
         GraphData (const std::uint32_t dsz)
         {
+            this->absc.resize (dsz, F{});
+            this->ord.resize (dsz, F{});
             this->coords.resize (dsz, sm::vec<F, 3>{});
         }
 
+        // Original abscissa data. Need to keep this to re-compute coords if the graph is re-sized.
+        sm::vvec<F> absc;
+        // Original ordinate data
+        sm::vvec<F> ord;
         // Coordinates of the graph data points
         sm::vvec<sm::vec<F, 3>> coords;
         // Directions of the data points (if required for a quiver plot)
@@ -62,6 +68,8 @@ export namespace mplot
 
         void clear()
         {
+            this->absc.clear();
+            this->ord.clear();
             this->coords.clear();
             this->vectors.clear();
             this->scalars.clear();
@@ -96,7 +104,7 @@ export namespace mplot
         void append (const Flt& _abscissa, const Flt& _ordinate, const unsigned int didx)
         {
             this->pendingAppended = true;
-            // Transfor the data into temporary containers sd and ad
+            // Transform the data into temporary containers sd and ad
             Flt o = Flt{0};
             if (this->datastyles[didx].axisside == mplot::axisside::left) {
                 this->ord1.push_back (_ordinate);
@@ -142,7 +150,13 @@ export namespace mplot
             }
 
             unsigned int oldsz = this->graphData[didx]->coords.size();
+            // Resize +1
+            this->graphData[didx]->absc.resize (oldsz + 1);
+            this->graphData[didx]->ord.resize (oldsz + 1);
             this->graphData[didx]->coords.resize (oldsz + 1);
+            // Set new datums
+            this->graphData[didx]->absc.at (oldsz) = static_cast<float>(_abscissa);
+            this->graphData[didx]->ord.at (oldsz) = static_cast<float>(_ordinate);
             this->graphData[didx]->coords.at (oldsz) = sm::vec<float>{ static_cast<float>(a), static_cast<float>(o), float{0} };
             int redraw_plot = 0;
             sm::range<Flt> xrange = this->datarange_x;
@@ -162,27 +176,48 @@ export namespace mplot
 
             // update graph if necessary
             if (redraw_plot > 0) {
-                this->clear_graph_data();
+                this->clear_graph_data(); // clears visual-model space coordinates in graphData as
+                                          // these will need to be re-computed using the changed
+                                          // abscissa and ordinate scales.
 
-                // setdata or this function will re-add these
-                this->graphData.clear();
-                this->datastyles.clear();
-
-                this->pendingAppended = true; // as the graph will be re-drawn
                 if (didx == 0) { this->abscissa_scale.reset(); }
                 if (this->datastyles[didx].axisside == mplot::axisside::left) {
                     this->ord1_scale.reset();
                 } else {
                     this->ord2_scale.reset();
                 }
-                this->setlimits (xrange, yrange, y2range);
+                constexpr bool allow_despite_graphdata = true; // 'force'
+                this->setlimits (xrange, yrange, y2range, allow_despite_graphdata);
 
-                if (!this->ord1.empty()) {
-                    // vvec, vvec, datasetstyle
-                    this->setdata (this->absc1, this->ord1, this->ds_ord1);
-                }
-                if (!this->ord2.empty()) {
-                    this->setdata (this->absc2, this->ord2, this->ds_ord2);
+                // Now need ord1_scale, ord2_scale and absc_scale to be recomputed given the new limits.
+                this->ord1_scale.compute_scaling (yrange);
+                this->ord2_scale.compute_scaling (y2range);
+                this->abscissa_scale.compute_scaling (xrange);
+
+                // Then we want to re-compute the coords for each dataset in graphData, so that
+                // coords is repopulated, with the right scaling.
+                //
+                // Re-transform the data. (using the stored 'original data' in graphData[di]->absc/ord)
+                for (std::uint32_t di = 0; di < this->graphData.size(); ++di) {
+                    std::uint32_t dsize = this->graphData[di]->ord.size();
+
+                    if (dsize == 0) { continue; } // No data to transform to coords, so continue
+
+                    sm::vvec<Flt> ad (dsize, Flt{0});
+                    sm::vvec<Flt> sd (dsize, Flt{0});
+                    if (this->datastyles[di].axisside == mplot::axisside::left) {
+                        this->ord1_scale.transform (this->graphData[di]->ord, sd);
+                    } else {
+                        this->ord2_scale.transform (this->graphData[di]->ord, sd);
+                    }
+                    this->abscissa_scale.transform (this->graphData[di]->absc, ad);
+
+                    this->graphData[di]->coords.resize (dsize);
+                    for (std::uint32_t i = 0; i < dsize; ++i) {
+                        // Now sd and ad can be used to construct dataCoords x/y. They are used to
+                        // set the position of each datum into dataCoords
+                        this->graphData[di]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
+                    }
                 }
             }
 
@@ -204,7 +239,7 @@ export namespace mplot
             VisualModel<glver>::render();
         }
 
-        //! Clear all the coordinate data for the graph, but leave the containers in place.
+        //! Clear all the (VisualModel-space) coordinate data for the graph, but leave the containers in place.
         void clear_graph_data()
         {
             unsigned int dsize = this->graphData.size();
@@ -487,6 +522,8 @@ export namespace mplot
                 // Now sd and ad can be used to construct dataCoords x/y. They are used to
                 // set the position of each datum into dataCoords
                 for (uint64_t i = 0; i < dsize; ++i) {
+                    this->graphData[didx]->absc.at(i) = static_cast<float>(_abscissae[i]);
+                    this->graphData[didx]->ord.at(i) = static_cast<float>(_data[i]);
                     this->graphData[didx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
                 }
             }
@@ -547,6 +584,8 @@ export namespace mplot
                 // Now sd and ad can be used to construct dataCoords x/y. They are used to
                 // set the position of each datum into dataCoords
                 for (uint64_t i = 0; i < dsize; ++i) {
+                    this->graphData[didx]->absc.at(i) = static_cast<float>(_abscissae[i]);
+                    this->graphData[didx]->ord.at(i) = static_cast<float>(_data[i]);
                     this->graphData[didx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
                 }
             }
@@ -1259,9 +1298,9 @@ export namespace mplot
 
         //! setlimits overload that sets BOTH left and right axes limits, passing by sm::range
         void setlimits (const sm::range<Flt>& range_x,
-                        const sm::range<Flt>& range_y, const sm::range<Flt>& range_y2)
+                        const sm::range<Flt>& range_y, const sm::range<Flt>& range_y2, bool force = false)
         {
-            if (!this->graphData.empty()) {
+            if (!this->graphData.empty() && !force) {
                 throw std::runtime_error ("GraphVisual::setlimits: Set your axis limits *before* using setdata to set the data");
             }
 
