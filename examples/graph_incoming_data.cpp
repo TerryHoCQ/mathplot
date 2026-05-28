@@ -27,7 +27,7 @@ int main()
         sm::vvec<float> absc =  {-1.0, -.9, -.8, -.7, -.6, -.5, -.4, -.3, -.2, -.1, 0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1.0};
         sm::vvec<float> data = absc.pow(3);
         sm::vvec<float> data2 = absc.pow(5);
-        auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>{}));
+        auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>{});
         gv->set_parent (v.get_id());
 
         // Optionally change the size of the graph and range of the axes
