@@ -3,18 +3,16 @@
  *
  * Do the rotations without rebuilding the OpenGL model each time.
  */
-#include <iostream>
-#include <array>
-#include <stdexcept>
+#include <memory>
 #include <string>
 
-#include <sm/vec>
-#include <sm/quaternion>
+import sm.vec;
+import sm.quaternion;
 
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/VectorVisual.h>
-#include <mplot/GeodesicVisual.h>
+import mplot.visual;
+import mplot.colourmap;
+import mplot.vectorvisual;
+import mplot.geodesicvisual;
 
 int main()
 {
@@ -27,7 +25,7 @@ int main()
 
 
     auto vvm = std::make_unique<mplot::VectorVisual<float, 3>>(offset);
-    v.bindmodel (vvm);
+    vvm->set_parent (v.get_id());
     vvm->thevec = {1,1,1};
     vvm->fixed_colour = true;
     vvm->single_colour = mplot::colour::crimson;
@@ -36,7 +34,7 @@ int main()
     auto ptr = v.addVisualModel (vvm);
 
     auto gv1 = std::make_unique<mplot::GeodesicVisual<float>> (-offset, 0.9f);
-    v.bindmodel (gv1);
+    gv1->set_parent (v.get_id());
     gv1->iterations = 0;
     std::string lbl = std::string("Icosahedron");
     gv1->addLabel (lbl, {0, -1, 0}, mplot::TextFeatures(0.1f));

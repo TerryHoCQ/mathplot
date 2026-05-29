@@ -819,12 +819,17 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(quiver OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
+  add_executable(rotating_models rotating_models.cpp)
+  target_sources(rotating_models PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.cppm
+  )
+  target_link_libraries(rotating_models OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+  
 endif()
 
 if (0) # During development
-
-  add_executable(rotating_models rotating_models.cpp)
-  target_link_libraries(rotating_models OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(scatter scatter.cpp)
   target_link_libraries(scatter OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
