@@ -1,18 +1,13 @@
 /*
  * Visualize a test surface
  */
-#include <iostream>
-#include <fstream>
-#include <cmath>
+#include <memory>
 #include <array>
+#include <cmath>
 
-#include <sm/scale>
-#include <sm/vec>
-#include <sm/vvec>
-
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/InstancedScatterVisual.h>
+import mplot.colourmap;
+import mplot.visual;
+import mplot.instancedscattervisual;
 
 // Instanced rendering requires OpenGL 4.3 or higher (for the SSBO)
 constexpr int glver = mplot::gl::version_4_3;
@@ -45,7 +40,7 @@ int main()
     }
 
     auto isv = std::make_unique<mplot::InstancedScatterVisual<glver>> (sm::vec<>{});
-    v.bindmodel (isv);
+    isv->set_parent (v.get_id());
     isv->radiusFixed = 0.03f;
     isv->finalize();
     auto isvp = v.addVisualModel (isv);

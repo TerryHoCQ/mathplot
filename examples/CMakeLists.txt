@@ -834,30 +834,43 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(scatter OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
   
-endif()
+  add_executable(scatter_ico scatter_ico.cpp)
+  target_sources(scatter_ico PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/ScatterVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/TriangleVisual.cppm
+  )
+  target_link_libraries(scatter_ico OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
-if (0) # During development
+  add_executable(scatter_geodesic scatter_geodesic.cpp)
+  target_sources(scatter_geodesic PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/ScatterVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/TriangleVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/QuiverVisual.cppm
+  )
+  target_link_libraries(scatter_geodesic OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
-  # This sphere example uses constexpr code
+  # Instancing also not available on Apple (limited to OpenGL 4.1)
   if(NOT APPLE)
-    add_executable(scatter_ico scatter_ico.cpp)
-    target_link_libraries(scatter_ico OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-    add_executable(scatter_geodesic scatter_geodesic.cpp)
-    target_link_libraries(scatter_geodesic OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-    # Instancing also not available on Apple (limited to OpenGL 4.1)
     add_executable(scatter_instanced scatter_instanced.cpp)
+    target_sources(scatter_instanced PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+      FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+      ${PROJECT_SOURCE_DIR}/mplot/InstancedScatterVisual.cppm
+    )
     target_link_libraries(scatter_instanced OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-    add_executable(breadcrumbs breadcrumbs.cpp)
-    target_link_libraries(breadcrumbs OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-    add_executable(model_crawler model_crawler.cpp)
-    target_link_libraries(model_crawler OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
   endif()
 
   add_executable(scatter_dynamic scatter_dynamic.cpp)
+  target_sources(scatter_dynamic PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/ScatterVisual.cppm
+  )
   target_link_libraries(scatter_dynamic OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+  
+endif()
+
+if (0) # During development
 
   add_executable(duochrome duochrome.cpp)
   target_link_libraries(duochrome OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
