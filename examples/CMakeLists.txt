@@ -914,16 +914,18 @@ if(BUILD_EXAMPLES_EXTRA)
     ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
   )
   target_link_libraries(threewindows OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(rod_pan rod_pan.cpp)
+  target_sources(rod_pan PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/RodVisual.cppm
+  )
+  target_link_libraries(rod_pan OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
   
 endif()
 
 if (0) # During development
 
-  add_executable(rod_with_normals rod_with_normals.cpp)
-  target_link_libraries(rod_with_normals OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(rod_pan rod_pan.cpp)
-  target_link_libraries(rod_pan OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   # This example uses constexpr code
   if(NOT APPLE)
