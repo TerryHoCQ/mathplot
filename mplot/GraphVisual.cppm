@@ -254,7 +254,6 @@ export namespace mplot
         update (const Ctnr1& _abscissae, const Ctnr2& _data, const unsigned int data_idx)
         {
             unsigned int dsize = _data.size();
-            sm::range<Flt> datarange;
 
             if (_abscissae.size() != dsize) {
                 throw std::runtime_error ("GraphVisual::update: size mismatch");
@@ -269,10 +268,20 @@ export namespace mplot
             this->graphData[data_idx]->resize (dsize);
 
             // Are we auto-rescaling the x axis?
+            sm::range<Flt> datarange = sm::range<Flt>::search_initialized();
             if (this->auto_rescale_x) {
+                if (this->auto_rescale_x_fix_min == true) {
+                    // Retain the existing abscissa minimum
+                    datarange.update (this->datarange_x.min);
+                }
+
                 this->abscissa_scale.reset();
-                datarange.search_init();
-                for (auto x_val : _abscissae) { datarange.update (x_val); }
+                for (std::uint32_t di = 0; di < this->graphData.size(); ++di) {
+                    // Update datarange from our new _abscissae...
+                    if (di == data_idx) { for (auto x_val : _abscissae) { datarange.update (x_val); } }
+                    // ...and from existing abscissae in other datasets
+                    for (auto x_val : this->graphData[di]->absc) { datarange.update (x_val); }
+                }
                 this->setlimits_x (datarange, true);
                 this->abscissa_scale.compute_scaling (this->datarange_x);
             }
@@ -282,41 +291,44 @@ export namespace mplot
             std::vector<Flt> ad (dsize, Flt{0});
             this->abscissa_scale.transform (_abscissae, ad);
 
+            sm::range<Flt> datarange2 = sm::range<Flt>::search_initialized();
+            if (this->auto_rescale_y) {
+                datarange.search_init(); // reuse datarange
+                if (this->auto_rescale_y_fix_min == true) {
+                    // Retain the existing datarange minima
+                    datarange.update (this->datarange_y.min);
+                    datarange2.update (this->datarange_y2.min);
+                }
+                // For rescale, need to accumulate for each other dataset first
+                for (std::uint32_t di = 0; di < this->graphData.size(); ++di) {
+                    if (di == data_idx) { continue; }
+                    // otherwise, add to datarange
+                    if (this->datastyles[di].axisside == mplot::axisside::left) {
+                        for (auto y_val : this->graphData[di]->ord) { datarange.update (y_val); }
+                    } else {
+                        for (auto y_val : this->graphData[di]->ord) { datarange2.update (y_val); }
+                    }
+                }
+            }
+
             std::vector<Flt> sd (dsize, Flt{0});
             if (this->datastyles[data_idx].axisside == mplot::axisside::left) {
                 // check min and max of the y axis
-                if (this->auto_rescale_y && this->auto_rescale_fit) {
+                if (this->auto_rescale_y) {
                     this->ord1_scale.reset();
-                    // Find the data range in _data and setlimits_y accordingly
-                    datarange.search_init();
+                    // update datarange for this dataset
                     for (auto y_val : _data) { datarange.update (y_val); }
-                    this->setlimits_y (datarange, true);
-                    this->ord1_scale.compute_scaling (this->datarange_y);
-
-                } else if (this->auto_rescale_y) {
-                    this->ord1_scale.reset();
-                    // Starting with datarange_y, update datarange.
-                    datarange = this->datarange_y;
-                    for (auto y_val : _data) { datarange.update (y_val); }
-                    this->setlimits_y (datarange, true);
+                    this->setlimits_y (datarange, true); // updates datarange_y
                     this->ord1_scale.compute_scaling (this->datarange_y);
                 }
                 // scale data with the axis
                 this->ord1_scale.transform (_data, sd);
             } else {
                 // Similar to the above, for the y2 axis
-                if (this->auto_rescale_y && this->auto_rescale_fit) {
+                if (this->auto_rescale_y) {
                     this->ord2_scale.reset();
-                    datarange.search_init();
-                    for (auto y_val : _data) { datarange.update (y_val); }
-                    this->setlimits_y2 (datarange, true);
-                    this->ord2_scale.compute_scaling (this->datarange_y2);
-
-                } else if (this->auto_rescale_y) {
-                    this->ord2_scale.reset();
-                    datarange = this->datarange_y2;
-                    for (auto y_val : _data) { datarange.update (y_val); }
-                    this->setlimits_y2 (datarange, true);
+                    for (auto y_val : _data) { datarange2.update (y_val); }
+                    this->setlimits_y2 (datarange2, true);
                     this->ord2_scale.compute_scaling (this->datarange_y2);
                 }
                 // scale data with the axis
@@ -331,6 +343,40 @@ export namespace mplot
                 this->graphData[data_idx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
             }
 
+            // Must also re-construct the other traces. SEB
+            for (std::uint32_t di = 0; di < this->graphData.size(); ++di) {
+
+                if (di == data_idx) {
+                    // This is the updated data index, set absc, ord, coords
+                    for (unsigned int i = 0; i < dsize; ++i) {
+                        this->graphData[data_idx]->absc.at(i) = static_cast<float>(_abscissae[i]);
+                        this->graphData[data_idx]->ord.at(i) = static_cast<float>(_data[i]);
+                        this->graphData[data_idx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
+                    }
+
+                } else {
+                    // Re-transform the other traces.
+                    std::uint32_t _dsize = this->graphData[di]->ord.size();
+
+                    if (_dsize == 0) { continue; } // No data to transform to coords, so continue
+
+                    sm::vvec<Flt> _ad (_dsize, Flt{0});
+                    sm::vvec<Flt> _sd (_dsize, Flt{0});
+                    if (this->datastyles[di].axisside == mplot::axisside::left) {
+                        this->ord1_scale.transform (this->graphData[di]->ord, _sd);
+                    } else {
+                        this->ord2_scale.transform (this->graphData[di]->ord, _sd);
+                    }
+                    this->abscissa_scale.transform (this->graphData[di]->absc, _ad);
+
+                    this->graphData[di]->resize (_dsize);
+                    for (std::uint32_t i = 0; i < _dsize; ++i) {
+                        // Now sd and ad can be used to construct dataCoords x/y. They are used to
+                        // set the position of each datum into dataCoords
+                        this->graphData[di]->coords.at(i) = sm::vec<float>{ static_cast<float>(_ad[i]), static_cast<float>(_sd[i]), float{0} };
+                    }
+                }
+            }
             this->clearTexts(); // VisualModel::clearTexts()
             this->reinit();
         }
@@ -2241,10 +2287,12 @@ export namespace mplot
         sm::range<Flt> datarange_y2{ Flt{0}, Flt{1} };
         //! Auto-rescale x axis if data goes off the edge of the graph (by setting the out of range data as new boundary)
         bool auto_rescale_x = false;
+        //! During auto_rescale_x, should the minimum be fixed?
+        bool auto_rescale_x_fix_min = false;
         //! Auto-rescale y axis if data goes off the edge of the graph (by setting the out of range data as new boundary)
         bool auto_rescale_y = false;
-        //! in the update function, it fits the scale with the range of the data (/!\ will scope only on the last datasets per y axis)
-        bool auto_rescale_fit = false;
+        //! During auto_rescale_y, should the minimum be fixed?
+        bool auto_rescale_y_fix_min = false;
         //! Current DatasetStyle for ord1
         mplot::DatasetStyle ds_ord1;
         //! DatasetStyle for ord2

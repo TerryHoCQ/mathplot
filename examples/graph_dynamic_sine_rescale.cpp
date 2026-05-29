@@ -36,9 +36,6 @@ int main()
     // Enable auto-rescaling of the y axis
     gv->auto_rescale_y = true;
 
-    // rescale to fit data along the y axis
-    gv->auto_rescale_fit = true;
-
     gv->finalize();
 
     auto gvp = v.addVisualModel (gv);
