@@ -1,18 +1,15 @@
 /*
  * An example showing how to create two mplot::Visuals and then a third one.
  */
+#include <memory>
 #include <iostream>
-#include <array>
+#include <vector>
 #include <stdexcept>
-#include <string>
+#include <cmath>
 
-#include <sm/vec>
-#include <sm/vvec>
-
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/QuiverVisual.h>
-#include <mplot/GraphVisual.h>
+import mplot.visual;
+import mplot.quivervisual;
+import mplot.graphvisual;
 
 int main()
 {
@@ -56,13 +53,13 @@ int main()
             quivs.push_back ({0.3,  -0.1,  0});
 
             auto qvp = std::make_unique<mplot::QuiverVisual<float>>(&coords, offset, &quivs, mplot::ColourMapType::Cividis);
-            v.bindmodel (qvp);
+            qvp->set_parent (v.get_id());
             qvp->finalize();
             v.addVisualModel (qvp);
 
             // Set up v2 with a graph
             auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({0,0,0}));
-            v2.bindmodel (gv);
+            gv->set_parent (v2.get_id());
             sm::vvec<float> x =  {-.5, -.4, -.3, -.2, -.1, 0, .1, .2, .3, .4, .5, .6, .7, .8};
             sm::vvec<float> y = x.pow(3);
             gv->setdata (x, y);

@@ -2,18 +2,15 @@
  * The twowindows example, but at least compiling and running the mutex locking code in
  * mplot::Visual.
  */
+#include <memory>
 #include <iostream>
-#include <array>
+#include <vector>
 #include <stdexcept>
-#include <string>
+#include <cmath>
 
-#include <sm/vec>
-#include <sm/vvec>
-
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/QuiverVisual.h>
-#include <mplot/GraphVisual.h>
+import mplot.visual;
+import mplot.quivervisual;
+import mplot.graphvisual;
 
 int main()
 {
@@ -71,7 +68,7 @@ int main()
         }
 
         auto qvp = std::make_unique<mplot::QuiverVisual<float>>(&coords, offset, &quivs, mplot::ColourMapType::Jet);
-        v.bindmodel (qvp);
+        qvp->set_parent (v.get_id());
         qvp->quiver_length_gain = 1.0f; // Scale the length of the quivers on screen
         qvp->colourScale.compute_scaling(0, qlens.max());
         qvp->quiver_thickness_gain = 0.02f; // Scale thickness of the quivers
@@ -80,7 +77,7 @@ int main()
 
         // Set up v2 with a graph, switching to the Visual v2's context first:
         auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({0,0,0}));
-        v2.bindmodel (gv);
+        gv->set_parent (v2.get_id());
         sm::vvec<float> x =  {-.5, -.4, -.3, -.2, -.1, 0, .1, .2, .3, .4, .5, .6, .7, .8};
         sm::vvec<float> y = x.pow(3);
         gv->setdata (x, y);
