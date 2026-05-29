@@ -36,13 +36,13 @@ module;
 
 export module mplot.visualmodel;
 
-import sm.mathconst;
+export import sm.mathconst;
 import sm.geometry_polyhedra;
-import sm.quaternion;
-import sm.mat;
-import sm.vec;
-import sm.vvec;
-import sm.range;
+export import sm.quaternion;
+export import sm.mat;
+export import sm.vec;
+export import sm.vvec;
+export import sm.range;
 import sm.algo;
 import sm.flags;
 import sm.base64;

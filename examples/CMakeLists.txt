@@ -826,13 +826,17 @@ if(BUILD_EXAMPLES_EXTRA)
     ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.cppm
   )
   target_link_libraries(rotating_models OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(scatter scatter.cpp)
+  target_sources(scatter PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/ScatterVisual.cppm
+  )
+  target_link_libraries(scatter OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
   
 endif()
 
 if (0) # During development
-
-  add_executable(scatter scatter.cpp)
-  target_link_libraries(scatter OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   # This sphere example uses constexpr code
   if(NOT APPLE)

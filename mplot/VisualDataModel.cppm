@@ -8,14 +8,14 @@ module;
 
 export module mplot.visualdatamodel;
 
-import sm.vec;
-import sm.vvec;
-import sm.scale;
+export import sm.vec;
+export import sm.vvec;
+export import sm.scale;
 import sm.centroid;
 
 export import mplot.visualmodel;
-import mplot.colourmap;
-import mplot.gl.version;
+export import mplot.colourmap;
+export import mplot.gl.version;
 
 export namespace mplot
 {
