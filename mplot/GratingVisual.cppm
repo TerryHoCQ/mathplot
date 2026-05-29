@@ -10,6 +10,12 @@ module;
 #include <array>
 #include <bitset>
 #include <map>
+#include <string>
+#include <iostream>
+#include <limits>
+#include <set>
+#include <stdexcept>
+#include <cmath>
 
 export module mplot.gratingvisual;
 

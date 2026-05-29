@@ -21,21 +21,16 @@ target_link_libraries(rod_with_normals OpenGL::GL glfw Freetype::Freetype glad m
 add_executable(ellipsoid ellipsoid.cpp)
 target_sources(ellipsoid PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
-  ${PROJECT_SOURCE_DIR}/mplot/RodVisual.cppm
   ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.cppm
 )
 target_link_libraries(ellipsoid OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
-if(NOT APPLE)
-  add_executable(geodesic geodesic.cpp)
-  target_sources(geodesic PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
-    ${PROJECT_SOURCE_DIR}/mplot/RodVisual.cppm
-    ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.cppm
-    ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.cppm
+add_executable(geodesic geodesic.cpp)
+target_sources(geodesic PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.cppm
 )
-  target_link_libraries(geodesic OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-endif()
+target_link_libraries(geodesic OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
 add_executable(vectorvis vectorvis.cpp)
 target_sources(vectorvis PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
@@ -921,41 +916,55 @@ if(BUILD_EXAMPLES_EXTRA)
     ${PROJECT_SOURCE_DIR}/mplot/RodVisual.cppm
   )
   target_link_libraries(rod_pan OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(grating grating.cpp)
+  target_sources(grating PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/GratingVisual.cppm
+  )
+  target_link_libraries(grating OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
   
+  add_executable(sphere sphere.cpp)
+  target_sources(sphere PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  )
+  target_link_libraries(sphere OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(icosahedron icosahedron.cpp)
+  target_sources(icosahedron PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/IcosaVisual.cppm
+  )  
+  target_link_libraries(icosahedron OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(testce testce.cpp)
+  target_sources(testce PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES
+    ${PROJECT_SOURCE_DIR}/maths/sm/mathconst.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/constexpr_math.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/bessel_i0.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/polysolve.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/trait_tests.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/random.cppm    
+    ${PROJECT_SOURCE_DIR}/maths/sm/range.cppm    
+    ${PROJECT_SOURCE_DIR}/maths/sm/vec.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/vvec.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/algo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/quaternion.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra.cppm
+  )  
+
+  add_executable(geodesic_with_normals geodesic_with_normals.cpp)
+  target_sources(geodesic_with_normals PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/GeodesicVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/NormalsVisual.cppm
+  )
+  target_link_libraries(geodesic_with_normals OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
 endif()
 
 if (0) # During development
-
-
-  # This example uses constexpr code
-  if(NOT APPLE)
-    add_executable(grating grating.cpp)
-    target_link_libraries(grating OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-  endif()
-
-  # This sphere example uses constexpr code
-  if(NOT APPLE)
-    add_executable(sphere sphere.cpp)
-    target_link_libraries(sphere OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-  endif()
-
-  add_executable(ellipsoid ellipsoid.cpp)
-  target_link_libraries(ellipsoid OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  # constexpr code won't work on Apple Clang
-  if(NOT APPLE)
-    add_executable(icosahedron icosahedron.cpp)
-    target_link_libraries(icosahedron OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-    add_executable(testce testce.cpp)
-
-    add_executable(geodesic geodesic.cpp)
-    target_link_libraries(geodesic OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-    add_executable(geodesic_with_normals geodesic_with_normals.cpp)
-    target_link_libraries(geodesic_with_normals OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  endif()
 
   add_executable(draw_triangles draw_triangles.cpp)
   target_link_libraries(draw_triangles OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)

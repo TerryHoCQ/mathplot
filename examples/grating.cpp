@@ -1,18 +1,13 @@
 /*
  * Visualize a Grating
  */
+#include <memory>
 #include <iostream>
-#include <fstream>
-#include <cmath>
-#include <array>
 #include <stdexcept>
 #include <string>
 
-#include <sm/vec>
-
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/GratingVisual.h>
+import mplot.visual;
+import mplot.gratingvisual;
 
 struct myvisual final : public mplot::Visual<>
 {
@@ -79,7 +74,7 @@ int main (int ac, char** av)
         sm::vec<float, 3> offset = { 0.0f, 0.0f, 0.0f };
 
         auto rvm = std::make_unique<mplot::GratingVisual<>> (offset);
-        v.bindmodel (rvm);
+        rvm->set_parent (v.get_id());
         rvm->v_front = { -0.01f, 0.0173f };
         rvm->t = v.t;
         rvm->do_loop2 = v.do_loop2;

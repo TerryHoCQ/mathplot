@@ -1,14 +1,7 @@
 /*
  * Visualize an ellipsoid
  */
-#include <iostream>
-#include <stdexcept>
-#include <string>
-#include <sstream>
 #include <memory>
-
-import sm.mathconst;
-import sm.mat;
 
 import mplot.visual;
 import mplot.normalsvisual;
