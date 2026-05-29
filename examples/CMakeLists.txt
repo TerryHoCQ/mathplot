@@ -548,6 +548,16 @@ if(BUILD_EXAMPLES_EXTRA)
     ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
   )
   target_link_libraries(graph_logist2 OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(linregr linregr.cpp)
+  target_sources(linregr PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(linregr OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+  
   ##### End graph examples
 
   add_executable(cone cone.cpp)
@@ -867,16 +877,18 @@ if(BUILD_EXAMPLES_EXTRA)
     ${PROJECT_SOURCE_DIR}/mplot/ScatterVisual.cppm
   )
   target_link_libraries(scatter_dynamic OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  add_executable(duochrome duochrome.cpp)
+    target_sources(duochrome PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/ScatterVisual.cppm
+  )
+  target_link_libraries(duochrome OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
   
 endif()
 
 if (0) # During development
 
-  add_executable(duochrome duochrome.cpp)
-  target_link_libraries(duochrome OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  add_executable(linregr linregr.cpp)
-  target_link_libraries(linregr OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   # By default, the multi-context aware GLAD headers are used, so multiple windows is guaranteed to work.
   add_executable(twowindows twowindows.cpp)
