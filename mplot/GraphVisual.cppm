@@ -48,12 +48,7 @@ export namespace mplot
     struct GraphData
     {
         GraphData() {}
-        GraphData (const std::uint32_t dsz)
-        {
-            this->absc.resize (dsz, F{});
-            this->ord.resize (dsz, F{});
-            this->coords.resize (dsz, sm::vec<F, 3>{});
-        }
+        GraphData (const std::uint32_t dsz) { this->resize (dsz); }
 
         // Original abscissa data. Need to keep this to re-compute coords if the graph is re-sized.
         sm::vvec<F> absc;
@@ -65,6 +60,13 @@ export namespace mplot
         sm::vvec<sm::vec<F, 3>> vectors;
         // Scalars for the data points. Can be converted to, e.g. colours via a colourmap in a DatasetStyle
         sm::vvec<F> scalars;
+
+        void resize (const std::uint32_t dsz)
+        {
+            this->absc.resize (dsz, F{});
+            this->ord.resize (dsz, F{});
+            this->coords.resize (dsz, sm::vec<F, 3>{});
+        }
 
         void clear()
         {
@@ -97,10 +99,8 @@ export namespace mplot
         //! Set true for any optional debugging
         static constexpr bool gv_debug = false;
 
-        //! Append a single datum onto the relevant graph. Build on existing data in
-        //! graphData. Finish up with a call to completeAppend(). didx is the data
-        //! index and counts up from 0. Have to save _abscissa and _ordinate in a local
-        //! copy of the data to be able to rescale.
+        //! Append a single datum onto the relevant graph. Build on existing data in graphData. didx
+        //! is the data index and counts up from 0.
         void append (const Flt& _abscissa, const Flt& _ordinate, const unsigned int didx)
         {
             this->pendingAppended = true;
@@ -151,9 +151,7 @@ export namespace mplot
 
             unsigned int oldsz = this->graphData[didx]->coords.size();
             // Resize +1
-            this->graphData[didx]->absc.resize (oldsz + 1);
-            this->graphData[didx]->ord.resize (oldsz + 1);
-            this->graphData[didx]->coords.resize (oldsz + 1);
+            this->graphData[didx]->resize (oldsz + 1);
             // Set new datums
             this->graphData[didx]->absc.at (oldsz) = static_cast<float>(_abscissa);
             this->graphData[didx]->ord.at (oldsz) = static_cast<float>(_ordinate);
@@ -212,7 +210,7 @@ export namespace mplot
                     }
                     this->abscissa_scale.transform (this->graphData[di]->absc, ad);
 
-                    this->graphData[di]->coords.resize (dsize);
+                    this->graphData[di]->resize (dsize);
                     for (std::uint32_t i = 0; i < dsize; ++i) {
                         // Now sd and ad can be used to construct dataCoords x/y. They are used to
                         // set the position of each datum into dataCoords
@@ -268,12 +266,12 @@ export namespace mplot
             }
 
             // Ensure the vector at data_idx has enough capacity for the updated data
-            this->graphData[data_idx]->coords.resize (dsize);
+            this->graphData[data_idx]->resize (dsize);
 
             // Are we auto-rescaling the x axis?
             if (this->auto_rescale_x) {
                 this->abscissa_scale.reset();
-                datarange = this->datarange_x;
+                datarange.search_init();
                 for (auto x_val : _abscissae) { datarange.update (x_val); }
                 this->setlimits_x (datarange, true);
                 this->abscissa_scale.compute_scaling (this->datarange_x);
@@ -328,6 +326,8 @@ export namespace mplot
             // Now sd and ad can be used to construct dataCoords x/y. They are used to
             // set the position of each datum into dataCoords
             for (unsigned int i = 0; i < dsize; ++i) {
+                this->graphData[data_idx]->absc.at(i) = static_cast<float>(_abscissae[i]);
+                this->graphData[data_idx]->ord.at(i) = static_cast<float>(_data[i]);
                 this->graphData[data_idx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
             }
 
@@ -783,6 +783,7 @@ export namespace mplot
                 // Now sd and ad can be used to construct dataCoords x/y. They are used to
                 // set the position of each datum into dataCoords
                 for (unsigned int i = 0; i < dsize; ++i) {
+                    // No need to set graphData[didx]->absc/ord for a Quiver plot
                     this->graphData[didx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
                 }
             }
