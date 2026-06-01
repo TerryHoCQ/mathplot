@@ -552,7 +552,7 @@ if(BUILD_EXAMPLES_EXTRA)
     ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
   )
   target_link_libraries(linregr OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-  
+
   ##### End graph examples
 
   add_executable(cone cone.cpp)
@@ -838,7 +838,7 @@ if(BUILD_EXAMPLES_EXTRA)
     ${PROJECT_SOURCE_DIR}/mplot/ScatterVisual.cppm
   )
   target_link_libraries(scatter OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-  
+
   add_executable(scatter_ico scatter_ico.cpp)
   target_sources(scatter_ico PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
     FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
@@ -923,7 +923,7 @@ if(BUILD_EXAMPLES_EXTRA)
     ${PROJECT_SOURCE_DIR}/mplot/GratingVisual.cppm
   )
   target_link_libraries(grating OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-  
+
   add_executable(sphere sphere.cpp)
   target_sources(sphere PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
     FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
@@ -934,7 +934,7 @@ if(BUILD_EXAMPLES_EXTRA)
   target_sources(icosahedron PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
     FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
     ${PROJECT_SOURCE_DIR}/mplot/IcosaVisual.cppm
-  )  
+  )
   target_link_libraries(icosahedron OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(testce testce.cpp)
@@ -945,14 +945,14 @@ if(BUILD_EXAMPLES_EXTRA)
     ${PROJECT_SOURCE_DIR}/maths/sm/bessel_i0.cppm
     ${PROJECT_SOURCE_DIR}/maths/sm/polysolve.cppm
     ${PROJECT_SOURCE_DIR}/maths/sm/trait_tests.cppm
-    ${PROJECT_SOURCE_DIR}/maths/sm/random.cppm    
-    ${PROJECT_SOURCE_DIR}/maths/sm/range.cppm    
+    ${PROJECT_SOURCE_DIR}/maths/sm/random.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/range.cppm
     ${PROJECT_SOURCE_DIR}/maths/sm/vec.cppm
     ${PROJECT_SOURCE_DIR}/maths/sm/vvec.cppm
     ${PROJECT_SOURCE_DIR}/maths/sm/algo.cppm
     ${PROJECT_SOURCE_DIR}/maths/sm/quaternion.cppm
     ${PROJECT_SOURCE_DIR}/maths/sm/geometry_polyhedra.cppm
-  )  
+  )
 
   add_executable(geodesic_with_normals geodesic_with_normals.cpp)
   target_sources(geodesic_with_normals PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
@@ -986,34 +986,101 @@ if(BUILD_EXAMPLES_EXTRA)
     ${PROJECT_SOURCE_DIR}/mplot/TriangleVisual.cppm
   )
   target_link_libraries(triangle_intersect OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-  
-endif()
-
-if (0) # During development
 
   add_executable(voronoi_boundary voronoi_boundary.cpp)
+  target_sources(voronoi_boundary PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES
+    ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/winder.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/jcvoronoi/jc_voronoi.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/VoronoiVisual.cppm
+  )
   target_link_libraries(voronoi_boundary OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(voronoi_rectangular voronoi_rectangular.cpp)
+  target_sources(voronoi_rectangular PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES
+    ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/winder.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/jcvoronoi/jc_voronoi.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/VoronoiVisual.cppm
+  )
   target_link_libraries(voronoi_rectangular OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(voronoi_vectordata voronoi_vectordata.cpp)
+  target_sources(voronoi_vectordata PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES
+    ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/winder.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/jcvoronoi/jc_voronoi.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/VoronoiVisual.cppm
+  )
   target_link_libraries(voronoi_vectordata OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(voronoi_function voronoi_function.cpp)
+  target_sources(voronoi_function PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES
+    ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/winder.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/jcvoronoi/jc_voronoi.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/VoronoiVisual.cppm
+  )
   target_link_libraries(voronoi_function OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(voronoi_function_flat voronoi_function_flat.cpp)
+  target_sources(voronoi_function_flat PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES
+    ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/winder.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/jcvoronoi/jc_voronoi.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/VoronoiVisual.cppm
+  )
   target_link_libraries(voronoi_function_flat OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(voronoi_fixed voronoi_fixed.cpp)
+  target_sources(voronoi_fixed PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES
+    ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/winder.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/jcvoronoi/jc_voronoi.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/VoronoiVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.cppm
+  )
   target_link_libraries(voronoi_fixed OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(voronoi_fixed_xz voronoi_fixed_xz.cpp)
+  target_sources(voronoi_fixed_xz PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES
+    ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/winder.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/jcvoronoi/jc_voronoi.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/VoronoiVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.cppm
+  )
   target_link_libraries(voronoi_fixed_xz OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(voronoi_fixed_nearlyz voronoi_fixed_nearlyz.cpp)
+  target_sources(voronoi_fixed_nearlyz PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES
+    ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/winder.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/jcvoronoi/jc_voronoi.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/VoronoiVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.cppm
+  )
   target_link_libraries(voronoi_fixed_nearlyz OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+endif()
+
+if (0) # During development
 
   add_executable(rectangle rectangle.cpp)
   target_link_libraries(rectangle OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)

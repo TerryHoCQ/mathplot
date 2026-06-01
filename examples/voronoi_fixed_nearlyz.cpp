@@ -1,12 +1,14 @@
 /*
  * Make a very small Voronoi surface. Used to debug VoronoiVisual
  */
-#include <iostream>
+#include <memory>
+#include <string>
 #include <limits>
-#include <sm/vec>
-#include <mplot/Visual.h>
-#include <mplot/VoronoiVisual.h>
-#include <mplot/VectorVisual.h>
+#include <vector>
+
+import mplot.visual;
+import mplot.voronoivisual;
+import mplot.vectorvisual;
 
 // Use key presses to change border_width, so extend mplot::Visual in the usual way
 struct myvisual final : public mplot::Visual<>
@@ -44,7 +46,7 @@ int main()
 
     sm::vec<float, 3> offset = { 0.0f };
     auto vorv = std::make_unique<mplot::VoronoiVisual<float>> (offset);
-    v.bindmodel (vorv);
+    vorv->set_parent (v.get_id());
     vorv->show_voronoi2d = true;
     vorv->debug_edges = true;
     vorv->debug_dataCoords = true;
@@ -58,7 +60,7 @@ int main()
 
     offset[0] -= 0.5f;
     auto vvm = std::make_unique<mplot::VectorVisual<float, 3>>(offset);
-    v.bindmodel (vvm);
+    vvm->set_parent (v.get_id());
     vvm->thevec = p_vorv->data_z_direction;
     vvm->fixed_colour = true;
     vvm->thickness = 0.03f;
