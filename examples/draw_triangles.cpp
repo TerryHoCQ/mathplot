@@ -1,8 +1,10 @@
+#include <memory>
+#include <string>
 #include <array>
-#include <sm/vec>
-#include <sm/vvec>
-#include <mplot/Visual.h>
-#include <mplot/VisualModel.h>
+
+import sm.vvec;
+import mplot.visual;
+import mplot.visualmodel;
 
 using namespace mplot;
 
@@ -243,17 +245,17 @@ int main()
     v.lightingEffects();
 
     auto tv = std::make_unique<trivis<>>(sm::vec<float>{0.0f});
-    v.bindmodel (tv);
+    tv->set_parent (v.get_id());
     tv->finalize();
     v.addVisualModel (tv);
 
     auto dtv = std::make_unique<doubletrivis<>>(sm::vec<float>{3.0f,0.0f,0.0f});
-    v.bindmodel (dtv);
+    dtv->set_parent (v.get_id());
     dtv->finalize();
     v.addVisualModel (dtv);
 
     auto tctv = std::make_unique<twocolourtri<>>(sm::vec<float>{6.0f,0.0f,0.0f});
-    v.bindmodel (tctv);
+    tctv->set_parent (v.get_id());
     tctv->finalize();
     v.addVisualModel (tctv);
 

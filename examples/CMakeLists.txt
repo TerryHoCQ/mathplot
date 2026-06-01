@@ -962,18 +962,34 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(geodesic_with_normals OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
-endif()
-
-if (0) # During development
-
   add_executable(draw_triangles draw_triangles.cpp)
+  target_sources(draw_triangles PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  )
   target_link_libraries(draw_triangles OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(draw_triangles_intersections draw_triangles_intersections.cpp)
+  target_sources(draw_triangles_intersections PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/SphereVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.cppm
+  )
   target_link_libraries(draw_triangles_intersections OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(triangle_intersect triangle_intersect.cpp)
+  target_sources(triangle_intersect PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/json/src/modules/json.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/config.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/SphereVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/TriangleVisual.cppm
+  )
   target_link_libraries(triangle_intersect OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+  
+endif()
+
+if (0) # During development
 
   add_executable(voronoi_boundary voronoi_boundary.cpp)
   target_link_libraries(voronoi_boundary OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)

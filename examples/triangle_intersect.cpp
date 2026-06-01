@@ -1,15 +1,16 @@
 // Utility to debug some triangle intersection problems
 
+#include <memory>
+#include <iostream>
 #include <array>
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/algo>
-#include <sm/config>
-#include <mplot/Visual.h>
-#include <mplot/VisualModel.h>
-#include <mplot/SphereVisual.h>
-#include <mplot/VectorVisual.h>
-#include <mplot/TriangleVisual.h>
+#include <string>
+
+import sm.config;
+import mplot.visual;
+import mplot.visualmodel;
+import mplot.spherevisual;
+import mplot.vectorvisual;
+import mplot.trianglevisual;
 
 int main (int argc, char** argv)
 {
@@ -29,32 +30,32 @@ int main (int argc, char** argv)
 
     sm::config conf;
     conf.parse (jstr);
-    std::cout << "Got t0: " << conf.getvec<float, 3> ("t0") << std::endl;
+    std::cout << "Got t0: " << conf.get_vec<float, 3> ("t0") << std::endl;
 
     mplot::Visual v(1024, 768, "Ray-triangle intersection");
     v.lightingEffects();
 
     // Triangle vertices
-    sm::vec<> v1 = conf.getvec<float, 3> ("t0");
-    sm::vec<> v2 = conf.getvec<float, 3> ("t1");
-    sm::vec<> v3 = conf.getvec<float, 3> ("t2");
+    sm::vec<> v1 = conf.get_vec<float, 3> ("t0");
+    sm::vec<> v2 = conf.get_vec<float, 3> ("t1");
+    sm::vec<> v3 = conf.get_vec<float, 3> ("t2");
     // Ray start and direction
-    sm::vec<> start = conf.getvec<float, 3> ("l0");
-    sm::vec<> dirn = conf.getvec<float, 3> ("l");
+    sm::vec<> start = conf.get_vec<float, 3> ("l0");
+    sm::vec<> dirn = conf.get_vec<float, 3> ("l");
 
     auto tv = std::make_unique<mplot::TriangleVisual<>> (sm::vec<>{}, v1, v2, v3, mplot::colour::blue);
-    v.bindmodel (tv);
+    tv->set_parent (v.get_id());
     tv->finalize();
     [[maybe_unused]] auto tvp = v.addVisualModel (tv);
 
     float start_sphr = dirn.length() / 20.0f;
     auto sv = std::make_unique<mplot::SphereVisual<>>(start, start_sphr, mplot::colour::goldenrod3);
-    v.bindmodel (sv);
+    sv->set_parent (v.get_id());
     sv->finalize();
     v.addVisualModel (sv);
 
     auto vvm = std::make_unique<mplot::VectorVisual<float, 3>>(start);
-    v.bindmodel (vvm);
+    vvm->set_parent (v.get_id());
     vvm->thevec = dirn;
     vvm->vgoes = mplot::VectorGoes::FromOrigin;
     vvm->thickness = 0.02f;
@@ -79,7 +80,7 @@ int main (int argc, char** argv)
         std::cout << "Contains hit " << hit << std::endl;
 
         sv = std::make_unique<mplot::SphereVisual<>>(hit, start_sphr * 1.1f, mplot::colour::springgreen2);
-        v.bindmodel (sv);
+        sv->set_parent (v.get_id());
         sv->finalize();
         v.addVisualModel (sv);
     }

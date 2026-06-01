@@ -1,11 +1,12 @@
+#include <memory>
+#include <iostream>
 #include <array>
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/algo>
-#include <mplot/Visual.h>
-#include <mplot/VisualModel.h>
-#include <mplot/SphereVisual.h>
-#include <mplot/VectorVisual.h>
+#include <string>
+
+import mplot.visual;
+import mplot.visualmodel;
+import mplot.spherevisual;
+import mplot.vectorvisual;
 
 using namespace mplot;
 
@@ -69,12 +70,6 @@ public:
         }
 
         this->addLabel ("Vertex normals: " + this->normal.str(), {0, -0.9, 0}, mplot::TextFeatures(0.16));
-
-        // Add illustrative stuff
-        for (unsigned int i = 0; i < 3U; ++i) {
-            this->computeSphereGeo (this->coords[i], this->colours[i], 0.05f, 2);
-            this->computeArrow (this->coords[i], this->coords[i] + this->normal, this->colours[i], 0.015f);
-        }
     }
 
     //! The positions of the vertices of the triangle
@@ -260,37 +255,37 @@ int main()
     v.lightingEffects();
 
     auto tv = std::make_unique<trivis<>>(sm::vec<float>{0.0f});
-    v.bindmodel (tv);
+    tv->set_parent (v.get_id());
     tv->finalize();
     [[maybe_unused]] auto tvp = v.addVisualModel (tv);
 
     // A coord from which we instantiate a ray
     sm::vec<> start = { 2, 0, 5 };
-    sm::vec<> dirn = { 0, 0, -10 };
+    [[maybe_unused]] sm::vec<> dirn = { 0, 0, -10 };
 
-    sm::vec<> start_fr2 = { 1, .9, 5 };
-    sm::vec<> dirn_fr2 = { 0.5, -0.7, -10 };
+    [[maybe_unused]] sm::vec<> start_fr2 = { 1, .9, 5 };
+    [[maybe_unused]] sm::vec<> dirn_fr2 = { 0.5, -0.7, -10 };
 
-    sm::vec<> start_bh = { 0, 0, -5 };
-    sm::vec<> dirn_bh = { 1.5, 1.5, 10 };
+    [[maybe_unused]] sm::vec<> start_bh = { 0, 0, -5 };
+    [[maybe_unused]] sm::vec<> dirn_bh = { 1.5, 1.5, 10 };
 
     auto sv = std::make_unique<mplot::SphereVisual<>>(start, 0.1, mplot::colour::goldenrod3);
-    v.bindmodel (sv);
+    sv->set_parent (v.get_id());
     sv->finalize();
     v.addVisualModel (sv);
 
     sv = std::make_unique<mplot::SphereVisual<>>(start_bh, 0.1, mplot::colour::goldenrod3);
-    v.bindmodel (sv);
+    sv->set_parent (v.get_id());
     sv->finalize();
     v.addVisualModel (sv);
 
     sv = std::make_unique<mplot::SphereVisual<>>(start_fr2, 0.1, mplot::colour::goldenrod3);
-    v.bindmodel (sv);
+    sv->set_parent (v.get_id());
     sv->finalize();
     v.addVisualModel (sv);
 
     auto vvm = std::make_unique<mplot::VectorVisual<float, 3>>(start);
-    v.bindmodel (vvm);
+    vvm->set_parent (v.get_id());
     vvm->thevec = dirn;
     vvm->vgoes = VectorGoes::FromOrigin;
     vvm->thickness = 0.02f;
@@ -302,7 +297,7 @@ int main()
     [[maybe_unused]] auto vvmp = v.addVisualModel (vvm);
 
     vvm = std::make_unique<mplot::VectorVisual<float, 3>>(start_bh);
-    v.bindmodel (vvm);
+    vvm->set_parent (v.get_id());
     vvm->thevec = dirn_bh;
     vvm->vgoes = VectorGoes::FromOrigin;
     vvm->thickness = 0.02f;
@@ -314,7 +309,7 @@ int main()
     [[maybe_unused]] auto vvmp2 = v.addVisualModel (vvm);
 
     vvm = std::make_unique<mplot::VectorVisual<float, 3>>(start_fr2);
-    v.bindmodel (vvm);
+    vvm->set_parent (v.get_id());
     vvm->thevec = dirn_fr2;
     vvm->vgoes = VectorGoes::FromOrigin;
     vvm->thickness = 0.02f;
@@ -325,6 +320,7 @@ int main()
     vvm->finalize();
     [[maybe_unused]] auto vvmp3 = v.addVisualModel (vvm);
 
+    // Making the navmesh allows us to find triangle crossings
     tvp->make_navmesh();
 
     auto vm = tvp->getViewMatrix();
@@ -340,7 +336,7 @@ int main()
         std::cout << "Contains hit " << hit << std::endl;
 
         sv = std::make_unique<mplot::SphereVisual<>>(hit, 0.07, mplot::colour::springgreen2);
-        v.bindmodel (sv);
+        sv->set_parent (v.get_id());
         sv->finalize();
         v.addVisualModel (sv);
     }
@@ -354,7 +350,7 @@ int main()
         std::cout << "Contains hit " << hit_fr2 << std::endl;
 
         sv = std::make_unique<mplot::SphereVisual<>>(hit_fr2, 0.07, mplot::colour::springgreen2);
-        v.bindmodel (sv);
+        sv->set_parent (v.get_id());
         sv->finalize();
         v.addVisualModel (sv);
     }
@@ -369,7 +365,7 @@ int main()
         std::cout << "Contains hit " << hit_bh << std::endl;
 
         sv = std::make_unique<mplot::SphereVisual<>>(hit_bh, 0.07, mplot::colour::springgreen2);
-        v.bindmodel (sv);
+        sv->set_parent (v.get_id());
         sv->finalize();
         v.addVisualModel (sv);
     }
