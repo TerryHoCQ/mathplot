@@ -1,8 +1,9 @@
 // Draw a cube with RhomboVisual
 
-#include <sm/vec>
-#include <mplot/compoundray/Visual.h>
-#include <mplot/RhomboVisual.h>
+#include <memory>
+
+import mplot.compoundray.visual;
+import mplot.rhombovisual;
 
 int main()
 {
@@ -21,7 +22,7 @@ int main()
     sm::vec<float, 3> colour1 = { 0.35,  0.76,  0.98 };  // RGB colour triplet
 
     auto rv = std::make_unique<mplot::RhomboVisual<>> (offset, e1, e2, e3, colour1);
-    v.bindmodel (rv);
+    rv->set_parent (v.get_id());
     rv->name = "Cube.002";
     rv->facecm = mplot::ColourMapType::Rainbow; // Try Rainbow, Batlow, Tofino
     rv->annotate = true;

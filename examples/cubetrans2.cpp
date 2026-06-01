@@ -1,14 +1,15 @@
 // Draw a cube with RhomboVisual and then make up vectors to transform with sm::mat<>s
 
+#include <memory>
 #include <iostream>
 
-#include <sm/vec>
-#include <sm/mat>
-#include <mplot/compoundray/Visual.h>
-#include <mplot/RhomboVisual.h>
-#include <mplot/VectorVisual.h>
-#include <mplot/SphereVisual.h>
-#include <mplot/CoordArrows.h>
+import sm.mat;
+
+import mplot.compoundray.visual;
+import mplot.rhombovisual;
+import mplot.vectorvisual;
+import mplot.spherevisual;
+import mplot.coordarrows;
 
 int main()
 {
@@ -28,7 +29,7 @@ int main()
     sm::vec<float, 3> colour1 = { 0.35,  0.76,  0.98 };  // RGB colour triplet
 
     auto rv = std::make_unique<mplot::RhomboVisual<>> (offset, e1, e2, e3, colour1);
-    v.bindmodel (rv);
+    rv->set_parent (v.get_id());
     rv->raise_corner = true;
     rv->name = "Cube.002";
     rv->facecm = mplot::ColourMapType::Rainbow; // Try Rainbow, Batlow, Tofino
@@ -68,12 +69,12 @@ int main()
     sm::vec<> d_l1_e = d_l1_e_e - d_l1_e_s;
 
     auto sv = std::make_unique<mplot::SphereVisual<>>(l1_s, 0.005, mplot::colour::magenta);
-    v.bindmodel (sv);
+    sv->set_parent (v.get_id());
     sv->finalize();
     v.addVisualModel (sv);
 
     auto vvm = std::make_unique<mplot::VectorVisual<float, 3>>(l1_s);
-    v.bindmodel (vvm);
+    vvm->set_parent (v.get_id());
     vvm->thevec = d_l1_s;
     vvm->vgoes = mplot::VectorGoes::FromOrigin;
     vvm->thickness *= 0.02;
@@ -83,12 +84,12 @@ int main()
     v.addVisualModel (vvm);
 
     sv = std::make_unique<mplot::SphereVisual<>>(l1_e, 0.02, mplot::colour::goldenrod3);
-    v.bindmodel (sv);
+    sv->set_parent (v.get_id());
     sv->finalize();
     v.addVisualModel (sv);
 
     vvm = std::make_unique<mplot::VectorVisual<float, 3>>(l1_e);
-    v.bindmodel (vvm);
+    vvm->set_parent (v.get_id());
     vvm->thevec = d_l1_e;
     vvm->vgoes = mplot::VectorGoes::FromOrigin;
     vvm->thickness *= 0.02;
@@ -107,7 +108,7 @@ int main()
     sm::vec<mplot::CoordArrows<>*, 4> ptrs;
     for (int i = 0; i < 4; ++i) {
         auto cavm = std::make_unique<mplot::CoordArrows<>> (ca1);
-        v.bindmodel (cavm);
+        cavm->set_parent (v.get_id());
         cavm->init (sm::vec<>::ux(), sm::vec<>::uy(), sm::vec<>::uz());
         cavm->lengths = sm::vec<>{.04,.04,.04} * (1+i);
         cavm->thickness = 0.5f;
@@ -154,12 +155,12 @@ int main()
     std::cout << "cam frame 1 viewmatrix:\n" << ptrs[1]->getViewMatrix() << std::endl;
 
     sv = std::make_unique<mplot::SphereVisual<>>(l1_e, 0.01, mplot::colour::mediumpurple1);
-    v.bindmodel (sv);
+    sv->set_parent (v.get_id());
     sv->finalize();
     v.addVisualModel (sv);
 
     vvm = std::make_unique<mplot::VectorVisual<float, 3>>(sm::vec<>{1, 1.2, 0});
-    v.bindmodel (vvm);
+    vvm->set_parent (v.get_id());
     vvm->thevec = n2/5.0f;
     vvm->vgoes = mplot::VectorGoes::FromOrigin;
     vvm->thickness *= 0.02;
@@ -168,7 +169,7 @@ int main()
     vvm->finalize();
     v.addVisualModel (vvm);
     vvm = std::make_unique<mplot::VectorVisual<float, 3>>(sm::vec<>{1, 1, 1});
-    v.bindmodel (vvm);
+    vvm->set_parent (v.get_id());
     vvm->thevec = n2/5.0f;
     vvm->vgoes = mplot::VectorGoes::FromOrigin;
     vvm->thickness *= 0.02;
@@ -178,7 +179,7 @@ int main()
     v.addVisualModel (vvm);
 
     vvm = std::make_unique<mplot::VectorVisual<float, 3>>(sm::vec<>{0, 1, 1});
-    v.bindmodel (vvm);
+    vvm->set_parent (v.get_id());
     vvm->thevec = n1/5.0f;
     vvm->vgoes = mplot::VectorGoes::FromOrigin;
     vvm->thickness *= 0.02;
@@ -187,7 +188,7 @@ int main()
     vvm->finalize();
     v.addVisualModel (vvm);
     vvm = std::make_unique<mplot::VectorVisual<float, 3>>(sm::vec<>{0, 1, 0});
-    v.bindmodel (vvm);
+    vvm->set_parent (v.get_id());
     vvm->thevec = n1/5.0f;
     vvm->vgoes = mplot::VectorGoes::FromOrigin;
     vvm->thickness *= 0.02;

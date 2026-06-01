@@ -1,6 +1,7 @@
-#include <sm/vec>
-#include <mplot/Visual.h>
-#include <mplot/RhomboVisual.h>
+#include <memory>
+
+import mplot.visual;
+import mplot.rhombovisual;
 
 int main()
 {
@@ -20,13 +21,13 @@ int main()
     sm::vec<float, 3> colour1 = { 0.35,  0.76,  0.98 };  // RGB colour triplet
 
     auto rv = std::make_unique<mplot::RhomboVisual<>> (offset, e1, e2, e3, colour1);
-    v.bindmodel (rv);
+    rv->set_parent (v.get_id());
     rv->finalize();
     v.addVisualModel (rv);
 #if 0
     offset = { 0,  0.25,  0 };
     rv = std::make_unique<mplot::RhomboVisual<>> (offset, e1, e2, e3, mplot::colour::crimson);
-    v.bindmodel (rv);
+    rv->set_parent (v.get_id());
     rv->finalize();
     v.addVisualModel (rv);
 #endif

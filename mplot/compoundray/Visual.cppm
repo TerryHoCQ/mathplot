@@ -6,12 +6,18 @@
  * \author Seb James
  * \date July 2024
  */
+module;
 
 #include <fstream>
 #include <string>
-#include <mplot/Visual.h>
+#include <stdexcept>
+#include <cstdlib>
 
-namespace mplot::compoundray
+export module mplot.compoundray.visual;
+
+export import mplot.visual;
+
+export namespace mplot::compoundray
 {
     template <int glver = mplot::gl::version_4_1>
     struct Visual : public mplot::Visual<glver>

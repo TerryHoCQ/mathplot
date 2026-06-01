@@ -1078,36 +1078,73 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(voronoi_fixed_nearlyz OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
-endif()
-
-if (0) # During development
-
   add_executable(rectangle rectangle.cpp)
+  target_sources(rectangle PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_HEXGRID_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/RectangleVisual.cppm
+  )
   target_link_libraries(rectangle OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(rhombo rhombo.cpp)
+  target_sources(rhombo PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_HEXGRID_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/RhomboVisual.cppm
+  )
   target_link_libraries(rhombo OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(rhombo_scene rhombo_scene.cpp)
+  target_sources(rhombo_scene PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_HEXGRID_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/RhomboVisual.cppm
+  )
   target_link_libraries(rhombo_scene OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
+  # This one requires a modular mplot::compoundray::Visual class (FIXME)
   add_executable(rhombo_scene2 rhombo_scene2.cpp)
+  target_sources(rhombo_scene2 PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_HEXGRID_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/compoundray/Visual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/RhomboVisual.cppm
+  )
   target_link_libraries(rhombo_scene2 OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(cube cube.cpp)
+  target_sources(cube PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_HEXGRID_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/compoundray/Visual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/RhomboVisual.cppm
+  )
   target_link_libraries(cube OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   # Eigen finding is not reliable on Github Mac OS runners
   if(NOT APPLE)
     if(Eigen3_FOUND)
       add_executable(cubetrans cubetrans.cpp)
+      target_sources(cubetrans PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+        FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_HEXGRID_MODULES}
+        ${PROJECT_SOURCE_DIR}/mplot/compoundray/Visual.cppm
+        ${PROJECT_SOURCE_DIR}/mplot/RhomboVisual.cppm
+        ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.cppm
+        ${PROJECT_SOURCE_DIR}/mplot/SphereVisual.cppm
+      )
       target_include_directories (cubetrans BEFORE PRIVATE ${EIGEN3_INCLUDE_DIR})
       target_link_libraries(cubetrans OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
     endif(Eigen3_FOUND)
   endif()
 
   add_executable(cubetrans2 cubetrans2.cpp)
+  target_sources(cubetrans2 PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES} ${MPLOT_MATHS_HEXGRID_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/compoundray/Visual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/RhomboVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/VectorVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/SphereVisual.cppm
+  )
   target_link_libraries(cubetrans2 OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+endif()
+
+if (0) # During development
 
   add_executable(randvec randvec.cpp)
   target_link_libraries(randvec OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)

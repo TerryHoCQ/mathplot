@@ -1,16 +1,16 @@
 // Draw a cube with RhomboVisual and then make up vectors to transform with mat44s
 
-#include <iostream>
-
-#include <sm/vec>
-#include <sm/mat>
-#include <mplot/compoundray/Visual.h>
-#include <mplot/RhomboVisual.h>
-#include <mplot/VectorVisual.h>
-#include <mplot/SphereVisual.h>
+#include <memory>
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
+
+import sm.mat;
+
+import mplot.compoundray.visual;
+import mplot.rhombovisual;
+import mplot.vectorvisual;
+import mplot.spherevisual;
 
 int main()
 {
@@ -30,7 +30,7 @@ int main()
     sm::vec<float, 3> colour1 = { 0.35,  0.76,  0.98 };  // RGB colour triplet
 
     auto rv = std::make_unique<mplot::RhomboVisual<>> (offset, e1, e2, e3, colour1);
-    v.bindmodel (rv);
+    rv->set_parent (v.get_id());
     rv->name = "Cube.002";
     rv->facecm = mplot::ColourMapType::Rainbow; // Try Rainbow, Batlow, Tofino
     rv->annotate = true;
@@ -136,12 +136,12 @@ int main()
 
 
     auto sv = std::make_unique<mplot::SphereVisual<>>(l1, 0.005, mplot::colour::magenta);
-    v.bindmodel (sv);
+    sv->set_parent (v.get_id());
     sv->finalize();
     v.addVisualModel (sv);
 
     auto vvm = std::make_unique<mplot::VectorVisual<float, 3>>(l1);
-    v.bindmodel (vvm);
+    vvm->set_parent (v.get_id());
     vvm->thevec = d1;
     vvm->vgoes = mplot::VectorGoes::FromOrigin;
     vvm->thickness *= 0.02;
@@ -151,12 +151,12 @@ int main()
     v.addVisualModel (vvm);
 
     sv = std::make_unique<mplot::SphereVisual<>>(l2, 0.02, mplot::colour::goldenrod3);
-    v.bindmodel (sv);
+    sv->set_parent (v.get_id());
     sv->finalize();
     v.addVisualModel (sv);
 
     vvm = std::make_unique<mplot::VectorVisual<float, 3>>(l2);
-    v.bindmodel (vvm);
+    vvm->set_parent (v.get_id());
     vvm->thevec = d2;
     vvm->vgoes = mplot::VectorGoes::FromOrigin;
     vvm->thickness *= 0.02;
@@ -166,12 +166,12 @@ int main()
     v.addVisualModel (vvm);
 
     sv = std::make_unique<mplot::SphereVisual<>>(eig_l2, 0.01, mplot::colour::mediumpurple1);
-    v.bindmodel (sv);
+    sv->set_parent (v.get_id());
     sv->finalize();
     v.addVisualModel (sv);
 
     vvm = std::make_unique<mplot::VectorVisual<float, 3>>(eig_l2);
-    v.bindmodel (vvm);
+    vvm->set_parent (v.get_id());
     vvm->thevec = eig_d2;
     vvm->vgoes = mplot::VectorGoes::FromOrigin;
     vvm->thickness *= 0.02;
