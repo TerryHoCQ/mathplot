@@ -3,9 +3,9 @@ uniform mat4 m_matrix;
 uniform mat4 v_matrix;
 uniform mat4 p_matrix;
 uniform float alpha;
-uniform int instance_count = 0;
-uniform int instance_start = -1;
-uniform int instparam_count = 0;
+uniform int instance_count;
+uniform int instance_start;
+uniform int instparam_count;
 layout(location = 0) in vec4 position;
 layout(location = 1) in vec4 normalin;
 layout(location = 2) in vec3 color;
@@ -21,7 +21,11 @@ void main()
 {
     if (instance_count > 0) {
         int ipos_i = instance_start * 3 + gl_InstanceID * 3;
-        vec4 iposv = { ipos[ipos_i], ipos[ipos_i + 1], ipos[ipos_i + 2], 0 };
+        vec4 iposv;
+        iposv[0] = ipos[ipos_i];
+        iposv[1] = ipos[ipos_i + 1];
+        iposv[2] = ipos[ipos_i + 2];
+        iposv[3] = 0.0;
         if (instparam_count > 0) {
             int idx = gl_InstanceID % instparam_count;
             int ippos_i = instance_start * 5;
