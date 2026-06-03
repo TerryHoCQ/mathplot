@@ -541,6 +541,8 @@ if(BUILD_EXAMPLES_EXTRA)
     ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
     ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
     ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+    ${PROJECT_SOURCE_DIR}/json/src/modules/json.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/config.cppm
   )
   target_link_libraries(graph_logist2 OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 

@@ -1,8 +1,10 @@
 // Graph the logistic function
-#include <sm/vvec>
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
-#include <mplot/unicode.h>
+
+#include <memory>
+#include <sstream>
+
+import mplot.visual;
+import mplot.graphvisual;
 
 // Make an equation string for the legend
 std::string make_legend_str (double k, double x0)
@@ -33,8 +35,9 @@ int main()
     // Set up a mplot::Visual 'scene environment'.
     mplot::Visual v(1024, 768, "Logistic functions");
     // Create a GraphVisual object (obtaining a unique_ptr to the object) with a spatial offset within the scene of 0,0,0
-    auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>({-0.5f,-0.5f,0.0f}));
-    v.bindmodel (gv);
+    auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>{-0.5f,-0.5f,0.0f});
+    gv->set_parent (v.get_id());
+
     // Data for the x axis. A vvec is like std::vector, but with built-in maths methods
     sm::vvec<double> x;
     // This works like numpy's linspace() (the 3 args are "start", "end" and "num"):
