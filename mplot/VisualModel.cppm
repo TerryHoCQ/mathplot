@@ -739,11 +739,14 @@ export namespace mplot
 
             if (!this->indices.empty()) {
 
-                // Enable/disable wireframe mode per-model on each render call
-                if (this->flags.test (vm_bools::wireframe)) {
-                    glfn->PolygonMode (GL_FRONT_AND_BACK, GL_LINE);
-                } else {
-                    glfn->PolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+                // glPolygonMode is OpenGL only and not supported on GL ES
+                if constexpr (mplot::gl::version::gles (glver) == false) {
+                    // Enable/disable wireframe mode per-model on each render call
+                    if (this->flags.test (vm_bools::wireframe)) {
+                        glfn->PolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+                    } else {
+                        glfn->PolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+                    }
                 }
 
                 // It is only necessary to bind the vertex array object before rendering
@@ -805,7 +808,9 @@ export namespace mplot
             mplot::gl::Util::checkError (__FILE__, __LINE__, glfn);
 
             // Now render any VisualTextModels
-            glfn->PolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+            if constexpr (mplot::gl::version::gles (glver) == false) {
+                glfn->PolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+            }
             auto ti = this->texts.begin();
             while (ti != this->texts.end()) { (*ti)->render(); ti++; }
 
@@ -1229,7 +1234,10 @@ export namespace mplot
         void twodimensional (const bool val) { this->flags.set (vm_bools::twodimensional, val); }
         bool twodimensional() const { return this->flags.test (vm_bools::twodimensional); }
 
+        // Wireframe rendering is not aviailable on GL ES
+        template<bool gles=false> requires (mplot::gl::version::gles (glver) == false)
         void wireframe (const bool val) { this->flags.set (vm_bools::wireframe, val); }
+        template<bool gles=false> requires (mplot::gl::version::gles (glver) == false)
         bool wireframe() const { return this->flags.test (vm_bools::wireframe); }
 
         void greyscale (const bool val) { this->flags.set (vm_bools::greyscale, val); }
