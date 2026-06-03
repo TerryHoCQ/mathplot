@@ -300,11 +300,14 @@ namespace mplot
 
             if (!this->indices.empty()) {
 
-                // Enable/disable wireframe mode per-model on each render call
-                if (this->flags.test (vm_bools::wireframe)) {
-                    _glfn->PolygonMode (GL_FRONT_AND_BACK, GL_LINE);
-                } else {
-                    _glfn->PolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+                // glPolygonMode is OpenGL only and not support on GL ES
+                if constexpr (mplot::gl::version::gles (glver) == false) {
+                    // Enable/disable wireframe mode per-model on each render call
+                    if (this->flags.test (vm_bools::wireframe)) {
+                        _glfn->PolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+                    } else {
+                        _glfn->PolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+                    }
                 }
 
                 // It is only necessary to bind the vertex array object before rendering
@@ -360,7 +363,9 @@ namespace mplot
             mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
 
             // Now render any VisualTextModels
-            _glfn->PolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+            if constexpr (mplot::gl::version::gles (glver) == false) {
+                _glfn->PolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+            }
             auto ti = this->texts.begin();
             while (ti != this->texts.end()) { (*ti)->render(); ti++; }
 
