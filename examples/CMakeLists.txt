@@ -546,6 +546,17 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(graph_logist2 OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
+  add_executable(graph_randomwalk graph_randomwalk.cpp)
+  target_sources(graph_randomwalk PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/spline.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/random_walk.cppm
+  )
+  target_link_libraries(graph_randomwalk OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
   add_executable(linregr linregr.cpp)
   target_sources(linregr PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
     FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
