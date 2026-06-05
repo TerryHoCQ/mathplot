@@ -10,6 +10,8 @@ module;
 #include <string>
 #include <fstream>
 #include <cmath>
+#include <map>
+#include <set>
 
 export module mplot.compoundray.eyevisual;
 
@@ -522,6 +524,14 @@ export namespace mplot::compoundray
                 while (e) {
                     flat_triangles.push_back (site->p.as<float>());
                     flat_triangles.push_back (e->pos[0].as<float>());
+                    if (this->record_neighbour_indices == true) {
+                        if (e->neighbor != nullptr) {
+                            // site site->index has edge with neighbour e->neighbor->index.
+                            // We insert neighbour site index (e->neighbor->index + this->projections[pri].start_i)
+                            // into omm_neighbours[site->index + this->projections[pri].start_i]
+                            this->omm_neighbours[site->index + this->projections[pri].start_i].insert (e->neighbor->index + this->projections[pri].start_i);
+                        }
+                    }
                     flat_triangles.push_back (e->pos[1].as<float>());
                     flat_colours.push_back (colour);
                     ++site_triangles;
@@ -540,6 +550,8 @@ export namespace mplot::compoundray
             }
         }
 
+        // If true record the neighbour indices from a 2D Voronoi projection of the eye in omm_neighbours
+        bool record_neighbour_indices = false;
         // If false, hide 3D representation (the ommatidial cones and discs)
         bool show_3d = true;
         // If true, show optical cones, if possible
@@ -553,6 +565,9 @@ export namespace mplot::compoundray
         std::vector<std::array<float, 3>>* ommData = nullptr;
         // The position and orientation of each ommatidium
         std::vector<mplot::compoundray::Ommatidium>* ommatidia = nullptr;
+        // This map is indexed with site index. The values are sets of the neighbour indices. Only
+        // populated if there is a 2D projection (with a Voronoi triangulation)
+        std::map<std::uint32_t, std::set<std::uint32_t>> omm_neighbours;
         // Distances to the nearest ommatidia, for choosing disc size. Computed once only
         sm::vvec<float> min_dist_to_other = {};
         // An optional head mesh
