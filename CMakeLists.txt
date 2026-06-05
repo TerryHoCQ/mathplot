@@ -227,6 +227,9 @@ if(BUILD_UTILS)
   add_subdirectory(buildtools)
 endif(BUILD_UTILS)
 
+# Partial cleanup of precompiled module files
+option(SAVE_PCM "Save all precompiled modules files (pcm/gcm) after building each target (they are cleaned by default, which saves storage in your build directory, but means every call to ninja WILL require actual compiling)" OFF)
+
 # Install the font files for program that need to to work with an
 # *installed* mathplot, as opposed to an in-tree mathplot.
 add_subdirectory(fonts)
