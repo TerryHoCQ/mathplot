@@ -3,14 +3,12 @@
  * equations as published in Izhikevich, Simple Model of Spiking Neurons, IEEE Transactions on
  * Neural Networks, Vol. 14. No. 6, 2003.
  */
+#include <memory>
+#include <string>
 
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/range>
-#include <sm/grid>
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
-#include <sm/config>
+import sm.config;
+import mplot.visual;
+import mplot.graphvisual;
 
 // A simple Izhikevich neuron model class
 struct izhi
@@ -92,19 +90,19 @@ int main()
     sm::config config(jsonfile);
     if (config.ready) {
         // Parameters
-        iz.a = config.getFloat ("a", iz.a);
-        iz.b = config.getFloat ("b", iz.b);
-        iz.c = config.getFloat ("c", iz.c);
-        iz.d = config.getFloat ("d", iz.d);
-        iz.A = config.getFloat ("A", iz.A);
-        iz.B = config.getFloat ("B", iz.B);
-        iz.C = config.getFloat ("C", iz.C);
-        iz.T = config.getFloat ("T", iz.C);
-        iz.SI = config.getFloat ("SI", iz.SI);
-        iz.vpeak = config.getFloat ("vpeak", iz.vpeak);
+        iz.a = config.get<float> ("a", iz.a);
+        iz.b = config.get<float> ("b", iz.b);
+        iz.c = config.get<float> ("c", iz.c);
+        iz.d = config.get<float> ("d", iz.d);
+        iz.A = config.get<float> ("A", iz.A);
+        iz.B = config.get<float> ("B", iz.B);
+        iz.C = config.get<float> ("C", iz.C);
+        iz.T = config.get<float> ("T", iz.C);
+        iz.SI = config.get<float> ("SI", iz.SI);
+        iz.vpeak = config.get<float> ("vpeak", iz.vpeak);
         // Initial values of state vars
-        iz.u = config.getFloat ("u0", iz.u);
-        iz.v = config.getFloat ("v0", iz.v);
+        iz.u = config.get<float> ("u0", iz.u);
+        iz.v = config.get<float> ("v0", iz.v);
     }
 
     // Run sim
@@ -168,7 +166,7 @@ int main()
 
     // Graph membrane voltage vs. time
     auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({-0.5,-0.5,0}));
-    vis.bindmodel (gv);
+    gv->set_parent (vis.get_id());
     gv->twodimensional (twodee);
     gv->setsize (1,0.8);
     gv->xlabel = "t";
@@ -180,7 +178,7 @@ int main()
 
     // Graph u(t)
     auto gu = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({-0.5,0.6,0}));
-    vis.bindmodel (gu);
+    gu->set_parent (vis.get_id());
     gu->twodimensional (twodee);
     gu->setsize (1,0.5);
     gu->xlabel = "t";
@@ -194,7 +192,7 @@ int main()
     // Graph nullclines, u vs v and vector field
     ds.showlines = false;
     auto gp = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({0.9,-0.5,0}));
-    vis.bindmodel (gp);
+    gp->set_parent (vis.get_id());
     gp->twodimensional (twodee);
     gp->setsize (1.6,1.6);
 
@@ -226,7 +224,7 @@ int main()
     ds.quiver_gain = { 0.01f, 0.1f, 1.0f };
     // ...and then if the lengths should be log-scaled, call quiver_setlog()
     gp->quiver_setlog();
-    ds.quiver_colourmap.setType (mplot::ColourMapType::Batlow);
+    ds.colourmap.setType (mplot::ColourMapType::Batlow);
     ds.quiver_conewidth = 1.8f;
     ds.quiver_arrowhead_prop = 0.35f;
     ds.quiver_thickness_gain = 1.5f;

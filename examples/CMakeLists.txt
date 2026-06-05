@@ -1228,15 +1228,31 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(vvec_smoothgauss OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
+  my_add_executable(quit_callback quit_callback.cpp)
+  target_sources(quit_callback PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(quit_callback OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  my_add_executable(izhikevich izhikevich.cpp)
+  target_sources(izhikevich PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+    ${PROJECT_SOURCE_DIR}/json/src/modules/json.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/config.cppm
+  )
+  target_link_libraries(izhikevich OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+  
 endif()
 
 if (0) # During development
 
-  my_add_executable(quit_callback quit_callback.cpp)
-  target_link_libraries(quit_callback OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
-  my_add_executable(izhikevich izhikevich.cpp)
-  target_link_libraries(izhikevich OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   my_add_executable(izhikevich_alt izhikevich_alt.cpp)
   target_link_libraries(izhikevich_alt OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
