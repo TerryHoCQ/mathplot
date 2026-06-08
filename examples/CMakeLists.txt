@@ -1247,7 +1247,14 @@ if(BUILD_EXAMPLES_EXTRA)
     ${PROJECT_SOURCE_DIR}/maths/sm/config.cppm
   )
   target_link_libraries(izhikevich OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-  
+
+  my_add_executable(bools bools.cpp)
+  target_sources(bools PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/BoolVisual.cppm
+  )
+  target_link_libraries(bools OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
 endif()
 
 if (0) # During development
