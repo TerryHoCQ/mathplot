@@ -1172,7 +1172,13 @@ export namespace mplot
                                 const sm::vvec<float>& alpha, const sm::vvec<float>& scale)
         {
             if (position.size() < 1) {
-                throw std::runtime_error ("set_instance_data: pass some instance positions in");
+                // Clear data
+                mplot::VisualResources<glver>::i().clear_instance_data();
+                mplot::VisualResources<glver>::i().clear_instparam_data();
+                mplot::VisualResources<glver>::i().instanced_needs_update (this->parentVis);
+                this->instance_count = 0;
+                this->instparam_count = 0;
+                return;
             }
             if (position.size() > this->max_instances) {
                 std::string ee1 = "set_instance_data: Haven't reserved enough space for that. position.size() = ";

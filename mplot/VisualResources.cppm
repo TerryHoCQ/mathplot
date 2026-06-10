@@ -319,6 +319,21 @@ export namespace mplot
             this->instparam_data.data[cur_fidx++] = scale;
         }
 
+        void clear_instance_data (const unsigned int instance_idx)
+        {
+            if (instance_idx >= this->max_instances) {
+                throw std::runtime_error ("clear_instance_data: bad instance_idx");
+            }
+            // Write zeros?
+        }
+
+        void clear_instparam_data (const unsigned int instance_idx)
+        {
+            if (instance_idx >= this->max_instances) {
+                throw std::runtime_error ("clear_instparam_data: bad instance_idx");
+            }
+        }
+
         void copy_instance_ssbo_to_gpu()
         {
             if (this->instance_data.ready()) { this->instance_data.copy_to_gpu(); }
