@@ -201,8 +201,10 @@ export namespace mplot
             return false;
         }
 
-        // A VisualModel can call this, passing in the numeric ID of the context it belongs to and
-        // this will pass back the correct GL context pointer.
+        /*!
+         * A VisualModel can call this method, passing in the numeric ID of the context it belongs
+         * to. The return value will be the correct GL context pointer.
+         */
         GladGLContext* get_glfn (const uint32_t visual_id) noexcept
         {
             if (visual_id == std::numeric_limits<uint32_t>::max()) { return nullptr; }
@@ -293,6 +295,10 @@ export namespace mplot
             return reservation;
         }
 
+        /*!
+         * Inserts the 3 values from coord into the SSBO instance buffer, starting at location
+         * instance_idx
+         */
         void insert_instance_data (const unsigned int instance_idx, const sm::vec<float, 3>& coord)
         {
             // If this function fails, make sure to call v.render before calling set_instance_data :)
@@ -305,6 +311,10 @@ export namespace mplot
             this->instance_data.data[cur_fidx++] = coord[2];
         }
 
+        /*!
+         * Inserts the 3 values from colour, along with alpha and scale into the SSBO instparam
+         * buffer, starting at location instance_idx
+         */
         void insert_instparam_data (const unsigned int instance_idx,
                                     const std::array<float, 3>& colour, const float& alpha, const float& scale)
         {
@@ -317,21 +327,6 @@ export namespace mplot
             this->instparam_data.data[cur_fidx++] = colour[2];
             this->instparam_data.data[cur_fidx++] = alpha;
             this->instparam_data.data[cur_fidx++] = scale;
-        }
-
-        void clear_instance_data (const unsigned int instance_idx)
-        {
-            if (instance_idx >= this->max_instances) {
-                throw std::runtime_error ("clear_instance_data: bad instance_idx");
-            }
-            // Write zeros?
-        }
-
-        void clear_instparam_data (const unsigned int instance_idx)
-        {
-            if (instance_idx >= this->max_instances) {
-                throw std::runtime_error ("clear_instparam_data: bad instance_idx");
-            }
         }
 
         void copy_instance_ssbo_to_gpu()
@@ -352,10 +347,12 @@ export namespace mplot
         //! Instance params are: colour/alpha (4 floats), scale (1 float)
         static constexpr unsigned int floats_per_instparam = 5;
 
-        //! This will control how much GPU RAM is allocated when using instanced rendering
-        //! (Hopefully, when I'm finished, the RAM will be allocated only if at least one
-        //! VisualModel is marked 'instanced'). Makes a big difference to speed of operation (unless
-        //! I can send a portion of a buffer to the GPU).
+        /*!
+         * This will control how much GPU RAM is allocated when using instanced rendering
+         * (Hopefully, when I'm finished, the RAM will be allocated only if at least one VisualModel
+         * is marked 'instanced'). Makes a big difference to speed of operation (unless I can send a
+         * portion of a buffer to the GPU).
+         */
         static constexpr unsigned int max_instances = 32 * 1024;
         static constexpr unsigned int max_instance_floats = floats_per_instance * max_instances;
         static constexpr unsigned int max_instparam_floats = floats_per_instparam * max_instances;
