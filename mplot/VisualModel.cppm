@@ -1173,11 +1173,14 @@ export namespace mplot
         {
             if (position.size() < 1) {
                 // Clear data
-                mplot::VisualResources<glver>::i().clear_instance_data();
-                mplot::VisualResources<glver>::i().clear_instparam_data();
+#if 0
+                constexpr unsigned int dummy = 0;
+                mplot::VisualResources<glver>::i().clear_instance_data(dummy);
+                mplot::VisualResources<glver>::i().clear_instparam_data(dummy);
                 mplot::VisualResources<glver>::i().instanced_needs_update (this->parentVis);
                 this->instance_count = 0;
                 this->instparam_count = 0;
+#endif
                 return;
             }
             if (position.size() > this->max_instances) {
