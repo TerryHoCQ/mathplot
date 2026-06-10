@@ -180,6 +180,17 @@ export namespace mplot::compoundray
 
         // 2D positions for the ommatidia centres encoded in 3D vecs. Gets re-used for each projection
         sm::vvec<sm::vec<double, 3>> omm2d;
+        // But turns out I want to save these
+        sm::vvec<sm::vvec<sm::vec<double, 3>>> omm2d_all;
+
+        sm::vvec<sm::vec<double, 3>> get_projection (std::uint32_t pri)
+        {
+            if (pri < omm2d_all.size()) {
+                return omm2d_all[pri];
+            } else {
+                return {};
+            }
+        }
 
         /*
          * Possibly each of these need replication for each of multiple 2d projections
@@ -415,6 +426,8 @@ export namespace mplot::compoundray
                     }
                     // Make 2D Voronoi of omm2d.
                     this->voronoi2d (pri);
+                    this->omm2d_all.push_back (omm2d);
+                    std::cout << "Pushback omm2d, now have " << this->omm2d_all.size() << " in omm2d_all\n";
                 }
             }
 
