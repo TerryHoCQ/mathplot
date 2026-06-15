@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <string>
+#include <format>
 
 import mplot.visual;
 import mplot.geodesicvisual;
@@ -27,14 +28,14 @@ int main()
         auto gv1 = std::make_unique<mplot::GeodesicVisual<float>> (offset + step * i, 0.9f);
         gv1->set_parent (v.get_id());
         gv1->iterations = i;
-        std::string lbl = std::string("iterations = ") + std::to_string(i);
-        gv1->addLabel (lbl, {0, -1, 0}, mplot::TextFeatures(0.06f));
         gv1->cm.setType (mplot::ColourMapType::Jet);
         gv1->colour_bb = cl;
         gv1->finalize();
 
         // re-colour after construction
         auto gv1p = v.addVisualModel (gv1);
+        gv1p->addLabel (std::format ("iteration = {} ({} faces, {} vertices)", i, gv1p->n_faces, gv1p->n_geo_verts),
+                        {0, -1, 0}, mplot::TextFeatures(0.06f));
         float imax_mult = 1.0f / static_cast<float>(imax);
         // sequential colouring:
         size_t sz1 = gv1p->data.size();
