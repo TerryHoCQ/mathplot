@@ -56,7 +56,8 @@ export namespace mplot
 
             sm::geometry::icosahedral_geodesic_info gi(this->iterations);
             this->n_faces = gi.n_faces;
-            this->n_verts = gi.n_vertices;
+            this->n_geo_verts = gi.n_vertices;
+            this->n_verts = n_geo_verts; // n_verts is OpenGL vertices. May be different from n_geo_verts to colour the Geodesic faces.
 
             if (this->colourFaces == true) {
                 // Resize our data.
@@ -193,7 +194,11 @@ export namespace mplot
         sm::scale<T, float> colourScale;
         //! The number of iterations in the geodesic sphere. Set before finalize() to change from the default.
         int iterations = 2;
-        //! This may be filled with the number of vertices in the geodesic
+        //! This may be filled with the number of vertices in the geodesic shape. This is the
+        //! 'maths' number of vertices.
+        int n_geo_verts = 0;
+        //! This may be filled with the number of OpenGL vertices used to construct the
+        //! geodesic. The OpenGL number of vertices >= n_geo_verts.
         int n_verts = 0;
         //! This may be filled with the number of faces in the geodesic
         int n_faces = 0;
