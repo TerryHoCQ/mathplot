@@ -77,7 +77,7 @@ int main()
     for (std::size_t i = 0; i < hg.num(); ++i) {
         banana_vals[i] = banana<FLT> (hg.d_x[i], hg.d_y[i]);
     }
-    sm::range<FLT> mm = sm::range<FLT>::get_from (banana_vals);
+    sm::interval<FLT> mm = sm::interval<FLT>::get_from (banana_vals);
     std::cout << "Banana surface range: " << mm << std::endl;
     auto hgv = std::make_unique<mplot::HexGridVisual<FLT>>(&hg, _offset);
     hgv->set_parent (v.get_id());

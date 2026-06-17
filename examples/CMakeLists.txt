@@ -983,7 +983,7 @@ if(BUILD_EXAMPLES_EXTRA)
     ${PROJECT_SOURCE_DIR}/maths/sm/polysolve.cppm
     ${PROJECT_SOURCE_DIR}/maths/sm/trait_tests.cppm
     ${PROJECT_SOURCE_DIR}/maths/sm/random.cppm
-    ${PROJECT_SOURCE_DIR}/maths/sm/range.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/interval.cppm
     ${PROJECT_SOURCE_DIR}/maths/sm/vec.cppm
     ${PROJECT_SOURCE_DIR}/maths/sm/vvec.cppm
     ${PROJECT_SOURCE_DIR}/maths/sm/algo.cppm

@@ -23,7 +23,7 @@ module;
 export module mplot.graphing;
 
 import sm.constexpr_math;
-import sm.range;
+import sm.interval;
 import sm.algo;
 import sm.vvec;
 
@@ -34,9 +34,9 @@ export namespace mplot::graphing
     template <typename F>
     std::string number_format (const F num, const F adjacent_num)
     {
-        sm::range<int> num_sigcols = sm::algo::significant_cols<F> (num);
+        sm::interval<int> num_sigcols = sm::algo::significant_cols<F> (num);
         F num_diff = std::abs (num - adjacent_num);
-        sm::range<int> diff_sigcols = sm::algo::significant_cols<F> (num_diff);
+        sm::interval<int> diff_sigcols = sm::algo::significant_cols<F> (num_diff);
 
         // Whats the num_diff maxcol? is it 9.5 plus? In which case it would round up
         if (num_diff * sm::cem::pow (F{10}, -diff_sigcols.max) >= F{9.5}) { diff_sigcols.max += 1; }
@@ -92,7 +92,7 @@ export namespace mplot::graphing
      * rmax. realmin and realmax gives the data range actually displayed on the graph - it's the
      * data range, plus any padding introduced by GraphVisual::dataaxisdist
      *
-     * This overload accepts a sm::range for the preferred number of ticks.
+     * This overload accepts a sm::interval for the preferred number of ticks.
      *
      * The bool arg allows the client code to either accept that _num_ticks_range is
      * guidance OR to *force* the number of ticks to be in the range, even if it
@@ -100,7 +100,7 @@ export namespace mplot::graphing
      * of maketicks.
      */
     template <typename F>
-    std::deque<F> maketicks (F rmin, F rmax, float realmin, float realmax, const sm::range<F>& _num_ticks_range)
+    std::deque<F> maketicks (F rmin, F rmax, float realmin, float realmax, const sm::interval<F>& _num_ticks_range)
     {
         std::deque<F> ticks = {};
 
@@ -196,7 +196,7 @@ export namespace mplot::graphing
     template <typename F>
     std::deque<F> maketicks (F rmin, F rmax, float realmin, float realmax, const F _min_num_ticks = 3, const F _max_num_ticks = 10)
     {
-        sm::range<F> _num_ticks_range(_min_num_ticks, _max_num_ticks);
+        sm::interval<F> _num_ticks_range(_min_num_ticks, _max_num_ticks);
         return mplot::graphing::maketicks<F> (rmin, rmax, realmin, realmax, _num_ticks_range);
     }
 
@@ -206,7 +206,7 @@ export namespace mplot::graphing
     template <typename F>
     std::deque<F> maketicks (F rmin, F rmax, float realmin, float realmax, const F num_ticks)
     {
-        sm::range<F> _num_ticks_range(num_ticks, num_ticks);
+        sm::interval<F> _num_ticks_range(num_ticks, num_ticks);
         return mplot::graphing::maketicks<F> (rmin, rmax, realmin, realmax, _num_ticks_range);
     }
 

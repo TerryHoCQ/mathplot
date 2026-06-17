@@ -18,7 +18,7 @@ export module mplot.compoundray.eyevisual;
 export import sm.mathconst;
 export import sm.vec;
 import sm.mat;
-import sm.range;
+import sm.interval;
 import sm.geometry;
 import sm.centroid;
 import jc.voronoi;
@@ -289,7 +289,7 @@ export namespace mplot::compoundray
             size_t n_omm = ommData->size();
 
             // Determine eye dimensions
-            sm::range<sm::vec<float, 3>> ommrng = sm::range<sm::vec<float, 3>>::search_initialized();
+            sm::interval<sm::vec<float, 3>> ommrng = sm::interval<sm::vec<float, 3>>::search_initialized();
             for (size_t i = 0u; i < n_omm; ++i) { ommrng.update ((*ommatidia)[i].relativePosition); }
             float ray_radius = ommrng.span().max() / 500.0f;
 

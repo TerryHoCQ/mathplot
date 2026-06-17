@@ -42,7 +42,7 @@ export import sm.quaternion;
 export import sm.mat;
 export import sm.vec;
 export import sm.vvec;
-export import sm.range;
+export import sm.interval;
 import sm.algo;
 import sm.flags;
 import sm.base64;
@@ -946,9 +946,9 @@ export namespace mplot
         }
 
         //! Apply the viewmatrix to the model's bounding box and return it
-        sm::range<sm::vec<float>> get_viewmatrix_modelbb() const
+        sm::interval<sm::vec<float>> get_viewmatrix_modelbb() const
         {
-            sm::range<sm::vec<float>> vmbb;
+            sm::interval<sm::vec<float>> vmbb;
             vmbb.min = (this->viewmatrix * this->bb.min).less_one_dim();
             vmbb.max = (this->viewmatrix * this->bb.max).less_one_dim();
             return vmbb;
@@ -976,9 +976,9 @@ export namespace mplot
         /*!
          * Find the extents of this VisualModel, returning it as the x range, the y range and the z range.
          */
-        sm::vec<sm::range<float>, 3> extents()
+        sm::vec<sm::interval<float>, 3> extents()
         {
-            sm::vec<sm::range<float>, 3> axis_extents;
+            sm::vec<sm::interval<float>, 3> axis_extents;
             for (unsigned int i = 0; i < 3; ++i) { axis_extents[i].search_init(); }
             for (unsigned int j = 0; j < static_cast<unsigned int>(this->vertexPositions.size() - 2); j += 3) {
                 for (unsigned int i = 0; i < 3; ++i) { axis_extents[i].update (this->vertexPositions[j+i]); }
@@ -1231,8 +1231,8 @@ export namespace mplot
         void show_bb (const bool val) { this->flags.set (vm_bools::show_bb, val); }
         void compute_bb (const bool val) { this->flags.set (vm_bools::compute_bb, val); }
 
-        //! A range can be used for a bounding box for this VisualModel
-        sm::range<sm::vec<float>> bb;
+        //! An interval can be used for a bounding box for this VisualModel
+        sm::interval<sm::vec<float>> bb;
         std::array<float, 3> colour_bb = mplot::colour::grey90;
 
         void twodimensional (const bool val) { this->flags.set (vm_bools::twodimensional, val); }

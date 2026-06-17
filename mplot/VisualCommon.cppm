@@ -15,7 +15,7 @@ module;
 export module mplot.visualcommon;
 
 import sm.vec;
-import sm.range;
+import sm.interval;
 import sm.vvec;
 import sm.mat;
 import mplot.colour;
@@ -45,8 +45,8 @@ export namespace mplot
         sm::vvec<sm::vec<float>> positions;
         sm::vvec<sm::vec<float>> normals;
         sm::vvec<sm::vec<float>> colours;
-        sm::range<sm::vec<float>> object_aabb;
-        sm::range<sm::vec<float>> world_aabb;
+        sm::interval<sm::vec<float>> object_aabb;
+        sm::interval<sm::vec<float>> world_aabb;
         // Single colour is used if colours is empty
         std::array<float, 3> single_colour = mplot::colour::grey50;
         void validate() const

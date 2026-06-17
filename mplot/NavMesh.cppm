@@ -86,7 +86,7 @@ export namespace mplot
         std::vector<mesh::face<>> triangles = {};
 
         //! Holds a copy of the bb of the parent model
-        sm::range<sm::vec<float>> bb;
+        sm::interval<sm::vec<float>> bb;
 
         //! When navigating, this is the 'current triangle' that you're located over/near
         uint32_t ti0 = std::numeric_limits<uint32_t>::max();

@@ -25,7 +25,7 @@ export import mplot.datasetstyle;
 
 export import sm.mathconst;
 import sm.scale;
-import sm.range;
+import sm.interval;
 export import sm.vec;
 export import sm.vvec;
 import sm.quaternion;
@@ -157,9 +157,9 @@ export namespace mplot
             this->graphData[didx]->ord.at (oldsz) = static_cast<float>(_ordinate);
             this->graphData[didx]->coords.at (oldsz) = sm::vec<float>{ static_cast<float>(a), static_cast<float>(o), float{0} };
             int redraw_plot = 0;
-            sm::range<Flt> xrange = this->datarange_x;
-            sm::range<Flt> yrange = this->datarange_y;
-            sm::range<Flt> y2range = this->datarange_y2;
+            sm::interval<Flt> xrange = this->datarange_x;
+            sm::interval<Flt> yrange = this->datarange_y;
+            sm::interval<Flt> y2range = this->datarange_y2;
             // check x axis
             if (this->auto_rescale_x) { redraw_plot += xrange.update (_abscissa) ? 1 : 0; }
 
@@ -268,7 +268,7 @@ export namespace mplot
             this->graphData[data_idx]->resize (dsize);
 
             // Are we auto-rescaling the x axis?
-            sm::range<Flt> datarange = sm::range<Flt>::search_initialized();
+            sm::interval<Flt> datarange = sm::interval<Flt>::search_initialized();
             if (this->auto_rescale_x) {
                 if (this->auto_rescale_x_fix_min == true) {
                     // Retain the existing abscissa minimum
@@ -291,7 +291,7 @@ export namespace mplot
             std::vector<Flt> ad (dsize, Flt{0});
             this->abscissa_scale.transform (_abscissae, ad);
 
-            sm::range<Flt> datarange2 = sm::range<Flt>::search_initialized();
+            sm::interval<Flt> datarange2 = sm::interval<Flt>::search_initialized();
             if (this->auto_rescale_y) {
                 datarange.search_init(); // reuse datarange
                 if (this->auto_rescale_y_fix_min == true) {
@@ -838,7 +838,7 @@ export namespace mplot
         }
 
         //! Set data using two ranges as input
-        void setdata (const sm::range<Flt> xx, const sm::range<Flt> yy, const DatasetStyle& ds)
+        void setdata (const sm::interval<Flt> xx, const sm::interval<Flt> yy, const DatasetStyle& ds)
         {
             if constexpr (debug_setdata) { std::cout << "setdata (range<> xx, range<> yy, DatasetStyle) called\n"; }
             sm::vvec<Flt> xxvv = { xx.min, xx.max };
@@ -955,7 +955,7 @@ export namespace mplot
         sm::vvec<Flt> add_y_crossing_lines (const Ctnr1& _abscissae, const Ctnr2& _data, const Flt y_value, const mplot::DatasetStyle& ds_data)
         {
             sm::vvec<Flt> xvals = mplot::GraphVisual<Flt>::x_at_y_value (_abscissae, _data, y_value);
-            sm::range<Flt> yy (sm::range_init::for_search);
+            sm::interval<Flt> yy (sm::interval_init::for_search);
             for (auto d : _data) { yy.update (d); } // Find the range
             mplot::DatasetStyle dsv (mplot::stylepolicy::lines);
             if (ds_data.policy == mplot::stylepolicy::lines) {
@@ -966,7 +966,7 @@ export namespace mplot
             dsv.linewidth = ds_data.linewidth * 0.5f; // Use a reduced width cf the original dataset style
             dsv.datalabel = ""; // Always empty the datalabel
             for (auto xv : xvals) {
-                sm::range<Flt> xx = { xv, xv };
+                sm::interval<Flt> xx = { xv, xv };
                 this->setdata (xx, yy, dsv);
             }
             return xvals;
@@ -986,8 +986,8 @@ export namespace mplot
                                             const mplot::DatasetStyle& ds_data, const mplot::DatasetStyle& ds_hline)
         {
             // Draw the horizontal line
-            sm::range<Flt> yy = { y_value, y_value };
-            sm::range<Flt> xx (sm::range_init::for_search);
+            sm::interval<Flt> yy = { y_value, y_value };
+            sm::interval<Flt> xx (sm::interval_init::for_search);
             for (auto a : _abscissae) { xx.update (a); }
             this->setdata (xx, yy, ds_hline);
             // And the vertical y crossings
@@ -1018,7 +1018,7 @@ export namespace mplot
                 if (crs_abs - static_cast<float>(crs_i) > 0.25f) {
                     // intermediate. Interpolate
                     sm::scale<Flt> interp;
-                    interp.output_range = sm::range<Flt>{static_cast<Flt>(_data.at(crs_i)), static_cast<Flt>(_data.at(crs_i + 1))};
+                    interp.output_range = sm::interval<Flt>{static_cast<Flt>(_data.at(crs_i)), static_cast<Flt>(_data.at(crs_i + 1))};
                     interp.compute_scaling (static_cast<Flt>(_abscissae.at(crs_i)), static_cast<Flt>(_abscissae.at(crs_i + 1)));
                     x_values.push_back (interp.inverse_one (y_value));
                 } else {
@@ -1036,7 +1036,7 @@ export namespace mplot
         {
             sm::vvec<Flt> yvals = mplot::GraphVisual<Flt>::y_at_x_value (_abscissae, _data, x_value);
 
-            sm::range<Flt> xx (sm::range_init::for_search);
+            sm::interval<Flt> xx (sm::interval_init::for_search);
             for (auto a : _abscissae) { xx.update (a); } // Find the range
             mplot::DatasetStyle dsv (mplot::stylepolicy::lines);
             if (ds_data.policy == mplot::stylepolicy::lines) {
@@ -1047,7 +1047,7 @@ export namespace mplot
             dsv.linewidth = ds_data.linewidth * 0.5f; // Use a reduced width cf the original dataset style
             dsv.datalabel = ""; // Always empty the datalabel
             for (auto yv : yvals) {
-                sm::range<Flt> yy = { yv, yv };
+                sm::interval<Flt> yy = { yv, yv };
                 this->setdata (xx, yy, dsv);
             }
             return yvals;
@@ -1066,8 +1066,8 @@ export namespace mplot
                                                const mplot::DatasetStyle& ds_data, const mplot::DatasetStyle& ds_vline)
         {
             // Draw the vertical line
-            sm::range<Flt> xx = { x_value, x_value };
-            sm::range<Flt> yy (sm::range_init::for_search);
+            sm::interval<Flt> xx = { x_value, x_value };
+            sm::interval<Flt> yy (sm::interval_init::for_search);
             for (auto d : _data) { yy.update (d); }
             this->setdata (xx, yy, ds_vline);
             // And the horizontal x crossings
@@ -1096,7 +1096,7 @@ export namespace mplot
                 if (crs_abs - static_cast<float>(crs_i) > 0.25f) {
                     // intermediate. Interpolate
                     sm::scale<Flt> interp;
-                    interp.output_range = sm::range<Flt>{static_cast<Flt>(_data.at(crs_i)), static_cast<Flt>(_data.at(crs_i + 1))};
+                    interp.output_range = sm::interval<Flt>{static_cast<Flt>(_data.at(crs_i)), static_cast<Flt>(_data.at(crs_i + 1))};
                     interp.compute_scaling (static_cast<Flt>(_abscissae.at(crs_i)), static_cast<Flt>(_abscissae.at(crs_i + 1)));
                     y_values.push_back (interp.transform_one (x_value));
                 } else {
@@ -1114,8 +1114,8 @@ export namespace mplot
                          && sm::is_copyable_container<Ctnr2>::value, void>
         compute_scaling (const Ctnr1& _abscissae, const Ctnr2& _data, const mplot::axisside axisside)
         {
-            sm::range<Flt> data_range = sm::range<Flt>::get_from (_data);
-            sm::range<Flt> absc_range = sm::range<Flt>::get_from (_abscissae);
+            sm::interval<Flt> data_range = sm::interval<Flt>::get_from (_data);
+            sm::interval<Flt> absc_range = sm::interval<Flt>::get_from (_abscissae);
 
             this->resetsize (this->width, this->height);
 
@@ -1253,13 +1253,13 @@ export namespace mplot
         //! but before setdata and finalize.
         void setlimits_x (const Flt _xmin, const Flt _xmax)
         {
-            sm::range<Flt> range_x(_xmin, _xmax);
+            sm::interval<Flt> range_x(_xmin, _xmax);
             this->setlimits_x (range_x);
         }
 
-        //! Set manual limits for the x axis (abscissa) passing by sm::range. Call
+        //! Set manual limits for the x axis (abscissa) passing by sm::interval. Call
         //! after setsize/zoomgraph, but before setdata and finalize.
-        void setlimits_x (const sm::range<Flt>& range_x, bool force = false)
+        void setlimits_x (const sm::interval<Flt>& range_x, bool force = false)
         {
             if (!force && !this->graphData.empty()) {
                 throw std::runtime_error ("GraphVisual::setlimits_x: Set your axis limits *before* using setdata to set the data");
@@ -1272,12 +1272,12 @@ export namespace mplot
         //! Set manual limits for the y axis (ordinate)
         void setlimits_y (const Flt _ymin, const Flt _ymax)
         {
-            sm::range<Flt> range_y(_ymin, _ymax);
+            sm::interval<Flt> range_y(_ymin, _ymax);
             this->setlimits_y (range_y);
         }
 
-        //! Set manual limits for the x axis (abscissa) passing by sm::range
-        void setlimits_y (const sm::range<Flt>& range_y, bool force = false)
+        //! Set manual limits for the x axis (abscissa) passing by sm::interval
+        void setlimits_y (const sm::interval<Flt>& range_y, bool force = false)
         {
             if (!force && !this->graphData.empty()) {
                 throw std::runtime_error ("GraphVisual::setlimits_y: Set your axis limits *before* using setdata to set the data");
@@ -1290,12 +1290,12 @@ export namespace mplot
         //! Set manual limits for the second y axis (ordinate)
         void setlimits_y2 (const Flt _ymin2, const Flt _ymax2)
         {
-            sm::range<Flt> range_y2(_ymin2, _ymax2);
+            sm::interval<Flt> range_y2(_ymin2, _ymax2);
             this->setlimits_y2 (range_y2);
         }
 
-        //! Set manual limits for the x axis (abscissa) passing by sm::range
-        void setlimits_y2 (const sm::range<Flt>& range_y2, bool force = false)
+        //! Set manual limits for the x axis (abscissa) passing by sm::interval
+        void setlimits_y2 (const sm::interval<Flt>& range_y2, bool force = false)
         {
             if (!force && !this->graphData.empty()) {
                 throw std::runtime_error ("GraphVisual::setlimits_y2: Set your axis limits *before* using setdata to set the data");
@@ -1311,13 +1311,13 @@ export namespace mplot
         // to extend.
         void setlimits (const Flt _xmin, const Flt _xmax, const Flt _ymin, const Flt _ymax)
         {
-            sm::range<Flt> range_x(_xmin, _xmax);
-            sm::range<Flt> range_y(_ymin, _ymax);
+            sm::interval<Flt> range_x(_xmin, _xmax);
+            sm::interval<Flt> range_y(_ymin, _ymax);
             this->setlimits (range_x, range_y);
         }
 
-        // Set axis limits for x/y passing by sm::range
-        void setlimits (const sm::range<Flt>& range_x, const sm::range<Flt>& range_y)
+        // Set axis limits for x/y passing by sm::interval
+        void setlimits (const sm::interval<Flt>& range_x, const sm::interval<Flt>& range_y)
         {
             if (!this->graphData.empty()) {
                 throw std::runtime_error ("GraphVisual::setlimits: Set your axis limits *before* using setdata to set the data");
@@ -1337,15 +1337,15 @@ export namespace mplot
         void setlimits (const Flt _xmin, const Flt _xmax,
                         const Flt _ymin, const Flt _ymax, const Flt _ymin2, const Flt _ymax2)
         {
-            sm::range<Flt> range_x(_xmin, _xmax);
-            sm::range<Flt> range_y(_ymin, _ymax);
-            sm::range<Flt> range_y2(_ymin2, _ymax2);
+            sm::interval<Flt> range_x(_xmin, _xmax);
+            sm::interval<Flt> range_y(_ymin, _ymax);
+            sm::interval<Flt> range_y2(_ymin2, _ymax2);
             this->setlimits (range_x, range_y, range_y2);
         }
 
-        //! setlimits overload that sets BOTH left and right axes limits, passing by sm::range
-        void setlimits (const sm::range<Flt>& range_x,
-                        const sm::range<Flt>& range_y, const sm::range<Flt>& range_y2, bool force = false)
+        //! setlimits overload that sets BOTH left and right axes limits, passing by sm::interval
+        void setlimits (const sm::interval<Flt>& range_x,
+                        const sm::interval<Flt>& range_y, const sm::interval<Flt>& range_y2, bool force = false)
         {
             if (!this->graphData.empty() && !force) {
                 throw std::runtime_error ("GraphVisual::setlimits: Set your axis limits *before* using setdata to set the data");
@@ -2280,11 +2280,11 @@ export namespace mplot
         //! What's the scaling policy for the ordinate?
         mplot::scalingpolicy scalingpolicy_y = mplot::scalingpolicy::autoscale;
         //! If required, the abscissa's minimum/max data values
-        sm::range<Flt> datarange_x{ Flt{0}, Flt{1} };
+        sm::interval<Flt> datarange_x{ Flt{0}, Flt{1} };
         //! If required, the ordinate's minimum/max data values
-        sm::range<Flt> datarange_y{ Flt{0}, Flt{1} };
+        sm::interval<Flt> datarange_y{ Flt{0}, Flt{1} };
         //! If required, the second ordinate's minimum/max data values (twinax)
-        sm::range<Flt> datarange_y2{ Flt{0}, Flt{1} };
+        sm::interval<Flt> datarange_y2{ Flt{0}, Flt{1} };
         //! Auto-rescale x axis if data goes off the edge of the graph (by setting the out of range data as new boundary)
         bool auto_rescale_x = false;
         //! During auto_rescale_x, should the minimum be fixed?
@@ -2334,10 +2334,10 @@ export namespace mplot
         bool omit_x_tick_labels = false;
         //! Should the y (and y2) tick *labels* be omitted?
         bool omit_y_tick_labels = false;
-        //! The number of tick labels permitted, stored as a sm::range
-        sm::range<Flt> num_ticks_range_x{ Flt{5}, Flt{10} };
-        sm::range<Flt> num_ticks_range_y{ Flt{5}, Flt{10} };
-        sm::range<Flt> num_ticks_range_y2{ Flt{5}, Flt{10} };
+        //! The number of tick labels permitted, stored as a sm::interval
+        sm::interval<Flt> num_ticks_range_x{ Flt{5}, Flt{10} };
+        sm::interval<Flt> num_ticks_range_y{ Flt{5}, Flt{10} };
+        sm::interval<Flt> num_ticks_range_y2{ Flt{5}, Flt{10} };
         // Default font
         mplot::VisualFont font = mplot::VisualFont::DVSans;
         //! Font resolution - determines how textures for glyphs are generated. If your

@@ -19,7 +19,7 @@ int main (int argc, char** argv)
     sm::vvec<T> samples (nsamp);
     for (unsigned int i = 0; i < nsamp; ++i) { samples[i] = rvm.get(); }
 
-    sm::histo<T, float> h(samples, 100, sm::range<T>{-sm::mathconst<T>::pi, sm::mathconst<T>::pi});
+    sm::histo<T, float> h(samples, 100, sm::interval<T>{-sm::mathconst<T>::pi, sm::mathconst<T>::pi});
 
 #ifndef __APPLE__ // rand_vonmises::prob_density is not available with Apple, as it doesn't have std::cyl_bessel_i
     // Compute PD function

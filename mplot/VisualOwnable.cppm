@@ -2200,7 +2200,7 @@ export namespace mplot
                     sm::vec<float> tr_bb_centre = (this->savedSceneview * (*vmi)->get_viewmatrix_bb_centre()).less_one_dim();
 
                     if (options.test (visual_options::boundingBoxesToJson) && fout.is_open()) {
-                        sm::range<sm::vec<float>> modelbb = (*vmi)->bb; // Get the VisualModel bounding box
+                        sm::interval<sm::vec<float>> modelbb = (*vmi)->bb; // Get the VisualModel bounding box
                         modelbb -= (*vmi)->bb.mid();                    // centre the bounding box about (VM frame's) origin
                         modelbb += tr_bb_centre;
                         fout << "  \"b" << (ci + 1) << "\": [" << modelbb.min.str_comma_separated() << "],\n";

@@ -31,7 +31,7 @@ int main()
     sm::histo<int, float> h(inumbers, 30);
 #if 0
     // Setting a manual datarange can be useful if you are comparing histograms with different data:
-    sm::histo<int, float> h(inumbers, 30, sm::range<int>{-2000, 2000});
+    sm::histo<int, float> h(inumbers, 30, sm::interval<int>{-2000, 2000});
 #endif
 
     // Set up a mplot::Visual for a graph

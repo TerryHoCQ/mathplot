@@ -11,7 +11,7 @@ macro(setup_module_variables_for_mathplot_maths base_directory)
   set(MPLOT_MATHS_CORE_MODULES
     ${base_directory}/sm/mathconst.cppm
     ${base_directory}/sm/constexpr_math.cppm
-    ${base_directory}/sm/range.cppm
+    ${base_directory}/sm/interval.cppm
     ${base_directory}/sm/polysolve.cppm
     ${base_directory}/sm/bessel_i0.cppm
     ${base_directory}/sm/random.cppm

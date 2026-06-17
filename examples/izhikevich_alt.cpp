@@ -137,9 +137,9 @@ int main (int argc, char** argv)
         u[i] = iz.u;
     }
     // Find range of the state variables u and v for plotting
-    sm::range<float> v_range = v.range();
+    sm::interval<float> v_range = v.range();
     if (v_range.max > iz.vpeak) { v_range.max = iz.vpeak; }
-    sm::range<float> u_range = u.range();
+    sm::interval<float> u_range = u.range();
 
     /*
      * Compute nullclines

@@ -12,7 +12,7 @@ module;
 
 export module mplot.colourbarvisual;
 
-import sm.range;
+import sm.interval;
 import sm.scale;
 import sm.vec;
 
@@ -365,7 +365,7 @@ export namespace mplot
         //! Set axis and text colours for a dark or black background
         bool darkbg = false;
         //! The range of acceptable numbers of ticks
-        sm::range<F> number_of_ticks_range = {F{3}, F{8}};
+        sm::interval<F> number_of_ticks_range = {F{3}, F{8}};
         //! The line width of the colourbar frame
         float framelinewidth = 0.006f;
         //! How long should the ticks be?

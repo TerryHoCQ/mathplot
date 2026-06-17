@@ -10,7 +10,6 @@ export module mplot.sphericalprojectionvisual;
 
 import sm.mathconst;
 import sm.vec;
-import sm.range;
 import sm.geometry;
 import sm.quaternion;
 
@@ -82,8 +81,8 @@ export namespace mplot
 
         void voronoi2d()
         {
-            // Use mplot::range to find the extents of dataCoords. From these create a
-            // rectangle to pass to diagram_generate.
+            // Find the extents of dataCoords. From these create a rectangle to pass to
+            // diagram_generate.
             int ncoords = static_cast<int>(this->xy.size());
 
             jcv::manager<double> vorman; // we need double precision for projections, float may run into trouble

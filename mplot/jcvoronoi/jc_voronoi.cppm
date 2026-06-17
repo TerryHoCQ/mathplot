@@ -1424,7 +1424,7 @@ export namespace jcv
         void diagram_generate (const std::vector<point<T>>& centres)
         {
             int ncoords = static_cast<int>(centres.size());
-            sm::range<T> rx, ry;
+            sm::interval<T> rx, ry;
             rx.search_init();
             ry.search_init();
             for (int i = 0; i < ncoords ; ++i) {

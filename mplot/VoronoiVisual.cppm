@@ -23,7 +23,6 @@ module;
 export module mplot.voronoivisual;
 
 import sm.vec;
-import sm.range;
 import sm.quaternion;
 import sm.geometry;
 import sm.centroid;

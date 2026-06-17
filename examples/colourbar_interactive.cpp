@@ -7,7 +7,7 @@
 #include <vector>
 #include <cmath>
 
-import sm.range;
+import sm.interval;
 import sm.vec;
 import sm.vvec;
 
@@ -85,7 +85,7 @@ protected:
         cbv->set_parent (this->get_id());
         cbv->orientation = mplot::colourbar_orientation::vertical;
         cbv->tickside = mplot::colourbar_tickside::right_or_below;
-        cbv->number_of_ticks_range = sm::range<float>{4, 6};
+        cbv->number_of_ticks_range = sm::interval<float>{4, 6};
         // Copy colourmap and scale to colourbar visual
         cbv->cm = this->hgvp->cm;
         cbv->scale = this->hgvp->colourScale;
@@ -100,7 +100,7 @@ protected:
         cbv->orientation = mplot::colourbar_orientation::horizontal;
         cbv->tickside = mplot::colourbar_tickside::left_or_above;
         cbv->cm = this->hgvp->cm;
-        cbv->number_of_ticks_range = sm::range<float>{2, 3};
+        cbv->number_of_ticks_range = sm::interval<float>{2, 3};
         cbv->scale = this->hgvp->colourScale;
         std::string lbl = "ColourMapType: " + mplot::ColourMap<float>::colourMapTypeToStr (this->colour_map_type);
         cbv->addLabel (lbl, sm::vec<float>{0.0f, -0.08f, 0.0f}, mplot::TextFeatures(0.05f));

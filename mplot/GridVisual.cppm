@@ -328,13 +328,13 @@ export namespace mplot
             float grid_left  = cg_extents[0] - (dx[0]/2.0f) + this->centering_offset[0];
             float grid_bot   = cg_extents[2] - (dx[1]/2.0f) + this->centering_offset[1];
 
-            sm::range<float> l_r; // left extent range
+            sm::interval<float> l_r; // left extent range
             l_r.search_init();
-            sm::range<float> r_r;
+            sm::interval<float> r_r;
             r_r.search_init();
-            sm::range<float> b_r;
+            sm::interval<float> b_r;
             b_r.search_init();
-            sm::range<float> t_r;
+            sm::interval<float> t_r;
             t_r.search_init();
 
             // Find extents of our selected pixels
