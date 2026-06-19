@@ -1295,23 +1295,45 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(curvytelly_chequered_pipe OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
-endif()
-
-if (0) # During development
-
   my_add_executable(lighting_test lighting_test.cpp)
+  target_sources(lighting_test PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  )
   target_link_libraries(lighting_test OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   my_add_executable(lines lines.cpp)
+  target_sources(lines PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  )
   target_link_libraries(lines OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   my_add_executable(line line.cpp)
+  target_sources(line PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  )
   target_link_libraries(line OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   my_add_executable(maketicks maketicks.cpp)
+  set(MAKETICKS_MODULES
+    ${SM_INTERVAL_MODULES}
+    ${SM_ALGO_MODULES}    
+    ${SM_VVEC_MODULES}    
+    ${PROJECT_SOURCE_DIR}/mplot/graphing.cppm
+  )
+  list(REMOVE_DUPLICATES MAKETICKS_MODULES)
+  target_sources(maketicks PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MAKETICKS_MODULES}
+  )
 
   my_add_executable(coordarrows coordarrows.cpp)
+  target_sources(coordarrows PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  )
   target_link_libraries(coordarrows OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+  
+endif()
+
+if (0) # During development
 
   my_add_executable(frames frames.cpp)
   target_link_libraries(frames OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)

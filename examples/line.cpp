@@ -1,14 +1,15 @@
 /*
  * Draw a line (made of a few segments)
  */
+#include <memory>
 
-#include <sm/vec>
-#include <sm/vvec>
-#include <mplot/Visual.h>
-#include <mplot/VisualModel.h>
+import sm.vec;
+import sm.vvec;
+import mplot.visual;
+import mplot.visualmodel;
 
-namespace mplot {
-
+namespace mplot
+{
     // A test VisualModel which draws some lines
     template<int glver = mplot::gl::version_4_1>
     struct LinestestVisual : public VisualModel<glver>
@@ -63,9 +64,8 @@ int main()
     mplot::Visual v(1024, 768, "Lines");
     v.coordArrowsInScene (true);
     auto vm = std::make_unique<mplot::LinestestVisual<>>();
-    v.bindmodel (vm);
+    vm->set_parent (v.get_id());
     vm->finalize();
     v.addVisualModel (vm);
     v.keepOpen();
-    return 0;
 }
