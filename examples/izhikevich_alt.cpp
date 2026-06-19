@@ -3,13 +3,13 @@
  * in Izhikevich, Dynamical Systems in Neuroscience p 273, Eqs. 8.5 and 8.6.
  */
 
-#include <sm/vvec>
-#include <sm/range>
-#include <sm/grid>
+#include <memory>
+#include <string>
+#include <iostream>
 
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
-#include <sm/config>
+import sm.config;
+import mplot.visual;
+import mplot.graphvisual;
 
 // A simple Izhikevich neuron model class
 struct izhi
@@ -105,23 +105,23 @@ int main (int argc, char** argv)
     sm::config config(jsonfile);
     if (config.ready) {
         // Parameters
-        iz.a = config.getFloat ("a", iz.a);
-        iz.b = config.getFloat ("b", iz.b);
-        iz.c = config.getFloat ("c", iz.c);
-        iz.d = config.getFloat ("d", iz.d);
-        iz.k = config.getFloat ("k", iz.k);
-        iz.vr = config.getFloat ("vr", iz.vr);
-        iz.vt = config.getFloat ("vt", iz.vt);
-        iz.vpeak = config.getFloat ("vpeak", iz.vpeak);
-        iz.CC = config.getFloat ("CC", iz.CC);
+        iz.a = config.get<float> ("a", iz.a);
+        iz.b = config.get<float> ("b", iz.b);
+        iz.c = config.get<float> ("c", iz.c);
+        iz.d = config.get<float> ("d", iz.d);
+        iz.k = config.get<float> ("k", iz.k);
+        iz.vr = config.get<float> ("vr", iz.vr);
+        iz.vt = config.get<float> ("vt", iz.vt);
+        iz.vpeak = config.get<float> ("vpeak", iz.vpeak);
+        iz.CC = config.get<float> ("CC", iz.CC);
 
         // Initial values of state vars
-        iz.u = config.getFloat ("u0", iz.u);
-        iz.v = config.getFloat ("v0", iz.v);
+        iz.u = config.get<float> ("u0", iz.u);
+        iz.v = config.get<float> ("v0", iz.v);
 
-        iz.I = config.getFloat ("I", iz.I);
+        iz.I = config.get<float> ("I", iz.I);
 
-        title = config.getString ("description", title);
+        title = config.get<std::string> ("description", title);
     } else if (!config.ready && user_file == true) {
         throw std::runtime_error ("Failed to open json file given by user");
     } // else use defaults
@@ -191,7 +191,7 @@ int main (int argc, char** argv)
 
     // Graph membrane voltage vs. time
     auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({-0.5,-0.5,0}));
-    vis.bindmodel (gv);
+    gv->set_parent (vis.get_id());
     gv->twodimensional (twodee);
     gv->setsize (1,0.8);
     gv->xlabel = "t";
@@ -203,7 +203,7 @@ int main (int argc, char** argv)
 
     // Graph u(t)
     auto gu = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({-0.5,0.6,0}));
-    vis.bindmodel (gu);
+    gu->set_parent (vis.get_id());
     gu->twodimensional (twodee);
     gu->setsize (1,0.5);
     gu->xlabel = "t";
@@ -217,7 +217,7 @@ int main (int argc, char** argv)
     // Graph nullclines, u vs v and vector field
     ds.showlines = false;
     auto gp = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({0.9,-0.5,0}));
-    vis.bindmodel (gp);
+    gp->set_parent (vis.get_id());
     gp->twodimensional (twodee);
     gp->setsize (1.6,1.6);
     // Fix plotting range
@@ -247,7 +247,7 @@ int main (int argc, char** argv)
     ds.quiver_gain = { 0.01f, 0.1f, 1.0f };
     // ...and then if the lengths should be log-scaled, call quiver_setlog()
     gp->quiver_setlog();
-    ds.quiver_colourmap.setType (mplot::ColourMapType::Jet);
+    ds.colourmap.setType (mplot::ColourMapType::Jet);
     ds.quiver_conewidth = 1.8f;
     ds.quiver_arrowhead_prop = 0.35f;
     ds.quiver_thickness_gain = 1.5f;
