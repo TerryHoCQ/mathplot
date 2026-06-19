@@ -1266,18 +1266,38 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(izhikevich_alt OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
-endif()
-
-if (0) # During development
-
   my_add_executable(curvytelly curvytelly.cpp)
+  target_sources(curvytelly  PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/CurvyTellyVisual.cppm
+  )
   target_link_libraries(curvytelly OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   my_add_executable(curvytelly_pipe curvytelly_pipe.cpp)
+  target_sources(curvytelly_pipe  PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/compoundray/Visual.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/CurvyTellyVisual.cppm
+  )
   target_link_libraries(curvytelly_pipe OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
+  
   my_add_executable(curvytelly_chequered_pipe curvytelly_chequered_pipe.cpp)
+  target_sources(curvytelly_chequered_pipe  PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/compoundray/Visual.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/GridVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/CurvyTellyVisual.cppm
+  )
   target_link_libraries(curvytelly_chequered_pipe OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+endif()
+
+if (0) # During development
 
   my_add_executable(lighting_test lighting_test.cpp)
   target_link_libraries(lighting_test OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
