@@ -1331,41 +1331,86 @@ if(BUILD_EXAMPLES_EXTRA)
   )
   target_link_libraries(coordarrows OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
   
+  my_add_executable(frames frames.cpp)
+  target_sources(frames PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+  )
+  target_link_libraries(frames OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  my_add_executable(sph_to_cart sph_to_cart.cpp)
+  target_sources(sph_to_cart PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/QuiverVisual.cppm
+  )
+  target_link_libraries(sph_to_cart OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  my_add_executable(polar polar.cpp)
+  target_sources(polar PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm #
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm  # reqd by GraphVisual
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm # reqd by PolarVisual
+    ${PROJECT_SOURCE_DIR}/mplot/PolarVisual.cppm    
+  )
+  target_link_libraries(polar OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  my_add_executable(zernike_radial zernike_radial.cpp)
+  target_sources(zernike_radial PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm 
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm  
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(zernike_radial OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+  
+  my_add_executable(zernike zernike.cpp)
+  target_sources(zernike PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm 
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm  
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+    ${PROJECT_SOURCE_DIR}/mplot/PolarVisual.cppm    
+  )
+  target_link_libraries(zernike OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  my_add_executable(vonmises vonmises.cpp)
+  target_sources(vonmises PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm 
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm  
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(vonmises OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+  my_add_executable(show_boundingboxes show_boundingboxes.cpp)
+  target_sources(show_boundingboxes PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/mplot/RodVisual.cppm
+    ${PROJECT_SOURCE_DIR}/json/src/modules/json.cppm
+    ${PROJECT_SOURCE_DIR}/maths/sm/config.cppm
+  )
+  target_link_libraries(show_boundingboxes OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+  
+  my_add_executable(trace_boundary trace_boundary.cpp)
+  target_sources(trace_boundary PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+    FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
+    ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm 
+    ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm  
+    ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  )
+  target_link_libraries(trace_boundary OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
 endif()
 
 if (0) # During development
 
-  my_add_executable(frames frames.cpp)
-  target_link_libraries(frames OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
-  my_add_executable(sph_to_cart sph_to_cart.cpp)
-  target_link_libraries(sph_to_cart OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  my_add_executable(polar polar.cpp)
-  target_link_libraries(polar OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-  if(HAVE_STD_FORMAT)
-    my_add_executable(zernike_radial zernike_radial.cpp)
-    target_link_libraries(zernike_radial OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-    my_add_executable(zernike zernike.cpp)
-    target_link_libraries(zernike OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-
-    my_add_executable(vonmises vonmises.cpp)
-    target_link_libraries(vonmises OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
-  endif()
-
-  my_add_executable(show_boundingboxes show_boundingboxes.cpp)
-  target_link_libraries(show_boundingboxes OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   if(0)
     # I made use of principle component analysis from arma in this example.
     my_add_executable(ellipse_pca ellipse_pca.cpp)
     target_link_libraries(ellipse_pca ${ARMADILLO_LIBRARY} ${ARMADILLO_LIBRARIES} OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
   endif()
-
-  my_add_executable(trace_boundary trace_boundary.cpp)
-  target_link_libraries(trace_boundary OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   # Shader compute examples. Not supported on Apple, which is limited to
   # OpenGL 4.1 or Windows because I want to keep the GL header inclusion

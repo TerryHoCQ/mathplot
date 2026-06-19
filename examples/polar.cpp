@@ -2,10 +2,13 @@
  * A simple polar plot example.
  */
 
-#include <sm/mathconst>
-#include <sm/vvec>
-#include <mplot/Visual.h>
-#include <mplot/PolarVisual.h>
+#include <memory>
+#include <cmath>
+
+import sm.vvec;
+import mplot.colourmap;
+import mplot.visual;
+import mplot.polarvisual;
 
 int main()
 {
@@ -20,7 +23,7 @@ int main()
     theta.linspace (0.0, mc::two_pi, N);
 
     auto pv = std::make_unique<mplot::PolarVisual<double>> (sm::vec<float>{0.0f});
-    v.bindmodel (pv);
+    pv->set_parent (v.get_id());
     pv->cm.setType (mplot::ColourMapType::Cork);
     pv->setFrameColour (mplot::colour::black);
     pv->setTextColour (mplot::colour::black);

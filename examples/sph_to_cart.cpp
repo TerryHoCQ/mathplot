@@ -1,9 +1,10 @@
 // Visualize spherical to cartesian conversion in sm::vec
+#include <memory>
 #include <vector>
-#include <sm/mathconst>
-#include <sm/vec>
-#include <mplot/Visual.h>
-#include <mplot/QuiverVisual.h>
+
+import sm.vec;
+import mplot.visual;
+import mplot.quivervisual;
 
 int main()
 {
@@ -31,7 +32,7 @@ int main()
 
     sm::vec<float, 3> offset = {};
     auto vmp = std::make_unique<mplot::QuiverVisual<float>>(&coords, offset, &quivs, mplot::ColourMapType::Jet);
-    v.bindmodel (vmp);
+    vmp->set_parent (v.get_id());
     vmp->setScalarData (&azim);
     vmp->fixed_length = 0.25f;
     vmp->fixed_quiver_thickness = 0.01f;

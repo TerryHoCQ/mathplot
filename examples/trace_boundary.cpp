@@ -2,16 +2,12 @@
  * Trace around a boundary of points in 2D. This code uses Graham's scan to compute the convex hull
  * of a set of randomly generated points.
  */
-#include <iostream>
+#include <memory>
 
-#include <sm/mathconst>
-#include <sm/random>
-#include <sm/vvec>
-#include <sm/vec>
-#include <sm/algo>
-
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
+import sm.random;
+import sm.geometry;
+import mplot.visual;
+import mplot.graphvisual;
 
 int main()
 {
@@ -19,7 +15,7 @@ int main()
     mplot::Visual v(1024, 768, "Graham's scan computes the convex hull");
     mplot::DatasetStyle ds (mplot::stylepolicy::markers);
     auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>{-0.5f,-0.5f,0.0f});
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
 
     constexpr unsigned int n_points = 200;
 

@@ -1,9 +1,12 @@
+#include <memory>
+#include <cstdlib>
 #include <iostream>
 #include <format>
-#include <sm/random>
-#include <sm/histo>
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
+
+import sm.random;
+import sm.histo;
+import mplot.visual;
+import mplot.graphvisual;
 
 int main (int argc, char** argv)
 {
@@ -34,7 +37,7 @@ int main (int argc, char** argv)
     v.setSceneTrans (sm::vec<float,3>{ float{-0.439335}, float{-0.472138}, float{-2.9} });
 
     auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>{0,0,0});
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
 
     gv->setdata (h, "", mplot::histo_view::densities);
 
