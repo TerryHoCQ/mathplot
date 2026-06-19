@@ -55,6 +55,12 @@ protected:
             std::cout << "Shift-k was pressed\n";
         }
 
+        // You can require NOT shift and a key like this:
+        if (key == mplot::key::k && (mods & keymod::shift) == 0 && action == mplot::keyaction::press) {
+            std::cout << "k was pressed without shift\n";
+        }
+
+
         // Ctrl-key is:
         if (key == mplot::key::k && (mods & keymod::control) && action == mplot::keyaction::press) {
             std::cout << "Ctrl-k was pressed\n";
