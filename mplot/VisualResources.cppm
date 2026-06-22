@@ -286,7 +286,7 @@ export namespace mplot
                 if (n_to_reserve + this->instance_top <= this->max_instances) {
                     reservation = this->instance_top;
                     this->instance_top += n_to_reserve;
-                    this->instance_data.resize (this->instance_top * this->floats_per_instance);
+                    this->instance_data.resize (this->instance_top * this->floats_per_instance, 1000.0f);
                     this->instparam_data.resize (this->instance_top * this->floats_per_instparam);
                 }
             } else {
