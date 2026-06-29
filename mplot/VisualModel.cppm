@@ -2064,6 +2064,7 @@ export namespace mplot
          * \param r Radius of the ring
          * \param t Thickness of the ring
          * \param segments Number of tube segments used to render the ring
+         * \param tfm a transform to apply to the points
          */
         void computeRing (sm::vec<float> ro, std::array<float, 3> rc, float r = 1.0f,
                           float t = 0.1f, int segments = 12,
@@ -2082,6 +2083,7 @@ export namespace mplot
          * \param r_in Inner radius of the ring
          * \param r_out Outer radius of the ring
          * \param segments Number of tube segments used to render the ring
+         * \param tfm a transform to apply to the points
          */
         void computeRingInOut (sm::vec<float> ro, std::array<float, 3> rc,
                                float r_in = 1.0f, float r_out = 2.0f, int segments = 12,
@@ -2107,6 +2109,78 @@ export namespace mplot
                 sm::vec<float> c2 = { xout_n, yout_n, 0.0f };
                 sm::vec<float> c1 = { xin_n, yin_n, 0.0f };
                 this->computeFlatQuad (tfm * (ro + c1), tfm * (ro + c2), tfm * (ro + c3), tfm * (ro + c4), rc);
+            }
+        }
+
+        /*!
+         * Make a ring of radius r, comprised of flat segments
+         *
+         * \param ro position of the centre of the ring
+         * \param rc The ring colour.
+         * \param mc The mark colour.
+         * \param m_centre The centre angle of the mark.
+         * \param r Radius of the ring
+         * \param t Thickness of the ring
+         * \param segments Number of tube segments used to render the ring
+         * \param tfm a transform to apply to the points
+         */
+        void computeMarkedRing (sm::vec<float> ro, std::array<float, 3> rc,
+                                std::array<float, 3> mc,
+                                float m_centre = 0.0f,
+                                float r = 1.0f,
+                                float t = 0.1f, int segments = 12,
+                                const sm::mat<float, 4> tfm = sm::mat<float, 4>::identity())
+        {
+            float r_in = r - (t * 0.5f);
+            float r_out = r + (t * 0.5f);
+            this->computeMarkedRingInOut (ro, rc, mc, m_centre, r_in, r_out, segments, tfm);
+        }
+
+        /*!
+         * Make a ring of radius r, comprised of flat segments, specifying inner and outer radii,
+         * which has a section coloured in a second colour.
+         *
+         * \param ro position of the centre of the ring
+         * \param rc The ring colour.
+         * \param mc The mark colour.
+         * \param m_centre The centre angle of the mark.
+         * \param m_num_segs The number of segments to colour either size of the centre angle.
+         * \param r_in Inner radius of the ring
+         * \param r_out Outer radius of the ring
+         * \param segments Number of tube segments used to render the ring
+         * \param tfm a transform to apply to the points
+         */
+        void computeMarkedRingInOut (sm::vec<float> ro, std::array<float, 3> rc,
+                                     std::array<float, 3> mc, float m_centre = 0.0f,
+                                     float r_in = 1.0f, float r_out = 2.0f, int segments = 12,
+                                     const sm::mat<float, 4> tfm = sm::mat<float, 4>::identity())
+        {
+            for (int j = 0; j < segments; j++) {
+                float segment = sm::mathconst<float>::two_pi * static_cast<float>(j) / segments;
+                // x and y of inner point
+                float xin = r_in * std::cos (segment);
+                float yin = r_in * std::sin (segment);
+                float xout = r_out * std::cos (segment);
+                float yout = r_out * std::sin (segment);
+                int segjnext = (j + 1) % segments;
+                float segnext = sm::mathconst<float>::two_pi * static_cast<float>(segjnext) / segments;
+                float xin_n = r_in * std::cos (segnext);
+                float yin_n = r_in * std::sin (segnext);
+                float xout_n = r_out * std::cos (segnext);
+                float yout_n = r_out * std::sin (segnext);
+
+                // Now draw a quad
+                sm::vec<float> c4 = { xin, yin, 0.0f };
+                sm::vec<float> c3 = { xout, yout, 0.0f };
+                sm::vec<float> c2 = { xout_n, yout_n, 0.0f };
+                sm::vec<float> c1 = { xin_n, yin_n, 0.0f };
+                if ((m_centre > segment && m_centre <= segnext)
+                    || (segment == 0.0f && m_centre == 0.0f)
+                    || (segment == 0.0f && m_centre == sm::mathconst<float>::two_pi)) {
+                    this->computeFlatQuad (tfm * (ro + c1), tfm * (ro + c2), tfm * (ro + c3), tfm * (ro + c4), mc);
+                } else {
+                    this->computeFlatQuad (tfm * (ro + c1), tfm * (ro + c2), tfm * (ro + c3), tfm * (ro + c4), rc);
+                }
             }
         }
 
