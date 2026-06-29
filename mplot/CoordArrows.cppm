@@ -111,48 +111,52 @@ export namespace mplot
             // Draw four spheres to make up the coord frame, with centre at 0,0,0
             sm::vec<float, 3> reloffset = {};
             static constexpr sm::vec<float, 3> zerocoord = { 0.0f, 0.0f, 0.0f };
-            this->computeSphere (zerocoord, centresphere_col, this->thickness * this->lengths[0] / 20.0f);
+            this->computeSphere (zerocoord, centresphere_col, this->thickness * this->lengths[0] * this->centre_sphere_size);
 
             // x
             reloffset = this->x_axis * this->lengths[0];
-            this->computeSphere (reloffset, x_axis_col, (this->thickness * this->lengths[0] / 40.0f) * endsphere_size);
-            this->computeTube (zerocoord, reloffset, x_axis_col, x_axis_col, this->thickness * this->lengths[0] / 80.0f);
+            this->computeSphere (reloffset, x_axis_col, this->thickness * this->lengths[0] * this->endsphere_size);
+            this->computeTube (zerocoord, reloffset, x_axis_col, x_axis_col, this->thickness * this->lengths[0] * this->tube_size);
             if (showneg) {
-                this->computeTube (zerocoord, -reloffset, x_axis_neg, x_axis_neg, this->thickness * this->lengths[0] / 80.0f);
+                this->computeTube (zerocoord, -reloffset, x_axis_neg, x_axis_neg, this->thickness * this->lengths[0] * this->tube_size);
             }
 
             // y
             reloffset = this->y_axis * this->lengths[1];
-            this->computeSphere (reloffset, y_axis_col, (this->thickness * this->lengths[0] / 40.0f) * endsphere_size);
-            this->computeTube (zerocoord, reloffset, y_axis_col, y_axis_col, this->thickness * this->lengths[0] / 80.0f);
+            this->computeSphere (reloffset, y_axis_col, this->thickness * this->lengths[0] * this->endsphere_size);
+            this->computeTube (zerocoord, reloffset, y_axis_col, y_axis_col, this->thickness * this->lengths[0]  * this->tube_size);
             if (showneg) {
-                this->computeTube (zerocoord, -reloffset, y_axis_neg, y_axis_neg, this->thickness * this->lengths[0] / 80.0f);
+                this->computeTube (zerocoord, -reloffset, y_axis_neg, y_axis_neg, this->thickness * this->lengths[0] * this->tube_size);
             }
 
             // z
             reloffset = this->z_axis * this->lengths[2];
-            this->computeSphere (reloffset, z_axis_col, (this->thickness * this->lengths[0] / 40.0f) * endsphere_size);
-            this->computeTube (zerocoord, reloffset, z_axis_col, z_axis_col, this->thickness * this->lengths[0] / 80.0f);
+            this->computeSphere (reloffset, z_axis_col, this->thickness * this->lengths[0] * this->endsphere_size);
+            this->computeTube (zerocoord, reloffset, z_axis_col, z_axis_col, this->thickness * this->lengths[0] * this->tube_size);
             if (showneg) {
-                this->computeTube (zerocoord, -reloffset, z_axis_neg, z_axis_neg, this->thickness * this->lengths[0] / 80.0f);
+                this->computeTube (zerocoord, -reloffset, z_axis_neg, z_axis_neg, this->thickness * this->lengths[0] * this->tube_size);
             }
 
             this->initAxisLabels();
         }
 
-        //! Length multipliers that can be applied to ux, uy and uz
+        //! The lengths of the coordinate arrows
         sm::vec<float, 3> lengths = { 1.0f, 1.0f, 1.0f };
 
         //! The axes for the coordinate arrows. A simple right handed coordinate system aligned with
         //! the 'real' world coordinate system by default.
-        sm::vec<float, 3> x_axis = { 1.0f, 0.0f, 0.0f };
-        sm::vec<float, 3> y_axis = { 0.0f, 1.0f, 0.0f };
-        sm::vec<float, 3> z_axis = { 0.0f, 0.0f, 1.0f };
+        sm::vec<float, 3> x_axis = sm::vec<float>::ux();
+        sm::vec<float, 3> y_axis = sm::vec<float>::uy();
+        sm::vec<float, 3> z_axis = sm::vec<float>::uz();
 
-        //! A thickness scaling factor, to apply to the arrows.
+        //! A thickness scaling factor, to scale all thicknesses at once
         float thickness = 1.0f;
-        //! a multiplier on the end spheres
-        float endsphere_size = 1.0f;
+        //! The radius of the end spheres as a proportion of the length
+        float endsphere_size = 1.0f / 40.0f;
+        //! The radius of the centre sphere as a proportion of the length
+        float centre_sphere_size = 1.0f / 20.0f;
+        //! The radius of the arrows, as a proportion of the length
+        float tube_size = 1.0f / 80.0f;
         //! m size for text labels
         float em = 0.0f;
 
