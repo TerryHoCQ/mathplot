@@ -1,9 +1,7 @@
 # All #includes in test programs have to be #include <mplot/header.h>
 include_directories(BEFORE ${PROJECT_SOURCE_DIR})
 
-add_library(mathplot_examples STATIC)
-target_sources(mathplot_examples PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES
+set(MATHPLOT_EXAMPLES_MODULES
   ${MPLOT_CORE_MODULES}
   ${MPLOT_MATHS_HEXGRID_MODULES}
   ${MPLOT_MATHS_CARTGRID_MODULES}  
@@ -15,6 +13,11 @@ target_sources(mathplot_examples PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT
   ${PROJECT_SOURCE_DIR}/maths/sm/config.cppm
   ${PROJECT_SOURCE_DIR}/maths/sm/winder.cppm
   ${PROJECT_SOURCE_DIR}/maths/sm/bootstrap.cppm
+)
+list(REMOVE_DUPLICATES MATHPLOT_EXAMPLES_MODULES)
+add_library(mathplot_examples STATIC)
+target_sources(mathplot_examples PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES ${MATHPLOT_EXAMPLES_MODULES}
 )
 target_link_libraries(mathplot_examples OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
