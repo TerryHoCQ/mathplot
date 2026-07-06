@@ -1,5 +1,6 @@
 // Graph of some random points and a spline fit.
 #include <memory>
+#include <cstdint>
 import sm.vec;
 import sm.vvec;
 //import sm.random;

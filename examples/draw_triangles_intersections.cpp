@@ -1,4 +1,5 @@
 #include <memory>
+#include <cstdint>
 #include <iostream>
 #include <array>
 #include <string>
