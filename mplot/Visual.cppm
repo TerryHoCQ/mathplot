@@ -227,6 +227,7 @@ export namespace mplot
             glfwSetMouseButtonCallback (this->window, mouse_button_callback_dispatch);
             glfwSetCursorPosCallback (this->window, cursor_position_callback_dispatch);
             glfwSetWindowSizeCallback (this->window, window_size_callback_dispatch);
+            glfwSetWindowContentScaleCallback (this->window, window_content_scale_callback_dispatch);
             glfwSetWindowCloseCallback (this->window, window_close_callback_dispatch);
             glfwSetScrollCallback (this->window, scroll_callback_dispatch);
 
@@ -266,6 +267,13 @@ export namespace mplot
         {
             Visual<glver>* self = static_cast<Visual<glver>*>(glfwGetWindowUserPointer (_window));
             if (self->window_size_callback (width, height)) {
+                self->render();
+            }
+        }
+        static void window_content_scale_callback_dispatch (GLFWwindow* _window, float xscl, float yscl)
+        {
+            Visual<glver>* self = static_cast<Visual<glver>*>(glfwGetWindowUserPointer (_window));
+            if (self->window_content_scale_callback (xscl, yscl)) {
                 self->render();
             }
         }

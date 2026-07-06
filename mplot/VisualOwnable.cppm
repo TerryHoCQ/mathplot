@@ -2425,6 +2425,20 @@ export namespace mplot
             return true; // needs_render
         }
 
+        virtual bool window_content_scale_callback (float xscl, float yscl)
+        {
+            bool nr = false;
+            if (this->window_scale_w != xscl) {
+                this->window_scale_w = xscl;
+                nr = true;
+            }
+            if (this->window_scale_h != yscl) {
+                this->window_scale_h = yscl;
+                nr = true;
+            }
+            return nr;
+        }
+
         virtual void window_close_callback()
         {
             if (this->options.test (visual_options::preventWindowCloseWithButton) == false) {
