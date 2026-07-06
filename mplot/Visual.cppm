@@ -231,6 +231,7 @@ export namespace mplot
             glfwSetScrollCallback (this->window, scroll_callback_dispatch);
 
             glfwMakeContextCurrent (this->window);
+            glfwGetWindowContentScale (this->window, &this->window_scale_w, &this->window_scale_h);
 
             this->init_glad (glfwGetProcAddress);
         }

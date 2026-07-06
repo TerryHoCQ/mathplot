@@ -472,7 +472,9 @@ export namespace mplot
             this->setContext();
 
             this->glfn->UseProgram (this->shaders.gprog);
-            this->glfn->Viewport (0, 0, this->window_w * mplot::retinaScale, this->window_h * mplot::retinaScale);
+            this->glfn->Viewport (0, 0,
+				  this->window_w * this->window_scale_w * mplot::retinaScale,
+				  this->window_h * this->window_scale_h * mplot::retinaScale);
 
             // Set the perspective
             if (this->ptype == perspective_type::orthographic) {
@@ -1740,6 +1742,10 @@ export namespace mplot
         int window_w = 640;
         //! Current window height
         int window_h = 480;
+
+        //! Window scaling
+        float window_scale_w = 1.0f;
+        float window_scale_h = 1.0f;
 
         //! The title for the Visual. Used in window title and if saving out 3D model or png image.
         std::string title = "mathplot";
