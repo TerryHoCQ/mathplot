@@ -12,13 +12,7 @@ module;
 #include <limits>
 #include <deque>
 #include <iostream>
-#ifdef MPLOT_HAVE_STD_FORMAT
-# include <format>
-#else
-# include <sstream>
-# include <iomanip>
-# include <ios>
-#endif
+#include <format>
 
 export module mplot.graphing;
 
@@ -53,7 +47,6 @@ export namespace mplot::graphing
             rounded = sm::algo::round_to_col (num, min_col);
         }
 
-#ifdef MPLOT_HAVE_STD_FORMAT
         std::string s = "0";
         if (num != F{0}) {
             if (num_sigcols.max > 3) {
@@ -62,20 +55,7 @@ export namespace mplot::graphing
                 s = std::format ("{:.{}f}", num, (min_col <= 0 ? -min_col : 0));
             }
         }
-#else
-        std::stringstream ss;
-        if (num != F{0}) {
-            if (num_sigcols.max > 3) {
-                ss << std::scientific << std::setprecision (num_sigcols.max - min_col);
-            } else {
-                ss << std::fixed << std::setprecision ((min_col <= 0 ? -min_col : 0));
-            }
-            ss << num;
-        } else {
-            ss << "0";
-        }
-        std::string s = ss.str();
-#endif
+
         if (num > F{-1} && num < F{1} && num != F{0}) {
             // It's a 0.something number. Get rid of any 0 preceding a '.'
             std::string::size_type p = s.find ('.');

@@ -27,15 +27,6 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 include(CheckIncludeFileCXX) # CHECK_INCLUDE_FILE_CXX will be used in later scripts
 
-# If I *require* std::format, I can start using it across mathplot. That
-# limits us to gcc-13 on Ubuntu (though it's the libc++ that contains
-# <format>). For now, test and use it only in examples.
-check_include_file_cxx(format HAVE_STD_FORMAT)
-if(NOT HAVE_STD_FORMAT)
-  message(INFO " Your compiler does not appear to provide std::format, some examples won't build.")
-  message(INFO " In future, <format> may be required across mathplot.")
-endif()
-
 # Add the host definition to CXXFLAGS along with other switches
 if (APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -O3")
@@ -72,11 +63,6 @@ else()
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconstexpr-steps=500000000")
     endif()
   endif()
-endif()
-
-# If you tell the code you have std::format, then it may use it
-if(HAVE_STD_FORMAT)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMPLOT_HAVE_STD_FORMAT")
 endif()
 
 # In Visual Studio, if CMAKE_BUILD_TYPE is "Debug", some programs will run very slowly
@@ -226,9 +212,6 @@ option(BUILD_UTILS "Build developer utils" OFF)
 if(BUILD_UTILS)
   add_subdirectory(buildtools)
 endif(BUILD_UTILS)
-
-# Partial cleanup of precompiled module files
-option(SAVE_PCM "Save all precompiled modules files (pcm/gcm) after building each target (they are cleaned by default, which saves storage in your build directory, but means every call to ninja WILL require actual compiling)" OFF)
 
 # Install the font files for program that need to to work with an
 # *installed* mathplot, as opposed to an in-tree mathplot.
