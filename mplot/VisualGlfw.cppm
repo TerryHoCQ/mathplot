@@ -14,6 +14,7 @@ module;
 #endif
 
 #include <iostream>
+#include <cstdint>
 #include <stdexcept>
 
 export module mplot.visualglfw;
@@ -23,7 +24,7 @@ import mplot.gl.version;
 export namespace mplot
 {
     //! Singleton resource class for mplot::Visual scenes.
-    template<int glver>
+    template<std::int32_t glver>
     class VisualGlfw
     {
     private:
@@ -65,7 +66,7 @@ export namespace mplot
         static void releaseContext() { glfwMakeContextCurrent (nullptr); }
 
         //! An error callback function for the GLFW windowing library
-        static void errorCallback (int error, const char* description)
+        static void errorCallback (std::int32_t error, const char* description)
         {
             std::cerr << "Error: " << description << " (code "  << error << ")\n";
         }

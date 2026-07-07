@@ -25,6 +25,7 @@ module;
 #include <mutex>
 #include <chrono>
 #include <utility>
+#include <cstdint>
 
 export module mplot.visual;
 
@@ -54,7 +55,7 @@ export namespace mplot
      *
      * \tparam glver The OpenGL version, encoded as a single int (see mplot::gl::version)
      */
-    template <int glver = mplot::gl::version_4_1>
+    template <std::int32_t glver = mplot::gl::version_4_1>
     class Visual : public mplot::VisualOwnable<glver>
     {
     public:
@@ -62,7 +63,7 @@ export namespace mplot
          * Construct a new visualiser. The rule is 1 window to one Visual object. So, this creates a
          * new window and a new OpenGL context.
          */
-        Visual (const int _width, const int _height, const std::string& _title, const bool _version_stdout = true)
+        Visual (const std::int32_t _width, const std::int32_t _height, const std::string& _title, const bool _version_stdout = true)
         {
             this->window_w = _width;
             this->window_h = _height;
@@ -206,7 +207,7 @@ export namespace mplot
             using sc = std::chrono::steady_clock;
             sc::time_point t0 = sc::now();
             sc::time_point t1 = sc::now();
-            int timeout_us = timeout * 1000000;
+            std::int32_t timeout_us = timeout * 1000000;
             while (std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count() < timeout_us) {
                 glfwWaitEventsTimeout (timeout/10.0);
                 t1 = sc::now();
@@ -247,14 +248,14 @@ export namespace mplot
         /*
          * GLFW callback dispatch functions
          */
-        static void key_callback_dispatch (GLFWwindow* _window, int key, int scancode, int action, int mods)
+        static void key_callback_dispatch (GLFWwindow* _window, std::int32_t key, std::int32_t scancode, std::int32_t action, std::int32_t mods)
         {
             Visual<glver>* self = static_cast<Visual<glver>*>(glfwGetWindowUserPointer (_window));
             if (self->key_callback (key, scancode, action, mods)) {
                 self->render();
             }
         }
-        static void mouse_button_callback_dispatch (GLFWwindow* _window, int button, int action, int mods)
+        static void mouse_button_callback_dispatch (GLFWwindow* _window, std::int32_t button, std::int32_t action, std::int32_t mods)
         {
             Visual<glver>* self = static_cast<Visual<glver>*>(glfwGetWindowUserPointer (_window));
             self->mouse_button_callback (button, action, mods);
@@ -266,7 +267,7 @@ export namespace mplot
                 self->render();
             }
         }
-        static void window_size_callback_dispatch (GLFWwindow* _window, int width, int height)
+        static void window_size_callback_dispatch (GLFWwindow* _window, std::int32_t width, std::int32_t height)
         {
             Visual<glver>* self = static_cast<Visual<glver>*>(glfwGetWindowUserPointer (_window));
             if (self->window_size_callback (width, height)) {
@@ -299,7 +300,7 @@ export namespace mplot
         /*
          * Generic callback handlers
          */
-        virtual bool key_callback (int _key, int scancode, int action, int mods)
+        virtual bool key_callback (std::int32_t _key, std::int32_t scancode, std::int32_t action, std::int32_t mods)
         {
             return mplot::VisualOwnable<glver>::template key_callback<true> (_key, scancode, action, mods);
         }

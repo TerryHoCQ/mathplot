@@ -204,7 +204,7 @@ export namespace mplot
      *
      * \tparam glver The OpenGL version, encoded as a single int (see mplot::gl::version)
      */
-    template <int glver = mplot::gl::version_4_1>
+    template <std::int32_t glver = mplot::gl::version_4_1>
     class VisualOwnable
     {
     public:
@@ -223,7 +223,7 @@ export namespace mplot
          * Construct a new visualiser. The rule is 1 window to one Visual object. So, this creates a
          * new window and a new OpenGL context.
          */
-        VisualOwnable (const int _width, const int _height, const std::string& _title, const bool _version_stdout = true)
+        VisualOwnable (const std::int32_t _width, const std::int32_t _height, const std::string& _title, const bool _version_stdout = true)
         {
             this->sceneview.translate (this->scenetrans_default);
             this->sceneview_tr.translate (this->scenetrans_default);
@@ -286,13 +286,13 @@ export namespace mplot
          * unique_ptr. The index into Visual::vm is returned.
          */
         template <typename T>
-        unsigned int addVisualModelId (std::unique_ptr<T>& model)
+        std::uint32_t addVisualModelId (std::unique_ptr<T>& model)
         {
             std::unique_ptr<mplot::VisualModel<glver>> vmp = std::move(model);
             vmp->set_parent (this->visual_id);
             if (vmp->instanced()) { this->state.set (visual_state::haveInstanced, true); }
             this->vm.push_back (std::move(vmp));
-            unsigned int rtn = (this->vm.size()-1);
+            std::uint32_t rtn = (this->vm.size()-1);
             return rtn;
         }
 
@@ -317,7 +317,7 @@ export namespace mplot
         const mplot::VisualModel<glver>* validVisualModel (const mplot::VisualModel<glver>* vmp) const
         {
             const mplot::VisualModel<glver>* rtn = nullptr;
-            for (unsigned int modelId = 0; modelId < this->vm.size(); ++modelId) {
+            for (std::uint32_t modelId = 0; modelId < this->vm.size(); ++modelId) {
                 if (this->vm[modelId].get() == vmp) {
                     rtn = vmp;
                     break;
@@ -328,7 +328,7 @@ export namespace mplot
 
         void setFollowedVM (const mplot::VisualModel<glver>* vm_to_follow)
         {
-            for (unsigned int modelId = 0; modelId < this->vm.size(); ++modelId) {
+            for (std::uint32_t modelId = 0; modelId < this->vm.size(); ++modelId) {
                 if (this->vm[modelId].get() == vm_to_follow) {
                     this->followedVM = this->vm[modelId].get();
                     this->followedLastViewMatrix = this->followedVM->getViewMatrix();
@@ -344,15 +344,15 @@ export namespace mplot
          *
          * \return VisualModel pointer
          */
-        mplot::VisualModel<glver>* getVisualModel (unsigned int modelId) { return (this->vm[modelId].get()); }
+        mplot::VisualModel<glver>* getVisualModel (std::uint32_t modelId) { return (this->vm[modelId].get()); }
 
         //! Remove the VisualModel with ID \a modelId from the scene.
-        void removeVisualModel (unsigned int modelId) { this->vm.erase (this->vm.begin() + modelId); }
+        void removeVisualModel (std::uint32_t modelId) { this->vm.erase (this->vm.begin() + modelId); }
 
         //! Remove the VisualModel whose pointer matches the VisualModel* vmp
         void removeVisualModel (mplot::VisualModel<glver>* vmp)
         {
-            unsigned int modelId = 0;
+            std::uint32_t modelId = 0;
             bool found_model = false;
             for (modelId = 0; modelId < this->vm.size(); ++modelId) {
                 if (this->vm[modelId].get() == vmp) {
@@ -374,7 +374,7 @@ export namespace mplot
         GladGLContext* glfn = nullptr;
 
         //! Stores the OpenGL function context version that was loaded
-        int glfn_version = 0;
+        std::int32_t glfn_version = 0;
 
         //! Graphics context functions that refer to the window system (GLFW usually) are defined in derived class
         virtual void setContext() = 0;
@@ -384,7 +384,7 @@ export namespace mplot
 
         //! Take a screenshot of the window. Return vec containing width * height or {-1, -1} on
         //! failure. Set transparent_bg to get a transparent background.
-        sm::vec<int, 2> saveImage (const std::string& img_filename, const bool transparent_bg = false)
+        sm::vec<std::int32_t, 2> saveImage (const std::string& img_filename, const bool transparent_bg = false)
         {
             using namespace std::chrono;
             using sc = std::chrono::steady_clock;
@@ -395,10 +395,10 @@ export namespace mplot
 
             if constexpr (profile_saveimage) { t0 = sc::now(); }
 
-            int32_t viewport[4]; // current viewport
+            std::int32_t viewport[4]; // current viewport
             this->glfn->GetIntegerv (GL_VIEWPORT, viewport);
 
-            sm::vec<int32_t, 2> dims;
+            sm::vec<std::int32_t, 2> dims;
             dims[0] = viewport[2];
             dims[1] = viewport[3];
             auto bits = std::make_unique<GLubyte[]>(dims.product() * 4);
@@ -411,15 +411,15 @@ export namespace mplot
             this->glfn->PixelStorei (GL_PACK_SKIP_PIXELS, 0);
             this->glfn->ReadPixels (0, 0, dims[0], dims[1], GL_RGBA, GL_UNSIGNED_BYTE, bits.get());
 
-            for (int32_t i = 0; i < dims[1]; ++i) {
-                int32_t rev_line = (dims[1] - i - 1) * 4 * dims[0];
-                int32_t for_line = i * 4 * dims[0];
+            for (std::int32_t i = 0; i < dims[1]; ++i) {
+                std::int32_t rev_line = (dims[1] - i - 1) * 4 * dims[0];
+                std::int32_t for_line = i * 4 * dims[0];
                 if (transparent_bg) {
-                    for (int32_t j = 0; j < 4 * dims[0]; ++j) {
+                    for (std::int32_t j = 0; j < 4 * dims[0]; ++j) {
                         rbits[rev_line + j] = bits[for_line + j];
                     }
                 } else {
-                    for (int32_t j = 0; j < 4 * dims[0]; ++j) {
+                    for (std::int32_t j = 0; j < 4 * dims[0]; ++j) {
                         rbits[rev_line + j] = (j % 4 == 3) ? 255 : bits[for_line + j];
                     }
                 }
@@ -1203,7 +1203,7 @@ export namespace mplot
             fout.close();
         }
 
-        void set_winsize (int _w, int _h) { this->window_w = _w; this->window_h = _h; }
+        void set_winsize (const std::int32_t _w, const std::int32_t _h) { this->window_w = _w; this->window_h = _h; }
 
         // Accessing std::vector<std::unique_ptr<mplot::VisualModel<glver>>> vm; from external code
         std::vector<std::unique_ptr<mplot::VisualModel<glver>>>::const_iterator next_vm_accessor;
@@ -1731,9 +1731,9 @@ export namespace mplot
         std::uint32_t visual_id = std::numeric_limits<std::uint32_t>::max();
 
         //! Current window width
-        int window_w = 640;
+        std::int32_t window_w = 640;
         //! Current window height
-        int window_h = 480;
+        std::int32_t window_h = 480;
         //! Window viewport scaling
         float window_scale_w = 1.0f;
         float window_scale_h = 1.0f;
@@ -1742,7 +1742,7 @@ export namespace mplot
         std::string title = "mathplot";
 
         //! The user's 'selected visual model'. For model specific changes to alpha and possibly colour
-        unsigned int selectedVisualModel = 0u;
+        std::uint32_t selectedVisualModel = 0u;
 
         //! A little model of the coordinate axes.
         std::unique_ptr<mplot::CoordArrows<glver>> coordArrows;
@@ -1825,7 +1825,7 @@ export namespace mplot
         using key = mplot::key;
         // The key_callback handler uses GLFW codes, but they're in a mplot header (keys.h)
         template<bool owned = true>
-        bool key_callback (int _key, int scancode, int action, int mods) // can't be virtual.
+        bool key_callback (std::int32_t _key, std::int32_t scancode, std::int32_t action, std::int32_t mods) // can't be virtual.
         {
             bool needs_render = false;
 
@@ -2367,7 +2367,7 @@ export namespace mplot
             return needs_render;
         }
 
-        virtual void mouse_button_callback (int button, int action, int mods = 0)
+        virtual void mouse_button_callback (std::int32_t button, std::int32_t action, std::int32_t mods = 0)
         {
             // If the scene is locked, then ignore the mouse movements
             if (this->state.test (visual_state::sceneLocked)) { return; }
@@ -2409,7 +2409,7 @@ export namespace mplot
             this->mouse_button_callback_extra (button, action, mods);
         }
 
-        virtual bool window_size_callback (int width, int height)
+        virtual bool window_size_callback (std::int32_t width, std::int32_t height)
         {
             this->window_w = width;
             this->window_h = height;
@@ -2486,27 +2486,11 @@ export namespace mplot
             return true; // needs_render
         }
 
-        virtual void key_callback_extra ([[maybe_unused]] int key, [[maybe_unused]] int scancode,
-                                         [[maybe_unused]] int action, [[maybe_unused]] int mods)
-        {
-            // This code is a workaround for the bug in
-            // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=124483 Although the bug is fixed in
-            // gcc16, it is easy to workaround for gcc15 with this:
-            constexpr bool output_args = false;
-            if constexpr (output_args == true) {
-                std::cout << "args: " << key << ", " << scancode << ", " << action << ", " << mods << std::endl;
-            }
-        }
+        virtual void key_callback_extra ([[maybe_unused]] std::int32_t key, [[maybe_unused]] std::int32_t scancode,
+                                         [[maybe_unused]] std::int32_t action, [[maybe_unused]] std::int32_t mods) {}
 
-        virtual void mouse_button_callback_extra ([[maybe_unused]] int button, [[maybe_unused]] int action,
-                                                  [[maybe_unused]] int mods)
-        {
-            // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=124483 workaround:
-            constexpr bool output_args = false;
-            if constexpr (output_args == true) {
-                std::cout << "args: " << button << ", " << action << ", " << mods << std::endl;
-            }
-        }
+        virtual void mouse_button_callback_extra ([[maybe_unused]] std::int32_t button, [[maybe_unused]] std::int32_t action,
+                                                  [[maybe_unused]] std::int32_t mods) {}
 
         //! A callback that client code can set so that it knows when user has signalled to
         //! mplot::Visual that it's quit time.

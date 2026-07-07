@@ -8,6 +8,7 @@
  */
 module;
 #include <string>
+#include <cstdint>
 
 export module mplot.gl.version;
 
@@ -19,21 +20,21 @@ export namespace mplot::gl
      * argument to mplot::Visual and friends. These are the human-readable definitions. You can
      * pass, for example `mplot::gl::version_4_3` as the argument to your template.
      */
-    constexpr int version_4_1        = 0x00040001;
-    constexpr int version_4_1_compat = 0x20040001;
-    constexpr int version_4_2        = 0x00040002;
-    constexpr int version_4_2_compat = 0x20040002;
-    constexpr int version_4_3        = 0x00040003;
-    constexpr int version_4_3_compat = 0x20040003;
-    constexpr int version_4_4        = 0x00040004;
-    constexpr int version_4_4_compat = 0x20040004;
-    constexpr int version_4_5        = 0x00040005;
-    constexpr int version_4_5_compat = 0x20040005;
-    constexpr int version_4_6        = 0x00040006;
-    constexpr int version_4_6_compat = 0x20040006;
-    constexpr int version_3_0_es     = 0x40030000; // OpenGL 3.0 ES is a subset of OpenGL 3.3
-    constexpr int version_3_1_es     = 0x40030001; // OpenGL 3.1 ES is a subset of OpenGL 4.3
-    constexpr int version_3_2_es     = 0x40030002;
+    constexpr std::int32_t version_4_1        = 0x00040001;
+    constexpr std::int32_t version_4_1_compat = 0x20040001;
+    constexpr std::int32_t version_4_2        = 0x00040002;
+    constexpr std::int32_t version_4_2_compat = 0x20040002;
+    constexpr std::int32_t version_4_3        = 0x00040003;
+    constexpr std::int32_t version_4_3_compat = 0x20040003;
+    constexpr std::int32_t version_4_4        = 0x00040004;
+    constexpr std::int32_t version_4_4_compat = 0x20040004;
+    constexpr std::int32_t version_4_5        = 0x00040005;
+    constexpr std::int32_t version_4_5_compat = 0x20040005;
+    constexpr std::int32_t version_4_6        = 0x00040006;
+    constexpr std::int32_t version_4_6_compat = 0x20040006;
+    constexpr std::int32_t version_3_0_es     = 0x40030000; // OpenGL 3.0 ES is a subset of OpenGL 3.3
+    constexpr std::int32_t version_3_1_es     = 0x40030001; // OpenGL 3.1 ES is a subset of OpenGL 4.3
+    constexpr std::int32_t version_3_2_es     = 0x40030002;
     //!@{
 
     /*
@@ -47,27 +48,27 @@ export namespace mplot::gl
     namespace version
     {
         // Open GL minor version number
-        int constexpr minor (const int gl_version_number)
+        std::int32_t constexpr minor (const std::int32_t gl_version_number)
         {
             return (gl_version_number & 0xffff);
         }
         // Open GL major version number
-        int constexpr major (const int gl_version_number)
+        std::int32_t constexpr major (const std::int32_t gl_version_number)
         {
             return (gl_version_number >> 16 & 0x1fff);
         }
         // True if this is the compatibility profile (by default it's the core profile)
-        bool constexpr compat (const int gl_version_number)
+        bool constexpr compat (const std::int32_t gl_version_number)
         {
             return (((gl_version_number >> 29) & 0x1) > 0x0) ? true : false;
         }
         // True if this is an OpenGL ES version
-        bool constexpr gles (const int gl_version_number)
+        bool constexpr gles (const std::int32_t gl_version_number)
         {
             return (((gl_version_number >> 30) & 0x1) > 0x0) ? true : false;
         }
         // True if this version suports shader storage buffer objects
-        bool constexpr has_ssbo (const int gl_version_number)
+        bool constexpr has_ssbo (const std::int32_t gl_version_number)
         {
             if (mplot::gl::version::gles (gl_version_number) == true) {
                 // OpenGL ES 3.1 and up supports SSBO
@@ -82,7 +83,7 @@ export namespace mplot::gl
             }
         }
         // Output a string describing the version number
-        inline std::string vstring (const int gl_version_number)
+        inline std::string vstring (const std::int32_t gl_version_number)
         {
             std::string v = std::to_string (version::major(gl_version_number)) + std::string(".")
             + std::to_string (version::minor(gl_version_number));
@@ -95,7 +96,7 @@ export namespace mplot::gl
             return v;
         }
         // Return the version-specific shader preamble as a const char* from a constexpr function
-        constexpr const char* shaderpreamble (const int gl_version_number)
+        constexpr const char* shaderpreamble (const std::int32_t gl_version_number)
         {
             const char* preamble = "#version unknown\n";
 

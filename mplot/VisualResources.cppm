@@ -40,7 +40,7 @@ export namespace mplot
 {
     //! Singleton resource class for mplot::Visual scenes. (base class, with no GL calls, and no
     //! instance function)
-    template <int glver>
+    template <std::int32_t glver>
     class VisualResources
     {
     private:
@@ -57,11 +57,11 @@ export namespace mplot
         //! The collection of VisualFaces generated for this instance of the application. Create one
         //! VisualFace for each unique combination of VisualFont and fontpixels (the texture
         //! resolution). uint32_t is the 'visual_id' an ID of the Visual instance.
-        std::map<std::tuple<mplot::VisualFont, unsigned int, uint32_t>,
+        std::map<std::tuple<mplot::VisualFont, std::uint32_t, std::uint32_t>,
                  std::unique_ptr<mplot::visgl::VisualFace>> faces;
 
         //! FreeType library object. Keyed by the 'visual_id' an ID of the Visual instance.
-        std::map<uint32_t, FT_Library> freetypes;
+        std::map<std::uint32_t, FT_Library> freetypes;
 
     public:
         VisualResources(const VisualResources<glver>&) = delete;
@@ -75,7 +75,7 @@ export namespace mplot
         //! window). Thus, arguably, the FT_Library should be a member of mplot::Visual,
         //! but that's a task for the future, as I coded it this way under the false
         //! assumption that I'd only need one FT_Library.
-        void freetype_init (uint32_t _vis, GladGLContext* glfn = nullptr)
+        void freetype_init (std::uint32_t _vis, GladGLContext* glfn = nullptr)
         {
             FT_Library freetype = nullptr;
             try {
@@ -96,7 +96,7 @@ export namespace mplot
 
         //! When a mplot::Visual goes out of scope, its freetype library instance should be
         //! deinitialized.
-        void freetype_deinit (uint32_t _vis)
+        void freetype_deinit (std::uint32_t _vis)
         {
             // First clear the faces associated with Visual with ID _vis
             this->clearVisualFaces (_vis);
@@ -121,8 +121,8 @@ export namespace mplot
 
         //! Return a pointer to a VisualFace for the given \a font at the given texture
         //! resolution, \a fontpixels and the given window (i.e. OpenGL context) \a _win.
-        mplot::visgl::VisualFace* getVisualFace (mplot::VisualFont font, unsigned int fontpixels,
-                                                 uint32_t _vis, GladGLContext* glfn)
+        mplot::visgl::VisualFace* getVisualFace (mplot::VisualFont font, std::uint32_t fontpixels,
+                                                 std::uint32_t _vis, GladGLContext* glfn)
         {
             mplot::visgl::VisualFace* rtn = nullptr;
             auto key = std::make_tuple(font, fontpixels, _vis);
@@ -136,17 +136,17 @@ export namespace mplot
         }
 
         mplot::visgl::VisualFace* getVisualFace (const mplot::TextFeatures& tf,
-                                                 const uint32_t _vis, GladGLContext* glfn)
+                                                 const std::uint32_t _vis, GladGLContext* glfn)
         {
             return this->getVisualFace (tf.font, tf.fontres, _vis, glfn);
         }
 
         //! Loop through this->faces clearing out those associated with the given mplot::Visual
-        void clearVisualFaces (const uint32_t _vis)
+        void clearVisualFaces (const std::uint32_t _vis)
         {
             mplot::VisualFont thefont;
-            unsigned int fpixels = 0;
-            uint32_t vf_vis = std::numeric_limits<uint32_t>::max();
+            std::uint32_t fpixels = 0;
+            std::uint32_t vf_vis = std::numeric_limits<std::uint32_t>::max();
 
             auto f = this->faces.begin();
 
@@ -161,20 +161,20 @@ export namespace mplot
             }
         }
 
-        uint32_t next_visual_id = 0;
+        std::uint32_t next_visual_id = 0;
 
         // GL function context pointers used in the program, keyed by a uint32_t ID
-        std::map<uint32_t, GladGLContext*> visual_keyed_gladglcontexts;
+        std::map<std::uint32_t, GladGLContext*> visual_keyed_gladglcontexts;
         // GL shader programs used by Visual in the program, keyed by ID
-        std::map<uint32_t, mplot::visgl::visual_shaderprogs> visual_keyed_shaderprogs;
+        std::map<std::uint32_t, mplot::visgl::visual_shaderprogs> visual_keyed_shaderprogs;
         // Window contexts
-        std::map<uint32_t, mplot::win_t*> visual_keyed_windows;
+        std::map<std::uint32_t, mplot::win_t*> visual_keyed_windows;
         // Does instanced data need update?
-        std::map<uint32_t, bool> visual_keyed_instanced_needs_update;
+        std::map<std::uint32_t, bool> visual_keyed_instanced_needs_update;
 
-        uint32_t register_visual (GladGLContext* glfn, mplot::win_t* win)
+        std::uint32_t register_visual (GladGLContext* glfn, mplot::win_t* win)
         {
-            uint32_t visual_id = this->next_visual_id++;
+            std::uint32_t visual_id = this->next_visual_id++;
             this->visual_keyed_gladglcontexts[visual_id] = glfn;
             this->visual_keyed_shaderprogs[visual_id] = {}; // initialized empty with 0s
             this->visual_keyed_windows[visual_id] = win;
@@ -183,9 +183,9 @@ export namespace mplot
         }
 
         // Return true if there is a GladGLContext for visual_id
-        bool test_glfn (const uint32_t visual_id)
+        bool test_glfn (const std::uint32_t visual_id)
         {
-            if (visual_id == std::numeric_limits<uint32_t>::max()) {
+            if (visual_id == std::numeric_limits<std::uint32_t>::max()) {
                 return false;
             }
             try {
@@ -199,48 +199,48 @@ export namespace mplot
          * A VisualModel can call this method, passing in the numeric ID of the context it belongs
          * to. The return value will be the correct GL context pointer.
          */
-        GladGLContext* get_glfn (const uint32_t visual_id) noexcept
+        GladGLContext* get_glfn (const std::uint32_t visual_id) noexcept
         {
-            if (visual_id == std::numeric_limits<uint32_t>::max()) { return nullptr; }
+            if (visual_id == std::numeric_limits<std::uint32_t>::max()) { return nullptr; }
             GladGLContext* glfn = this->visual_keyed_gladglcontexts[visual_id];
             return glfn;
         }
 
-        void set_tprog (const uint32_t visual_id, const uint32_t _tprog)
+        void set_tprog (const std::uint32_t visual_id, const std::uint32_t _tprog)
         {
-            if (visual_id == std::numeric_limits<uint32_t>::max()) {
+            if (visual_id == std::numeric_limits<std::uint32_t>::max()) {
                 throw std::runtime_error ("VisualResources::set_tprog(): visual_id is unset");
             }
             this->visual_keyed_shaderprogs[visual_id].tprog = _tprog;
         }
 
-        uint32_t get_tprog (const uint32_t visual_id)
+        std::uint32_t get_tprog (const std::uint32_t visual_id)
         {
-            if (visual_id == std::numeric_limits<uint32_t>::max()) {
+            if (visual_id == std::numeric_limits<std::uint32_t>::max()) {
                 throw std::runtime_error ("VisualResources::get_tprog(): visual_id is unset");
             }
             return this->visual_keyed_shaderprogs[visual_id].tprog;
         }
 
-        void set_gprog (const uint32_t visual_id, const uint32_t _gprog)
+        void set_gprog (const std::uint32_t visual_id, const std::uint32_t _gprog)
         {
-            if (visual_id == std::numeric_limits<uint32_t>::max()) {
+            if (visual_id == std::numeric_limits<std::uint32_t>::max()) {
                 throw std::runtime_error ("VisualResources::set_gprog(): visual_id is unset");
             }
             this->visual_keyed_shaderprogs[visual_id].gprog = _gprog;
         }
 
-        uint32_t get_gprog (const uint32_t visual_id)
+        std::uint32_t get_gprog (const std::uint32_t visual_id)
         {
-            if (visual_id == std::numeric_limits<uint32_t>::max()) {
+            if (visual_id == std::numeric_limits<std::uint32_t>::max()) {
                 throw std::runtime_error ("VisualResources::get_gprog(): visual_id is unset");
             }
             return this->visual_keyed_shaderprogs[visual_id].gprog;
         }
 
-        void setContext (const uint32_t visual_id)
+        void setContext (const std::uint32_t visual_id)
         {
-            if (visual_id == std::numeric_limits<uint32_t>::max()) {
+            if (visual_id == std::numeric_limits<std::uint32_t>::max()) {
                 throw std::runtime_error ("VisualResources::setContext(): visual_id is unset");
             }
             this->setContextDispatch (this->visual_keyed_windows[visual_id]);
@@ -250,17 +250,17 @@ export namespace mplot
         void releaseContext() { this->releaseContextDispatch(); }
         std::function<void()> releaseContextDispatch;             // For GLFW, should call VisualGlfw::releaseContext()
 
-        bool get_instanced_needs_update (const uint32_t visual_id)
+        bool get_instanced_needs_update (const std::uint32_t visual_id)
         {
-            if (visual_id == std::numeric_limits<uint32_t>::max()) {
+            if (visual_id == std::numeric_limits<std::uint32_t>::max()) {
                 throw std::runtime_error ("VisualResources::get_instanced_needs_update: visual_id is unset");
             }
             return this->visual_keyed_instanced_needs_update[visual_id];
         }
 
-        void instanced_needs_update (const uint32_t visual_id, const bool val = true)
+        void instanced_needs_update (const std::uint32_t visual_id, const bool val = true)
         {
-            if (visual_id == std::numeric_limits<uint32_t>::max()) {
+            if (visual_id == std::numeric_limits<std::uint32_t>::max()) {
                 throw std::runtime_error ("VisualResources::instanced_needs_update: visual_id is unset");
             }
             this->visual_keyed_instanced_needs_update[visual_id] = val;
@@ -271,10 +271,10 @@ export namespace mplot
          * VisualResourcesdata in . Reserve n_to_reserve instances of data in the SSBOs. Return the
          * start offset into the buffers in terms of number of instances
          */
-        unsigned int init_instance_ssbo (const uint32_t visual_id, const unsigned int n_to_reserve)
+        std::uint32_t init_instance_ssbo (const std::uint32_t visual_id, const std::uint32_t n_to_reserve)
         {
             GladGLContext* glfn = this->get_glfn (visual_id);
-            unsigned int reservation = std::numeric_limits<unsigned int>::max();
+            std::uint32_t reservation = std::numeric_limits<std::uint32_t>::max();
             if constexpr (mplot::gl::version::has_ssbo (glver) == true) {
                 if (this->instance_data.ready() == false) { this->instance_data.init (glfn); }
                 if (this->instparam_data.ready() == false) { this->instparam_data.init (glfn); }
@@ -294,13 +294,13 @@ export namespace mplot
          * Inserts the 3 values from coord into the SSBO instance buffer, starting at location
          * instance_idx
          */
-        void insert_instance_data (const unsigned int instance_idx, const sm::vec<float, 3>& coord)
+        void insert_instance_data (const std::uint32_t instance_idx, const sm::vec<float, 3>& coord)
         {
             // If this function fails, make sure to call v.render before calling set_instance_data :)
             if (instance_idx >= this->max_instances) {
                 throw std::runtime_error ("insert_instance_data: bad instance_idx");
             }
-            unsigned int cur_fidx = instance_idx * this->floats_per_instance;
+            std::uint32_t cur_fidx = instance_idx * this->floats_per_instance;
             this->instance_data.data[cur_fidx++] = coord[0];
             this->instance_data.data[cur_fidx++] = coord[1];
             this->instance_data.data[cur_fidx++] = coord[2];
@@ -310,13 +310,13 @@ export namespace mplot
          * Inserts the 3 values from colour, along with alpha and scale into the SSBO instparam
          * buffer, starting at location instance_idx
          */
-        void insert_instparam_data (const unsigned int instance_idx,
+        void insert_instparam_data (const std::uint32_t instance_idx,
                                     const std::array<float, 3>& colour, const float& alpha, const float& scale)
         {
             if (instance_idx >= this->max_instances) {
                 throw std::runtime_error ("insert_instparam_data: bad instance_idx");
             }
-            unsigned int cur_fidx = instance_idx * this->floats_per_instparam;
+            std::uint32_t cur_fidx = instance_idx * this->floats_per_instparam;
             this->instparam_data.data[cur_fidx++] = colour[0];
             this->instparam_data.data[cur_fidx++] = colour[1];
             this->instparam_data.data[cur_fidx++] = colour[2];
@@ -334,13 +334,13 @@ export namespace mplot
          * SSBO management
          */
         //! Instanced rendering mode (SSBO access). position data stored in SSBO index 1 (must match GLSL code)
-        static constexpr unsigned int instance_index = 1;
+        static constexpr std::uint32_t instance_index = 1u;
         //! colour, scale, rotation stored in SSBO index 2
-        static constexpr unsigned int instparam_index = 2;
+        static constexpr std::uint32_t instparam_index = 2u;
         //! one 3D vector is 3 floats
-        static constexpr unsigned int floats_per_instance = 3;
+        static constexpr std::uint32_t floats_per_instance = 3u;
         //! Instance params are: colour/alpha (4 floats), scale (1 float)
-        static constexpr unsigned int floats_per_instparam = 5;
+        static constexpr std::uint32_t floats_per_instparam = 5u;
 
         /*!
          * This will control how much GPU RAM is allocated when using instanced rendering
@@ -348,9 +348,9 @@ export namespace mplot
          * is marked 'instanced'). Makes a big difference to speed of operation (unless I can send a
          * portion of a buffer to the GPU).
          */
-        static constexpr unsigned int max_instances = 32 * 1024;
-        static constexpr unsigned int max_instance_floats = floats_per_instance * max_instances;
-        static constexpr unsigned int max_instparam_floats = floats_per_instparam * max_instances;
+        static constexpr std::uint32_t max_instances = 32u * 1024u;
+        static constexpr std::uint32_t max_instance_floats = floats_per_instance * max_instances;
+        static constexpr std::uint32_t max_instparam_floats = floats_per_instparam * max_instances;
 
         //! Shader Storage Buffer Object for instanced rendering - this holds positions only
         mplot::gl::ssbo<mplot::VisualResources<glver>::instance_index,
@@ -360,7 +360,7 @@ export namespace mplot
                         float, mplot::VisualResources<glver>::max_instparam_floats> instparam_data;
 
         // The Current location from which space in the instance SSBOs should be allocated
-        unsigned int instance_top = 0;
+        std::uint32_t instance_top = 0;
     };
 
 } // namespace mplot

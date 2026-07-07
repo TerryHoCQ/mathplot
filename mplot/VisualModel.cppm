@@ -63,7 +63,7 @@ export namespace mplot
     union float_bytes // for gltf output
     {
         float f;
-        uint8_t bytes[sizeof(float)];
+        std::uint8_t bytes[sizeof(float)];
     };
 
     /*!
@@ -81,7 +81,7 @@ export namespace mplot
      * This class contains some common 'object primitives' code, such as computeSphere and
      * computeCone, which compute the vertices that will make up sphere and cone, respectively.
      */
-    template <int glver = mplot::gl::version_4_1>
+    template <std::int32_t glver = mplot::gl::version_4_1>
     struct VisualModel
     {
         VisualModel() {}
@@ -143,7 +143,7 @@ export namespace mplot
                 // Here, we cause the SSBOs to be intialized if they haven't already, and we reserve
                 // some space in the SSBOs for *this model*
                 this->instance_start = mplot::VisualResources<glver>::i().init_instance_ssbo (this->parentVis, this->max_instances);
-                if (this->instance_start == std::numeric_limits<unsigned int>::max()) {
+                if (this->instance_start == std::numeric_limits<std::uint32_t>::max()) {
                     throw std::runtime_error ("Failed to reserve space in SSBO");
                 }
             }
@@ -788,11 +788,11 @@ export namespace mplot
                     if (loc_is != -1) { glfn->Uniform1i (loc_is, this->instance_start); }
                     if (loc_ic != -1) { glfn->Uniform1i (loc_ic, this->instance_count); }
                     if (loc_ipc != -1) { glfn->Uniform1i (loc_ipc, this->instparam_count); }
-                    glfn->DrawElementsInstanced (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0, this->instance_count);
+                    glfn->DrawElementsInstanced (GL_TRIANGLES, static_cast<std::uint32_t>(this->indices.size()), GL_UNSIGNED_INT, 0, this->instance_count);
                 } else {
                     if (loc_is != -1) { glfn->Uniform1i (loc_is, -1); }
                     if (loc_ic != -1) { glfn->Uniform1i (loc_ic, -1); }
-                    glfn->DrawElements (GL_TRIANGLES, static_cast<unsigned int>(this->indices.size()), GL_UNSIGNED_INT, 0);
+                    glfn->DrawElements (GL_TRIANGLES, static_cast<std::uint32_t>(this->indices.size()), GL_UNSIGNED_INT, 0);
                 }
 
                 // Unbind the VAO
@@ -801,7 +801,7 @@ export namespace mplot
                 // Do the bounding box optionally
                 if (this->flags.test (vm_bools::compute_bb) && this->flags.test (vm_bools::show_bb) && !this->indices_bb.empty()) {
                     glfn->BindVertexArray (this->vao_bb);
-                    glfn->DrawElements (GL_TRIANGLES, static_cast<unsigned int>(this->indices_bb.size()), GL_UNSIGNED_INT, 0);
+                    glfn->DrawElements (GL_TRIANGLES, static_cast<std::uint32_t>(this->indices_bb.size()), GL_UNSIGNED_INT, 0);
                     glfn->BindVertexArray(0);
                 }
             }
@@ -979,9 +979,9 @@ export namespace mplot
         sm::vec<sm::interval<float>, 3> extents()
         {
             sm::vec<sm::interval<float>, 3> axis_extents;
-            for (unsigned int i = 0; i < 3; ++i) { axis_extents[i].search_init(); }
-            for (unsigned int j = 0; j < static_cast<unsigned int>(this->vertexPositions.size() - 2); j += 3) {
-                for (unsigned int i = 0; i < 3; ++i) { axis_extents[i].update (this->vertexPositions[j+i]); }
+            for (std::uint32_t i = 0; i < 3; ++i) { axis_extents[i].search_init(); }
+            for (std::uint32_t j = 0; j < static_cast<std::uint32_t>(this->vertexPositions.size() - 2); j += 3) {
+                for (std::uint32_t i = 0; i < 3; ++i) { axis_extents[i].update (this->vertexPositions[j+i]); }
             }
             return axis_extents;
         }
@@ -1129,14 +1129,14 @@ export namespace mplot
          * Max number of instances in a model. Each *model* has to reserve space in the SSBOs which
          * are managed by VisualResources. VisualResources<glver>::max_instances must be larger than this.
          */
-        unsigned int max_instances = 16 * 1024;
+        std::uint32_t max_instances = 16 * 1024;
         //! The offset into the SSBOs for the instance data for this VisualModel
-        unsigned int instance_start = 0;
+        std::uint32_t instance_start = 0;
         //! If drawing with instancing, how many instances? <= this->max_instances
-        unsigned int instance_count = 0;
+        std::uint32_t instance_count = 0;
         //! If drawing with instancing, how many params will be used (these will be cycled through
         //! per-instance and there may be fewer than instance_count parameters)
-        unsigned int instparam_count = 0;
+        std::uint32_t instparam_count = 0;
 
         //! Set the scaling matrix for all instances
         void set_instance_scale (const float scl)
@@ -1341,7 +1341,7 @@ export namespace mplot
         std::vector<std::unique_ptr<mplot::VisualTextModel<glver>>> texts;
 
         //! Set up a vertex buffer object - bind, buffer and set vertex array object attribute
-        void setupVBO (GLuint& buf, std::vector<float>& dat, unsigned int bufferAttribPosition)
+        void setupVBO (GLuint& buf, std::vector<float>& dat, std::uint32_t bufferAttribPosition)
         {
             std::size_t sz = dat.size() * sizeof(float);
 
@@ -1436,7 +1436,7 @@ export namespace mplot
          */
         void computeTube (sm::vec<float> start, sm::vec<float> end,
                           std::array<float, 3> colStart, std::array<float, 3> colEnd,
-                          float r = 1.0f, int segments = 12)
+                          float r = 1.0f, std::int32_t segments = 12)
         {
             this->computeFlaredTube (start, end, colStart, colEnd, r, r, segments);
         }
@@ -1464,7 +1464,7 @@ export namespace mplot
         void computeTube (sm::vec<float> start, sm::vec<float> end,
                           sm::vec<float> _ux, sm::vec<float> _uy,
                           std::array<float, 3> colStart, std::array<float, 3> colEnd,
-                          float r = 1.0f, int segments = 12, float rotation = 0.0f, bool bb = false)
+                          float r = 1.0f, std::int32_t segments = 12, float rotation = 0.0f, bool bb = false)
         {
             // The vector from start to end defines direction of the tube
             sm::vec<float> vstart = start;
@@ -1487,7 +1487,7 @@ export namespace mplot
             this->vertex_push (colStart, vc);
 
             // Start cap vertices (a triangle fan)
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 // t is the angle of the segment
                 float t = rotation + j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = _ux * std::sin(t) * r + _uy * std::cos(t) * r;
@@ -1497,7 +1497,7 @@ export namespace mplot
             }
 
             // Intermediate, near start cap. Normals point in direction c
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 float t = rotation + j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = _ux * std::sin(t) * r + _uy * std::cos(t) * r;
                 this->vertex_push (vstart+c, vp);
@@ -1507,7 +1507,7 @@ export namespace mplot
             }
 
             // Intermediate, near end cap. Normals point in direction c
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 float t = rotation + (float)j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = _ux * std::sin(t) * r + _uy * std::cos(t) * r;
                 this->vertex_push (vend+c, vp);
@@ -1517,7 +1517,7 @@ export namespace mplot
             }
 
             // Bottom cap vertices
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 float t = rotation + (float)j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = _ux * std::sin(t) * r + _uy * std::cos(t) * r;
                 this->vertex_push (vend+c, vp);
@@ -1531,7 +1531,7 @@ export namespace mplot
             this->vertex_push (colEnd, vc);
 
             // Number of vertices = segments * 4 + 2.
-            int nverts = (segments * 4) + 2;
+            std::int32_t nverts = (segments * 4) + 2;
 
             // After creating vertices, push all the indices.
             GLuint capMiddle = _idx;
@@ -1540,7 +1540,7 @@ export namespace mplot
             GLuint endStartIdx = capStartIdx + (3u * segments);
 
             // Start cap indices
-            for (int j = 0; j < segments-1; j++) {
+            for (std::int32_t j = 0; j < segments-1; j++) {
                 idcs.push_back (capMiddle);
                 idcs.push_back (capStartIdx + j);
                 idcs.push_back (capStartIdx + 1 + j);
@@ -1551,10 +1551,10 @@ export namespace mplot
             idcs.push_back (capStartIdx);
 
             // Middle sections
-            for (int lsection = 0; lsection < 3; ++lsection) {
+            for (std::int32_t lsection = 0; lsection < 3; ++lsection) {
                 capStartIdx = _idx + 1 + lsection*segments;
                 endStartIdx = capStartIdx + segments;
-                for (int j = 0; j < segments; j++) {
+                for (std::int32_t j = 0; j < segments; j++) {
                     idcs.push_back (capStartIdx + j);
                     if (j == (segments-1)) {
                         idcs.push_back (capStartIdx);
@@ -1577,7 +1577,7 @@ export namespace mplot
             }
 
             // bottom cap
-            for (int j = 0; j < segments-1; j++) {
+            for (std::int32_t j = 0; j < segments-1; j++) {
                 idcs.push_back (endMiddle);
                 idcs.push_back (endStartIdx + j);
                 idcs.push_back (endStartIdx + 1 + j);
@@ -1613,7 +1613,7 @@ export namespace mplot
                            float tube_radius = -1.0f,
                            float arrowhead_prop = -1.0f,
                            float cone_radius = -1.0f,
-                           const int shapesides = 18)
+                           const std::int32_t shapesides = 18)
         {
             // The right way to draw an arrow.
             sm::vec<float> arrow_line = end - start;
@@ -1649,7 +1649,7 @@ export namespace mplot
          */
         void computeFlaredTube (sm::vec<float> start, sm::vec<float> end,
                                 std::array<float, 3> colStart, std::array<float, 3> colEnd,
-                                float r = 1.0f, int segments = 12, float flare = 0.0f)
+                                float r = 1.0f, std::int32_t segments = 12, float flare = 0.0f)
         {
             // Find the length of the tube
             sm::vec<float> v = end - start;
@@ -1676,7 +1676,7 @@ export namespace mplot
          */
         void computeFlaredTube (sm::vec<float> start, sm::vec<float> end,
                                 std::array<float, 3> colStart, std::array<float, 3> colEnd,
-                                float r = 1.0f, float r_end = 1.0f, int segments = 12)
+                                float r = 1.0f, float r_end = 1.0f, std::int32_t segments = 12)
         {
             // The vector from start to end defines a vector and a plane. Find a
             // 'circle' of points in that plane.
@@ -1708,7 +1708,7 @@ export namespace mplot
 
             // Start cap vertices. Draw as a triangle fan, but record indices so that we
             // only need a single call to glDrawElements.
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 // t is the angle of the segment
                 float t = j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r + v_x_inplane * std::cos(t) * r;
@@ -1718,7 +1718,7 @@ export namespace mplot
             }
 
             // Intermediate, near start cap. Normals point in direction c
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 float t = j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r + v_x_inplane * std::cos(t) * r;
                 this->vertex_push (vstart+c, this->vertexPositions);
@@ -1728,7 +1728,7 @@ export namespace mplot
             }
 
             // Intermediate, near end cap. Normals point in direction c
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 float t = (float)j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r_end + v_x_inplane * std::cos(t) * r_end;
                 this->vertex_push (vend+c, this->vertexPositions);
@@ -1738,7 +1738,7 @@ export namespace mplot
             }
 
             // Bottom cap vertices
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 float t = (float)j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r_end + v_x_inplane * std::cos(t) * r_end;
                 this->vertex_push (vend+c, this->vertexPositions);
@@ -1752,7 +1752,7 @@ export namespace mplot
             this->vertex_push (colEnd, this->vertexColors);
 
             // Note: number of vertices = segments * 4 + 2.
-            int nverts = (segments * 4) + 2;
+            std::int32_t nverts = (segments * 4) + 2;
 
             // After creating vertices, push all the indices.
             GLuint capMiddle = this->idx;
@@ -1761,7 +1761,7 @@ export namespace mplot
             GLuint endStartIdx = capStartIdx + (3u * segments);
 
             // Start cap
-            for (int j = 0; j < segments-1; j++) {
+            for (std::int32_t j = 0; j < segments-1; j++) {
                 this->indices.push_back (capMiddle);
                 this->indices.push_back (capStartIdx + j);
                 this->indices.push_back (capStartIdx + 1 + j);
@@ -1772,11 +1772,11 @@ export namespace mplot
             this->indices.push_back (capStartIdx);
 
             // Middle sections
-            for (int lsection = 0; lsection < 3; ++lsection) {
+            for (std::int32_t lsection = 0; lsection < 3; ++lsection) {
                 capStartIdx = this->idx + 1 + lsection*segments;
                 endStartIdx = capStartIdx + segments;
                 // This does sides between start and end. I want to do this three times.
-                for (int j = 0; j < segments; j++) {
+                for (std::int32_t j = 0; j < segments; j++) {
                     // Triangle 1
                     this->indices.push_back (capStartIdx + j);
                     if (j == (segments-1)) {
@@ -1801,7 +1801,7 @@ export namespace mplot
             }
 
             // Bottom cap
-            for (int j = 0; j < segments-1; j++) {
+            for (std::int32_t j = 0; j < segments-1; j++) {
                 this->indices.push_back (endMiddle);
                 this->indices.push_back (endStartIdx + j);
                 this->indices.push_back (endStartIdx + 1 + j);
@@ -1841,7 +1841,7 @@ export namespace mplot
         void computeOpenFlaredTube (sm::vec<float> start, sm::vec<float> end,
                                     sm::vec<float> n_start, sm::vec<float> n_end,
                                     std::array<float, 3> colStart, std::array<float, 3> colEnd,
-                                    float r = 1.0f, float r_end = 1.0f, int segments = 12)
+                                    float r = 1.0f, float r_end = 1.0f, std::int32_t segments = 12)
         {
             // The vector from start to end defines a vector and a plane. Find a
             // 'circle' of points in that plane.
@@ -1875,7 +1875,7 @@ export namespace mplot
             // Now use parameterization of circle inplane = p1-x1 and
             // c1(t) = ( (p1-x1).normalized std::sin(t) + v.normalized cross (p1-x1).normalized * std::cos(t) )
             // c1(t) = ( inplane std::sin(t) + v * inplane * std::cos(t)
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 float t = j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r + v_x_inplane * std::cos(t) * r_mod;
                 this->vertex_push (vstart+c, this->vertexPositions);
@@ -1889,7 +1889,7 @@ export namespace mplot
             v_x_inplane.renormalize();
             r_mod = r_end / v_x_inplane.cross (v).length();
 
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 float t = (float)j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r_end + v_x_inplane * std::cos(t) * r_mod;
                 this->vertex_push (vend+c, this->vertexPositions);
@@ -1899,13 +1899,13 @@ export namespace mplot
             }
 
             // Number of vertices
-            int nverts = (segments * 2);
+            std::int32_t nverts = (segments * 2);
 
             // After creating vertices, push all the indices.
             GLuint sIdx = this->idx;
             GLuint eIdx = sIdx + segments;
             // This does sides between start and end
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 // Triangle 1
                 this->indices.push_back (sIdx + j);
                 if (j == (segments-1)) {
@@ -1936,7 +1936,7 @@ export namespace mplot
         void computeOpenTube (sm::vec<float> start, sm::vec<float> end,
                               sm::vec<float> n_start, sm::vec<float> n_end,
                               std::array<float, 3> colStart, std::array<float, 3> colEnd,
-                              float r = 1.0f, int segments = 12)
+                              float r = 1.0f, std::int32_t segments = 12)
         {
             this->computeOpenFlaredTube (start, end, n_start, n_end, colStart, colEnd, r, r, segments);
         }
@@ -1963,18 +1963,18 @@ export namespace mplot
             // Push corner vertices
             std::size_t vpsz = this->vertexPositions.size();
             this->vertexPositions.resize (vpsz + 12);
-            for (unsigned int i = 0; i < 3u; ++i) { this->vertexPositions[vpsz++] = c1[i]; }
-            for (unsigned int i = 0; i < 3u; ++i) { this->vertexPositions[vpsz++] = c2[i]; }
-            for (unsigned int i = 0; i < 3u; ++i) { this->vertexPositions[vpsz++] = c3[i]; }
-            for (unsigned int i = 0; i < 3u; ++i) { this->vertexPositions[vpsz++] = c4[i]; }
+            for (std::uint32_t i = 0; i < 3u; ++i) { this->vertexPositions[vpsz++] = c1[i]; }
+            for (std::uint32_t i = 0; i < 3u; ++i) { this->vertexPositions[vpsz++] = c2[i]; }
+            for (std::uint32_t i = 0; i < 3u; ++i) { this->vertexPositions[vpsz++] = c3[i]; }
+            for (std::uint32_t i = 0; i < 3u; ++i) { this->vertexPositions[vpsz++] = c4[i]; }
 
             // Colours/normals
             std::size_t vcsz = this->vertexColors.size();
             std::size_t vnsz = this->vertexNormals.size();
             this->vertexColors.resize (vcsz + 12);
             this->vertexNormals.resize (vnsz + 12);
-            for (unsigned int i = 0; i < 4u; ++i) {
-                for (unsigned int j = 0; j < 3u; ++j) {
+            for (std::uint32_t i = 0; i < 4u; ++i) {
+                for (std::uint32_t j = 0; j < 3u; ++j) {
                     this->vertexColors[vcsz++] = col[j];
                     this->vertexNormals[vnsz++] = v[j];
                 }
@@ -2013,7 +2013,7 @@ export namespace mplot
         void computeFlatPoly (sm::vec<float> vstart,
                               sm::vec<float> _ux, sm::vec<float> _uy,
                               std::array<float, 3> col,
-                              float r = 1.0f, int segments = 12, float rotation = 0.0f)
+                              float r = 1.0f, std::int32_t segments = 12, float rotation = 0.0f)
         {
             // v is a face normal
             sm::vec<float> v = _uy.cross(_ux);
@@ -2025,7 +2025,7 @@ export namespace mplot
             this->vertex_push (col, this->vertexColors);
 
             // Polygon vertices (a triangle fan)
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 // t is the angle of the segment
                 float t = rotation + j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = _ux * std::sin(t) * r + _uy * std::cos(t) * r;
@@ -2035,14 +2035,14 @@ export namespace mplot
             }
 
             // Number of vertices
-            int nverts = segments + 1;
+            std::int32_t nverts = segments + 1;
 
             // After creating vertices, push all the indices.
             GLuint capMiddle = this->idx;
             GLuint capStartIdx = this->idx + 1;
 
             // Start cap indices
-            for (int j = 0; j < segments-1; j++) {
+            for (std::int32_t j = 0; j < segments-1; j++) {
                 this->indices.push_back (capMiddle);
                 this->indices.push_back (capStartIdx + j);
                 this->indices.push_back (capStartIdx + 1 + j);
@@ -2067,7 +2067,7 @@ export namespace mplot
          * \param tfm a transform to apply to the points
          */
         void computeRing (sm::vec<float> ro, std::array<float, 3> rc, float r = 1.0f,
-                          float t = 0.1f, int segments = 12,
+                          float t = 0.1f, std::int32_t segments = 12,
                           const sm::mat<float, 4> tfm = sm::mat<float, 4>::identity())
         {
             float r_in = r - (t * 0.5f);
@@ -2086,17 +2086,17 @@ export namespace mplot
          * \param tfm a transform to apply to the points
          */
         void computeRingInOut (sm::vec<float> ro, std::array<float, 3> rc,
-                               float r_in = 1.0f, float r_out = 2.0f, int segments = 12,
+                               float r_in = 1.0f, float r_out = 2.0f, std::int32_t segments = 12,
                                const sm::mat<float, 4> tfm = sm::mat<float, 4>::identity())
         {
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 float segment = sm::mathconst<float>::two_pi * static_cast<float>(j) / segments;
                 // x and y of inner point
                 float xin = r_in * std::cos (segment);
                 float yin = r_in * std::sin (segment);
                 float xout = r_out * std::cos (segment);
                 float yout = r_out * std::sin (segment);
-                int segjnext = (j + 1) % segments;
+                std::int32_t segjnext = (j + 1) % segments;
                 float segnext = sm::mathconst<float>::two_pi * static_cast<float>(segjnext) / segments;
                 float xin_n = r_in * std::cos (segnext);
                 float yin_n = r_in * std::sin (segnext);
@@ -2128,7 +2128,7 @@ export namespace mplot
                                 std::array<float, 3> mc,
                                 float m_centre = 0.0f,
                                 float r = 1.0f,
-                                float t = 0.1f, int segments = 12,
+                                float t = 0.1f, std::int32_t segments = 12,
                                 const sm::mat<float, 4> tfm = sm::mat<float, 4>::identity())
         {
             float r_in = r - (t * 0.5f);
@@ -2152,17 +2152,17 @@ export namespace mplot
          */
         void computeMarkedRingInOut (sm::vec<float> ro, std::array<float, 3> rc,
                                      std::array<float, 3> mc, float m_centre = 0.0f,
-                                     float r_in = 1.0f, float r_out = 2.0f, int segments = 12,
+                                     float r_in = 1.0f, float r_out = 2.0f, std::int32_t segments = 12,
                                      const sm::mat<float, 4> tfm = sm::mat<float, 4>::identity())
         {
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 float segment = sm::mathconst<float>::two_pi * static_cast<float>(j) / segments;
                 // x and y of inner point
                 float xin = r_in * std::cos (segment);
                 float yin = r_in * std::sin (segment);
                 float xout = r_out * std::cos (segment);
                 float yout = r_out * std::sin (segment);
-                int segjnext = (j + 1) % segments;
+                std::int32_t segjnext = (j + 1) % segments;
                 float segnext = sm::mathconst<float>::two_pi * static_cast<float>(segjnext) / segments;
                 float xin_n = r_in * std::cos (segnext);
                 float yin_n = r_in * std::sin (segnext);
@@ -2223,7 +2223,7 @@ export namespace mplot
          * \return The number of vertices in the generated geodesic sphere
          */
         template<typename F=float>
-        int computeSphereGeo (sm::vec<float> so, std::array<float, 3> sc, float r = 1.0f, int iterations = 2)
+        std::int32_t computeSphereGeo (sm::vec<float> so, std::array<float, 3> sc, float r = 1.0f, std::int32_t iterations = 2)
         {
             if (iterations < 0) { throw std::runtime_error ("computeSphereGeo: iterations must be positive"); }
             // test if type F is float
@@ -2251,7 +2251,7 @@ export namespace mplot
                 this->indices.push_back (this->idx + f[2]);
             }
             // idx is the *vertex index* and should be incremented by the number of vertices in the polyhedron
-            int n_verts = static_cast<int>(geo.poly.vertices.size());
+            std::int32_t n_verts = static_cast<std::int32_t>(geo.poly.vertices.size());
             this->idx += n_verts;
 
             return n_verts;
@@ -2274,7 +2274,7 @@ export namespace mplot
          * through. Determines number of faces
          */
         template<typename F=float>
-        int computeSphereGeoFaces (sm::vec<float> so, std::array<float, 3> sc, float r = 1.0f, int iterations = 2)
+        std::int32_t computeSphereGeoFaces (sm::vec<float> so, std::array<float, 3> sc, float r = 1.0f, std::int32_t iterations = 2)
         {
             if (iterations < 0) { throw std::runtime_error ("computeSphereGeo: iterations must be positive"); }
             // test if type F is float
@@ -2289,16 +2289,16 @@ export namespace mplot
             }
             // Note that we need double precision to compute higher iterations of the geodesic (iterations > 5)
             sm::geometry::icosahedral_geodesic<F> geo = sm::geometry::make_icosahedral_geodesic<F> (iterations);
-            int n_faces = static_cast<int>(geo.poly.faces.size());
+            std::int32_t n_faces = static_cast<std::int32_t>(geo.poly.faces.size());
 
-            for (int i = 0; i < n_faces; ++i) { // For each face in the geodesic...
+            for (std::int32_t i = 0; i < n_faces; ++i) { // For each face in the geodesic...
                 sm::vec<F, 3> norm = { F{0}, F{0}, F{0} };
                 for (auto vtx : geo.poly.faces[i]) { // For each vertex in face...
                     norm += geo.poly.vertices[vtx]; // Add to the face norm
                     this->vertex_push (geo.poly.vertices[vtx].as_float() * r + so, this->vertexPositions);
                 }
                 sm::vec<float, 3> nf = (norm / F{3}).as_float();
-                for (int j = 0; j < 3; ++j) { // Faces all have size 3
+                for (std::int32_t j = 0; j < 3; ++j) { // Faces all have size 3
                     this->vertex_push (nf, this->vertexNormals);
                     this->vertex_push (sc, this->vertexColors); // A default colour
                     this->indices.push_back (this->idx + (3 * i) + j); // indices is vertex index
@@ -2313,8 +2313,8 @@ export namespace mplot
         //! Fast computeSphereGeo, which uses constexpr make_icosahedral_geodesic. The
         //! resulting vertices and faces are NOT in any kind of order, but ok for
         //! plotting, e.g. scatter graph spheres.
-        template<typename F=float, int iterations = 2>
-        int computeSphereGeoFast (sm::vec<float> so, std::array<float, 3> sc, float r = 1.0f)
+        template<typename F=float, std::int32_t iterations = 2>
+        std::int32_t computeSphereGeoFast (sm::vec<float> so, std::array<float, 3> sc, float r = 1.0f)
         {
             // test if type F is float
             if constexpr (std::is_same<std::decay_t<F>, float>::value == true) {
@@ -2337,7 +2337,7 @@ export namespace mplot
                 this->indices.push_back (this->idx + f[2]);
             }
             // idx is the *vertex index* and should be incremented by the number of vertices in the polyhedron
-            int n_verts = static_cast<int>(geo.poly.vertices.size());
+            std::int32_t n_verts = static_cast<std::int32_t>(geo.poly.vertices.size());
             this->idx += n_verts;
 
             return n_verts;
@@ -2357,7 +2357,7 @@ export namespace mplot
          * Number of faces should be (2 + rings) * segments
          */
         void computeSphere (sm::vec<float> so, std::array<float, 3> sc,
-                            float r = 1.0f, int rings = 10, int segments = 12)
+                            float r = 1.0f, std::int32_t rings = 10, std::int32_t segments = 12)
         {
             // First cap, draw as a triangle fan, but record indices so that
             // we only need a single call to glDrawElements.
@@ -2379,7 +2379,7 @@ export namespace mplot
             GLuint lastRingStartIdx = this->idx;
 
             bool firstseg = true;
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 float segment = sm::mathconst<float>::two_pi * static_cast<float>(j) / segments;
                 float x = std::cos(segment);
                 float y = std::sin(segment);
@@ -2407,14 +2407,14 @@ export namespace mplot
             this->indices.push_back (capMiddle+1);
 
             // Now add the triangles around the rings
-            for (int i = 2; i < rings; i++) {
+            for (std::int32_t i = 2; i < rings; i++) {
 
                 rings0 = sm::mathconst<float>::pi * (-0.5f + static_cast<float>(i) / rings);
                 _z0  = std::sin(rings0);
                 z0  = r * _z0;
                 r0 =  std::cos(rings0);
 
-                for (int j = 0; j < segments; j++) {
+                for (std::int32_t j = 0; j < segments; j++) {
 
                     // "current" segment
                     float segment = sm::mathconst<float>::two_pi * static_cast<float>(j) / segments;
@@ -2467,7 +2467,7 @@ export namespace mplot
             firstseg = true;
             // No more vertices to push, just do the indices for the bottom cap
             ringStartIdx = lastRingStartIdx;
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 if (j != segments - 1) {
                     this->indices.push_back (capMiddle);
                     this->indices.push_back (ringStartIdx++);
@@ -2495,7 +2495,7 @@ export namespace mplot
          * \param segments Number of segments used to render the sphere
          */
         void computeSphere (sm::vec<float> so, std::array<float, 3> sc, std::array<float, 3> sc2,
-                            float r = 1.0f, int rings = 10, int segments = 12)
+                            float r = 1.0f, std::int32_t rings = 10, std::int32_t segments = 12)
         {
             // First cap, draw as a triangle fan, but record indices so that
             // we only need a single call to glDrawElements.
@@ -2517,7 +2517,7 @@ export namespace mplot
             GLuint lastRingStartIdx = this->idx;
 
             bool firstseg = true;
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 float segment = sm::mathconst<float>::two_pi * static_cast<float>(j) / segments;
                 float x = std::cos(segment);
                 float y = std::sin(segment);
@@ -2545,14 +2545,14 @@ export namespace mplot
             this->indices.push_back (capMiddle+1);
 
             // Now add the triangles around the rings
-            for (int i = 2; i < rings; i++) {
+            for (std::int32_t i = 2; i < rings; i++) {
 
                 rings0 = sm::mathconst<float>::pi * (-0.5f + static_cast<float>(i) / rings);
                 _z0  = std::sin(rings0);
                 z0  = r * _z0;
                 r0 =  std::cos(rings0);
 
-                for (int j = 0; j < segments; j++) {
+                for (std::int32_t j = 0; j < segments; j++) {
 
                     // "current" segment
                     float segment = sm::mathconst<float>::two_pi * static_cast<float>(j) / segments;
@@ -2608,7 +2608,7 @@ export namespace mplot
             firstseg = true;
             // No more vertices to push, just do the indices for the bottom cap
             ringStartIdx = lastRingStartIdx;
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 if (j != segments - 1) {
                     this->indices.push_back (capMiddle);
                     this->indices.push_back (ringStartIdx++);
@@ -2644,7 +2644,7 @@ export namespace mplot
                                std::array<float, 3> sc,
                                std::array<float, 3> sc2,
                                sm::vec<float> abc,
-                               int rings = 10, int segments = 12,
+                               std::int32_t rings = 10, std::int32_t segments = 12,
                                sm::mat<float, 4> tr = sm::mat<float, 4>{})
         {
             // We have two angular parameters t and t2. t in range 0-2pi and t2 in range 0-pi. t
@@ -2680,7 +2680,7 @@ export namespace mplot
             p[2] = abc[2] * std::cos(t2);
 
             bool firstseg = true;
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
 
                 t = sm::mathconst<float>::two_pi * static_cast<float>(j) / segments;
                 p[0] = abc[0] * std::cos(t) * std::sin(t2);
@@ -2710,14 +2710,14 @@ export namespace mplot
             this->indices.push_back (capMiddle+1);
 
             // Now add the triangles around the rings
-            for (int i = 2; i < rings; i++) {
+            for (std::int32_t i = 2; i < rings; i++) {
 
                 t2 = sm::mathconst<float>::pi * (static_cast<float>(i) / rings);
                 p[2] = abc[2] * std::cos(t2);
 
                 sm::vec<float> sc_ring = _sc * (1.0f - static_cast<float>(i) / rings)  + _sc2 * static_cast<float>(i) / rings;
 
-                for (int j = 0; j < segments; j++) {
+                for (std::int32_t j = 0; j < segments; j++) {
 
                     // "current" segment
                     t = sm::mathconst<float>::two_pi * static_cast<float>(j) / segments;
@@ -2767,7 +2767,7 @@ export namespace mplot
             firstseg = true;
             // No more vertices to push, just do the indices for the bottom cap
             ringStartIdx = lastRingStartIdx;
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 if (j != segments - 1) {
                     this->indices.push_back (capMiddle);
                     this->indices.push_back (ringStartIdx++);
@@ -2790,13 +2790,13 @@ export namespace mplot
         {
             sm::geometry::polyhedron<float> ico = sm::geometry::icosahedron<float>();
 
-            for (int j = 0; j < 20; ++j) {
+            for (std::int32_t j = 0; j < 20; ++j) {
                 // Compute the face normal
                 sm::vec<float, 3> norml = (ico.vertices[ico.faces[j][0]] + ico.vertices[ico.faces[j][1]] + ico.vertices[ico.faces[j][2]])/3.0f;
                 this->vertex_push (centre + (ico.vertices[ico.faces[j][0]] * r), this->vertexPositions);
                 this->vertex_push (centre + (ico.vertices[ico.faces[j][1]] * r), this->vertexPositions);
                 this->vertex_push (centre + (ico.vertices[ico.faces[j][2]] * r), this->vertexPositions);
-                for (int i = 0; i < 3; ++i) {
+                for (std::int32_t i = 0; i < 3; ++i) {
                     this->vertex_push (norml, this->vertexNormals);
                     this->vertex_push (face_colours[j], this->vertexColors);
                 }
@@ -2828,7 +2828,7 @@ export namespace mplot
                           sm::vec<float> tip,
                           float ringoffset,
                           std::array<float, 3> col,
-                          float r = 1.0f, int segments = 12)
+                          float r = 1.0f, std::int32_t segments = 12)
         {
             // Cone is drawn as a base ring around a centre-of-the-base vertex, an
             // intermediate ring which is on the base ring, but has different normals, a
@@ -2852,7 +2852,7 @@ export namespace mplot
             this->vertex_push (col, this->vertexColors);
 
             // Base ring with normals in direction -v
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 float t = j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r + v_x_inplane * std::cos(t) * r;
                 // Subtract the vector which makes this circle
@@ -2863,7 +2863,7 @@ export namespace mplot
             }
 
             // Intermediate ring of vertices around/aligned with the base ring with normals in direction c
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 float t = j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r + v_x_inplane * std::cos(t) * r;
                 c = c + (v * ringoffset);
@@ -2874,7 +2874,7 @@ export namespace mplot
             }
 
             // Intermediate ring of vertices around the tip with normals direction c
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 float t = j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c = inplane * std::sin(t) * r + v_x_inplane * std::cos(t) * r;
                 c = c + (v * ringoffset);
@@ -2890,7 +2890,7 @@ export namespace mplot
             this->vertex_push (col, this->vertexColors);
 
             // Number of vertices = segments * 3 + 2.
-            int nverts = segments * 3 + 2;
+            std::int32_t nverts = segments * 3 + 2;
 
             // After creating vertices, push all the indices.
             GLuint capMiddle = this->idx;
@@ -2899,7 +2899,7 @@ export namespace mplot
             GLuint endStartIdx = capStartIdx;
 
             // Base of the cone
-            for (int j = 0; j < segments-1; j++) {
+            for (std::int32_t j = 0; j < segments-1; j++) {
                 this->indices.push_back (capMiddle);
                 this->indices.push_back (capStartIdx + j);
                 this->indices.push_back (capStartIdx + 1 + j);
@@ -2910,10 +2910,10 @@ export namespace mplot
             this->indices.push_back (capStartIdx);
 
             // Middle sections
-            for (int lsection = 0; lsection < 2; ++lsection) {
+            for (std::int32_t lsection = 0; lsection < 2; ++lsection) {
                 capStartIdx = this->idx + 1 + lsection*segments;
                 endStartIdx = capStartIdx + segments;
-                for (int j = 0; j < segments; j++) {
+                for (std::int32_t j = 0; j < segments; j++) {
                     // Triangle 1:
                     this->indices.push_back (capStartIdx + j);
                     if (j == (segments-1)) {
@@ -2938,7 +2938,7 @@ export namespace mplot
             }
 
             // tip
-            for (int j = 0; j < segments-1; j++) {
+            for (std::int32_t j = 0; j < segments-1; j++) {
                 this->indices.push_back (endMiddle);
                 this->indices.push_back (endStartIdx + j);
                 this->indices.push_back (endStartIdx + 1 + j);
@@ -2981,7 +2981,7 @@ export namespace mplot
                           float w = 0.1f, float thickness = 0.01f, float shorten = 0.0f)
         {
             // There are always 8 segments for this line object, 2 at each of 4 corners
-            const int segments = 8;
+            const std::int32_t segments = 8;
 
             // The vector from start to end defines direction of the tube
             sm::vec<float> vstart = start;
@@ -3021,7 +3021,7 @@ export namespace mplot
             std::array<sm::vec<float>, 8> norms = { vv, _uz, _uz, -vv, -vv, -_uz, -_uz, vv };
 
             // Start cap vertices (a triangle fan)
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 sm::vec<float> c = _uz * std::sin(angles[j]) * r + vv * std::cos(angles[j]) * r;
                 this->vertex_push (vstart+c, this->vertexPositions);
                 this->vertex_push (-v, this->vertexNormals);
@@ -3029,7 +3029,7 @@ export namespace mplot
             }
 
             // Intermediate, near start cap. Normals point outwards. Need Additional vertices
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 sm::vec<float> c = _uz * std::sin(angles[j]) * r + vv * std::cos(angles[j]) * r;
                 this->vertex_push (vstart+c, this->vertexPositions);
                 this->vertex_push (norms[j], this->vertexNormals);
@@ -3037,7 +3037,7 @@ export namespace mplot
             }
 
             // Intermediate, near end cap. Normals point in direction c
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 sm::vec<float> c = _uz * std::sin(angles[j]) * r + vv * std::cos(angles[j]) * r;
                 this->vertex_push (vend+c, this->vertexPositions);
                 this->vertex_push (norms[j], this->vertexNormals);
@@ -3045,7 +3045,7 @@ export namespace mplot
             }
 
             // Bottom cap vertices
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 sm::vec<float> c = _uz * std::sin(angles[j]) * r + vv * std::cos(angles[j]) * r;
                 this->vertex_push (vend+c, this->vertexPositions);
                 this->vertex_push (v, this->vertexNormals);
@@ -3058,7 +3058,7 @@ export namespace mplot
             this->vertex_push (colEnd, this->vertexColors);
 
             // Number of vertices = segments * 4 + 2.
-            int nverts = (segments * 4) + 2;
+            std::int32_t nverts = (segments * 4) + 2;
 
             // After creating vertices, push all the indices.
             GLuint capMiddle = this->idx;
@@ -3067,7 +3067,7 @@ export namespace mplot
             GLuint endStartIdx = capStartIdx + (3u * segments);
 
             // Start cap indices
-            for (int j = 0; j < segments-1; j++) {
+            for (std::int32_t j = 0; j < segments-1; j++) {
                 this->indices.push_back (capMiddle);
                 this->indices.push_back (capStartIdx + j);
                 this->indices.push_back (capStartIdx + 1 + j);
@@ -3078,10 +3078,10 @@ export namespace mplot
             this->indices.push_back (capStartIdx);
 
             // Middle sections
-            for (int lsection = 0; lsection < 3; ++lsection) {
+            for (std::int32_t lsection = 0; lsection < 3; ++lsection) {
                 capStartIdx = this->idx + 1 + lsection*segments;
                 endStartIdx = capStartIdx + segments;
-                for (int j = 0; j < segments; j++) {
+                for (std::int32_t j = 0; j < segments; j++) {
                     this->indices.push_back (capStartIdx + j);
                     if (j == (segments-1)) {
                         this->indices.push_back (capStartIdx);
@@ -3104,7 +3104,7 @@ export namespace mplot
             }
 
             // bottom cap
-            for (int j = 0; j < segments-1; j++) {
+            for (std::int32_t j = 0; j < segments-1; j++) {
                 this->indices.push_back (endMiddle);
                 this->indices.push_back (endStartIdx + j);
                 this->indices.push_back (endStartIdx + 1 + j);
@@ -3163,7 +3163,7 @@ export namespace mplot
             this->vertex_push (col, this->vertexColors);
 
             // Number of vertices = segments * 4 + 2.
-            int nverts = 4;
+            std::int32_t nverts = 4;
 
             // After creating vertices, push all the indices.
             this->indices.push_back (this->idx);
@@ -3210,9 +3210,9 @@ export namespace mplot
             sm::vec<float> c3 = vend - ww;
             sm::vec<float> c4 = vend + ww;
 
-            int segments = 12;
+            std::int32_t segments = 12;
             float r = 0.5f * w;
-            unsigned int startvertices = 0u;
+            std::uint32_t startvertices = 0u;
             if (startcaps) {
                 // Push the central point of the start cap - this is at location vstart
                 this->vertex_push (vstart, this->vertexPositions);
@@ -3220,7 +3220,7 @@ export namespace mplot
                 this->vertex_push (col, this->vertexColors);
                 ++startvertices;
                 // Start cap vertices (a triangle fan)
-                for (int j = 0; j < segments; j++) {
+                for (std::int32_t j = 0; j < segments; j++) {
                     float t = j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                     sm::vec<float> c = { std::sin(t) * r, std::cos(t) * r, 0.0f };
                     this->vertex_push (vstart+c, this->vertexPositions);
@@ -3246,7 +3246,7 @@ export namespace mplot
             this->vertex_push (_uz, this->vertexNormals);
             this->vertex_push (col, this->vertexColors);
 
-            unsigned int endvertices = 0u;
+            std::uint32_t endvertices = 0u;
             if (endcaps) {
                 // Push the central point of the end cap - this is at location vend
                 this->vertex_push (vend, this->vertexPositions);
@@ -3254,7 +3254,7 @@ export namespace mplot
                 this->vertex_push (col, this->vertexColors);
                 ++endvertices;
                 // End cap vertices (a triangle fan)
-                for (int j = 0; j < segments; j++) {
+                for (std::int32_t j = 0; j < segments; j++) {
                     float t = j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                     sm::vec<float> c = { std::sin(t) * r, std::cos(t) * r, 0.0f };
                     this->vertex_push (vend+c, this->vertexPositions);
@@ -3268,9 +3268,9 @@ export namespace mplot
 
             if (startcaps) { // prolly startcaps, for flexibility
                 GLuint topcap = this->idx;
-                for (int j = 0; j < segments; j++) {
-                    int inc1 = 1+j;
-                    int inc2 = 1+((j+1)%segments);
+                for (std::int32_t j = 0; j < segments; j++) {
+                    std::int32_t inc1 = 1+j;
+                    std::int32_t inc2 = 1+((j+1)%segments);
                     this->indices.push_back (topcap);
                     this->indices.push_back (topcap+inc1);
                     this->indices.push_back (topcap+inc2);
@@ -3290,9 +3290,9 @@ export namespace mplot
 
             if (endcaps) {
                 GLuint botcap = this->idx;
-                for (int j = 0; j < segments; j++) {
-                    int inc1 = 1+j;
-                    int inc2 = 1+((j+1)%segments);
+                for (std::int32_t j = 0; j < segments; j++) {
+                    std::int32_t inc1 = 1+j;
+                    std::int32_t inc2 = 1+((j+1)%segments);
                     this->indices.push_back (botcap);
                     this->indices.push_back (botcap+inc1);
                     this->indices.push_back (botcap+inc2);
@@ -3565,7 +3565,7 @@ export namespace mplot
                 this->vertex_push (col, this->vertexColors);
 
                 // Number of vertices = segments * 4 + 2.
-                int nverts = 4;
+                std::int32_t nverts = 4;
 
                 // After creating vertices, push all the indices.
                 this->indices.push_back (this->idx);
@@ -3589,7 +3589,7 @@ export namespace mplot
 
         // Compute a flat line circle outline
         void computeFlatCircleLine (sm::vec<float> centre, sm::vec<float> norm, sm::vec<float> inplane, float radius,
-                                    float linewidth, std::array<float, 3> col, int segments = 128)
+                                    float linewidth, std::array<float, 3> col, std::int32_t segments = 128)
         {
             inplane.renormalize();
             sm::vec<float> norm_x_inplane = norm.cross(inplane);
@@ -3599,7 +3599,7 @@ export namespace mplot
             float r_out = radius + half_lw;
             // Inner ring at radius radius-linewidth/2 with normals in direction norm;
             // Outer ring at radius radius+linewidth/2 with normals also in direction norm
-            for (int j = 0; j < segments; j++) {
+            for (std::int32_t j = 0; j < segments; j++) {
                 float t = j * sm::mathconst<float>::two_pi / static_cast<float>(segments);
                 sm::vec<float> c_in = inplane * std::sin(t) * r_in + norm_x_inplane * std::cos(t) * r_in;
                 this->vertex_push (centre+c_in, this->vertexPositions);
@@ -3613,8 +3613,8 @@ export namespace mplot
             // Added 2*segments vertices to vertexPositions
 
             // After creating vertices, push all the indices.
-            for (int j = 0; j < segments; j++) {
-                int jn = (segments + ((j+1) % segments)) % segments;
+            for (std::int32_t j = 0; j < segments; j++) {
+                std::int32_t jn = (segments + ((j+1) % segments)) % segments;
                 this->indices.push_back (this->idx+(2*j));
                 this->indices.push_back (this->idx+(2*jn));
                 this->indices.push_back (this->idx+(2*jn+1));
@@ -3628,7 +3628,7 @@ export namespace mplot
 
         // Compute a flat line circle outline
         void computeFlatCircleLine (sm::vec<float> centre, sm::vec<float> norm, float radius,
-                                    float linewidth, std::array<float, 3> col, int segments = 128)
+                                    float linewidth, std::array<float, 3> col, std::int32_t segments = 128)
         {
             // circle in a plane defined by a point (v0 = vstart or vend) and a normal
             // (v) can be found: Choose random vector vr. A vector inplane = vr ^ v. The
@@ -3678,43 +3678,43 @@ export namespace mplot
             this->vertex_push (o + edge1,                this->vertexPositions);
             this->vertex_push (o + edge3,                this->vertexPositions);
             this->vertex_push (o + edge1 + edge3,        this->vertexPositions);
-            for (unsigned short i = 0U; i < 4U; ++i) { this->vertex_push (_n3, this->vertexNormals); }
+            for (std::uint16_t i = 0U; i < 4U; ++i) { this->vertex_push (_n3, this->vertexNormals); }
             // Top face
             this->vertex_push (o + edge3,                 this->vertexPositions);
             this->vertex_push (o + edge1 + edge3,         this->vertexPositions);
             this->vertex_push (o + edge2 + edge3,         this->vertexPositions);
             this->vertex_push (o + edge2 + edge1 + edge3, this->vertexPositions);
-            for (unsigned short i = 0U; i < 4U; ++i) { this->vertex_push (_n1, this->vertexNormals); }
+            for (std::uint16_t i = 0U; i < 4U; ++i) { this->vertex_push (_n1, this->vertexNormals); }
             // Back face
             this->vertex_push (o + edge2 + edge3,         this->vertexPositions);
             this->vertex_push (o + edge2 + edge1 + edge3, this->vertexPositions);
             this->vertex_push (o + edge2,                 this->vertexPositions);
             this->vertex_push (o + edge2 + edge1,         this->vertexPositions);
-            for (unsigned short i = 0U; i < 4U; ++i) { this->vertex_push (-_n3, this->vertexNormals); }
+            for (std::uint16_t i = 0U; i < 4U; ++i) { this->vertex_push (-_n3, this->vertexNormals); }
             // Bottom face
             this->vertex_push (o + edge2,                 this->vertexPositions);
             this->vertex_push (o + edge2 + edge1,         this->vertexPositions);
             this->vertex_push (o,                         this->vertexPositions);
             this->vertex_push (o + edge1,                 this->vertexPositions);
-            for (unsigned short i = 0U; i < 4U; ++i) { this->vertex_push (-_n1, this->vertexNormals); }
+            for (std::uint16_t i = 0U; i < 4U; ++i) { this->vertex_push (-_n1, this->vertexNormals); }
             // Left face
             this->vertex_push (o + edge2,                 this->vertexPositions);
             this->vertex_push (o,                         this->vertexPositions);
             this->vertex_push (o + edge2 + edge3,         this->vertexPositions);
             this->vertex_push (o + edge3,                 this->vertexPositions);
-            for (unsigned short i = 0U; i < 4U; ++i) { this->vertex_push (-_n2, this->vertexNormals); }
+            for (std::uint16_t i = 0U; i < 4U; ++i) { this->vertex_push (-_n2, this->vertexNormals); }
             // Right face
             this->vertex_push (o + edge1,                 this->vertexPositions);
             this->vertex_push (o + edge1 + edge2,         this->vertexPositions);
             this->vertex_push (o + edge1 + edge3,         this->vertexPositions);
             this->vertex_push (o + edge1 + edge2 + edge3, this->vertexPositions);
-            for (unsigned short i = 0U; i < 4U; ++i) { this->vertex_push (_n2, this->vertexNormals); }
+            for (std::uint16_t i = 0U; i < 4U; ++i) { this->vertex_push (_n2, this->vertexNormals); }
 
             // Vertex colours are all the same
-            for (unsigned short i = 0U; i < 24U; ++i) { this->vertex_push (clr, this->vertexColors); }
+            for (std::uint16_t i = 0U; i < 24U; ++i) { this->vertex_push (clr, this->vertexColors); }
 
             // Indices for 6 faces
-            for (unsigned short i = 0U; i < 6U; ++i) {
+            for (std::uint16_t i = 0U; i < 6U; ++i) {
                 this->indices.push_back (this->idx++);
                 this->indices.push_back (this->idx++);
                 this->indices.push_back (this->idx--);
@@ -3756,7 +3756,7 @@ export namespace mplot
             const sm::vec<float>& c6 = this->bb.max;
             sm::vec<float> c7 = { x0, y1, z1 };
 
-            constexpr int segs = 4;
+            constexpr std::int32_t segs = 4;
             constexpr float zrot = 0.0f;
             auto cl = this->colour_bb;
 
