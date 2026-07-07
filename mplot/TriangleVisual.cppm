@@ -1,5 +1,6 @@
 module;
 
+#include <cstdint>
 #include <array>
 
 export module mplot.trianglevisual;
@@ -10,7 +11,7 @@ import mplot.visualmodel;
 export namespace mplot
 {
     //! This class creates the vertices for a simple triangle in a 3D scene.
-    template<int glver = mplot::gl::version_4_1>
+    template<std::int32_t glver = mplot::gl::version_4_1>
     class TriangleVisual : public VisualModel<glver>
     {
     public:
@@ -49,7 +50,7 @@ export namespace mplot
             this->vertex_push (c2, this->vertexPositions);
             this->vertex_push (c3, this->vertexPositions);
             // Colours/normals
-            for (unsigned int i = 0; i < 3U; ++i) {
+            for (std::uint32_t i = 0; i < 3U; ++i) {
                 this->vertex_push (colr, this->vertexColors);
                 this->vertex_push (v, this->vertexNormals);
             }

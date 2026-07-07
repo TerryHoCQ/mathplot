@@ -6,6 +6,7 @@
  */
 module;
 
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include <array>
@@ -21,7 +22,7 @@ export namespace mplot
 {
     //! The template argument Flt is the type of the data which this ScatterVisual
     //! will visualize.
-    template <typename Flt, int glver = mplot::gl::version_4_1>
+    template <typename Flt, std::int32_t glver = mplot::gl::version_4_1>
     class ScatterVisual : public VisualDataModel<Flt, glver>
     {
     public:
@@ -70,11 +71,11 @@ export namespace mplot
         //! Compute spheres for a scatter plot
         void initializeVertices()
         {
-            unsigned int ncoords = this->dataCoords == nullptr ? 0 : this->dataCoords->size();
+            std::uint32_t ncoords = this->dataCoords == nullptr ? 0 : this->dataCoords->size();
             if (ncoords == 0) { return; }
-            unsigned int ndata = this->scalarData == nullptr ? 0 : this->scalarData->size();
+            std::uint32_t ndata = this->scalarData == nullptr ? 0 : this->scalarData->size();
             // If we have vector data, then manipulate colour accordingly.
-            unsigned int nvdata = this->vectorData == nullptr ? 0 : this->vectorData->size();
+            std::uint32_t nvdata = this->vectorData == nullptr ? 0 : this->vectorData->size();
 
             if (ndata > 0 && ncoords != ndata) {
                 std::cout << "ScatterVisual Error: ncoords ("<<ncoords<<") != ndata ("<<ndata<<"), return (no model)." << std::endl;
@@ -106,7 +107,7 @@ export namespace mplot
                 dcopy2.resize(this->vectorData->size());
                 dcopy3.resize(this->vectorData->size());
 
-                for (unsigned int i = 0; i < this->vectorData->size(); ++i) {
+                for (std::uint32_t i = 0; i < this->vectorData->size(); ++i) {
                     dcopy[i] = (*this->vectorData)[i][0];
                     dcopy2[i] = (*this->vectorData)[i][1];
                     dcopy3[i] = (*this->vectorData)[i][2];
@@ -122,7 +123,7 @@ export namespace mplot
 
             } // else no scaling required - spheres will be one colour
 
-            for (unsigned int i = 0; i < ncoords; ++i) {
+            for (std::uint32_t i = 0; i < ncoords; ++i) {
                 // Scale colour (or use single colour)
                 std::array<float, 3> clr = this->cm.getHueRGB();
                 if (ndata && !nvdata) {

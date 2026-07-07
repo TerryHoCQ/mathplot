@@ -1,4 +1,5 @@
 module;
+#include <cstdint>
 #include <array>
 export module mplot.ringvisual;
 import sm.vec;
@@ -7,7 +8,7 @@ import mplot.visualmodel;
 export namespace mplot
 {
     // A simple ring class that uses the primitive VisualModel::computeRing
-    template <int glver = mplot::gl::version_4_1>
+    template <std::int32_t glver = mplot::gl::version_4_1>
     struct RingVisual : public mplot::VisualModel<glver>
     {
         RingVisual(const sm::vec<float> _offset) : mplot::VisualModel<glver>::VisualModel (_offset) {}
@@ -21,6 +22,6 @@ export namespace mplot
         sm::vec<float, 3> locn = { 0.0f };
         float radius = 1.0f;
         float thickness = 0.2f;
-        int segments = 80;
+        std::int32_t segments = 80;
     };
 } // namespace

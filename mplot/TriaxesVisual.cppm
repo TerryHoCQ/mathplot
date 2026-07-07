@@ -5,6 +5,7 @@
  */
 module;
 
+#include <cstdint>
 #include <iostream>
 #include <string>
 #include <deque>
@@ -24,7 +25,7 @@ import mplot.graphstyles; // Share tickstyle, axestyle
 
 export namespace mplot
 {
-    template <typename Flt, int glver = mplot::gl::version_4_1>
+    template <typename Flt, std::int32_t glver = mplot::gl::version_4_1>
     class TriaxesVisual : public VisualModel<glver>
     {
     public:
@@ -212,7 +213,7 @@ export namespace mplot
 
             mplot::TextFeatures tf(this->fontsize, this->fontres, false, mplot::colour::black, this->font);
 
-            for (unsigned int i = 0; i < this->xtick_posns.size(); ++i) {
+            for (std::uint32_t i = 0; i < this->xtick_posns.size(); ++i) {
                 std::string s = mplot::graphing::number_format (this->xticks[i], this->xticks[i==0 ? 1 : i-1]);
                 // Issue: I need the width of the text ss.str() before I can create the
                 // VisualTextModel, so need a static method like this:
@@ -225,7 +226,7 @@ export namespace mplot
                 this->texts.push_back (std::move(lbl));
             }
 
-            for (unsigned int i = 0; i < this->ytick_posns.size(); ++i) {
+            for (std::uint32_t i = 0; i < this->ytick_posns.size(); ++i) {
                 std::string s = mplot::graphing::number_format (this->yticks[i], this->yticks[i==0 ? 1 : i-1]);
                 auto lbl = this->makeVisualTextModel (tf);
                 mplot::TextGeometry geom = lbl->getTextGeometry (s);
@@ -236,7 +237,7 @@ export namespace mplot
                 this->texts.push_back (std::move(lbl));
             }
 
-            for (unsigned int i = 0; i < this->ztick_posns.size(); ++i) {
+            for (std::uint32_t i = 0; i < this->ztick_posns.size(); ++i) {
                 std::string s = mplot::graphing::number_format (this->zticks[i], this->zticks[i==0 ? 1 : i-1]);
                 auto lbl = this->makeVisualTextModel (tf);
                 mplot::TextGeometry geom = lbl->getTextGeometry (s);
@@ -343,7 +344,7 @@ export namespace mplot
         //! Font resolution - determines how textures for glyphs are generated. If your
         //! labels will be small, this should be smaller. If labels are large, then it
         //! should be increased.
-        int fontres = 24;
+        std::int32_t fontres = 24;
         //! The font size is the width of an m in the chosen font, in model units
         float fontsize = 0.05;
         // might need tickfontsize and axisfontsize

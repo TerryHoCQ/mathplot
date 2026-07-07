@@ -1,5 +1,6 @@
 module;
 
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include <array>
@@ -25,7 +26,7 @@ export namespace mplot
      * support the Stalefish app, which collects 2-D curves of ISH gene expression and arranges them
      * in a stack.
      */
-    template <typename Flt, int glver = mplot::gl::version_4_1>
+    template <typename Flt, std::int32_t glver = mplot::gl::version_4_1>
     class PointRowsVisual : public VisualDataModel<Flt, glver>
     {
     public:
@@ -62,8 +63,8 @@ export namespace mplot
         //! surface.
         void initializeVertices()
         {
-            unsigned int npoints = this->dataCoords->size();
-            unsigned int ndata = this->scalarData->size();
+            std::uint32_t npoints = this->dataCoords->size();
+            std::uint32_t ndata = this->scalarData->size();
 
             if (npoints != ndata) {
                 std::cout << "npoints != ndata, return." << std::endl;
@@ -298,7 +299,7 @@ export namespace mplot
 
     private:
         //! Which axis are we perpendicular to?
-        unsigned int pa = 0U;
+        std::uint32_t pa = 0U;
     };
 
 } // namespace mplot

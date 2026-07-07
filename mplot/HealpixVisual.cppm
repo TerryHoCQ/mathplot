@@ -25,7 +25,7 @@ export namespace mplot
      * Type T for the data. A HEALPix VisualModel which visualizes the values in
      * pixeldata, which should be indexed with the Healpix NEST index scheme.
      */
-    template <typename T, int glver = mplot::gl::version_4_1>
+    template <typename T, std::int32_t glver = mplot::gl::version_4_1>
     struct HealpixVisual : public mplot::VisualModel<glver>
     {
     public:

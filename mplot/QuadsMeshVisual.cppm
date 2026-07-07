@@ -1,11 +1,11 @@
 module;
 
+#include <cstdint>
 #include <memory>
 #include <iostream>
 #include <vector>
 #include <array>
 #include <set>
-#include <stdexcept>
 
 export module mplot.quadsmeshvisual;
 
@@ -17,7 +17,7 @@ export import mplot.colourmap;
 
 export namespace mplot
 {
-    template <typename Flt, int glver = mplot::gl::version_4_1>
+    template <typename Flt, std::int32_t glver = mplot::gl::version_4_1>
     class QuadsMeshVisual : public VisualDataModel<Flt, glver>
     {
     public:
@@ -43,7 +43,7 @@ export namespace mplot
             this->dataCoords_mem = std::make_unique<std::vector<sm::vec<float>>>(this->quads->size());
             this->dataCoords = this->dataCoords_mem.get();
 
-            unsigned int qi = 0;
+            std::uint32_t qi = 0;
             for (auto q : (*this->quads)) {
                 // q is an array<Flt, 12>. These lines compute the centroid:
                 (*this->dataCoords)[qi][0] = 0.25f * static_cast<float>(q[0]+q[3]+q[6]+q[9]);
@@ -77,8 +77,8 @@ export namespace mplot
         //! Initialize the vertices that will represent the Quads.
         void initializeVertices()
         {
-            unsigned int nquads = this->quads->size();
-            unsigned int ndata = this->scalarData->size();
+            std::uint32_t nquads = this->quads->size();
+            std::uint32_t ndata = this->scalarData->size();
 
             if (nquads != ndata) {
                 std::cout << "nquads != ndata, return." << std::endl;
@@ -95,7 +95,7 @@ export namespace mplot
             auto _cmp = [](sm::vec<float,6> a, sm::vec<float,6> b){return a.lexical_lessthan(b);};
             std::set<sm::vec<float, 6>,  decltype(_cmp)> lastQuadLines(_cmp);
 
-            for (unsigned int qi = 0; qi < nquads; ++qi) {
+            for (std::uint32_t qi = 0; qi < nquads; ++qi) {
                 // Extract coordinates from this->quads
                 sm::vec<float> q0 = {(*this->quads)[qi][0], (*this->quads)[qi][1], (*this->quads)[qi][2]};
                 sm::vec<float> q1 = {(*this->quads)[qi][3], (*this->quads)[qi][4], (*this->quads)[qi][5]};
@@ -163,7 +163,7 @@ export namespace mplot
         //! coordinates that define boxes (and we'll vis them as rods). Note that
         //! the coordinates of the locations of the data are the centroids of each
         //! quad.
-        const std::vector<std::array<Flt,12>>* quads;
+        const std::vector<std::array<Flt, 12>>* quads;
 
         //! We own the memory that will be displayed as dataCoords.
         std::unique_ptr<std::vector<sm::vec<float>>> dataCoords_mem;
@@ -171,7 +171,7 @@ export namespace mplot
         //! Tube radius
         float radius = 0.05f;
         //! Tube number of segments
-        int tseg = 8;
+        std::int32_t tseg = 8;
     };
 
 } // namespace mplot

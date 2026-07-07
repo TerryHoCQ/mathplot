@@ -3,6 +3,7 @@
  */
 module;
 
+#include <cstdint>
 #include <array>
 #include <deque>
 #include <string>
@@ -20,7 +21,7 @@ import mplot.textgeometry;
 
 export namespace mplot
 {
-    template <typename F, int glver = mplot::gl::version_4_1>
+    template <typename F, std::int32_t glver = mplot::gl::version_4_1>
     class HSVWheelVisual : public VisualModel<glver>
     {
         using mc = sm::mathconst<F>;
@@ -84,7 +85,7 @@ export namespace mplot
                 // Auto-fill label_angles based on labels size.
                 // example order for 4: mc::pi_over_2, mc::pi, mc::three_pi_over_2, 0.0f
                 this->label_angles.resize (this->labels.size());
-                for (unsigned int i = 0; i < this->labels.size(); ++i) {
+                for (std::uint32_t i = 0; i < this->labels.size(); ++i) {
                     // North is pi/2, so that's the start:
                     this->label_angles[i] = mc::pi_over_2 + i * (mc::two_pi / this->labels.size());
                     // Rescale any that exceed 2pi:
@@ -93,7 +94,7 @@ export namespace mplot
                 }
             }
 
-            for (unsigned int i = 0; i < this->label_angles.size(); ++i) {
+            for (std::uint32_t i = 0; i < this->label_angles.size(); ++i) {
                 std::string s = this->labels[i];
                 auto lbl = this->makeVisualTextModel (this->tf);
                 mplot::TextGeometry geom = lbl->getTextGeometry (s);
@@ -117,14 +118,14 @@ export namespace mplot
         {
             sm::vec<float> centre = {0,0,this->z};
 
-            for (int ring = this->numrings; ring > 0; ring--) {
+            for (std::int32_t ring = this->numrings; ring > 0; ring--) {
 
                 float r_out = this->radius * static_cast<float>(ring)/this->numrings;
                 float r_in = this->radius * static_cast<float>(ring-1)/this->numrings;
                 float norm_r_out = r_out / this->radius; // range 0->1
                 float norm_r_in = r_in / this->radius;
 
-                for (int j = 0; j < static_cast<int>(this->numsegs); j++) {
+                for (std::int32_t j = 0; j < static_cast<std::int32_t>(this->numsegs); j++) {
 
                     // The colour will change for each j
                     float colour_angle = (static_cast<float>(j)/this->numsegs) * sm::mathconst<float>::two_pi;
@@ -143,8 +144,8 @@ export namespace mplot
                 }
                 // Added 2*segments vertices to vertexPositions
 
-                for (int j = 0; j < static_cast<int>(this->numsegs); j++) {
-                    int jn = (numsegs + ((j+1) % numsegs)) % numsegs;
+                for (std::int32_t j = 0; j < static_cast<std::int32_t>(this->numsegs); j++) {
+                    std::int32_t jn = (numsegs + ((j+1) % numsegs)) % numsegs;
                     this->indices.push_back (this->idx+(2*j));
                     this->indices.push_back (this->idx+(2*jn));
                     this->indices.push_back (this->idx+(2*jn+1));
@@ -175,9 +176,9 @@ export namespace mplot
         //! Gap to x axis tick labels. Gets auto-set
         float ticklabelgap = 0.05f;
         //! The number of segments to make in each ring of the colourmap fill
-        unsigned int numsegs = 128;
+        std::uint32_t numsegs = 128;
         //! How many rings of colour?
-        unsigned int numrings = 64;
+        std::uint32_t numrings = 64;
     protected:
         //! tick label height
         float ticklabelheight = 0.0f;

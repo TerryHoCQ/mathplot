@@ -1,5 +1,6 @@
 module;
 
+#include <cstdint>
 #include <array>
 #include <string>
 
@@ -16,7 +17,7 @@ import mplot.colour;
 export namespace mplot
 {
     // Boolean flags relating to quiver plots that form part of a DatasetStyle
-    enum class quiver_flags : unsigned int
+    enum class quiver_flags : std::uint32_t
     {
         length_fixed,
         thickness_fixed,
@@ -112,7 +113,7 @@ export namespace mplot
 
         //! Obtain the curated dataset colours, by index. Static public function to
         //! allow other Visuals to set marker style in the same order as a graph.
-        static constexpr mplot::markerstyle datamarkerstyle (unsigned int data_index)
+        static constexpr mplot::markerstyle datamarkerstyle (std::uint32_t data_index)
         {
             mplot::markerstyle rtn = mplot::markerstyle::square;
             switch (data_index) {
@@ -133,7 +134,7 @@ export namespace mplot
 
         //! Obtain the curated dataset colours, by index. Static public function to
         //! allow other Visuals to colour things in the same order as a graph.
-        static constexpr std::array<float, 3> datacolour (unsigned int data_index)
+        static constexpr std::array<float, 3> datacolour (std::uint32_t data_index)
         {
             std::array<float, 3> rtn = mplot::colour::gray50;
             switch (data_index) {
@@ -203,7 +204,7 @@ export namespace mplot
         }
 
         //! Set defaults on this dataset as if it were for dataset index data_index
-        void setdefaults (unsigned int data_index)
+        void setdefaults (std::uint32_t data_index)
         {
             this->markercolour = DatasetStyle::datacolour (data_index);
             // maybe: this->linecolour = DatasetStyle::datacolour (data_index);

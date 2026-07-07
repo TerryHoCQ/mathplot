@@ -1,5 +1,6 @@
 module;
 
+#include <cstdint>
 #include <array>
 #include <vector>
 #include <utility>
@@ -13,7 +14,7 @@ export import sm.vec;
 export namespace mplot
 {
     //! This class creates the vertices for a rhombohedron
-    template<int glver = mplot::gl::version_4_1>
+    template<std::int32_t glver = mplot::gl::version_4_1>
     class RhomboVisual : public VisualModel<glver>
     {
     public:
@@ -119,45 +120,45 @@ export namespace mplot
             this->vertex_push (o + this->edge1,                this->vertexPositions);
             this->vertex_push (o + this->edge3,                this->vertexPositions);
             this->vertex_push (o + this->edge1 + this->edge3,  this->vertexPositions);
-            for (unsigned short i = 0U; i < 4U; ++i) { this->vertex_push (_n3, this->vertexNormals); }
+            for (std::uint16_t i = 0U; i < 4U; ++i) { this->vertex_push (_n3, this->vertexNormals); }
             // Top face
             this->vertex_push (o + this->edge3, this->vertexPositions);
             this->vertex_push (o + this->edge1 + this->edge3,               this->vertexPositions);
             this->vertex_push (o + this->edge2 + this->edge3,               this->vertexPositions);
             this->vertex_push (o + this->edge2 + this->edge1 + this->edge3, this->vertexPositions);
-            for (unsigned short i = 0U; i < 4U; ++i) { this->vertex_push (_n1, this->vertexNormals); }
+            for (std::uint16_t i = 0U; i < 4U; ++i) { this->vertex_push (_n1, this->vertexNormals); }
             // Back face
             this->vertex_push (o + this->edge2 + this->edge3,               this->vertexPositions);
             this->vertex_push (o + this->edge2 + this->edge1 + this->edge3, this->vertexPositions);
             this->vertex_push (o + this->edge2,                             this->vertexPositions);
             this->vertex_push (o + this->edge2 + this->edge1,               this->vertexPositions);
-            for (unsigned short i = 0U; i < 4U; ++i) { this->vertex_push (-_n3, this->vertexNormals); }
+            for (std::uint16_t i = 0U; i < 4U; ++i) { this->vertex_push (-_n3, this->vertexNormals); }
             // Bottom face
             this->vertex_push (o + this->edge2,                this->vertexPositions);
             this->vertex_push (o + this->edge2 + this->edge1,  this->vertexPositions);
             this->vertex_push (o,                              this->vertexPositions);
             this->vertex_push (o + this->edge1,                this->vertexPositions);
-            for (unsigned short i = 0U; i < 4U; ++i) { this->vertex_push (-_n1, this->vertexNormals); }
+            for (std::uint16_t i = 0U; i < 4U; ++i) { this->vertex_push (-_n1, this->vertexNormals); }
             // Left face
             this->vertex_push (o + this->edge2,                this->vertexPositions);
             this->vertex_push (o,                              this->vertexPositions);
             this->vertex_push (o + this->edge2 + this->edge3,  this->vertexPositions);
             this->vertex_push (o + this->edge3,                this->vertexPositions);
-            for (unsigned short i = 0U; i < 4U; ++i) { this->vertex_push (-_n2, this->vertexNormals); }
+            for (std::uint16_t i = 0U; i < 4U; ++i) { this->vertex_push (-_n2, this->vertexNormals); }
             // Right face
             this->vertex_push (o + this->edge1,                             this->vertexPositions);
             this->vertex_push (o + this->edge1 + this->edge2,               this->vertexPositions);
             this->vertex_push (o + this->edge1 + this->edge3,               this->vertexPositions);
             this->vertex_push (o + this->edge1 + this->edge2 + this->edge3, this->vertexPositions);
-            for (unsigned short i = 0U; i < 4U; ++i) { this->vertex_push (_n2, this->vertexNormals); }
+            for (std::uint16_t i = 0U; i < 4U; ++i) { this->vertex_push (_n2, this->vertexNormals); }
 
             // Vertex colours are all the same
-            for (unsigned short i = 0U; i < 24U; ++i) {
+            for (std::uint16_t i = 0U; i < 24U; ++i) {
                 this->vertex_push (this->col, this->vertexColors);
             }
 
             // Indices for 6 faces
-            for (unsigned short i = 0U; i < 6U; ++i) {
+            for (std::uint16_t i = 0U; i < 6U; ++i) {
                 this->indices.push_back (this->idx++);
                 this->indices.push_back (this->idx++);
                 this->indices.push_back (this->idx--);
@@ -192,7 +193,7 @@ export namespace mplot
             this->vertex_push (o + this->edge3,                this->vertexPositions); // extra
             this->vertex_push (o + this->edge1,                this->vertexPositions); // extra
             this->vertex_push (o + this->edge1 + this->edge3,  this->vertexPositions);
-            for (unsigned short i = 0U; i < 6U; ++i) { this->vertex_push (_n3, this->vertexNormals); }
+            for (std::uint16_t i = 0U; i < 6U; ++i) { this->vertex_push (_n3, this->vertexNormals); }
             // Top face
             this->vertex_push (o + this->edge3, this->vertexPositions);
             this->vertex_push (o + this->edge1 + this->edge3,               this->vertexPositions);
@@ -200,7 +201,7 @@ export namespace mplot
             this->vertex_push (o + this->edge2 + this->edge3,               this->vertexPositions); // extra
             this->vertex_push (o + this->edge1 + this->edge3,               this->vertexPositions); // extra
             this->vertex_push (o + this->edge2 + this->edge1 + this->edge3, this->vertexPositions);
-            for (unsigned short i = 0U; i < 6U; ++i) { this->vertex_push (_n1, this->vertexNormals); }
+            for (std::uint16_t i = 0U; i < 6U; ++i) { this->vertex_push (_n1, this->vertexNormals); }
             // Back face
             this->vertex_push (o + this->edge2 + this->edge3,               this->vertexPositions);
             this->vertex_push (o + this->edge2 + this->edge1 + this->edge3, this->vertexPositions);
@@ -208,12 +209,12 @@ export namespace mplot
             this->vertex_push (o + this->edge2,                             this->vertexPositions); // extra
             this->vertex_push (o + this->edge2 + this->edge1 + this->edge3, this->vertexPositions); // extra
             this->vertex_push (o + this->edge2 + this->edge1 + coroffs,     this->vertexPositions);
-            for (unsigned short i = 0U; i < 3U; ++i) { this->vertex_push (-_n3, this->vertexNormals); }
+            for (std::uint16_t i = 0U; i < 3U; ++i) { this->vertex_push (-_n3, this->vertexNormals); }
             if (this->raise_corner) {
-                for (unsigned short i = 0U; i < 3U; ++i) { this->vertex_push (-_n3, this->vertexNormals); }
+                for (std::uint16_t i = 0U; i < 3U; ++i) { this->vertex_push (-_n3, this->vertexNormals); }
             } else {
                 sm::vec<float> _n4 = (edge2 - (edge1 + edge2 + edge3)).cross (edge1 + edge2 + coroffs - (edge1 + edge2 + edge3));
-                for (unsigned short i = 0U; i < 3U; ++i) { this->vertex_push (-_n4, this->vertexNormals); }
+                for (std::uint16_t i = 0U; i < 3U; ++i) { this->vertex_push (-_n4, this->vertexNormals); }
             }
             // Bottom face
             this->vertex_push (o + this->edge2,                this->vertexPositions);
@@ -222,7 +223,7 @@ export namespace mplot
             this->vertex_push (o,                              this->vertexPositions); // extra
             this->vertex_push (o + this->edge2 + this->edge1 + coroffs,  this->vertexPositions); // extra
             this->vertex_push (o + this->edge1,                this->vertexPositions);
-            for (unsigned short i = 0U; i < 6U; ++i) { this->vertex_push (-_n1, this->vertexNormals); }
+            for (std::uint16_t i = 0U; i < 6U; ++i) { this->vertex_push (-_n1, this->vertexNormals); }
             // Left face
             this->vertex_push (o + this->edge2,                this->vertexPositions);
             this->vertex_push (o,                              this->vertexPositions);
@@ -230,7 +231,7 @@ export namespace mplot
             this->vertex_push (o + this->edge2 + this->edge3,  this->vertexPositions); // extra
             this->vertex_push (o,                              this->vertexPositions); // extra
             this->vertex_push (o + this->edge3,                this->vertexPositions);
-            for (unsigned short i = 0U; i < 6U; ++i) { this->vertex_push (-_n2, this->vertexNormals); }
+            for (std::uint16_t i = 0U; i < 6U; ++i) { this->vertex_push (-_n2, this->vertexNormals); }
             // Right face
             this->vertex_push (o + this->edge1,                             this->vertexPositions);
             this->vertex_push (o + this->edge1 + this->edge2 + coroffs,               this->vertexPositions);
@@ -238,18 +239,18 @@ export namespace mplot
             this->vertex_push (o + this->edge1 + this->edge3,               this->vertexPositions); // extra
             this->vertex_push (o + this->edge1 + this->edge2 + coroffs,               this->vertexPositions); // extra
             this->vertex_push (o + this->edge1 + this->edge2 + this->edge3, this->vertexPositions);
-            for (unsigned short i = 0U; i < 6U; ++i) { this->vertex_push (_n2, this->vertexNormals); }
+            for (std::uint16_t i = 0U; i < 6U; ++i) { this->vertex_push (_n2, this->vertexNormals); }
 
             // Vertex colours are NOT all the same
             mplot::ColourMap<float> cm (this->facecm);
-            for (unsigned short i = 0U; i < 36U; i += 3) {
+            for (std::uint16_t i = 0U; i < 36U; i += 3) {
                 this->vertex_push (cm.convert(static_cast<float>(i) / 35.0f), this->vertexColors);
                 this->vertex_push (cm.convert(static_cast<float>(i) / 35.0f), this->vertexColors);
                 this->vertex_push (cm.convert(static_cast<float>(i) / 35.0f), this->vertexColors);
             }
 
             // Indices for 6 faces.
-            for (unsigned short i = 0U; i < 36U; ++i) { this->indices.push_back (this->idx++); }
+            for (std::uint16_t i = 0U; i < 36U; ++i) { this->indices.push_back (this->idx++); }
         }
 
         //! Three vectors define the Rhombohedron and we use a single colour

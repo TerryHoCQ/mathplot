@@ -1,5 +1,6 @@
 module;
 
+#include <cstdint>
 #include <array>
 #include <string>
 #include <cstdlib>
@@ -14,7 +15,7 @@ export import mplot.colourmap;
 export namespace mplot
 {
     //! This class creates the vertices for a square scalar value indicator. The indicator has a tubular border
-    template<typename T, int glver = mplot::gl::version_4_1>
+    template<typename T, std::int32_t glver = mplot::gl::version_4_1>
     class ScalarVisual : public VisualModel<glver>
     {
     public:

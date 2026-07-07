@@ -8,6 +8,7 @@
  */
 module;
 
+#include <cstdint>
 #include <string>
 
 export module mplot.unicode;
@@ -164,12 +165,12 @@ export namespace mplot::unicode
         // Fix this so that it *interprets* _txt as unicode and builds up utxt
         // accordingly. Then I only have to have char32_t here.
         char32_t uc = 0;
-        int pos = 0; // byte position in uc
+        std::int32_t pos = 0; // byte position in uc
         for (std::string::size_type i = 0; i < input.size(); ++i) {
             // Decode UTF-8
             char c = input[i];
             if (c & 0x80) {
-                //std::cout << "UTF-8 code. char c is " << static_cast<unsigned long int>(c) << "\n";
+                //std::cout << "UTF-8 code. char c is " << static_cast<std::uint64_t>(c) << "\n";
                 // Top bit is 1, so interpret and add to c.
                 if ((c & 0xc0) == 0xc0) {
                     // Two top bits are 1 so that means start a new unicode character
@@ -251,7 +252,7 @@ export namespace mplot::unicode
     }
 
     // Helper to return the subscript for the given num (expected to be in range 0-9)
-    std::string subs (int num)
+    std::string subs (std::int32_t num)
     {
         std::string rtn ("x");
         if (num < 0 || num > 9) { return rtn; }
@@ -260,7 +261,7 @@ export namespace mplot::unicode
     }
 
     // Helper to return the superscript for the given num (expected to be in range 0-9)
-    std::string ss (int num)
+    std::string ss (std::int32_t num)
     {
         std::string rtn ("x");
         if (num < 0 || num > 9) { return rtn; }

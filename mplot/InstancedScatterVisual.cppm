@@ -6,6 +6,7 @@
  */
 module;
 
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include <array>
@@ -20,7 +21,7 @@ import mplot.tools;
 
 export namespace mplot
 {
-    template <int glver = mplot::gl::version_4_3>
+    template <std::int32_t glver = mplot::gl::version_4_3>
     class InstancedScatterVisual : public VisualModel<glver>
     {
     public:

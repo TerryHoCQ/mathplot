@@ -18,7 +18,7 @@ import sm.flags;
 
 export namespace mplot
 {
-    enum class normalsvisual_flags : uint32_t
+    enum class normalsvisual_flags : std::uint32_t
     {
         show_gl_normals,  // Show the OpenGL vertex normals?
         show_tri_edges,   // Show the OpenGLtriangle edge vectors?
@@ -34,7 +34,7 @@ export namespace mplot
     };
 
     //! A class to visualize normals for another model
-    template <int glver = mplot::gl::version_4_1>
+    template <std::int32_t glver = mplot::gl::version_4_1>
     class NormalsVisual : public VisualModel<glver>
     {
     public:
@@ -69,7 +69,7 @@ export namespace mplot
 
             if (this->options.test (normalsvisual_flags::show_gl_normals)) {
                 std::cout << "Showing " << vn->size() << " OpenGL vertex normals" << std::endl;
-                for (uint32_t ii = 0; ii < vn->size(); ++ii) {
+                for (std::uint32_t ii = 0; ii < vn->size(); ++ii) {
                     // (*vp)[ii] is position, (*vn)[ii] is normal
                     std::array<float, 3> _clr = clr;
                     if (this->options.test (normalsvisual_flags::singlecolour) == false) { _clr = (*vc)[ii]; }
@@ -197,7 +197,7 @@ export namespace mplot
         // The model for which we will plot normal vectors
         mplot::VisualModel<glver>* mymodel = nullptr;
         // How many sides to each normal vector
-        int shapesides = 12;
+        std::int32_t shapesides = 12;
         // thickness for the normal vectors
         float thickness = 0.025f;
         // What proportion of the arrow length should the arrowhead length be?

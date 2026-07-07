@@ -1,5 +1,6 @@
 module;
 
+#include <cstdint>
 #include <array>
 
 export module mplot.icosavisual;
@@ -11,7 +12,7 @@ import mplot.visualmodel;
 export namespace mplot
 {
     //! This class creates the vertices for an icosahedron in a 3D scene.
-    template<int glver = mplot::gl::version_4_1>
+    template<std::int32_t glver = mplot::gl::version_4_1>
     class IcosaVisual : public VisualModel<glver>
     {
     public:

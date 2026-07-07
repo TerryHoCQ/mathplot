@@ -509,8 +509,8 @@ export namespace mplot
      *
      * \tparam T The type of the datum used to traverse the colour map. When this is a
      * floating point type, then the input datum should be in the range 0.0 to 1.0. If
-     * an integral type, then what? For char/unsigned char then 0-127 or 0-255. When
-     * unsigned short then 0-MAX also. What about if unsigned int or larger? Surely not
+     * an integral type, then what? For char/uint8_t then 0-127 or 0-255. When
+     * uint16_t then 0-MAX also. What about if uint32_t or larger? Surely not
      * the full range of these? Allow a runtime choice?
      *
      * A simple use of a ColourMap might look like this:
@@ -1709,7 +1709,7 @@ export namespace mplot
         {
             T rm = T{1};
             // If integral type, might need to change this
-            if constexpr (std::is_same<std::decay_t<T>, unsigned char>::value == true) {
+            if constexpr (std::is_same<std::decay_t<T>, std::uint8_t>::value == true) {
                 rm = 255;
             } else if constexpr (std::is_same<std::decay_t<T>, char>::value == true) {
                 rm = 127;

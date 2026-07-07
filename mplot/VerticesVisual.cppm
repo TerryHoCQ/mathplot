@@ -23,11 +23,11 @@ export namespace mplot
      * to specify it. Unlike most VisualModel derived classes, it doesn't need to implement
      * initializeVertices as the vertices are copied in by the constructor.
      */
-    template<int glver = mplot::gl::version_4_1>
+    template<std::int32_t glver = mplot::gl::version_4_1>
     struct VerticesVisual : public VisualModel<glver>
     {
         VerticesVisual (sm::mat<float, 4>& _model_transform,
-                        sm::vvec<uint32_t> _ind,
+                        sm::vvec<std::uint32_t> _ind,
                         sm::vvec<sm::vec<float>> _posn,
                         sm::vvec<sm::vec<float>> _norm,
                         sm::vvec<sm::vec<float>> _colr)

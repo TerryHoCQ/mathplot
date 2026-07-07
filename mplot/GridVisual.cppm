@@ -38,7 +38,7 @@ export namespace mplot
      * Boolean options used in GridVisual. For meanings, see the setters of the same
      * names in GridVisual. E.g. GridVisual::centralize(bool)
      */
-    enum class gridvisual_flags : uint32_t
+    enum class gridvisual_flags : std::uint32_t
     {
         centralize,
         showorigin,
@@ -59,13 +59,13 @@ export namespace mplot
      *
      * \tparam T the type of the *data* which this GridVisual will visualize.
      *
-     * \tparam I The type for the Grid indexing (defaults to unsigned int)
+     * \tparam I The type for the Grid indexing (defaults to std::uint32_t)
      *
      * \tparam C The type for the Grid coordinates (default float, must be a signed type)
      *
      * \tparam glver The OpenGL version in use in your program
      */
-    template <typename T, typename I = unsigned int, typename C = float, int glver = mplot::gl::version_4_1>
+    template <typename T, typename I = std::uint32_t, typename C = float, std::int32_t glver = mplot::gl::version_4_1>
     struct GridVisual : public VisualDataModel<T, glver>
     {
         GridVisual(const sm::grid<I, C>* _grid, const sm::vec<float> _offset)
@@ -1170,7 +1170,7 @@ export namespace mplot
         void reinitColoursVector (const std::size_t n_data, const std::size_t n_cvertices_per_datum)
         {
             if (this->colourScale.do_autoscale == true) { this->colourScale.reset(); }
-            for (unsigned int i = 0; i < this->vectorData->size(); ++i) {
+            for (std::uint32_t i = 0; i < this->vectorData->size(); ++i) {
                 this->dcolour[i] = (*this->vectorData)[i][0];
                 this->dcolour2[i] = (*this->vectorData)[i][1];
                 this->dcolour3[i] = (*this->vectorData)[i][2];

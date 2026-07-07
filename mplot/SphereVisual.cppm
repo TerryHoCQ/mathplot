@@ -3,6 +3,7 @@
  */
 module;
 
+#include <cstdint>
 #include <array>
 
 export module mplot.spherevisual;
@@ -13,7 +14,7 @@ export import sm.vec;
 export namespace mplot
 {
     //! This class creates the vertices for a simple sphere in a 3D scene.
-    template<int glver = mplot::gl::version_4_1>
+    template<std::int32_t glver = mplot::gl::version_4_1>
     class SphereVisual : public VisualModel<glver>
     {
     public:

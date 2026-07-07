@@ -8,6 +8,7 @@
  */
 module;
 
+#include <cstdint>
 #include <iostream>
 #include <string>
 #include <list>
@@ -486,11 +487,11 @@ export namespace mplot
          * set to point to the end of the commands read into the return value.
          */
         std::vector<float> splitSvgCmdString (const std::string& s, char cmd,
-                                              unsigned int numParams,
+                                              std::uint32_t numParams,
                                               std::string::size_type& endOfCmd)
         {
             std::vector<float> numbers;
-            unsigned int numnum = 0; // number of numbers stored in numbers
+            std::uint32_t numnum = 0; // number of numbers stored in numbers
             float n = 0.0f;
 
             std::string::size_type p0 = 0;
@@ -620,7 +621,7 @@ export namespace mplot
                         if (v.size()%2 != 0) {
                             throw std::runtime_error ("Unexpected size of SVG path L command (expected pairs of numbers)");
                         }
-                        for (unsigned int i = 0; i<v.size(); i+=2) {
+                        for (std::uint32_t i = 0; i<v.size(); i+=2) {
                             if (cmd == 'l') { // delta coordinates
                                 f = { currentCoordinate[0] + v[i], currentCoordinate[1] + v[i+1] };
                             } else {
@@ -646,7 +647,7 @@ export namespace mplot
                         if (v.size() == 0) {
                             throw std::runtime_error ("Unexpected size of SVG path H command (expected at least one number)");
                         }
-                        for (unsigned int i = 0; i<v.size(); ++i) {
+                        for (std::uint32_t i = 0; i<v.size(); ++i) {
                             if (cmd == 'h') { // delta coordinates
                                 f = { currentCoordinate[0] + v[i], currentCoordinate[1] };
                             } else {
@@ -672,7 +673,7 @@ export namespace mplot
                         if (v.size() == 0) {
                             throw std::runtime_error ("Unexpected size of SVG path V command (expected at least one number)");
                         }
-                        for (unsigned int i = 0; i<v.size(); ++i) {
+                        for (std::uint32_t i = 0; i<v.size(); ++i) {
                             if (cmd == 'v') { // delta coordinates
                                 if (v[i] != 0.0f) {
                                     f = { currentCoordinate[0], currentCoordinate[1] + v[i] };
@@ -716,7 +717,7 @@ export namespace mplot
                             // Just 2 coords means it's a move command; nothing further to do
                         } else {
                             // pairs of commands implies linetos.
-                            for (unsigned int i = 2; i<v.size(); i+=2) {
+                            for (std::uint32_t i = 2; i<v.size(); i+=2) {
                                 if (cmd == 'm') { // delta coordinates
                                     f = { currentCoordinate[0] + v[i], currentCoordinate[1] + v[i+1] };
                                 } else {

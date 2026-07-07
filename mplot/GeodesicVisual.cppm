@@ -1,5 +1,6 @@
 module;
 
+#include <cstdint>
 #include <array>
 #include <stdexcept>
 
@@ -24,7 +25,7 @@ export namespace mplot
      * \tparam glver The usual OpenGL version code; match this to everything else in
      * your program.
      */
-    template<typename T, int glver = mplot::gl::version_4_1>
+    template<typename T, std::int32_t glver = mplot::gl::version_4_1>
     class GeodesicVisual : public VisualModel<glver>
     {
     public:
@@ -95,9 +96,9 @@ export namespace mplot
             this->cart_centres.resize (this->n_faces);
             this->sph_centres.resize (this->n_faces);
             for (size_t i = 0; i < this->indices.size(); i+=3) {
-                int _vtx1 = this->indices[i];
-                int _vtx2 = this->indices[i+1];
-                int _vtx3 = this->indices[i+2];
+                std::int32_t _vtx1 = this->indices[i];
+                std::int32_t _vtx2 = this->indices[i+1];
+                std::int32_t _vtx3 = this->indices[i+2];
                 sm::vec<float> v1 = {
                     this->vertexPositions[3 * _vtx1],
                     this->vertexPositions[3 * _vtx1 + 1],
@@ -142,7 +143,7 @@ export namespace mplot
                 // Re-colour
                 for (size_t i = 0u; i < n_data; ++i) {
                     // Update the 3 RGB values in vertexColors
-                    for (int ci = 0; ci < (this->colourFaces == true ? 3 : 1); ++ci) {
+                    for (std::int32_t ci = 0; ci < (this->colourFaces == true ? 3 : 1); ++ci) {
                         this->vertex_push (cdata[i], this->vertexColors);
                     }
                 }
@@ -169,7 +170,7 @@ export namespace mplot
                 for (size_t i = 0u; i < n_data; ++i) {
                     // Update the 3 RGB values in vertexColors
                     auto c = this->cm.convert (scaled_data[i]);
-                    for (int ci = 0; ci < (this->colourFaces == true ? 3 : 1); ++ci) {
+                    for (std::int32_t ci = 0; ci < (this->colourFaces == true ? 3 : 1); ++ci) {
                         this->vertex_push (c, this->vertexColors);
                     }
                 }
@@ -193,15 +194,15 @@ export namespace mplot
         //! A scaling for data colour
         sm::scale<T, float> colourScale;
         //! The number of iterations in the geodesic sphere. Set before finalize() to change from the default.
-        int iterations = 2;
+        std::int32_t iterations = 2;
         //! This may be filled with the number of vertices in the geodesic shape. This is the
         //! 'maths' number of vertices.
-        int n_geo_verts = 0;
+        std::int32_t n_geo_verts = 0;
         //! This may be filled with the number of OpenGL vertices used to construct the
         //! geodesic. The OpenGL number of vertices >= n_geo_verts.
-        int n_verts = 0;
+        std::int32_t n_verts = 0;
         //! This may be filled with the number of faces in the geodesic
-        int n_faces = 0;
+        std::int32_t n_faces = 0;
     };
 
 } // namespace mplot

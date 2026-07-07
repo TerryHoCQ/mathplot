@@ -1,6 +1,8 @@
 /*!
  * \file Declares ConeVisual to visualize a simple cone
  */
+module;
+#include <cstdint>
 export module mplot.conevisual;
 
 import sm.vec;
@@ -10,7 +12,7 @@ import mplot.visualmodel;
 export namespace mplot
 {
     //! A class to visualize a single vector
-    template <int glver = mplot::gl::version_4_1>
+    template <std::int32_t glver = mplot::gl::version_4_1>
     struct ConeVisual : public VisualModel<glver>
     {
         ConeVisual (const sm::vec<float> _offset) { this->viewmatrix.translate (_offset); }
@@ -30,6 +32,6 @@ export namespace mplot
         // How many sides to an arrow/cone/sphere? Increase for smoother arrow
         // objects. Decrease to ease the load on your CPU and GPU. 12 is a reasonable
         // compromise. You can set this before calling finalize().
-        int shapesides = 12;
+        std::int32_t shapesides = 12;
     };
 }

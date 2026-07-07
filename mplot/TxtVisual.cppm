@@ -1,6 +1,7 @@
 // Add some text as a VisualModel
 module;
 
+#include <cstdint>
 #include <string>
 #include <iostream>
 #include <vector>
@@ -16,7 +17,7 @@ export import mplot.textfeatures;
 
 export namespace mplot
 {
-    template<int glver = mplot::gl::version_4_1>
+    template<std::int32_t glver = mplot::gl::version_4_1>
     class TxtVisual : public VisualModel<glver>
     {
     public:

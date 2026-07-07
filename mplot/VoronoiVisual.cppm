@@ -36,7 +36,7 @@ export namespace mplot
 {
     //! The template argument F is the type of the data which this VoronoiVisual
     //! will visualize.
-    template <typename F, int n_epsilons = 0, int glver = mplot::gl::version_4_1>
+    template <typename F, std::int32_t n_epsilons = 0, std::int32_t glver = mplot::gl::version_4_1>
     class VoronoiVisual : public VisualDataModel<F, glver>
     {
         // Need a vec comparison function for a std::set of sm::vec or a std::map with a sm::vec key. See:
@@ -54,7 +54,7 @@ export namespace mplot
         // The shape of the domain to draw around the points in the Voronoi diagram Each kind of
         // boundary shape is auto-fit to the data points, although the user can set an additional
         // border_width.
-        enum class domain_shape : uint32_t
+        enum class domain_shape : std::uint32_t
         {
             rectangular,
             ellipsoid,
@@ -76,7 +76,7 @@ export namespace mplot
         // to point.
         void initializeVertices()
         {
-            unsigned int ncoords = this->dataCoords == nullptr ? 0 : this->dataCoords->size();
+            std::uint32_t ncoords = this->dataCoords == nullptr ? 0 : this->dataCoords->size();
             if (ncoords == 0) { return; }
 
             this->determine_datasize();
@@ -116,7 +116,7 @@ export namespace mplot
                 sm::vec<float> cent = this->coordsCentroid();
                 sm::vec<float, 2> cent2 = {cent[0], cent[1]};
                 sm::vvec<float> lengths (this->dcoords_ptr->size(), 0.0f);
-                for (unsigned int i = 0; i < this->dcoords_ptr->size(); ++i) {
+                for (std::uint32_t i = 0; i < this->dcoords_ptr->size(); ++i) {
                     sm::vec<float, 2> c = (*this->dcoords_ptr)[i].less_one_dim() - cent2;
                     lengths[i] = c.length();
                 }
@@ -135,7 +135,7 @@ export namespace mplot
 #if 0
                     // Find ellipse parameters for the data. First place data in an arma::mat, offsetting by the centroid
                     arma::Mat<float> x (dcoords_ptr->size(), 2);
-                    for (unsigned int i = 0; i < dcoords_ptr->size(); ++i) {
+                    for (std::uint32_t i = 0; i < dcoords_ptr->size(); ++i) {
                         x(i, 0) = (*this->dcoords_ptr)[i][0] - cent2[0];
                         x(i, 1) = (*this->dcoords_ptr)[i][1] - cent2[1];
                     }
@@ -151,7 +151,7 @@ export namespace mplot
                     float a = this->n_sigma * std::sqrt (lat(0));
                     float b = this->n_sigma * std::sqrt (lat(1));
                     // Create the elliptic boundary
-                    for (unsigned int i = 0; i < this->num_boundary_points; ++i) {
+                    for (std::uint32_t i = 0; i < this->num_boundary_points; ++i) {
                         float phi = i * sm::mathconst<float>::two_pi / this->num_boundary_points;
                         sm::vec<float, 2> bp = el_rotn * sm::vec<float, 2>{ a * std::cos (phi), b * std::sin (phi) }  + cent2;
                         this->boundary[i] = bp.plus_one_dim();
@@ -159,7 +159,7 @@ export namespace mplot
 #endif
                 } else { // circular boundary
                     float l = max_len + this->border_width;
-                    for (unsigned int i = 0; i < this->num_boundary_points; ++i) {
+                    for (std::uint32_t i = 0; i < this->num_boundary_points; ++i) {
                         float phi = i * sm::mathconst<float>::two_pi / this->num_boundary_points;
                         this->boundary[i] += { l * std::cos (phi), l * std::sin (phi) };
                     }
@@ -167,7 +167,7 @@ export namespace mplot
             } else if (this->dom_shape == domain_shape::traced) {
                 // Copy 3D points to 2D
                 sm::vvec<sm::vec<float, 2>> coords2 (dcoords_ptr->size());
-                for (unsigned int i = 0; i < dcoords_ptr->size(); ++i) {
+                for (std::uint32_t i = 0; i < dcoords_ptr->size(); ++i) {
                     coords2[i] = (*dcoords_ptr)[i].less_one_dim();
                 }
                 auto bnd2centr = sm::algo::centroid (coords2);
@@ -175,7 +175,7 @@ export namespace mplot
                 sm::vvec<sm::vec<float, 2>> bnd2 = sm::geometry::graham_scan (coords2);
                 this->boundary.resize (bnd2.size());
                 // Copy 2D to 3D boundary
-                for (unsigned int i = 0; i < bnd2.size(); ++i) {
+                for (std::uint32_t i = 0; i < bnd2.size(); ++i) {
                     this->boundary[i] = bnd2[i].plus_one_dim();
                     // Add border
                     sm::vec<float, 2> brd = bnd2[i] - bnd2centr; // border vector from centroid to point
@@ -192,7 +192,7 @@ export namespace mplot
                 vorman.diagram_generate (*(dcoords_ptr));
             }
 
-            if (static_cast<unsigned int>(vorman.diagram_numsites()) == 0) {
+            if (static_cast<std::uint32_t>(vorman.diagram_numsites()) == 0) {
                 if (this->boundary.empty()) {
                     throw std::runtime_error ("numsites == 0.");
                 } else {
@@ -220,7 +220,7 @@ export namespace mplot
             // Mapping same edge end-point locations to the averate z value of the adjacent cell centres
             std::map<sm::vec<float, 3>, float, veccmp> edge_end_zsums;
 
-            for (int i = 0; i < vorman.diagram_numsites(); ++i) {
+            for (std::int32_t i = 0; i < vorman.diagram_numsites(); ++i) {
 
                 // We have the current edge_1, the next edge_2 and the previous edge_0
                 const jcv::site<float>* site = &sites[i];
@@ -244,7 +244,7 @@ export namespace mplot
                     // compute the correct z value for the end with no site. The
                     // solution would be to modify the jcvoronoi algorithm to populate
                     // both ends of all edges with additional logic.
-                    for (unsigned int j = 0; j < 2; ++j) {
+                    for (std::uint32_t j = 0; j < 2; ++j) {
                         if (edge_1->edge_->sites[j]) {
                             //std::cout << "insert edge_1 " << edge_1->edge->sites[j]->p << " into edge_pos_centres[" << edge_1->pos[1] << "]\n";
                             edge_pos_centres[edge_1->pos[1]].insert (edge_1->edge_->sites[j]->p);
@@ -282,7 +282,7 @@ export namespace mplot
             }
 
             // Now go through edge_end_zsums and edges and update z values
-            for (int i = 0; i < vorman.diagram_numsites(); ++i) {
+            for (std::int32_t i = 0; i < vorman.diagram_numsites(); ++i) {
                 const jcv::site<float>* site = &sites[i];
                 jcv::graphedge<float>* edge_1 = site->edges; // The very first edge
                 while (edge_1) {
@@ -319,10 +319,10 @@ export namespace mplot
                 sm::vec<float> t1 = {0.0f};
                 sm::vec<float> t2 = {0.0f};
                 sm::quaternion<float> rqinv = rq.invert();
-                for (int i = 0; i < vorman.diagram_numsites(); ++i) {
+                for (std::int32_t i = 0; i < vorman.diagram_numsites(); ++i) {
                     const jcv::site<float>* site = &sites[i];
                     const jcv::graphedge<float>* e = site->edges;
-                    unsigned int site_triangles = 0;
+                    std::uint32_t site_triangles = 0;
                     while (e) {
                         // NB: There are 3 each of pos/col/norm vertices (and 3 indices) per
                         // triangle. Could be reduced in principle. For a random map, it
@@ -340,10 +340,10 @@ export namespace mplot
                 }
             } else {
                 // No need to inverse rotate
-                for (int i = 0; i < vorman.diagram_numsites(); ++i) {
+                for (std::int32_t i = 0; i < vorman.diagram_numsites(); ++i) {
                     const jcv::site<float>* site = &sites[i];
                     const jcv::graphedge<float>* e = site->edges;
-                    unsigned int site_triangles = 0;
+                    std::uint32_t site_triangles = 0;
                     while (e) {
                         this->computeTriangle (site->p, e->pos[0], e->pos[1], this->setColour(site->index));
                         ++site_triangles;
@@ -354,7 +354,7 @@ export namespace mplot
                     this->triangle_count_sum += site_triangles;
                 }
             }
-            if (static_cast<unsigned int>(vorman.diagram_numsites()) != ncoords) {
+            if (static_cast<std::uint32_t>(vorman.diagram_numsites()) != ncoords) {
                 std::cout << "WARNING: numsites (" << vorman.diagram_numsites()
                           << ") != ncoords (" << ncoords << ")?!?!\n";
             }
@@ -367,7 +367,7 @@ export namespace mplot
                     sm::vec<float> t0 = {0.0f};
                     sm::vec<float> t1 = {0.0f};
                     sm::quaternion<float> rqinv = rq.invert();
-                    for (int i = 0; i < vorman.diagram_numsites(); ++i) {
+                    for (std::int32_t i = 0; i < vorman.diagram_numsites(); ++i) {
                         const jcv::site<float>* site = &sites[i];
                         const jcv::graphedge<float>* e = site->edges;
                         while (e) {
@@ -380,7 +380,7 @@ export namespace mplot
 
                 } else {
                     // No rotations required
-                    for (int i = 0; i < vorman.diagram_numsites(); ++i) {
+                    for (std::int32_t i = 0; i < vorman.diagram_numsites(); ++i) {
                         const jcv::site<float>* site = &sites[i];
                         const jcv::graphedge<float>* e = site->edges;
                         while (e) {
@@ -399,7 +399,7 @@ export namespace mplot
                     sm::vec<float> t1 = {0.0f};
                     sm::quaternion<float> rqinv = rq.invert();
 
-                    for (int i = 0; i < vorman.diagram_numsites(); ++i) {
+                    for (std::int32_t i = 0; i < vorman.diagram_numsites(); ++i) {
                         const jcv::site<float>* site = &sites[i];
                         const jcv::graphedge<float>* e = site->edges;
                         while (e) {
@@ -412,7 +412,7 @@ export namespace mplot
 
                 } else {
                     // Show the 2D Voronoi diagram's edges at z=0
-                    for (int i = 0; i < vorman.diagram_numsites(); ++i) {
+                    for (std::int32_t i = 0; i < vorman.diagram_numsites(); ++i) {
                         const jcv::site<float>* site = &sites[i];
                         const jcv::graphedge<float>* e = site->edges;
                         while (e) {
@@ -430,7 +430,7 @@ export namespace mplot
 
             if (this->debug_dataCoords) {
                 // Add some spheres at the original data points for debugging
-                for (unsigned int i = 0; i < ncoords; ++i) {
+                for (std::uint32_t i = 0; i < ncoords; ++i) {
                     this->computeSphere ((*this->dataCoords)[i] * this->zoom, mplot::colour::black, this->dataCoord_sphere_size);
                 }
                 // Polygonal boundary (if used)
@@ -449,7 +449,7 @@ export namespace mplot
             this->colourScale.transform (*(this->scalarData), this->dcolour);
 
             // Replace elements of vertexColors
-            unsigned int tcounts = 0;
+            std::uint32_t tcounts = 0;
             for (std::size_t i = 0u; i < this->triangle_counts.size(); ++i) {
                 auto c = this->cm.convert (this->dcolour[this->site_indices[i]]);
                 std::size_t d_idx = tcounts * 9; // 3 floats per vtx, 3 vtxs per tri
@@ -473,7 +473,7 @@ export namespace mplot
             if (this->colourScale2.do_autoscale == true) { this->colourScale.reset(); }
             if (this->colourScale3.do_autoscale == true) { this->colourScale.reset(); }
 
-            for (unsigned int i = 0; i < this->vectorData->size(); ++i) {
+            for (std::uint32_t i = 0; i < this->vectorData->size(); ++i) {
                 this->dcolour[i] = (*this->vectorData)[i][0];
                 this->dcolour2[i] = (*this->vectorData)[i][1];
                 this->dcolour3[i] = (*this->vectorData)[i][2];
@@ -487,7 +487,7 @@ export namespace mplot
             } // else assume dcolour/dcolour2/dcolour3 are all in range 0->1 (or 0-255) already
 
             // Replace elements of vertexColors
-            unsigned int tcounts = 0;
+            std::uint32_t tcounts = 0;
             for (std::size_t i = 0u; i < this->triangle_counts.size(); ++i) {
                 std::array<float, 3> c = this->setColour (this->site_indices[i]);
                 std::size_t d_idx = tcounts * 9; // 3 floats per vtx, 3 vtxs per tri
@@ -544,7 +544,7 @@ export namespace mplot
         // Create a rectangular domain or use a smoother (circular) boundary?
         domain_shape dom_shape = domain_shape::rectangular;
         // When making the boundary, how many points? Or use some f (dcoords.size())?
-        unsigned int num_boundary_points = 30;
+        std::uint32_t num_boundary_points = 30;
         // When finding ellipsoid shape from PCA, how many sigmas to multiply the principle axes length by?
         float n_sigma = 3.0f;
 
@@ -570,7 +570,7 @@ export namespace mplot
             this->vertex_push (c2, this->vertexPositions);
             this->vertex_push (c3, this->vertexPositions);
             // Colours/normals
-            for (unsigned int i = 0; i < 3U; ++i) {
+            for (std::uint32_t i = 0; i < 3U; ++i) {
                 this->vertex_push (colr, this->vertexColors);
                 this->vertex_push (v, this->vertexNormals);
             }
@@ -580,10 +580,10 @@ export namespace mplot
         }
 
         //! Have to record the number of triangles in each cell in order to update the colours
-        sm::vvec<unsigned int> triangle_counts;
+        sm::vvec<std::uint32_t> triangle_counts;
         //! Record the data index for each Voronoi cell index
-        sm::vvec<unsigned int> site_indices;
-        unsigned int triangle_count_sum = 0;
+        sm::vvec<std::uint32_t> site_indices;
+        std::uint32_t triangle_count_sum = 0;
         // Polygon domain coordinates
         std::vector<sm::vec<float>> boundary;
         //! Internally owned version of dataCoords after rotation

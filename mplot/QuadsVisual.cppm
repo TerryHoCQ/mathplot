@@ -1,5 +1,6 @@
 module;
 
+#include <cstdint>
 #include <memory>
 #include <iostream>
 #include <vector>
@@ -16,7 +17,7 @@ export import mplot.colourmap;
 
 export namespace mplot
 {
-    template <typename Flt, int glver = mplot::gl::version_4_1>
+    template <typename Flt, std::int32_t glver = mplot::gl::version_4_1>
     class QuadsVisual : public VisualDataModel<Flt, glver>
     {
     public:
@@ -39,7 +40,7 @@ export namespace mplot
             this->dataCoords_mem = std::make_unique<std::vector<sm::vec<float>>>(this->quads->size());
             this->dataCoords = this->dataCoords_mem.get();
 
-            unsigned int qi = 0;
+            std::uint32_t qi = 0;
             for (auto q : (*this->quads)) {
                 // q is an array<Flt, 12>. These lines compute the centroid:
                 (*this->dataCoords)[qi][0] = 0.25f * static_cast<float>(q[0]+q[3]+q[6]+q[9]);
@@ -72,8 +73,8 @@ export namespace mplot
         //! Initialize the vertices that will represent the Quads.
         void initializeVertices()
         {
-            unsigned int nquads = this->quads->size();
-            unsigned int ndata = this->scalarData->size();
+            std::uint32_t nquads = this->quads->size();
+            std::uint32_t ndata = this->scalarData->size();
 
             if (nquads != ndata) {
                 std::cout << "nquads != ndata, return." << std::endl;
@@ -85,7 +86,7 @@ export namespace mplot
             this->colourScale.transform ((*this->scalarData), dcopy);
 
             sm::vec<float> v0, v1, v2, v3;
-            for (unsigned int qi = 0; qi < nquads; ++qi) {
+            for (std::uint32_t qi = 0; qi < nquads; ++qi) {
 
                 std::array<float, 12> quad = (*this->quads)[qi];
                 // Convert the array of 12 floats into 4 vecs

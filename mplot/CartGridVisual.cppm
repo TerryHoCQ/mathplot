@@ -1,5 +1,6 @@
 module;
 
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include <array>
@@ -47,7 +48,7 @@ export namespace mplot
 
     //! The template argument T is the type of the data which this HexGridVisual
     //! will visualize.
-    template <class T, int glver = mplot::gl::version_4_1>
+    template <class T, std::int32_t glver = mplot::gl::version_4_1>
     class CartGridVisual : public VisualDataModel<T, glver>
     {
     public:
@@ -121,11 +122,11 @@ export namespace mplot
         void initializeVerticesTris()
         {
             this->idx = 0;
-            unsigned int nrect = this->cg->num();
+            std::uint32_t nrect = this->cg->num();
 
             this->setupScaling();
 
-            for (unsigned int ri = 0; ri < nrect; ++ri) {
+            for (std::uint32_t ri = 0; ri < nrect; ++ri) {
                 std::array<float, 3> clr = this->setColour (ri);
                 this->vertex_push (this->cg->d_x[ri]+centering_offset[0],
                                    this->cg->d_y[ri]+centering_offset[1], this->dcopy[ri], this->vertexPositions);
@@ -134,7 +135,7 @@ export namespace mplot
             }
 
             // Build indices based on neighbour relations in the cartgrid
-            for (unsigned int ri = 0; ri < nrect; ++ri) {
+            for (std::uint32_t ri = 0; ri < nrect; ++ri) {
                 if (R_HAS_NNE(ri) && R_HAS_NE(ri)) {
                     this->indices.push_back (ri);
                     this->indices.push_back (R_NNE(ri));
@@ -164,7 +165,7 @@ export namespace mplot
             float dy = this->cg->get_v();
             float vy = 0.5f * dy;
 
-            unsigned int nrect = this->cg->num();
+            std::uint32_t nrect = this->cg->num();
             this->idx = 0;
 
             this->setupScaling();
@@ -182,7 +183,7 @@ export namespace mplot
             float datum = 0.0f;
 
             sm::vec<float> vtx_0, vtx_1, vtx_2;
-            for (unsigned int ri = 0; ri < nrect; ++ri) {
+            for (std::uint32_t ri = 0; ri < nrect; ++ri) {
 
                 // Use the linear scaled copy of the data, dcopy.
                 datumC  = this->dcopy[ri];
@@ -314,7 +315,7 @@ export namespace mplot
             // Show a Flat surface for the zero plane? This is expensively plotting out all the hexes...
             // Instead use cg->getExtents() and plot two triangles.
             if (this->zerogrid == true) {
-                for (unsigned int hi = 0; hi < nrect; ++hi) {
+                for (std::uint32_t hi = 0; hi < nrect; ++hi) {
 
                     // z position is always 0
                     datum = 0.0f;

@@ -3,6 +3,7 @@
  */
 module;
 
+#include <cstdint>
 #include <array>
 #include <deque>
 #include <string>
@@ -21,7 +22,7 @@ import mplot.graphvisual;
 
 export namespace mplot
 {
-    template <typename F, int glver = mplot::gl::version_4_1>
+    template <typename F, std::int32_t glver = mplot::gl::version_4_1>
     struct PolarVisual : public VisualDataModel<F, glver>
     {
         using mc = sm::mathconst<F>;
@@ -82,7 +83,7 @@ export namespace mplot
 
             if (this->label_angles.empty()) {
                 this->label_angles.resize (this->labels.size());
-                for (unsigned int i = 0; i < this->labels.size(); ++i) {
+                for (std::uint32_t i = 0; i < this->labels.size(); ++i) {
                     this->label_angles[i] = i * (mc::two_pi / this->labels.size());
                     // Rescale any that exceed 2pi:
                     this->label_angles[i] = this->label_angles[i] < F{0} ? this->label_angles[i] + mc::two_pi : this->label_angles[i];
@@ -90,7 +91,7 @@ export namespace mplot
                 }
             }
 
-            for (unsigned int i = 0; i < this->label_angles.size(); ++i) {
+            for (std::uint32_t i = 0; i < this->label_angles.size(); ++i) {
                 std::string s = this->labels[i];
                 auto lbl = this->makeVisualTextModel (this->tf);
                 mplot::TextGeometry geom = lbl->getTextGeometry (s);
@@ -118,12 +119,12 @@ export namespace mplot
             }
 
             // Note: Going from out to in, rather than in to out
-            for (int ring = this->numrings - 1; ring > 0; ring--) {
+            for (std::int32_t ring = this->numrings - 1; ring > 0; ring--) {
 
                 float r_out = this->radius * static_cast<float>(ring)/(this->numrings-1);
                 float r_in = this->radius * static_cast<float>(ring-1)/(this->numrings-1);
 
-                for (int j = 0; j < static_cast<int>(this->numsegs); j++) {
+                for (std::int32_t j = 0; j < static_cast<std::int32_t>(this->numsegs); j++) {
 
                     std::array<float, 3> clr = this->setColour ((ring - 1) * this->numsegs + j);
 
@@ -147,8 +148,8 @@ export namespace mplot
                     this->vertex_push (clr, this->vertexColors);
                 }
                 // Added 2*segments vertices to vertexPositions
-                for (int j = 0; j < static_cast<int>(this->numsegs); j++) {
-                    int jn = (numsegs + ((j + 1) % numsegs)) % numsegs;
+                for (std::int32_t j = 0; j < static_cast<std::int32_t>(this->numsegs); j++) {
+                    std::int32_t jn = (numsegs + ((j + 1) % numsegs)) % numsegs;
 
                     this->indices.push_back (this->idx + (2 * j));
                     this->indices.push_back (this->idx + (2 * jn));
@@ -184,10 +185,10 @@ export namespace mplot
         //! Additional gap to x axis tick labels for user to set
         float ticklabelgap = 0.0f;
         //! The number of segments to make in each ring of the colourmap fill. Depends on your data.
-        unsigned int numsegs = 128;
+        std::uint32_t numsegs = 128;
         //! How many rings of colour? Depends on your data. This is really 'the number of rings
         //! you'll see + 1'. It's related to the number of rings of data you have.
-        unsigned int numrings = 64;
+        std::uint32_t numrings = 64;
     protected:
         float autolabelgap = 0.0f;
         //! tick label height

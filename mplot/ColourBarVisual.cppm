@@ -44,7 +44,7 @@ export namespace mplot
         left_or_above_ticksboth
     };
 
-    template <typename F, int glver = mplot::gl::version_4_1>
+    template <typename F, std::int32_t glver = mplot::gl::version_4_1>
     class ColourBarVisual : public VisualModel<glver>
     {
     public:
@@ -185,7 +185,7 @@ export namespace mplot
             if (this->tickside == colourbar_tickside::left_or_above || this->tickside == colourbar_tickside::left_or_above_ticksboth) {
                 if (this->orientation == colourbar_orientation::horizontal) {
                     // Labels above
-                    for (unsigned int i = 0; i < this->tick_posns.size(); ++i) {
+                    for (std::uint32_t i = 0; i < this->tick_posns.size(); ++i) {
                         std::string s = mplot::graphing::number_format (this->ticks[i], this->ticks[i==0 ? 1 : i-1]);
                         auto lbl = this->makeVisualTextModel (this->tf);
                         mplot::TextGeometry geom = lbl->getTextGeometry (s);
@@ -201,7 +201,7 @@ export namespace mplot
                     }
                 } else {
                     // Labels left
-                    for (unsigned int i = 0; i < this->tick_posns.size(); ++i) {
+                    for (std::uint32_t i = 0; i < this->tick_posns.size(); ++i) {
                         std::string s = mplot::graphing::number_format (this->ticks[i], this->ticks[i==0 ? 1 : i-1]);
                         auto lbl = this->makeVisualTextModel (this->tf);
                         mplot::TextGeometry geom = lbl->getTextGeometry (s);
@@ -220,7 +220,7 @@ export namespace mplot
             } else if (this->tickside == colourbar_tickside::right_or_below || this->tickside == colourbar_tickside::right_or_below_ticksboth) {
                 if (this->orientation == colourbar_orientation::horizontal) {
                     // Labels below
-                    for (unsigned int i = 0; i < this->tick_posns.size(); ++i) {
+                    for (std::uint32_t i = 0; i < this->tick_posns.size(); ++i) {
                         std::string s = mplot::graphing::number_format (this->ticks[i], this->ticks[i==0 ? 1 : i-1]);
                         auto lbl = this->makeVisualTextModel (this->tf);
                         mplot::TextGeometry geom = lbl->getTextGeometry (s);
@@ -236,7 +236,7 @@ export namespace mplot
                     }
                 } else {
                     // Labels right
-                    for (unsigned int i = 0; i < this->tick_posns.size(); ++i) {
+                    for (std::uint32_t i = 0; i < this->tick_posns.size(); ++i) {
                         std::string s = mplot::graphing::number_format (this->ticks[i], this->ticks[i==0 ? 1 : i-1]);
                         auto lbl = this->makeVisualTextModel (this->tf);
                         mplot::TextGeometry geom = lbl->getTextGeometry (s);
@@ -320,7 +320,7 @@ export namespace mplot
             sm::vec<float> c3;
             sm::vec<float> c4;
             if (this->orientation == colourbar_orientation::horizontal) {
-                for (unsigned int seg = 0; seg < this->numsegs; ++seg) {
+                for (std::uint32_t seg = 0; seg < this->numsegs; ++seg) {
                     segstart = seg * seglen;
                     segend = segstart + seglen;
                     c1 = { segstart,           0, this->z };
@@ -331,7 +331,7 @@ export namespace mplot
                     colourval += 1.0f/this->numsegs;
                 }
             } else { // vertical
-                for (unsigned int seg = 0; seg < this->numsegs; ++seg) {
+                for (std::uint32_t seg = 0; seg < this->numsegs; ++seg) {
                     segstart = seg * seglen;
                     segend = segstart + seglen;
                     c1 = { 0,           segstart, this->z };
@@ -388,7 +388,7 @@ export namespace mplot
         //! The axis label
         std::string label = "";
         //! The number of segments to make in the colourmap
-        unsigned int numsegs = 256;
+        std::uint32_t numsegs = 256;
     protected:
         //! tick label height
         float ticklabelheight = 0.0f;

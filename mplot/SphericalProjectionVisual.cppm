@@ -21,7 +21,7 @@ export namespace mplot
 {
     //! This class creates a flat projection of spherical data provided as vvecs of
     //! latitude-longitude pairs and scalar or vector values. Use VisualDataModel?
-    template<typename T, int glver = mplot::gl::version_4_1> requires std::is_floating_point_v<T>
+    template<typename T, std::int32_t glver = mplot::gl::version_4_1> requires std::is_floating_point_v<T>
     struct SphericalProjectionVisual : public mplot::VisualModel<glver>
     {
         SphericalProjectionVisual() {}
@@ -51,7 +51,7 @@ export namespace mplot
             this->vertexColors.clear();
             this->indices.clear();
             this->xy.resize (this->latlong.size());
-            for (uint32_t i = 0; i < this->latlong.size(); ++i) {
+            for (std::uint32_t i = 0; i < this->latlong.size(); ++i) {
                 this->xy[i] = this->project (this->latlong[i], this->radius).plus_one_dim().template as<double>();
             }
             this->voronoi2d();
@@ -70,7 +70,7 @@ export namespace mplot
             this->vertex_push (c2.as_float(), this->vertexPositions);
             this->vertex_push (c3.as_float(), this->vertexPositions);
             // Colours/normals
-            for (uint32_t i = 0; i < 3U; ++i) {
+            for (std::uint32_t i = 0; i < 3U; ++i) {
                 this->vertex_push (colr, this->vertexColors);
                 this->vertex_push (v.as_float(), this->vertexNormals);
             }
@@ -83,13 +83,13 @@ export namespace mplot
         {
             // Find the extents of dataCoords. From these create a rectangle to pass to
             // diagram_generate.
-            int ncoords = static_cast<int>(this->xy.size());
+            std::int32_t ncoords = static_cast<std::int32_t>(this->xy.size());
 
             jcv::manager<double> vorman; // we need double precision for projections, float may run into trouble
             vorman.border_width = this->border_width;
             vorman.diagram_generate (this->xy);
 
-            int diag_nsites = vorman.diagram_numsites();
+            std::int32_t diag_nsites = vorman.diagram_numsites();
             if (diag_nsites != ncoords) {
                 std::cout << "WARNING: diagram's ncoords (" << diag_nsites << ") != ncoords (" << ncoords << ")?!?!\n";
             }
@@ -97,7 +97,7 @@ export namespace mplot
             // We obtain access to the Voronoi cell sites:
             const jcv::site<double>* sites = vorman.diagram_get_sites();
 
-            for (int i = 0; i < vorman.diagram_numsites() && i < ncoords; ++i) {
+            for (std::int32_t i = 0; i < vorman.diagram_numsites() && i < ncoords; ++i) {
                 const jcv::site<double>* site = &sites[i];
                 jcv::graphedge<double>* e = site->edges; // The very first edge
                 while (e) {
@@ -109,7 +109,7 @@ export namespace mplot
             }
 
             // To draw triangles iterate over the 'sites' and draw triangles
-            for (int i = 0; i < vorman.diagram_numsites() && i < ncoords; ++i) {
+            for (std::int32_t i = 0; i < vorman.diagram_numsites() && i < ncoords; ++i) {
                 const jcv::site<double>* site = &sites[i];
                 const jcv::graphedge<double>* e = site->edges;
                 std::array<float, 3> c = mplot::colour::black;

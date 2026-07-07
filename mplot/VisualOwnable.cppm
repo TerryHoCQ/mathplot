@@ -671,7 +671,7 @@ export namespace mplot
             this->setContext(); // if managing context
 
             if (this->options.test (visual_options::versionStdout) == true) {
-                unsigned char* glv = (unsigned char*)this->glfn->GetString(GL_VERSION);
+                std::uint8_t* glv = (std::uint8_t*)this->glfn->GetString(GL_VERSION);
                 std::cout << "This is version " << mplot::version_string()
                           << " of mplot::Visual<glver=" << mplot::gl::version::vstring (glver)
                           << "> running on OpenGL Version " << glv << std::endl;

@@ -81,7 +81,7 @@ export namespace mplot
     /*!
      * A VisualModel for showing a 2D graph.
      */
-    template <typename Flt, int glver = mplot::gl::version_4_1>
+    template <typename Flt, std::int32_t glver = mplot::gl::version_4_1>
     class GraphVisual : public VisualModel<glver>
     {
     public:
@@ -101,7 +101,7 @@ export namespace mplot
 
         //! Append a single datum onto the relevant graph. Build on existing data in graphData. didx
         //! is the data index and counts up from 0.
-        void append (const Flt& _abscissa, const Flt& _ordinate, const unsigned int didx)
+        void append (const Flt& _abscissa, const Flt& _ordinate, const std::uint32_t didx)
         {
             this->pendingAppended = true;
             // Transform the data into temporary containers sd and ad
@@ -149,14 +149,14 @@ export namespace mplot
                 }
             }
 
-            unsigned int oldsz = this->graphData[didx]->coords.size();
+            std::uint32_t oldsz = this->graphData[didx]->coords.size();
             // Resize +1
             this->graphData[didx]->resize (oldsz + 1);
             // Set new datums
             this->graphData[didx]->absc.at (oldsz) = static_cast<float>(_abscissa);
             this->graphData[didx]->ord.at (oldsz) = static_cast<float>(_ordinate);
             this->graphData[didx]->coords.at (oldsz) = sm::vec<float>{ static_cast<float>(a), static_cast<float>(o), float{0} };
-            int redraw_plot = 0;
+            std::int32_t redraw_plot = 0;
             sm::interval<Flt> xrange = this->datarange_x;
             sm::interval<Flt> yrange = this->datarange_y;
             sm::interval<Flt> y2range = this->datarange_y2;
@@ -240,8 +240,8 @@ export namespace mplot
         //! Clear all the (VisualModel-space) coordinate data for the graph, but leave the containers in place.
         void clear_graph_data()
         {
-            unsigned int dsize = this->graphData.size();
-            for (unsigned int i = 0; i < dsize; ++i) {
+            std::uint32_t dsize = this->graphData.size();
+            for (std::uint32_t i = 0; i < dsize; ++i) {
                 this->graphData[i]->coords.clear();
             }
             this->reinit();
@@ -251,9 +251,9 @@ export namespace mplot
         template <typename Ctnr1, typename Ctnr2>
         std::enable_if_t<sm::is_copyable_container<Ctnr1>::value
                          && sm::is_copyable_container<Ctnr2>::value, void>
-        update (const Ctnr1& _abscissae, const Ctnr2& _data, const unsigned int data_idx)
+        update (const Ctnr1& _abscissae, const Ctnr2& _data, const std::uint32_t data_idx)
         {
-            unsigned int dsize = _data.size();
+            std::uint32_t dsize = _data.size();
 
             if (_abscissae.size() != dsize) {
                 throw std::runtime_error ("GraphVisual::update: size mismatch");
@@ -337,7 +337,7 @@ export namespace mplot
 
             // Now sd and ad can be used to construct dataCoords x/y. They are used to
             // set the position of each datum into dataCoords
-            for (unsigned int i = 0; i < dsize; ++i) {
+            for (std::uint32_t i = 0; i < dsize; ++i) {
                 this->graphData[data_idx]->absc.at(i) = static_cast<float>(_abscissae[i]);
                 this->graphData[data_idx]->ord.at(i) = static_cast<float>(_data[i]);
                 this->graphData[data_idx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
@@ -348,7 +348,7 @@ export namespace mplot
 
                 if (di == data_idx) {
                     // This is the updated data index, set absc, ord, coords
-                    for (unsigned int i = 0; i < dsize; ++i) {
+                    for (std::uint32_t i = 0; i < dsize; ++i) {
                         this->graphData[data_idx]->absc.at(i) = static_cast<float>(_abscissae[i]);
                         this->graphData[data_idx]->ord.at(i) = static_cast<float>(_data[i]);
                         this->graphData[data_idx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
@@ -382,11 +382,11 @@ export namespace mplot
         }
 
         //! update() overload that accepts vvec of coords
-        void update (const sm::vvec<sm::vec<Flt, 2>>& _coords, const unsigned int data_idx)
+        void update (const sm::vvec<sm::vec<Flt, 2>>& _coords, const std::uint32_t data_idx)
         {
             std::vector<Flt> absc (_coords.size(), Flt{0});
             std::vector<Flt> ord (_coords.size(), Flt{0});
-            for (unsigned int i = 0; i < _coords.size(); ++i) {
+            for (std::uint32_t i = 0; i < _coords.size(); ++i) {
                 absc[i] = _coords[i][0];
                 ord[i] = _coords[i][1];
             }
@@ -398,7 +398,7 @@ export namespace mplot
                    typename T,
                    typename Allocator=std::allocator<T> >
         void update (const Container<T, Allocator>& _abscissae,
-                     const Container<T, Allocator>& _data, std::string datalabel, const unsigned int data_idx)
+                     const Container<T, Allocator>& _data, std::string datalabel, const std::uint32_t data_idx)
         {
             if (data_idx >= this->datastyles.size()) {
                 std::cout << "Can't add change data label at graphData index " << data_idx << std::endl;
@@ -507,7 +507,7 @@ export namespace mplot
             DatasetStyle ds(this->policy);
             ds.axisside = axisside;
             if (!name.empty()) { ds.datalabel = name; }
-            unsigned int data_index = static_cast<unsigned int>(this->graphData.size());
+            std::uint32_t data_index = static_cast<std::uint32_t>(this->graphData.size());
             this->setstyle (ds, DatasetStyle::datacolour(data_index), DatasetStyle::datamarkerstyle (data_index));
             this->setdata (_abscissae, _data, ds);
         }
@@ -538,8 +538,8 @@ export namespace mplot
                 this->ds_ord2 = ds;
             }
 
-            uint64_t dsize = _data.size();
-            unsigned int didx = static_cast<unsigned int>(this->graphData.size());
+            std::uint64_t dsize = _data.size();
+            std::uint32_t didx = static_cast<std::uint32_t>(this->graphData.size());
 
             // Allocate memory for the new data coords, add the data style info and the
             // starting index for dataCoords
@@ -567,7 +567,7 @@ export namespace mplot
 
                 // Now sd and ad can be used to construct dataCoords x/y. They are used to
                 // set the position of each datum into dataCoords
-                for (uint64_t i = 0; i < dsize; ++i) {
+                for (std::uint64_t i = 0; i < dsize; ++i) {
                     this->graphData[didx]->absc.at(i) = static_cast<float>(_abscissae[i]);
                     this->graphData[didx]->ord.at(i) = static_cast<float>(_data[i]);
                     this->graphData[didx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
@@ -598,8 +598,8 @@ export namespace mplot
                 this->ds_ord2 = ds;
             }
 
-            uint64_t dsize = _data.size();
-            unsigned int didx = static_cast<unsigned int>(this->graphData.size());
+            std::uint64_t dsize = _data.size();
+            std::uint32_t didx = static_cast<std::uint32_t>(this->graphData.size());
 
             // Allocate memory for the new data coords, add the data style info and the
             // starting index for dataCoords
@@ -629,7 +629,7 @@ export namespace mplot
 
                 // Now sd and ad can be used to construct dataCoords x/y. They are used to
                 // set the position of each datum into dataCoords
-                for (uint64_t i = 0; i < dsize; ++i) {
+                for (std::uint64_t i = 0; i < dsize; ++i) {
                     this->graphData[didx]->absc.at(i) = static_cast<float>(_abscissae[i]);
                     this->graphData[didx]->ord.at(i) = static_cast<float>(_data[i]);
                     this->graphData[didx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
@@ -645,14 +645,14 @@ export namespace mplot
             // Split coords into two vectors then call setdata() overload
             std::vector<Flt> absc (_coords.size(), Flt{0});
             std::vector<Flt> ord (_coords.size(), Flt{0});
-            for (unsigned int i = 0; i < _coords.size(); ++i) {
+            for (std::uint32_t i = 0; i < _coords.size(); ++i) {
                 absc[i] = _coords[i][0];
                 ord[i] = _coords[i][1];
             }
             DatasetStyle ds(this->policy);
             ds.axisside = axisside;
             if (!name.empty()) { ds.datalabel = name; }
-            unsigned int data_index = static_cast<unsigned int>(this->graphData.size());
+            std::uint32_t data_index = static_cast<std::uint32_t>(this->graphData.size());
             this->setstyle (ds, DatasetStyle::datacolour(data_index), DatasetStyle::datamarkerstyle (data_index));
             this->setdata (absc, ord, ds);
         }
@@ -722,7 +722,7 @@ export namespace mplot
                 this->ord2_scale.transform (_data, sd);
             }
 
-            for (unsigned int i = 0; i < dsize; ++i) {
+            for (std::uint32_t i = 0; i < dsize; ++i) {
                 this->graphData[didx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
             }
 
@@ -748,7 +748,7 @@ export namespace mplot
 
 
         //! setdata overload that plots quivers on a grid, scaling the grid's coordinates suitably?
-        void setdata (const sm::grid<unsigned int, Flt>& g, const sm::vvec<sm::vec<Flt, 2>>& _quivs,
+        void setdata (const sm::grid<std::uint32_t, Flt>& g, const sm::vvec<sm::vec<Flt, 2>>& _quivs,
                       const DatasetStyle& ds)
         {
             if constexpr (debug_setdata) { std::cout << "setdata (sm::grid, vvec<vec<>> quivs, DatasetStyle) called\n"; }
@@ -770,7 +770,7 @@ export namespace mplot
 
             // Copy _quivs
             this->quivers.resize (_quivs.size(), { Flt{0}, Flt{0}, Flt{0} });
-            for (unsigned int i = 0; i < _quivs.size(); ++i) {
+            for (std::uint32_t i = 0; i < _quivs.size(); ++i) {
                 this->quivers[i][0] = _quivs[i][0];
                 this->quivers[i][1] = _quivs[i][1];
             }
@@ -791,8 +791,8 @@ export namespace mplot
                 this->ds_ord2 = ds;
             }
 
-            unsigned int dsize = _quivs.size();
-            unsigned int didx = this->graphData.size();
+            std::uint32_t dsize = _quivs.size();
+            std::uint32_t didx = this->graphData.size();
             this->graphData.push_back (std::make_unique<GraphData<float>>(dsize));
             this->datastyles.push_back (ds);
 
@@ -810,7 +810,7 @@ export namespace mplot
                 // Extract x coordinates and y coordinates from grid
                 sm::vvec<Flt> g_v_x (g.n(), Flt{0});
                 sm::vvec<Flt> g_v_y (g.n(), Flt{0});
-                for (unsigned int i = 0; i < g.n(); i++) {
+                for (std::uint32_t i = 0; i < g.n(); i++) {
                     g_v_x[i] = g.v_c[i][0];
                     g_v_y[i] = g.v_c[i][1];
                 }
@@ -828,7 +828,7 @@ export namespace mplot
 
                 // Now sd and ad can be used to construct dataCoords x/y. They are used to
                 // set the position of each datum into dataCoords
-                for (unsigned int i = 0; i < dsize; ++i) {
+                for (std::uint32_t i = 0; i < dsize; ++i) {
                     // No need to set graphData[didx]->absc/ord for a Quiver plot
                     this->graphData[didx]->coords.at(i) = sm::vec<float>{ static_cast<float>(ad[i]), static_cast<float>(sd[i]), float{0} };
                 }
@@ -853,7 +853,7 @@ export namespace mplot
             // Split coords into two vectors then call setdata() overload
             std::vector<Flt> absc (_coords.size(), Flt{0});
             std::vector<Flt> ord (_coords.size(), Flt{0});
-            for (unsigned int i = 0; i < _coords.size(); ++i) {
+            for (std::uint32_t i = 0; i < _coords.size(); ++i) {
                 absc[i] = _coords[i][0];
                 ord[i] = _coords[i][1];
             }
@@ -868,7 +868,7 @@ export namespace mplot
             // Split coords into two vectors then call setdata() overload
             std::vector<Flt> absc (_coords.size(), Flt{0});
             std::vector<Flt> ord (_coords.size(), Flt{0});
-            for (unsigned int i = 0; i < _coords.size(); ++i) {
+            for (std::uint32_t i = 0; i < _coords.size(); ++i) {
                 absc[i] = _coords[i][0];
                 ord[i] = _coords[i][1];
             }
@@ -889,7 +889,7 @@ export namespace mplot
             // User may wish to change these by calling the setdata (const histo&, DatasetStyle&) overload
             ds.showlines = true;
             ds.linewidth = ds.markersize / 10.0f;
-            unsigned int data_index = this->graphData.size();
+            std::uint32_t data_index = this->graphData.size();
             ds.markercolour = DatasetStyle::datacolour(data_index);
             ds.linecolour = mplot::colour::black;
 
@@ -1014,7 +1014,7 @@ export namespace mplot
             for (const float crs : crossings) {
                 // bool up = crs > float{0} ? true : false; // Don't care here, but could
                 float crs_abs = std::abs (crs);
-                int crs_i = static_cast<int>(crs_abs);
+                std::int32_t crs_i = static_cast<std::int32_t>(crs_abs);
                 if (crs_abs - static_cast<float>(crs_i) > 0.25f) {
                     // intermediate. Interpolate
                     sm::scale<Flt> interp;
@@ -1092,7 +1092,7 @@ export namespace mplot
             for (const float crs : crossings) {
                 // bool up = crs > float{0} ? true : false; // Don't care here, but could
                 float crs_abs = std::abs (crs);
-                int crs_i = static_cast<int>(crs_abs);
+                std::int32_t crs_i = static_cast<std::int32_t>(crs_abs);
                 if (crs_abs - static_cast<float>(crs_i) > 0.25f) {
                     // intermediate. Interpolate
                     sm::scale<Flt> interp;
@@ -1376,7 +1376,7 @@ export namespace mplot
 
         //! Stores the length of each entry in graphData - i.e how many data
         //! points are in each graph curve. FIXME may not need to be here.
-        std::vector<unsigned int> coords_lengths;
+        std::vector<std::uint32_t> coords_lengths;
 
         //! Is there pending appended data that needs to be converted into OpenGL shapes?
         bool pendingAppended = false;
@@ -1411,14 +1411,14 @@ export namespace mplot
         bool within_axes_y (sm::vec<float>& dpt) { return (dpt[1] >= 0 && dpt[1] <= this->height); }
 
         //! dsi: data set iterator
-        void drawDataCommon (unsigned int dsi, unsigned int coords_start, unsigned int coords_end, bool appending = false)
+        void drawDataCommon (std::uint32_t dsi, std::uint32_t coords_start, std::uint32_t coords_end, bool appending = false)
         {
             // Draw data markers
             if (this->datastyles[dsi].markerstyle != markerstyle::none) {
 
                 if (this->datastyles[dsi].markerstyle == markerstyle::bar) { // Data markers are bars
 
-                    for (unsigned int i = coords_start; i < coords_end; ++i) {
+                    for (std::uint32_t i = coords_start; i < coords_end; ++i) {
                         this->bar (this->graphData[dsi]->coords[i], this->datastyles[dsi]);
                     }
 
@@ -1435,7 +1435,7 @@ export namespace mplot
                         throw std::runtime_error ("GraphVisual::drawDataCommon: coords_end is off the end of quivers");
                     }
                     std::array<float, 3> clr = this->datastyles[dsi].linecolour;
-                    for (unsigned int i = coords_start; i < coords_end; ++i) {
+                    for (std::uint32_t i = coords_start; i < coords_end; ++i) {
                         if (this->within_axes (this->graphData[dsi]->coords[i])) {
                             if (this->datastyles[dsi].quiver_flagset.test (mplot::quiver_flags::colour_fixed) == false) {
                                 clr = this->datastyles[dsi].colourmap.convert (this->graphData[dsi]->scalars[i]);
@@ -1446,7 +1446,7 @@ export namespace mplot
 
                 } else { // Regular data markers
 
-                    for (unsigned int i = coords_start; i < coords_end; ++i) {
+                    for (std::uint32_t i = coords_start; i < coords_end; ++i) {
                         if (this->within_axes (this->graphData[dsi]->coords[i])) {
                             if (this->graphData[dsi]->scalars.empty()) {
                                 this->marker (this->graphData[dsi]->coords[i], this->datastyles[dsi]);
@@ -1464,7 +1464,7 @@ export namespace mplot
                 // If appending markers to a dataset, need to add the line preceding the first marker
                 if (appending == true) { if (coords_start != 0) { coords_start -= 1; } }
 
-                for (unsigned int i = coords_start+1; i < coords_end; ++i) {
+                for (std::uint32_t i = coords_start+1; i < coords_end; ++i) {
                     // Draw tube from location -1 to location 0.
                     if (this->draw_beyond_axes == true
                         || (this->within_axes (this->graphData[dsi]->coords[i-1])
@@ -1534,10 +1534,10 @@ export namespace mplot
         //! Draw markers and lines for data points that are being appended to a graph
         void drawAppendedData()
         {
-            for (unsigned int dsi = 0; dsi < this->graphData.size(); ++dsi) {
+            for (std::uint32_t dsi = 0; dsi < this->graphData.size(); ++dsi) {
                 // Start is old end:
-                unsigned int coords_start = this->coords_lengths[dsi];
-                unsigned int coords_end = static_cast<unsigned int>(this->graphData[dsi]->coords.size());
+                std::uint32_t coords_start = this->coords_lengths[dsi];
+                std::uint32_t coords_end = static_cast<std::uint32_t>(this->graphData[dsi]->coords.size());
                 this->coords_lengths[dsi] = coords_end;
                 this->drawDataCommon (dsi, coords_start, coords_end, appending_data);
             }
@@ -1546,10 +1546,10 @@ export namespace mplot
         //! Draw all markers and lines for datasets in the graph (as stored in graphDataCoords)
         void drawData()
         {
-            unsigned int coords_start = 0;
+            std::uint32_t coords_start = 0;
             this->coords_lengths.resize (this->graphData.size());
-            for (unsigned int dsi = 0; dsi < static_cast<unsigned int>(this->graphData.size()); ++dsi) {
-                unsigned int coords_end = this->graphData[dsi]->coords.size();
+            for (std::uint32_t dsi = 0; dsi < static_cast<std::uint32_t>(this->graphData.size()); ++dsi) {
+                std::uint32_t coords_end = this->graphData[dsi]->coords.size();
                 // Record coords length for future appending:
                 this->coords_lengths[dsi] = coords_end;
                 this->drawDataCommon (dsi, coords_start, coords_end);
@@ -1559,7 +1559,7 @@ export namespace mplot
         //! Draw the graph legend, above the graph, rather than inside it (so much simpler!)
         void drawLegend()
         {
-            unsigned int num_legends_max = static_cast<unsigned int>(this->graphData.size());
+            std::uint32_t num_legends_max = static_cast<std::uint32_t>(this->graphData.size());
 
             // Text offset from marker to text
             sm::vec<float> toffset = {this->fontsize, 0.0f, 0.0f};
@@ -1567,14 +1567,14 @@ export namespace mplot
             // To determine the legend layout, will need all the text geometries
             std::vector<mplot::TextGeometry> geom;
 
-            std::map<unsigned int, std::unique_ptr<mplot::VisualTextModel<glver>>> legtexts;
+            std::map<std::uint32_t, std::unique_ptr<mplot::VisualTextModel<glver>>> legtexts;
 
-            sm::vvec<unsigned int> ds_indices; // dataset indices.
+            sm::vvec<std::uint32_t> ds_indices; // dataset indices.
 
             float text_advance = 0.0f;
-            int num_legends = 0;
+            std::int32_t num_legends = 0;
             mplot::TextFeatures tf(this->fontsize, this->fontres, false, mplot::colour::black, this->font);
-            for (unsigned int dsi = 0; dsi < num_legends_max; ++dsi) {
+            for (std::uint32_t dsi = 0; dsi < num_legends_max; ++dsi) {
                 // If no label, then draw no legend. Thus the effective num_legends may be smaller
                 // than num_legends_max.
                 if (this->datastyles[dsi].datalabel.empty()) { continue; }
@@ -1602,10 +1602,10 @@ export namespace mplot
             // text_advance, some space and the size of the marker
             float col_advance = 2 * toffset[0] + text_advance;
             if (!datastyles.empty()) { col_advance += this->datastyles[0].markersize; }
-            int max_cols = static_cast<int>((1.0f - this->dataaxisdist) / col_advance);
+            std::int32_t max_cols = static_cast<std::int32_t>((1.0f - this->dataaxisdist) / col_advance);
             if (max_cols < 1) { max_cols = 1; }
-            int num_cols = num_legends <= max_cols ? num_legends : max_cols;
-            int num_rows = num_legends;
+            std::int32_t num_cols = num_legends <= max_cols ? num_legends : max_cols;
+            std::int32_t num_rows = num_legends;
             if (num_cols != 0) {
                 num_rows = (num_legends / num_cols);
                 num_rows += num_legends % num_cols ? 1 : 0;
@@ -1613,13 +1613,13 @@ export namespace mplot
 
             // Label position
             sm::vec<float> lpos = {this->dataaxisdist, 0.0f, 0.0f};
-            int cur_entry = 0;
+            std::int32_t cur_entry = 0;
             for (auto _dsi : ds_indices) {
-                int dsi = static_cast<int>(_dsi);
+                std::int32_t dsi = static_cast<std::int32_t>(_dsi);
                 // Compute the row and column for this legend entry
                 if (num_cols == 0) { throw std::runtime_error ("GraphVisual::drawLegend: Why is num_cols 0?"); }
-                int col = cur_entry % num_cols;
-                int row = (num_rows-1) - (cur_entry / num_cols);
+                std::int32_t col = cur_entry % num_cols;
+                std::int32_t row = (num_rows-1) - (cur_entry / num_cols);
                 ++cur_entry;
 
                 lpos[0] = this->dataaxisdist + (static_cast<float>(col) * col_advance);
@@ -1761,7 +1761,7 @@ export namespace mplot
                     // Create a temporary VisualTextModel to find the length of all the tick text
                     auto lbl = this->makeVisualTextModel (tf);
                     // Find longest string (more or less)
-                    for (unsigned int i = 0; i < this->xtick_posns.size(); ++i) {
+                    for (std::uint32_t i = 0; i < this->xtick_posns.size(); ++i) {
                         std::string s = mplot::graphing::number_format (this->xticks[i], this->xticks[i==0 ? 1 : i-1]);
                         mplot::TextGeometry geom = lbl->getTextGeometry (s);
                         max_label_length = geom.width() > max_label_length ? geom.width() : max_label_length;
@@ -1773,7 +1773,7 @@ export namespace mplot
                     x_font_factor = (xtick_spacing * max_label_prop) / max_label_length;
                 }
 
-                for (unsigned int i = 0; i < this->xtick_posns.size(); ++i) {
+                for (std::uint32_t i = 0; i < this->xtick_posns.size(); ++i) {
 
                     // Omit the 0 for 'cross' axes (or maybe shift its position)
                     if (this->axisstyle == axisstyle::cross && this->xticks[i] == 0) { continue; }
@@ -1792,7 +1792,7 @@ export namespace mplot
                 }
             }
             if (!this->omit_y_tick_labels) {
-                for (unsigned int i = 0; i < this->ytick_posns.size(); ++i) {
+                for (std::uint32_t i = 0; i < this->ytick_posns.size(); ++i) {
 
                     // Omit the 0 for 'cross' axes (or maybe shift its position)
                     if (this->axisstyle == axisstyle::cross && this->yticks[i] == 0) { continue; }
@@ -1813,7 +1813,7 @@ export namespace mplot
             if ((this->axisstyle == axisstyle::twinax || !this->ytick_posns2.empty()) && !this->omit_y_tick_labels) {
                 x_for_yticks = this->width;
                 this->ytick_label_width2 = 0.0f;
-                for (unsigned int i = 0; i < this->ytick_posns2.size(); ++i) {
+                for (std::uint32_t i = 0; i < this->ytick_posns2.size(); ++i) {
                     std::string s = mplot::graphing::number_format (this->yticks2[i], this->yticks2[i==0 ? 1 : i-1]);
                     auto lbl = this->makeVisualTextModel (tf);
                     mplot::TextGeometry geom = lbl->getTextGeometry (s);
@@ -1984,7 +1984,7 @@ export namespace mplot
                 float quiv_thick = style.quiver_flagset.test(mplot::quiver_flags::thickness_fixed)
                 ? style.linewidth * style.quiver_thickness_gain : quiv.length() * 0.1f * style.quiver_thickness_gain;
 
-                constexpr int shapesides = 12;
+                constexpr std::int32_t shapesides = 12;
 
                 this->computeArrow (start, end, clr, quiv_thick, style.quiver_arrowhead_prop, quiv_thick * style.quiver_conewidth, shapesides);
 
@@ -2143,7 +2143,7 @@ export namespace mplot
         }
 
         // Create an n sided polygon with first vertex 'pointing up'
-        void polygonMarker (sm::vec<float> p, int n, const mplot::DatasetStyle& style)
+        void polygonMarker (sm::vec<float> p, std::int32_t n, const mplot::DatasetStyle& style)
         {
             p[2] += this->thickness;
             this->computeFlatPoly (p, sm::vec<>::ux(), sm::vec<>::uy(),
@@ -2152,7 +2152,7 @@ export namespace mplot
         }
 
         // Create an n sided polygon with a flat edge 'pointing up'
-        void polygonFlattop (sm::vec<float> p, int n, const mplot::DatasetStyle& style)
+        void polygonFlattop (sm::vec<float> p, std::int32_t n, const mplot::DatasetStyle& style)
         {
             p[2] += this->thickness;
             this->computeFlatPoly (p, sm::vec<>::ux(), sm::vec<>::uy(),
@@ -2343,7 +2343,7 @@ export namespace mplot
         //! Font resolution - determines how textures for glyphs are generated. If your
         //! labels will be small, this should be smaller. If labels are large, then it
         //! should be increased.
-        int fontres = 24;
+        std::int32_t fontres = 24;
         //! The font size is the width of an m in the chosen font, in model units
         float fontsize = 0.05f;
         //! A separate fontsize for the axis labels, incase these should be different from the tick labels

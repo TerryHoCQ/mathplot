@@ -1,8 +1,8 @@
 module;
 
+#include <cstdint>
 #include <array>
 #include <string>
-#include <cstdlib>
 
 export module mplot.boolvisual;
 
@@ -12,7 +12,7 @@ import mplot.visualmodel;
 export namespace mplot
 {
     //! This class creates the vertices for a square boolean true/false indicator. The indicator has a tubular border
-    template<int glver = mplot::gl::version_4_1>
+    template<std::int32_t glver = mplot::gl::version_4_1>
     class BoolVisual : public VisualModel<glver>
     {
     public:
@@ -93,7 +93,7 @@ export namespace mplot
         {
             // Change colour of just the rectangle
             auto c = this->value ? this->tcol : this->fcol;
-            for (std::size_t i = 0u; i < 4u; ++i) {
+            for (std::uint32_t i = 0u; i < 4u; ++i) {
                 this->vertexColors[3 * i] = c[0];
                 this->vertexColors[3 * i + 1] = c[1];
                 this->vertexColors[3 * i + 2] = c[2];

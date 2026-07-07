@@ -21,13 +21,13 @@ export namespace mplot
      *
      * \tparam T the type of the *data* which this CurvyTellyVisual will visualize.
      *
-     * \tparam I The type for the grid indexing (defaults to unsigned int)
+     * \tparam I The type for the grid indexing (defaults to std::uint32_t)
      *
      * \tparam C The type for the grid coordinates (default float, must be a signed type)
      *
      * \tparam glver The OpenGL version in use in your program
      */
-    template <typename T, typename I = unsigned int, typename C = float, int glver = mplot::gl::version_4_1>
+    template <typename T, typename I = std::uint32_t, typename C = float, std::int32_t glver = mplot::gl::version_4_1>
     struct CurvyTellyVisual : public mplot::GridVisual<T, I, C, glver>
     {
         // The radius of the curved surface representing the grid
@@ -57,7 +57,7 @@ export namespace mplot
             float hx = 0.5f * dx[0];
             float vy = 0.5f * dx[1];
 
-            unsigned int nrect = this->grid->n();
+            std::uint32_t nrect = this->grid->n();
             this->idx = 0;
 
             if (this->scalarData != nullptr) {
@@ -70,7 +70,7 @@ export namespace mplot
                 this->dcolour.resize (this->vectorData->size());
                 this->dcolour2.resize (this->vectorData->size());
                 this->dcolour3.resize (this->vectorData->size());
-                for (unsigned int i = 0; i < this->vectorData->size(); ++i) {
+                for (std::uint32_t i = 0; i < this->vectorData->size(); ++i) {
                     this->dcolour[i] = (*this->vectorData)[i][0];
                     this->dcolour2[i] = (*this->vectorData)[i][1];
                     // Could also extract a third colour for Trichrome vs Duochrome (or for raw RGB signal)
@@ -91,8 +91,8 @@ export namespace mplot
             float angle_per_distance = this->angle_to_subtend / (dx[0]+this->grid->width());
 
             sm::vec<float> centroid = { 0.0f, 0.0f, 0.0f };
-            unsigned long long int c_count = 0;
-            for (unsigned int ri = 0; ri < nrect; ++ri) {
+            std::uint64_t c_count = 0;
+            for (std::uint32_t ri = 0; ri < nrect; ++ri) {
 
                 bool T_border = false;
                 bool B_border = false;
@@ -238,7 +238,7 @@ export namespace mplot
             }
             centroid /= c_count;
             // Loop through and alter vertices
-            for (unsigned int vi = 0; vi < this->vertexPositions.size()/3; ++vi) {
+            for (std::uint32_t vi = 0; vi < this->vertexPositions.size()/3; ++vi) {
                 this->vertexPositions[vi * 3]     -= centroid[0];
                 this->vertexPositions[vi * 3 + 1] -= centroid[1];
                 this->vertexPositions[vi * 3 + 2] -= centroid[2];

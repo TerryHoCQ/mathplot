@@ -21,7 +21,7 @@ import mplot.textgeometry;
 
 export namespace mplot
 {
-    template<int glver = mplot::gl::version_4_1>
+    template<std::int32_t glver = mplot::gl::version_4_1>
     class ConfigVisual : public VisualModel<glver>
     {
     public:

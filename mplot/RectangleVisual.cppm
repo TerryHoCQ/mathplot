@@ -1,5 +1,6 @@
 module;
 
+#include <cstdint>
 #include <array>
 
 export module mplot.rectanglevisual;
@@ -12,7 +13,7 @@ import mplot.visualmodel;
 export namespace mplot
 {
     //! This class creates the vertices for a simple flat rectangle in a 3D scene.
-    template<int glver = mplot::gl::version_4_1>
+    template<std::int32_t glver = mplot::gl::version_4_1>
     class RectangleVisual : public VisualModel<glver>
     {
     public:

@@ -21,7 +21,7 @@ export namespace mplot
 {
     //! VisualDataModel implementation base class containing common functionality - all the
     //! sm::scale objects and methods.
-    template <typename T, int glver>
+    template <typename T, std::int32_t glver>
     struct VisualDataModel_impl_base : public VisualModel<glver>
     {
         VisualDataModel_impl_base() : mplot::VisualModel<glver>::VisualModel() {}
@@ -135,11 +135,11 @@ export namespace mplot
 
         //! The length of the data structure that will be visualized. May be length of
         //! this->scalarData or of this->vectorData.
-        unsigned int datasize = 0;
+        std::uint32_t datasize = 0;
     };
 
     //! VisualDataModel implementation that deals with std::vector pointers to scalar/vector data
-    template <std::int32_t ctype = 0, typename T = float, int glver = mplot::gl::version_4_1>
+    template <std::int32_t ctype = 0, typename T = float, std::int32_t glver = mplot::gl::version_4_1>
     struct VisualDataModel_impl : public VisualDataModel_impl_base<T, glver>
     {
         void setScalarData (const std::vector<T>* _data) { this->scalarData = _data; }
@@ -242,7 +242,7 @@ export namespace mplot
                 this->dcolour2.resize (this->datasize);
                 this->dcolour3.resize (this->datasize);
                 sm::vvec<float> veclens(this->dcopy);
-                for (unsigned int i = 0; i < this->datasize; ++i) {
+                for (std::uint32_t i = 0; i < this->datasize; ++i) {
                     veclens[i] = (*this->vectorData)[i].length();
                     this->dcolour[i] = (*this->vectorData)[i][0];
                     this->dcolour2[i] = (*this->vectorData)[i][1];
@@ -286,7 +286,7 @@ export namespace mplot
 #if 0 // We could add another implementation here, in which the data are provided as std::span
 
     //! VisualDataModel implementation that deals with std::spans to scalar/vector data
-    template<typename T, int glver>
+    template<typename T, std::int32_t glver>
     struct VisualDataModel_impl<1, T, glver> : public VisualDataModel_impl_base<T, glver>
     {
         // span functions
@@ -308,7 +308,7 @@ export namespace mplot
      * necessary to use VisualDataModel as your base class; you can derive directly from VisualModel
      * (for an example see InstancedScatterVisual)
      */
-    template <typename T, int glver = mplot::gl::version_4_1>
+    template <typename T, std::int32_t glver = mplot::gl::version_4_1>
     struct VisualDataModel : public VisualDataModel_impl<0, T, glver> {};
 
 } // namespace mplot

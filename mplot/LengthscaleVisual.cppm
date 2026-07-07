@@ -3,6 +3,7 @@
  */
 module;
 
+#include <cstdint>
 #include <array>
 #include <string>
 #include <utility>
@@ -18,7 +19,7 @@ import sm.quaternion;
 export namespace mplot
 {
     //! A length scale marker
-    template<int glver = mplot::gl::version_4_1>
+    template<std::int32_t glver = mplot::gl::version_4_1>
     class LengthscaleVisual : public VisualModel<glver>
     {
     public:

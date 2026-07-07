@@ -1,5 +1,6 @@
 module;
 
+#include <cstdint>
 #include <array>
 
 export module mplot.polygonvisual;
@@ -10,7 +11,7 @@ import mplot.visualmodel;
 export namespace mplot
 {
     //! This class creates the vertices for a polygonal object in a 3D scene
-    template<int glver = mplot::gl::version_4_1>
+    template<std::int32_t glver = mplot::gl::version_4_1>
     class PolygonVisual : public VisualModel<glver>
     {
     public:
@@ -19,7 +20,7 @@ export namespace mplot
         PolygonVisual(const sm::vec<float, 3> _offset,
                       const sm::vec<float, 3> _position, const sm::vec<float, 3> _vertex,
                       const float _radius, const float _thickness,
-                      const std::array<float, 3> _col, const int _n)
+                      const std::array<float, 3> _col, const std::int32_t _n)
         {
             this->init (_offset, _position, _vertex, _radius, _thickness, _col, _n);
         }
@@ -27,7 +28,7 @@ export namespace mplot
         void init (const sm::vec<float, 3> _offset,
                    const sm::vec<float, 3> _position, const sm::vec<float, 3> _vertex,
                    const float _radius, const float _thickness,
-                   const std::array<float, 3> _col, const int _n)
+                   const std::array<float, 3> _col, const std::int32_t _n)
         {
             this->viewmatrix.translate (_offset);
             this->position = _position;
@@ -67,7 +68,7 @@ export namespace mplot
         //! The thickness of the polygonal puck
         float thickness = 0.01f;
         //! Number of segments in this polygon
-        int n = 4;
+        std::int32_t n = 4;
 
         // Some axes
         sm::vec<float> _ux = sm::vec<>::ux();

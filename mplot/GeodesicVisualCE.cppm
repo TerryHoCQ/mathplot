@@ -1,5 +1,6 @@
 module;
 
+#include <cstdint>
 #include <array>
 
 export module mplot.geodesicvisualce;
@@ -19,7 +20,7 @@ export namespace mplot
      * \tparam glver The usual OpenGL version code; match this to everything else in
      * your program.
      */
-    template<typename T, int iterations, int glver = mplot::gl::version_4_1>
+    template<typename T, std::int32_t iterations, std::int32_t glver = mplot::gl::version_4_1>
     class GeodesicVisualCE : public VisualModel<glver>
     {
     public:

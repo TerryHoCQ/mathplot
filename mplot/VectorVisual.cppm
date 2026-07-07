@@ -4,6 +4,7 @@ module;
  * \file Declares VectorVisual to visualize a vector.
  */
 
+#include <cstdint>
 #include <array>
 
 export module mplot.vectorvisual;
@@ -25,7 +26,7 @@ export namespace mplot
     };
 
     //! A class to visualize a single vector
-    template <typename Flt, int ndim, int glver = mplot::gl::version_4_1>
+    template <typename Flt, std::int32_t ndim, std::int32_t glver = mplot::gl::version_4_1>
     class VectorVisual : public VisualModel<glver>
     {
         static_assert (ndim > 0 && ndim <= 3, "1, 2 or 3 dimensions please.");
@@ -89,7 +90,7 @@ export namespace mplot
         // How many sides to an arrow/cone/sphere? Increase for smoother arrow
         // objects. Decrease to ease the load on your CPU and GPU. 12 is a reasonable
         // compromise. You can set this before calling finalize().
-        int shapesides = 12;
+        std::int32_t shapesides = 12;
 
         // Arrow thickness for the vector
         float thickness = 0.1f;

@@ -23,7 +23,7 @@ export import mplot.graphstyles;
 export namespace mplot
 {
     //! A class to make quiver plots
-    template <typename Flt, int glver = mplot::gl::version_4_1>
+    template <typename Flt, std::int32_t glver = mplot::gl::version_4_1>
     class QuiverVisual : public VisualDataModel<Flt, glver>
     {
     public:
@@ -50,8 +50,8 @@ export namespace mplot
         //! Do the computations to initialize the vertices that will represent the Quivers.
         void initializeVertices()
         {
-            unsigned int ncoords = this->dataCoords->size();
-            unsigned int nquiv = this->vectorData->size();
+            std::uint32_t ncoords = this->dataCoords->size();
+            std::uint32_t nquiv = this->vectorData->size();
 
             if (ncoords != nquiv) {
                 std::cout << "ncoords != nquiv, return." << std::endl;
@@ -60,7 +60,7 @@ export namespace mplot
 
             sm::vvec<Flt> dlengths;
             // Compute the lengths of each vector
-            for (unsigned int i = 0; i < nquiv; ++i) {
+            for (std::uint32_t i = 0; i < nquiv; ++i) {
                 dlengths.push_back ( (*this->vectorData)[i].length() );
             }
 
@@ -112,7 +112,7 @@ export namespace mplot
             sm::vec<Flt> vectorData_i, halfquiv;
             sm::vec<float> start, end, coords_i;
             std::array<float, 3> clr;
-            for (unsigned int i = 0; i < ncoords; ++i) {
+            for (std::uint32_t i = 0; i < ncoords; ++i) {
 
                 coords_i = (*this->dataCoords)[i];
 
@@ -168,7 +168,7 @@ export namespace mplot
         // How many sides to an arrow/cone/sphere? Increase for smoother arrow
         // objects. Decrease to ease the load on your CPU and GPU. 12 is a reasonable
         // compromise. You can set this before calling finalize().
-        int shapesides = 12;
+        std::int32_t shapesides = 12;
 
         // Setting a fixed length can be useful to focus on the flow of the field.
         Flt fixed_length = 0.0f;

@@ -7,6 +7,7 @@
  */
 module;
 
+#include <cstdint>
 #include <array>
 #include <bitset>
 #include <map>
@@ -53,7 +54,7 @@ export namespace mplot
     }
 
     //! This class creates the vertices for a rectangular moving grating
-    template<int glver = mplot::gl::version_4_1>
+    template<std::int32_t glver = mplot::gl::version_4_1>
     class GratingVisual : public VisualModel<glver>
     {
     public:
@@ -71,7 +72,7 @@ export namespace mplot
             this->vertex_push (fq1.plus_one_dim(), this->vertexPositions);
             this->vertex_push (fp2.plus_one_dim(), this->vertexPositions);
             this->vertex_push (fq2.plus_one_dim(), this->vertexPositions);
-            for (unsigned int vi = 0; vi < 4; ++vi) {
+            for (std::uint32_t vi = 0; vi < 4; ++vi) {
                 this->vertex_push (_col, this->vertexColors);
                 this->vertex_push (sm::vec<>::uz(), this->vertexNormals);
             }
@@ -422,7 +423,7 @@ export namespace mplot
                     this->vertex_push (fp.plus_one_dim(), this->vertexPositions);
                     this->vertex_push (fq.plus_one_dim(), this->vertexPositions);
                     this->vertex_push (corner.plus_one_dim(), this->vertexPositions);
-                    for (unsigned int vi = 0; vi < 3; ++vi) {
+                    for (std::uint32_t vi = 0; vi < 3; ++vi) {
                         this->vertex_push (_col, this->vertexColors);
                         this->vertex_push (sm::vec<>::uz(), this->vertexNormals);
                         this->indices.push_back (this->idx++);
@@ -433,7 +434,7 @@ export namespace mplot
                     this->vertex_push (corner.plus_one_dim(), this->vertexPositions);
                     this->vertex_push (fq.plus_one_dim(), this->vertexPositions);
                     this->vertex_push (corner_2.plus_one_dim(), this->vertexPositions);
-                    for (unsigned int vi = 0; vi < 4; ++vi) {
+                    for (std::uint32_t vi = 0; vi < 4; ++vi) {
                         this->vertex_push (_col, this->vertexColors);
                         this->vertex_push (sm::vec<>::uz(), this->vertexNormals);
                     }
@@ -478,7 +479,7 @@ export namespace mplot
             auto loop_lambda = [this, find_border_points, draw_fill_in_shape, p_0, half_wave,
                                 bot_p, bot_q, top_p, top_q, left_p, left_q, right_p, right_q,
                                 bot_left, top_left, bot_right, top_right]
-            (unsigned int i, const sm::vec<float, 2>& p_step)
+            (std::uint32_t i, const sm::vec<float, 2>& p_step)
             {
                 sm::vec<float, 2> p1 = {0,0}, q1 = {0,0}, p2 = {0,0}, q2 = {0,0};
                 sm::vec<float, 2> fp1 = {0,0}, fp2 = {0,0}, fq1 = {0,0}, fq2 = {0,0};
@@ -724,7 +725,7 @@ export namespace mplot
         //! Width, height (after any rotation?)
         sm::vec<float, 2> dims = { 2.0f, 1.0f };
         //! Current time
-        unsigned long long int t = 0;
+        std::uint64_t t = 0;
         bool do_loop2 = true;
         //! Draw in colours that are helpful for debugging?
         static constexpr bool debug_geometry = false;

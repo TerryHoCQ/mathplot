@@ -1,5 +1,6 @@
 module;
 
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include <array>
@@ -62,7 +63,7 @@ export namespace mplot
      * _radius is good to see the spheres. Make this 0 to omit the spheres.
      *
      */
-    template <typename Flt, int glver = mplot::gl::version_4_1>
+    template <typename Flt, std::int32_t glver = mplot::gl::version_4_1>
     class PointRowsMeshVisual : public VisualDataModel<Flt, glver>
     {
     public:
@@ -115,8 +116,8 @@ export namespace mplot
         //! Do the computations to initialize the vertices that will represent the surface.
         void initializeVertices()
         {
-            unsigned int npoints = this->dataCoords->size();
-            unsigned int ndata = this->scalarData->size();
+            std::uint32_t npoints = this->dataCoords->size();
+            std::uint32_t ndata = this->scalarData->size();
 
             if (npoints != ndata) {
                 std::cout << "npoints != ndata, return." << std::endl;
@@ -273,17 +274,17 @@ export namespace mplot
 
     private:
         //! Which axis are we perpendicular to?
-        unsigned int pa = 0U;
+        std::uint32_t pa = 0U;
         //! tube radius
         float radius = 0.05f;
         //! sphere radius
         float sradius = 0.052f;
         //! sphere rings
-        int srings = 10;
+        std::int32_t srings = 10;
         //! sphere segments
-        int sseg = 12;
+        std::int32_t sseg = 12;
         //! tube segments
-        int tseg = 12;
+        std::int32_t tseg = 12;
         //! A colour map for the spheres
         mplot::ColourMap<float> cm_sph;
     };
