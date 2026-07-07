@@ -1733,8 +1733,7 @@ export namespace mplot
         int window_w = 640;
         //! Current window height
         int window_h = 480;
-
-        //! Window scaling
+        //! Window viewport scaling
         float window_scale_w = 1.0f;
         float window_scale_h = 1.0f;
 
