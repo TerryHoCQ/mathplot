@@ -62,13 +62,6 @@ import sm.mat;
 
 export namespace mplot
 {
-#ifdef __APPLE__
-    // https://stackoverflow.com/questions/35715579/opengl-created-window-size-twice-as-large
-    constexpr double retinaScale = 2; // deals with quadrant issue on osx
-#else
-    constexpr double retinaScale = 1; // Qt has devicePixelRatio() to get retinaScale.
-#endif
-
     //! Here are our boolean state flags
     enum class visual_state : uint32_t
     {
@@ -472,9 +465,7 @@ export namespace mplot
             this->setContext();
 
             this->glfn->UseProgram (this->shaders.gprog);
-            this->glfn->Viewport (0, 0,
-				  this->window_w * this->window_scale_w * mplot::retinaScale,
-				  this->window_h * this->window_scale_h * mplot::retinaScale);
+            this->glfn->Viewport (0, 0, this->window_w * this->window_scale_w, this->window_h * this->window_scale_h);
 
             // Set the perspective
             if (this->ptype == perspective_type::orthographic) {
