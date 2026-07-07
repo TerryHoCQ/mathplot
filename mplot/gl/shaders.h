@@ -15,6 +15,7 @@
 # include <mplot/glad/gl.h>
 #endif
 
+#include <cstdint>
 #include <iostream>
 #include <fstream>
 #include <cstring>
@@ -41,11 +42,11 @@ namespace mplot::gl
     struct ShaderInfo
     {
         // GLenum is, in practice, a 32 bit unsigned int. The type appears not to be defined in
-        // OpenGL 3.1 ES (though it does appear in 3.2 ES), so here I use unsigned int.
-        unsigned int type; // rather than GLenum
+        // OpenGL 3.1 ES (though it does appear in 3.2 ES), so here I use std::uint32_t.
+        std::uint32_t type;
         std::string filename;
         std::string compiledIn;
-        uint32_t shader;
+        std::uint32_t shader;
     };
 
     // To enable debugging, set true.
@@ -58,7 +59,7 @@ namespace mplot::gl
             std::cerr << "'" << filename << "' is not a regular file\n";
             return nullptr;
         }
-        size_t len = std::filesystem::file_size (filename);
+        std::size_t len = std::filesystem::file_size (filename);
         std::unique_ptr<char[]> source = std::make_unique<char[]>(len + 1);
         std::ifstream fin (filename.c_str(), std::ios::in);
         if (!fin.is_open()) {

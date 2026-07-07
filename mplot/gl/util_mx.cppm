@@ -11,6 +11,7 @@ module;
 # include <mplot/glad/gl.h>
 #endif
 
+#include <cstdint>
 #include <stdexcept>
 #include <string>
 #include <iostream>
@@ -19,11 +20,11 @@ export module mplot.gl.util;
 
 export namespace mplot::gl::Util
 {
-    GLenum checkError (const char *file, int line, GladGLContext* glfn)
+    std::uint32_t checkError (const char *file, std::int32_t line, GladGLContext* glfn)
     {
-        GLenum errorCode = 0;
+        std::uint32_t errorCode = 0;
 #ifndef __APPLE__ // MacOS didn't like multiple calls to glGetError(); don't know why
-        unsigned int ecount = 0;
+        std::uint32_t ecount = 0;
         std::string error;
 
         while ((errorCode = glfn->GetError()) != GL_NO_ERROR) {

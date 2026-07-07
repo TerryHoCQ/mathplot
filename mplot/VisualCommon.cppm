@@ -69,9 +69,9 @@ export namespace mplot::visgl
     struct visual_shaderprogs
     {
         //! An OpenGL shader program for graphical objects
-        unsigned int /*GLuint*/ gprog = 0;
+        std::uint32_t gprog = 0;
         //! A text shader program, which uses textures to draw text on quads.
-        unsigned int /*GLuint*/ tprog = 0;
+        std::uint32_t tprog = 0;
     };
 
     // This defines different graphics shader types, as used in mplot::Visual. The essential
@@ -92,12 +92,12 @@ export namespace mplot::visgl
     struct CharInfo
     {
         //! ID handle of the glyph texture
-        unsigned int textureID;
+        std::uint32_t textureID;
         //! Size of glyph
-        sm::vec<int,2>  size;
+        sm::vec<std::int32_t, 2>  size;
         //! Offset from baseline to left/top of glyph
-        sm::vec<int,2>  bearing;
+        sm::vec<std::int32_t, 2>  bearing;
         //! Offset to advance to next glyph
-        unsigned int advance;
+        std::uint32_t advance;
     };
 } // namespace

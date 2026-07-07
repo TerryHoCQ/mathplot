@@ -71,8 +71,8 @@ export namespace mplot
         {
             if (this->hide == true) { return; }
 
-            GLint prev_shader;
-            GLuint tshaderprog = mplot::VisualResources<glver>::i().get_tprog (this->parentVis);
+            std::int32_t prev_shader;
+            std::uint32_t tshaderprog = mplot::VisualResources<glver>::i().get_tprog (this->parentVis);
             GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
 
             _glfn->GetIntegerv (GL_CURRENT_PROGRAM, &prev_shader);
@@ -81,13 +81,13 @@ export namespace mplot
             _glfn->UseProgram (tshaderprog);
 
             // Set uniforms
-            GLint loc_tc = _glfn->GetUniformLocation (tshaderprog, static_cast<const GLchar*>("textColor"));
+            std::int32_t loc_tc = _glfn->GetUniformLocation (tshaderprog, static_cast<const char*>("textColor"));
             if (loc_tc != -1) { _glfn->Uniform3f (loc_tc, this->clr_text[0], this->clr_text[1], this->clr_text[2]); }
-            GLint loc_a = _glfn->GetUniformLocation (tshaderprog, static_cast<const GLchar*>("alpha"));
+            std::int32_t loc_a = _glfn->GetUniformLocation (tshaderprog, static_cast<const char*>("alpha"));
             if (loc_a != -1) { _glfn->Uniform1f (loc_a, this->alpha); }
-            GLint loc_v = _glfn->GetUniformLocation (tshaderprog, static_cast<const GLchar*>("v_matrix"));
+            std::int32_t loc_v = _glfn->GetUniformLocation (tshaderprog, static_cast<const char*>("v_matrix"));
             if (loc_v != -1) { _glfn->UniformMatrix4fv (loc_v, 1, GL_FALSE, this->scenematrix.arr.data()); }
-            GLint loc_m = _glfn->GetUniformLocation (tshaderprog, static_cast<const GLchar*>("m_matrix"));
+            std::int32_t loc_m = _glfn->GetUniformLocation (tshaderprog, static_cast<const char*>("m_matrix"));
             if (loc_m != -1) { _glfn->UniformMatrix4fv (loc_m, 1, GL_FALSE, this->viewmatrix.arr.data()); }
 
             _glfn->ActiveTexture (GL_TEXTURE0);
@@ -96,7 +96,7 @@ export namespace mplot
             _glfn->BindVertexArray (this->vao);
 
             // We have a max of (2^32)-1 characters. Should be enough.
-            for (unsigned int i = 0U; i < this->quads.size(); ++i) {
+            for (std::uint32_t i = 0U; i < this->quads.size(); ++i) {
                 // Bind the right texture for the quad.
                 _glfn->BindTexture (GL_TEXTURE_2D, this->quad_ids[i]);
                 // This is 'draw a subset of the elements from the vertex array
@@ -279,7 +279,7 @@ export namespace mplot
 
             if (this->vbos == nullptr) {
                 // Create the vertex buffer objects
-                this->vbos = std::make_unique<GLuint[]>(this->numVBO);
+                this->vbos = std::make_unique<std::uint32_t[]>(this->numVBO);
                 _glfn->GenBuffers (this->numVBO, this->vbos.get()); // OpenGL 4.4- safe
             }
 
@@ -287,7 +287,7 @@ export namespace mplot
             _glfn->BindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbos[this->idxVBO]);
 
             //std::cout << "indices.size(): " << this->indices.size() << std::endl;
-            std::size_t sz = this->indices.size() * sizeof(GLuint);
+            std::size_t sz = this->indices.size() * sizeof(std::uint32_t);
             _glfn->BufferData(GL_ELEMENT_ARRAY_BUFFER, sz, this->indices.data(), GL_STATIC_DRAW);
 
             // Binds data from the "C++ world" to the OpenGL shader world for
@@ -307,7 +307,7 @@ export namespace mplot
         mplot::visgl::VisualFace* face = nullptr;
 
         //! Set up a vertex buffer object - bind, buffer and set vertex array object attribute
-        void setupVBO (GLuint& buf, std::vector<float>& dat, unsigned int bufferAttribPosition)
+        void setupVBO (std::uint32_t& buf, std::vector<float>& dat, std::uint32_t bufferAttribPosition)
         {
             std::size_t sz = dat.size() * sizeof(float);
             GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
@@ -398,9 +398,9 @@ export namespace mplot
 
             constexpr bool debug_textquads = false;
 
-            unsigned int nquads = static_cast<unsigned int>(this->quads.size());
+            std::uint32_t nquads = static_cast<std::uint32_t>(this->quads.size());
 
-            for (unsigned int qi = 0; qi < nquads; ++qi) {
+            for (std::uint32_t qi = 0; qi < nquads; ++qi) {
 
                 std::array<float, 12> quad = this->quads[qi];
 
@@ -500,7 +500,7 @@ export namespace mplot
         //! numbers is left, right, bottom, top
         sm::vec<float, 4> extents = { 1e7, -1e7, 1e7, -1e7 };
         //! The texture ID for each quad - so that we draw the right texture image over each quad.
-        std::vector<unsigned int> quad_ids = {};
+        std::vector<std::uint32_t> quad_ids = {};
         //! Position within vertex buffer object (if I use an array of VBO)
         enum VBOPos { posnVBO, normVBO, colVBO, idxVBO, textureVBO, numVBO };
         //! The OpenGL Vertex Array Object

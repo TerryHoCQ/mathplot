@@ -118,14 +118,14 @@ export namespace mplot
 
             // Create the vertex buffer objects (once only)
             if (this->vbos == nullptr) {
-                this->vbos = std::make_unique<GLuint[]>(this->numVBO);
+                this->vbos = std::make_unique<std::uint32_t[]>(this->numVBO);
                 glfn->GenBuffers (this->numVBO, this->vbos.get()); // OpenGL 4.4- safe
             }
 
             // Set up the indices buffer - bind and buffer the data in this->indices
             glfn->BindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos[this->idxVBO]);
 
-            std::size_t sz = this->indices.size() * sizeof(GLuint);
+            std::size_t sz = this->indices.size() * sizeof(std::uint32_t);
             glfn->BufferData (GL_ELEMENT_ARRAY_BUFFER, sz, this->indices.data(), GL_STATIC_DRAW);
 
             // Binds data from the "C++ world" to the OpenGL shader world for
@@ -158,14 +158,14 @@ export namespace mplot
 
                 // Create the vertex buffer objects (once only)
                 if (this->vbos_bb == nullptr) {
-                    this->vbos_bb = std::make_unique<GLuint[]>(this->numVBO);
+                    this->vbos_bb = std::make_unique<std::uint32_t[]>(this->numVBO);
                     glfn->GenBuffers (this->numVBO, this->vbos_bb.get());
                 }
 
                 // Set up the indices buffer - bind and buffer the data in this->indices
                 glfn->BindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos_bb[this->idxVBO]);
 
-                std::size_t sz = this->indices_bb.size() * sizeof(GLuint);
+                std::size_t sz = this->indices_bb.size() * sizeof(std::uint32_t);
                 glfn->BufferData (GL_ELEMENT_ARRAY_BUFFER, sz, this->indices_bb.data(), GL_STATIC_DRAW);
 
                 // Binds data from the "C++ world" to the OpenGL shader world for
@@ -344,7 +344,7 @@ export namespace mplot
             glfn->BindVertexArray (this->vao);                                    // carefully unbind and rebind
             glfn->BindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos[this->idxVBO]);  // carefully unbind and rebind
 
-            std::size_t sz = this->indices.size() * sizeof(GLuint);
+            std::size_t sz = this->indices.size() * sizeof(std::uint32_t);
             glfn->BufferData (GL_ELEMENT_ARRAY_BUFFER, sz, this->indices.data(), GL_STATIC_DRAW);
             this->setupVBO (this->vbos[this->posnVBO], this->vertexPositions, visgl::posnLoc);
             this->setupVBO (this->vbos[this->normVBO], this->vertexNormals, visgl::normLoc);
@@ -358,7 +358,7 @@ export namespace mplot
                 glfn->BindVertexArray (this->vao_bb);
                 glfn->BindBuffer (GL_ELEMENT_ARRAY_BUFFER, this->vbos_bb[this->idxVBO]);
 
-                std::size_t sz = this->indices_bb.size() * sizeof(GLuint);
+                std::size_t sz = this->indices_bb.size() * sizeof(std::uint32_t);
                 glfn->BufferData (GL_ELEMENT_ARRAY_BUFFER, sz, this->indices_bb.data(), GL_STATIC_DRAW);
                 this->setupVBO (this->vbos_bb[this->posnVBO], this->vpos_bb, visgl::posnLoc);
                 this->setupVBO (this->vbos_bb[this->normVBO], this->vnorm_bb, visgl::normLoc);
@@ -729,7 +729,7 @@ export namespace mplot
             // Execute post-vertex init at render, as GL should be available.
             if (this->flags.test (vm_bools::postVertexInitRequired) == true) { this->postVertexInit(); }
 
-            GLint prev_shader = 0;
+            std::int32_t prev_shader = 0;
 
             GladGLContext* glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
             glfn->GetIntegerv (GL_CURRENT_PROGRAM, &prev_shader);
@@ -754,25 +754,25 @@ export namespace mplot
                 glfn->BindVertexArray (this->vao);
 
                 // Pass this->float to GLSL so the model can have an alpha value.
-                GLint loc_a = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("alpha"));
+                std::int32_t loc_a = glfn->GetUniformLocation (gprog, static_cast<const char*>("alpha"));
                 if (loc_a != -1) { glfn->Uniform1f (loc_a, this->alpha); }
 
-                GLint loc_gr = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("greyscale"));
+                std::int32_t loc_gr = glfn->GetUniformLocation (gprog, static_cast<const char*>("greyscale"));
                 if (loc_gr != -1) { glfn->Uniform1i (loc_gr, (this->flags.test (vm_bools::greyscale) ? 1 : 0)); }
 
-                GLint loc_gam = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("gamma"));
+                std::int32_t loc_gam = glfn->GetUniformLocation (gprog, static_cast<const char*>("gamma"));
                 if (loc_gam != -1) { glfn->Uniform1f (loc_gam, this->gamma); }
 
                 // The scene-view matrix
-                GLint loc_v = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("v_matrix"));
+                std::int32_t loc_v = glfn->GetUniformLocation (gprog, static_cast<const char*>("v_matrix"));
                 if (loc_v != -1) { glfn->UniformMatrix4fv (loc_v, 1, GL_FALSE, this->scenematrix.arr.data()); }
 
                 // the model-view matrix
-                GLint loc_m = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("m_matrix"));
+                std::int32_t loc_m = glfn->GetUniformLocation (gprog, static_cast<const char*>("m_matrix"));
                 if (loc_m != -1) { glfn->UniformMatrix4fv (loc_m, 1, GL_FALSE, this->viewmatrix.arr.data()); }
 
                 // the instance scaling matrix (applied to all instances)
-                GLint loc_s = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("s_matrix"));
+                std::int32_t loc_s = glfn->GetUniformLocation (gprog, static_cast<const char*>("s_matrix"));
                 if (loc_s != -1) { glfn->UniformMatrix4fv (loc_s, 1, GL_FALSE, this->instscale.arr.data()); }
 
                 if constexpr (debug_render) {
@@ -781,9 +781,9 @@ export namespace mplot
                 }
 
                 // Draw the triangles
-                GLint loc_is = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("instance_start"));
-                GLint loc_ic = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("instance_count"));
-                GLint loc_ipc = glfn->GetUniformLocation (gprog, static_cast<const GLchar*>("instparam_count"));
+                std::int32_t loc_is = glfn->GetUniformLocation (gprog, static_cast<const char*>("instance_start"));
+                std::int32_t loc_ic = glfn->GetUniformLocation (gprog, static_cast<const char*>("instance_count"));
+                std::int32_t loc_ipc = glfn->GetUniformLocation (gprog, static_cast<const char*>("instparam_count"));
                 if (this->flags.test (vm_bools::instanced)) {
                     if (loc_is != -1) { glfn->Uniform1i (loc_is, this->instance_start); }
                     if (loc_ic != -1) { glfn->Uniform1i (loc_ic, this->instance_count); }
@@ -958,7 +958,7 @@ export namespace mplot
         std::size_t indices_size() { return this->indices.size(); }
         float indices_max() { return this->idx_max; }
         float indices_min() { return this->idx_min; }
-        std::size_t indices_bytes() { return this->indices.size() * sizeof (GLuint); }
+        std::size_t indices_bytes() { return this->indices.size() * sizeof (std::uint32_t); }
         //! Return base64 encoded version of indices
         std::string indices_base64()
         {
@@ -1120,8 +1120,8 @@ export namespace mplot
         std::string name = {};
 
         //! The current indices index
-        GLuint idx = 0u;
-        GLuint idx_bb = 0u;
+        std::uint32_t idx = 0u;
+        std::uint32_t idx_bb = 0u;
 
         /*!
          * This is the upper limit for instance_count. We reserve max_isntances of space in the SSBO.
@@ -1287,13 +1287,13 @@ export namespace mplot
          */
 
         //! The OpenGL Vertex Array Object
-        GLuint vao = 0;
+        std::uint32_t vao = 0;
 
         //! Vertex Buffer Objects stored in an array
-        std::unique_ptr<GLuint[]> vbos;
+        std::unique_ptr<std::uint32_t[]> vbos;
 
         //! CPU-side data for indices
-        std::vector<GLuint> indices = {};
+        std::vector<std::uint32_t> indices = {};
         //! CPU-side data for vertex positions
         std::vector<float> vertexPositions = {};
         //! CPU-side data for vertex normals
@@ -1302,9 +1302,9 @@ export namespace mplot
         std::vector<float> vertexColors = {};
 
         // OpenGL arrays for the bounding box, if needed
-        GLuint vao_bb = 0;
-        std::unique_ptr<GLuint[]> vbos_bb;
-        std::vector<GLuint> indices_bb = {};
+        std::uint32_t vao_bb = 0;
+        std::unique_ptr<std::uint32_t[]> vbos_bb;
+        std::vector<std::uint32_t> indices_bb = {};
         std::vector<float> vpos_bb = {};
         std::vector<float> vnorm_bb = {};
         std::vector<float> vcol_bb = {};
@@ -1324,9 +1324,9 @@ export namespace mplot
         sm::vec<float, 3> vnorm_maxes = { _low, _low, _low };
         sm::vec<float, 3> vnorm_mins = { _max, _max, _max };
         //! Max value in indices
-        GLuint idx_max = 0u;
+        std::uint32_t idx_max = 0u;
         //! Min value in indices.
-        GLuint idx_min = std::numeric_limits<GLuint>::max();
+        std::uint32_t idx_min = std::numeric_limits<std::uint32_t>::max();
 
         //! A model-wide alpha value for the shader
         float alpha = 1.0f;
@@ -1341,7 +1341,7 @@ export namespace mplot
         std::vector<std::unique_ptr<mplot::VisualTextModel<glver>>> texts;
 
         //! Set up a vertex buffer object - bind, buffer and set vertex array object attribute
-        void setupVBO (GLuint& buf, std::vector<float>& dat, std::uint32_t bufferAttribPosition)
+        void setupVBO (std::uint32_t& buf, std::vector<float>& dat, std::uint32_t bufferAttribPosition)
         {
             std::size_t sz = dat.size() * sizeof(float);
 
@@ -1478,8 +1478,8 @@ export namespace mplot
             std::vector<float>& vp = bb ? this->vpos_bb : this->vertexPositions;
             std::vector<float>& vn = bb ? this->vnorm_bb : this->vertexNormals;
             std::vector<float>& vc = bb ? this->vcol_bb : this->vertexColors;
-            std::vector<GLuint>& idcs = bb ? this->indices_bb : this->indices;
-            GLuint& _idx = bb ? this->idx_bb : this->idx;
+            std::vector<std::uint32_t>& idcs = bb ? this->indices_bb : this->indices;
+            std::uint32_t& _idx = bb ? this->idx_bb : this->idx;
 
             // Push the central point of the start cap - this is at location vstart
             this->vertex_push (vstart, vp);
@@ -1534,10 +1534,10 @@ export namespace mplot
             std::int32_t nverts = (segments * 4) + 2;
 
             // After creating vertices, push all the indices.
-            GLuint capMiddle = _idx;
-            GLuint capStartIdx = _idx + 1u;
-            GLuint endMiddle = _idx + static_cast<GLuint>(nverts) - 1u;
-            GLuint endStartIdx = capStartIdx + (3u * segments);
+            std::uint32_t capMiddle = _idx;
+            std::uint32_t capStartIdx = _idx + 1u;
+            std::uint32_t endMiddle = _idx + static_cast<std::uint32_t>(nverts) - 1u;
+            std::uint32_t endStartIdx = capStartIdx + (3u * segments);
 
             // Start cap indices
             for (std::int32_t j = 0; j < segments-1; j++) {
@@ -1755,10 +1755,10 @@ export namespace mplot
             std::int32_t nverts = (segments * 4) + 2;
 
             // After creating vertices, push all the indices.
-            GLuint capMiddle = this->idx;
-            GLuint capStartIdx = this->idx + 1u;
-            GLuint endMiddle = this->idx + static_cast<GLuint>(nverts) - 1u;
-            GLuint endStartIdx = capStartIdx + (3u * segments);
+            std::uint32_t capMiddle = this->idx;
+            std::uint32_t capStartIdx = this->idx + 1u;
+            std::uint32_t endMiddle = this->idx + static_cast<std::uint32_t>(nverts) - 1u;
+            std::uint32_t endStartIdx = capStartIdx + (3u * segments);
 
             // Start cap
             for (std::int32_t j = 0; j < segments-1; j++) {
@@ -1902,8 +1902,8 @@ export namespace mplot
             std::int32_t nverts = (segments * 2);
 
             // After creating vertices, push all the indices.
-            GLuint sIdx = this->idx;
-            GLuint eIdx = sIdx + segments;
+            std::uint32_t sIdx = this->idx;
+            std::uint32_t eIdx = sIdx + segments;
             // This does sides between start and end
             for (std::int32_t j = 0; j < segments; j++) {
                 // Triangle 1
@@ -2038,8 +2038,8 @@ export namespace mplot
             std::int32_t nverts = segments + 1;
 
             // After creating vertices, push all the indices.
-            GLuint capMiddle = this->idx;
-            GLuint capStartIdx = this->idx + 1;
+            std::uint32_t capMiddle = this->idx;
+            std::uint32_t capStartIdx = this->idx + 1;
 
             // Start cap indices
             for (std::int32_t j = 0; j < segments-1; j++) {
@@ -2374,9 +2374,9 @@ export namespace mplot
             this->vertex_push (0.0f, 0.0f, -1.0f, this->vertexNormals);
             this->vertex_push (sc, this->vertexColors);
 
-            GLuint capMiddle = this->idx++;
-            GLuint ringStartIdx = this->idx;
-            GLuint lastRingStartIdx = this->idx;
+            std::uint32_t capMiddle = this->idx++;
+            std::uint32_t ringStartIdx = this->idx;
+            std::uint32_t lastRingStartIdx = this->idx;
 
             bool firstseg = true;
             for (std::int32_t j = 0; j < segments; j++) {
@@ -2512,9 +2512,9 @@ export namespace mplot
             this->vertex_push (0.0f, 0.0f, -1.0f, this->vertexNormals);
             this->vertex_push (sc2, this->vertexColors);
 
-            GLuint capMiddle = this->idx++;
-            GLuint ringStartIdx = this->idx;
-            GLuint lastRingStartIdx = this->idx;
+            std::uint32_t capMiddle = this->idx++;
+            std::uint32_t ringStartIdx = this->idx;
+            std::uint32_t lastRingStartIdx = this->idx;
 
             bool firstseg = true;
             for (std::int32_t j = 0; j < segments; j++) {
@@ -2672,9 +2672,9 @@ export namespace mplot
             this->vertex_push (n, this->vertexNormals);
             this->vertex_push (_sc, this->vertexColors);
 
-            GLuint capMiddle = this->idx++;
-            GLuint ringStartIdx = this->idx;
-            GLuint lastRingStartIdx = this->idx;
+            std::uint32_t capMiddle = this->idx++;
+            std::uint32_t ringStartIdx = this->idx;
+            std::uint32_t lastRingStartIdx = this->idx;
 
             t2 = sm::mathconst<float>::pi / rings;
             p[2] = abc[2] * std::cos(t2);
@@ -2893,10 +2893,10 @@ export namespace mplot
             std::int32_t nverts = segments * 3 + 2;
 
             // After creating vertices, push all the indices.
-            GLuint capMiddle = this->idx;
-            GLuint capStartIdx = this->idx + 1;
-            GLuint endMiddle = this->idx + static_cast<GLuint>(nverts) - 1u;
-            GLuint endStartIdx = capStartIdx;
+            std::uint32_t capMiddle = this->idx;
+            std::uint32_t capStartIdx = this->idx + 1;
+            std::uint32_t endMiddle = this->idx + static_cast<std::uint32_t>(nverts) - 1u;
+            std::uint32_t endStartIdx = capStartIdx;
 
             // Base of the cone
             for (std::int32_t j = 0; j < segments-1; j++) {
@@ -3061,10 +3061,10 @@ export namespace mplot
             std::int32_t nverts = (segments * 4) + 2;
 
             // After creating vertices, push all the indices.
-            GLuint capMiddle = this->idx;
-            GLuint capStartIdx = this->idx + 1u;
-            GLuint endMiddle = this->idx + static_cast<GLuint>(nverts) - 1u;
-            GLuint endStartIdx = capStartIdx + (3u * segments);
+            std::uint32_t capMiddle = this->idx;
+            std::uint32_t capStartIdx = this->idx + 1u;
+            std::uint32_t endMiddle = this->idx + static_cast<std::uint32_t>(nverts) - 1u;
+            std::uint32_t endStartIdx = capStartIdx + (3u * segments);
 
             // Start cap indices
             for (std::int32_t j = 0; j < segments-1; j++) {
@@ -3267,7 +3267,7 @@ export namespace mplot
             // After creating vertices, push all the indices.
 
             if (startcaps) { // prolly startcaps, for flexibility
-                GLuint topcap = this->idx;
+                std::uint32_t topcap = this->idx;
                 for (std::int32_t j = 0; j < segments; j++) {
                     std::int32_t inc1 = 1+j;
                     std::int32_t inc2 = 1+((j+1)%segments);
@@ -3289,7 +3289,7 @@ export namespace mplot
             this->idx += 4;
 
             if (endcaps) {
-                GLuint botcap = this->idx;
+                std::uint32_t botcap = this->idx;
                 for (std::int32_t j = 0; j < segments; j++) {
                     std::int32_t inc1 = 1+j;
                     std::int32_t inc2 = 1+((j+1)%segments);

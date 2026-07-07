@@ -21,6 +21,7 @@ module;
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#include <cstdint>
 #include <map>
 #include <iostream>
 #include <utility>
@@ -55,7 +56,7 @@ export namespace mplot::visgl
          * of font textures for separate VisualTextModel instances which might have
          * the same pixel size.
          */
-        VisualFace (const mplot::VisualFont _font, unsigned int fontpixels, FT_Library& ft_freetype,
+        VisualFace (const mplot::VisualFont _font, std::uint32_t fontpixels, FT_Library& ft_freetype,
                     GladGLContext* glfn = nullptr)
         {
             constexpr bool debug_visualface = false;
@@ -70,12 +71,12 @@ export namespace mplot::visgl
                 // load character glyph
                 if (FT_Load_Char (this->face, c, FT_LOAD_RENDER)) {
                     std::cout << "ERROR::FREETYPE: Failed to load Glyph for Unicode 0x"
-                              << std::hex << static_cast<unsigned int>(c) << std::dec << std::endl;
+                              << std::hex << static_cast<std::uint32_t>(c) << std::dec << std::endl;
                     continue;
                 }
 
                 // generate texture
-                unsigned int texture = 0;
+                std::uint32_t texture = 0;
 
                 if (glfn == nullptr) { throw std::runtime_error ("glfn problem"); }
                 glfn->GenTextures (1, &texture);
@@ -100,10 +101,10 @@ export namespace mplot::visgl
                 // now store character for later use
                 mplot::visgl::CharInfo glchar = {
                     texture,
-                    {static_cast<int>(this->face->glyph->bitmap.width),
-                     static_cast<int>(this->face->glyph->bitmap.rows)}, // size
+                    {static_cast<std::int32_t>(this->face->glyph->bitmap.width),
+                     static_cast<std::int32_t>(this->face->glyph->bitmap.rows)}, // size
                     {this->face->glyph->bitmap_left, this->face->glyph->bitmap_top}, // bearing
-                    static_cast<unsigned int>(this->face->glyph->advance.x)          // advance
+                    static_cast<std::uint32_t>(this->face->glyph->advance.x)          // advance
                 };
 
                 if constexpr (debug_visualface == true) {
@@ -129,7 +130,7 @@ export namespace mplot::visgl
 
     protected:
 
-        void init_common (const mplot::VisualFont _font, unsigned int fontpixels, FT_Library& ft_freetype)
+        void init_common (const mplot::VisualFont _font, std::uint32_t fontpixels, FT_Library& ft_freetype)
         {
             constexpr bool debug_visualface = false;
 
@@ -145,85 +146,85 @@ export namespace mplot::visgl
             case VisualFont::DVSans:
             {
                 fontpath = uppath + "\\AppData\\Local\\Temp\\DejaVuSans.ttf";
-                this->makeTempFontFile<const unsigned char> (fontpath, vf_dvsansData, vf_dvsansEnd);
+                this->makeTempFontFile<const std::uint8_t> (fontpath, vf_dvsansData, vf_dvsansEnd);
                 break;
             }
             case VisualFont::DVSansItalic:
             {
                 fontpath = uppath + "\\AppData\\Local\\Temp\\DejaVuSans-Oblique.ttf";
-                this->makeTempFontFile<const unsigned char> (fontpath, vf_dvsansitData, vf_dvsansitEnd);
+                this->makeTempFontFile<const std::uint8_t> (fontpath, vf_dvsansitData, vf_dvsansitEnd);
                 break;
             }
             case VisualFont::DVSansBold:
             {
                 fontpath = uppath + "\\AppData\\Local\\Temp\\DejaVuSans-Bold.ttf";
-                this->makeTempFontFile<const unsigned char> (fontpath, vf_dvsansbdData, vf_dvsansbdEnd);
+                this->makeTempFontFile<const std::uint8_t> (fontpath, vf_dvsansbdData, vf_dvsansbdEnd);
                 break;
             }
             case VisualFont::DVSansBoldItalic:
             {
                 fontpath = uppath + "\\AppData\\Local\\Temp\\DejaVuSans-BoldOblique.ttf";
-                this->makeTempFontFile<const unsigned char> (fontpath, vf_dvsansbiData, vf_dvsansbiEnd);
+                this->makeTempFontFile<const std::uint8_t> (fontpath, vf_dvsansbiData, vf_dvsansbiEnd);
                 break;
             }
             case VisualFont::Vera:
             {
                 fontpath = uppath + "\\AppData\\Local\\Temp\\Vera.ttf";
-                this->makeTempFontFile<const unsigned char> (fontpath, vf_veraData, vf_veraEnd);
+                this->makeTempFontFile<const std::uint8_t> (fontpath, vf_veraData, vf_veraEnd);
                 break;
             }
             case VisualFont::VeraItalic:
             {
                 fontpath = uppath + "\\AppData\\Local\\Temp\\VeraIt.ttf";
-                this->makeTempFontFile<const unsigned char> (fontpath, vf_veraitData, vf_veraitEnd);
+                this->makeTempFontFile<const std::uint8_t> (fontpath, vf_veraitData, vf_veraitEnd);
                 break;
             }
             case VisualFont::VeraBold:
             {
                 fontpath = uppath + "\\AppData\\Local\\Temp\\VeraBd.ttf";
-                this->makeTempFontFile<const unsigned char> (fontpath, vf_verabdData, vf_verabdEnd);
+                this->makeTempFontFile<const std::uint8_t> (fontpath, vf_verabdData, vf_verabdEnd);
                 break;
             }
             case VisualFont::VeraBoldItalic:
             {
                 fontpath = uppath + "\\AppData\\Local\\Temp\\VeraBI.ttf";
-                this->makeTempFontFile<const unsigned char> (fontpath, vf_verabiData, vf_verabiEnd);
+                this->makeTempFontFile<const std::uint8_t> (fontpath, vf_verabiData, vf_verabiEnd);
                 break;
             }
             case VisualFont::VeraMono:
             {
                 fontpath = uppath + "\\AppData\\Local\\Temp\\VeraMono.ttf";
-                this->makeTempFontFile<const unsigned char> (fontpath, vf_veramonoData, vf_veramonoEnd);
+                this->makeTempFontFile<const std::uint8_t> (fontpath, vf_veramonoData, vf_veramonoEnd);
                 break;
             }
             case VisualFont::VeraMonoBold:
             {
                 fontpath = uppath + "\\AppData\\Local\\Temp\\VeraMoBd.ttf";
-                this->makeTempFontFile<const unsigned char> (fontpath, vf_veramobdData, vf_veramobdEnd);
+                this->makeTempFontFile<const std::uint8_t> (fontpath, vf_veramobdData, vf_veramobdEnd);
                 break;
             }
             case VisualFont::VeraMonoItalic:
             {
                 fontpath = uppath + "\\AppData\\Local\\Temp\\VeraMoIt.ttf";
-                this->makeTempFontFile<const unsigned char> (fontpath, vf_veramoitData, vf_veramoitEnd);
+                this->makeTempFontFile<const std::uint8_t> (fontpath, vf_veramoitData, vf_veramoitEnd);
                 break;
             }
             case VisualFont::VeraMonoBoldItalic:
             {
                 fontpath = uppath + "\\AppData\\Local\\Temp\\VeraMoBI.ttf";
-                this->makeTempFontFile<const unsigned char> (fontpath, vf_veramobiData, vf_veramobiEnd);
+                this->makeTempFontFile<const std::uint8_t> (fontpath, vf_veramobiData, vf_veramobiEnd);
                 break;
             }
             case VisualFont::VeraSerif:
             {
                 fontpath = uppath + "\\AppData\\Local\\Temp\\VeraSe.ttf";
-                this->makeTempFontFile<const unsigned char> (fontpath, vf_veraseData, vf_veraseEnd);
+                this->makeTempFontFile<const std::uint8_t> (fontpath, vf_veraseData, vf_veraseEnd);
                 break;
             }
             case VisualFont::VeraSerifBold:
             {
                 fontpath = uppath + "\\AppData\\Local\\Temp\\VeraSeBd.ttf";
-                this->makeTempFontFile<const unsigned char> (fontpath, vf_verasebdData, vf_verasebdEnd);
+                this->makeTempFontFile<const std::uint8_t> (fontpath, vf_verasebdData, vf_verasebdEnd);
                 break;
             }
             default:
