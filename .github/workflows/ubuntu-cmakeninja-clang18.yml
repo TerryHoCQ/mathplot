@@ -1,0 +1,26 @@
+name: Ubuntu clang18 cmake + ninja
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - 'docs/**'
+      - 'README**'
+      - 'examples/screenshots/**'
+      - 'examples/docs/**'
+  pull_request:
+    branches: [ "main" ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  call-workflow-passing-data:
+    uses: sebsjames/mathplot/.github/workflows/ubuntu-cmakeninja-template.yml@main
+    with:
+      RUNNER_IMAGE: ubuntu-24.04
+      BUILD_TYPE: Release
+      COMPILER_PACKAGES: clang-18 clang-tools-18
+      CC: clang-18
+      CXX: clang++-18
+      WX_PACKAGE: libwxgtk3.2-dev
