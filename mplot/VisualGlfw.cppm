@@ -58,6 +58,12 @@ export namespace mplot
             this->initialized = true;
         }
 
+        //! This is connected to VisualResources::setContext to keep glfw out of VisualResources,
+        //! whilst allowing VisualResources to own the window handle (as mplot::win_t*)
+        static void setContext (GLFWwindow* window) { glfwMakeContextCurrent (window); }
+        //! Connected to VisualResources::releaseContext
+        static void releaseContext() { glfwMakeContextCurrent (nullptr); }
+
         //! An error callback function for the GLFW windowing library
         static void errorCallback (int error, const char* description)
         {

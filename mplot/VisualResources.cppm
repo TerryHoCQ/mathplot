@@ -14,12 +14,6 @@ module;
 // Include GLAD header
 #include <mplot/glad/gl.h>
 
-// Probably DO want to separate all things GLFW into VisualGlfw.
-#ifndef _glfw3_h_
-# define GLFW_INCLUDE_NONE
-# include <GLFW/glfw3.h>
-#endif
-
 // FreeType for text rendering
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -28,6 +22,7 @@ module;
 #include <iostream>
 #include <map>
 #include <memory>
+#include <functional>
 #include <mplot/gl/ssbo_mx.h>
 
 export module mplot.visualresources;
@@ -177,7 +172,6 @@ export namespace mplot
         // Does instanced data need update?
         std::map<uint32_t, bool> visual_keyed_instanced_needs_update;
 
-        // win_t is GLFWwindow and this is really 'struct GLFWwindow' so we need it to be properly defined
         uint32_t register_visual (GladGLContext* glfn, mplot::win_t* win)
         {
             uint32_t visual_id = this->next_visual_id++;
@@ -244,16 +238,17 @@ export namespace mplot
             return this->visual_keyed_shaderprogs[visual_id].gprog;
         }
 
-        // Better in VisualGlfw? Or should what's in VisualGlfw come in here?
         void setContext (const uint32_t visual_id)
         {
             if (visual_id == std::numeric_limits<uint32_t>::max()) {
                 throw std::runtime_error ("VisualResources::setContext(): visual_id is unset");
             }
-            glfwMakeContextCurrent (this->visual_keyed_windows[visual_id]);
+            this->setContextDispatch (this->visual_keyed_windows[visual_id]);
         }
+        std::function<void(mplot::win_t*)> setContextDispatch;    // For GLFW, should call VisualGlfw::setContext()
 
-        void releaseContext() { glfwMakeContextCurrent (nullptr); }
+        void releaseContext() { this->releaseContextDispatch(); }
+        std::function<void()> releaseContextDispatch;             // For GLFW, should call VisualGlfw::releaseContext()
 
         bool get_instanced_needs_update (const uint32_t visual_id)
         {
