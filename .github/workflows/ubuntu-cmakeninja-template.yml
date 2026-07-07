@@ -23,6 +23,9 @@ on:
       CMAKE_CXX_FLAGS:
         required: false
         type: string
+      WX_PACKAGE:
+        required: false
+        type: string
 
 jobs:
   build:
