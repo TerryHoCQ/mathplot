@@ -16,6 +16,7 @@
  */
 module;
 
+#include <cstdint>
 #include <fstream>
 #include <string>
 #include <array>
@@ -63,7 +64,7 @@ import sm.mat;
 export namespace mplot
 {
     //! Here are our boolean state flags
-    enum class visual_state : uint32_t
+    enum class visual_state : std::uint32_t
     {
         readyToFinish,
         //! paused can be set true so that pauseOpen() can be used to display the window mid-simulation
@@ -94,7 +95,7 @@ export namespace mplot
     };
 
     //! Boolean options - similar to state, but more likely to be modified by client code
-    enum class visual_options : uint32_t
+    enum class visual_options : std::uint32_t
     {
         //! Set true to disable the 'X' button on the Window from exiting the program
         preventWindowCloseWithButton,
@@ -158,7 +159,7 @@ export namespace mplot
     };
 
     //! Whether to render with perspective or orthographic
-    enum class perspective_type : uint32_t
+    enum class perspective_type : std::uint32_t
     {
         perspective,
         orthographic
@@ -243,7 +244,7 @@ export namespace mplot
             // Explicitly deconstruct coordArrows, textModel and texts here
             this->coordArrows.reset (nullptr);
             this->textModel.reset (nullptr);
-            for (uint32_t i = 0; i < this->texts.size(); ++i) { this->texts[i].reset (nullptr); }
+            for (std::uint32_t i = 0; i < this->texts.size(); ++i) { this->texts[i].reset (nullptr); }
             //for (auto& t : this->texts) { t.reset (nullptr); }
 
             if (this->shaders.gprog) {
@@ -426,7 +427,7 @@ export namespace mplot
 
             if constexpr (profile_saveimage) { t1 = sc::now(); }
 
-            uint32_t error = 0;
+            std::uint32_t error = 0;
 
             // If filename ends with pnm, then save in pnm format; otherwise save as PNG
             bool pnm_save = false;
@@ -1217,7 +1218,7 @@ export namespace mplot
             return cvm;
         }
 
-        uint32_t get_id() const { return this->visual_id; }
+        std::uint32_t get_id() const { return this->visual_id; }
 
     protected:
 
@@ -1727,7 +1728,7 @@ export namespace mplot
         mplot::win_t* window = nullptr;
 
         //! Each window has an ID number, which is passed to the owned VisualModels
-        uint32_t visual_id = std::numeric_limits<uint32_t>::max();
+        std::uint32_t visual_id = std::numeric_limits<std::uint32_t>::max();
 
         //! Current window width
         int window_w = 640;
@@ -2179,7 +2180,7 @@ export namespace mplot
             // There's an option to write out the bounding box corners to a file that can be
             // displayed with debug_boundingboxes.cpp
             std::ofstream fout;
-            uint32_t ci = 0;
+            std::uint32_t ci = 0;
             if (options.test (visual_options::boundingBoxesToJson)) {
                 fout.open ("/tmp/mathplot_bounding_boxes.json", std::ios::out | std::ios::trunc);
                 if (fout.is_open()) { fout << "{\n"; }
