@@ -1,0 +1,81 @@
+name: Ubuntu Template for cmake + ninja build
+on:
+  workflow_call:
+    inputs:
+      RUNNER_IMAGE:
+        required: true
+        type: string
+      BUILD_TYPE:
+        required: true
+        type: string
+      CC:
+        required: true
+        type: string
+      CXX:
+        required: true
+        type: string
+      COMPILER_PACKAGES:
+        required: true
+        type: string
+      COMPILER_INSTALL:
+        required: false
+        type: string
+      CMAKE_CXX_FLAGS:
+        required: false
+        type: string
+      WX_PACKAGE:
+        required: false
+        type: string
+
+jobs:
+  build:
+    runs-on: ${{ inputs.RUNNER_IMAGE }}
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'true'
+    - name: Update index
+      run: sudo apt update
+
+    - name: Install dependencies
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        ${{ inputs.COMPILER_INSTALL }}
+        sudo apt-get update -y
+        # Install deps for sm::hdfdata and sm::config
+        sudo apt-get install libgbm-dev freeglut3-dev libglu1-mesa-dev libxmu-dev libxi-dev libglfw3-dev libfreetype-dev libarmadillo-dev libhdf5-dev nlohmann-json3-dev librapidxml-dev qtbase5-dev ${{ inputs.WX_PACKAGE }}
+        # Install compiler
+        sudo apt-get install ${{ inputs.COMPILER_PACKAGES }}
+
+    - name: Install latest CMake
+      uses: ssrobins/install-cmake@v1
+      with:
+        release-candidate: true
+
+    - name: Configure CMake
+      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      run: cmake -B ${{ github.workspace }}/build -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/build/install -DCMAKE_BUILD_TYPE=${{ inputs.BUILD_TYPE }} -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON -GNinja -DCMAKE_CXX_FLAGS=${{ inputs.CMAKE_CXX_FLAGS }}
+      env:
+        CC: ${{ inputs.CC }}
+        CXX: ${{ inputs.CXX }}
+
+    - name: Build
+      # Build your program with the given configuration
+      run: cmake --build ${{ github.workspace }}/build --config ${{ inputs.BUILD_TYPE }}
+      env:
+        CC: ${{ inputs.CC }}
+        CXX: ${{ inputs.CXX }}
+
+    - name: Test
+      working-directory: ${{ github.workspace }}/build
+      # Execute tests defined by the CMake configuration.
+      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+      run: ctest -C ${{ inputs.BUILD_TYPE }}
+
+    - name: Test if all mplot files are installed
+      working-directory: ${{ github.workspace }}/build
+      run: |
+        ninja install
+        ./../ci_scripts/check_installed_headers.sh
