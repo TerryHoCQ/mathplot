@@ -8,18 +8,19 @@
  */
 module;
 
+#include <iostream>
 #include <string>
 #include <list>
 #include <vector>
 #include <map>
+#include <stdexcept>
 
 // For AllocAndRead (to be replaced with modern memory allocation/file reading code)
 #include <sstream>
 #include <fstream>
 #include <cstddef>
-#include <stdexcept>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 
 #include <rapidxml/rapidxml.hpp>
 
