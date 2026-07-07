@@ -6,7 +6,7 @@
  * \author: Seb James
  * \date: July 2018
  */
-#pragma once
+module;
 
 #include <string>
 #include <list>
@@ -23,10 +23,12 @@
 
 #include <rapidxml/rapidxml.hpp>
 
+export module mplot.readcurves;
+
 import mplot.tools;
 import sm.bezcurvepath;
 
-namespace mplot
+export namespace mplot
 {
     // To be got rid of:
 
