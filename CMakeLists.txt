@@ -10,9 +10,6 @@ project(mathplot LANGUAGES CXX C)
 message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "  (This can be changed with `cmake -DCMAKE_INSTALL_PREFIX=/some/place`")
 
-#
-# We're firmly at C++20.
-#
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -218,12 +215,10 @@ endif(BUILD_UTILS)
 add_subdirectory(fonts)
 
 # Example code (you can also see tests/ for examples)
-option(BUILD_EXAMPLES_EXTRA "Build extra examples" OFF)
 option(BUILD_EXAMPLES "Build examples" ON)
-if(BUILD_EXAMPLES OR BUILD_EXAMPLES_EXTRA)
+if(BUILD_EXAMPLES)
   add_subdirectory(examples)
-endif(BUILD_EXAMPLES OR BUILD_EXAMPLES_EXTRA)
-
+endif(BUILD_EXAMPLES)
 
 # Additional examples (requires BUILD_EXAMPLES ON)
 option(BUILD_DOC_SCREENSHOTS "Build documentation screenshot examples" OFF)
