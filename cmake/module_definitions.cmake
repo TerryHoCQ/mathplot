@@ -30,7 +30,7 @@ macro(setup_module_variables_for_mathplot_maths base_directory)
     ${base_directory}/sm/scale.cppm
     ${base_directory}/sm/centroid.cppm
     ${base_directory}/sm/spline.cppm
-    ${base_directory}/sm/winder.cppm    
+    ${base_directory}/sm/winder.cppm
   )
 
   # The modules required for hexgrids
@@ -55,6 +55,15 @@ macro(setup_module_variables_for_mathplot_maths base_directory)
     ${base_directory}/sm/grid.cppm
     ${base_directory}/sm/rect.cppm
     ${base_directory}/sm/cartgrid.cppm
+  )
+
+  # Modules in addition to core required for ReadCurves.cppm
+  set(MPLOT_MATHS_READCURVES_MODULES
+    ${base_directory}/sm/nm_simplex.cppm
+    ${base_directory}/sm/binomial.cppm
+    ${base_directory}/sm/bezcoord.cppm
+    ${base_directory}/sm/bezcurve.cppm
+    ${base_directory}/sm/bezcurvepath.cppm
   )
 
   # Maths used in individual VisualModels, but not the mathplot core
@@ -108,13 +117,18 @@ macro(setup_module_variables_for_mathplot base_directory)
     ${base_directory}/mplot/VisualDataModel.cppm
     ${base_directory}/mplot/compoundray/Ommatidium.cppm
     ${base_directory}/mplot/jcvoronoi/jc_voronoi.cppm
-    ${base_directory}/mplot/healpix/healpix_bare.cppm        
+    ${base_directory}/mplot/healpix/healpix_bare.cppm
     ${base_directory}/mplot/fps/profiler.cppm
+  )
+
+  set(MPLOT_READCURVES_MODULES
+    ${base_directory}/mplot/tools.cppm
+    ${base_directory}/mplot/ReadCurves.cppm
   )
 
   # All the VisualModel modules
   set(MPLOT_VISUALMODEL_MODULES
-    ${base_directory}/mplot/GraphVisual.cppm    
+    ${base_directory}/mplot/GraphVisual.cppm
     ${base_directory}/mplot/GridVisual.cppm
     ${base_directory}/mplot/RodVisual.cppm
     ${base_directory}/mplot/RhomboVisual.cppm
@@ -129,10 +143,10 @@ macro(setup_module_variables_for_mathplot base_directory)
     ${base_directory}/mplot/HexGridVisual.cppm
     ${base_directory}/mplot/CartGridVisual.cppm
     ${base_directory}/mplot/TriaxesVisual.cppm
-    ${base_directory}/mplot/TxtVisual.cppm    
+    ${base_directory}/mplot/TxtVisual.cppm
     ${base_directory}/mplot/ScatterVisual.cppm
     ${base_directory}/mplot/CurvyTellyVisual.cppm
-    ${base_directory}/mplot/BoolVisual.cppm    
+    ${base_directory}/mplot/BoolVisual.cppm
     ${base_directory}/mplot/RectangleVisual.cppm
     ${base_directory}/mplot/TriangleVisual.cppm
     ${base_directory}/mplot/VoronoiVisual.cppm
@@ -142,12 +156,12 @@ macro(setup_module_variables_for_mathplot base_directory)
     ${base_directory}/mplot/HSVWheelVisual.cppm
     ${base_directory}/mplot/CyclicColourVisual.cppm
     ${base_directory}/mplot/QuadsVisual.cppm
-    ${base_directory}/mplot/QuadsMeshVisual.cppm    
+    ${base_directory}/mplot/QuadsMeshVisual.cppm
     ${base_directory}/mplot/PointRowsVisual.cppm
     ${base_directory}/mplot/PointRowsMeshVisual.cppm
     ${base_directory}/mplot/RingVisual.cppm
     ${base_directory}/mplot/SphericalProjectionVisual.cppm
-    ${base_directory}/mplot/HealpixVisual.cppm        
+    ${base_directory}/mplot/HealpixVisual.cppm
     ${base_directory}/mplot/PolygonVisual.cppm
     ${base_directory}/mplot/TriFrameVisual.cppm
     ${base_directory}/mplot/PolarVisual.cppm

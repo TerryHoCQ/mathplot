@@ -16,7 +16,6 @@
 #include <fstream>
 #include <cstdlib>
 #include <memory>
-#include <mplot/ReadCurves.h>
 
 import sm.bezcoord;
 import sm.hexgrid;
@@ -25,6 +24,7 @@ import mplot.tools;
 import mplot.colourmap;
 import mplot.visual;
 import mplot.hexgridvisual;
+import mplot.readcurves;
 
 int main(int argc, char** argv)
 {

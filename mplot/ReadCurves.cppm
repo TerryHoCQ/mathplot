@@ -26,7 +26,8 @@ module;
 export module mplot.readcurves;
 
 import mplot.tools;
-import sm.bezcurvepath;
+export import sm.bezcurvepath;
+import sm.bezcurve;
 
 export namespace mplot
 {

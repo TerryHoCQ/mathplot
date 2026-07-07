@@ -3,78 +3,110 @@
 # All #includes in test programs have to be #include "mplot/header.h"
 include_directories(BEFORE ${PROJECT_SOURCE_DIR})
 
+# Compile the modules that we use into a library
+set(MATHPLOT_TESTS_MODULES
+  ${MPLOT_MATHS_CORE_MODULES}
+  ${MPLOT_MATHS_READCURVES_MODULES}
+  ${MPLOT_READCURVES_MODULES}
+  ${MPLOT_MATHS_VISUALMODEL_MODULES}
+  ${MPLOT_CORE_MODULES}
+  ${PROJECT_SOURCE_DIR}/mplot/HexGridVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/QuiverVisual.cppm
+  ${PROJECT_SOURCE_DIR}/mplot/ScatterVisual.cppm
+)
+list(REMOVE_DUPLICATES MATHPLOT_TESTS_MODULES)
+add_library(mathplot_tests STATIC)
+target_sources(mathplot_tests PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES ${MATHPLOT_TESTS_MODULES}
+)
+target_link_libraries(mathplot_tests )
+
 # Test reading trial.svg
 set(TARGETTEST3 testreadcurves)
 set(SOURCETEST3 testreadcurves.cpp)
 add_executable(${TARGETTEST3} ${SOURCETEST3})
-add_test(testreadcurves ${TARGETTEST3})
+target_link_libraries(testreadcurves mathplot_tests)
+# No longer add this test, because it contains linear curves, which sm::bezcurvepath no longer supports
+#add_test(testreadcurves ${TARGETTEST3})
 
 # Test reading whiskerbarrels_withcentres.svg
 set(TARGETTEST31 testreadcurves_circles)
 set(SOURCETEST31 testreadcurves_circles.cpp)
 add_executable(${TARGETTEST31} ${SOURCETEST31})
+target_link_libraries(testreadcurves_circles mathplot_tests)
 add_test(testreadcurves_circles ${TARGETTEST31})
 
 if(${glfw3_FOUND})
   # Test hexgrid3 (hexgrid2 with visualisation)
   add_executable(testhexgrid3 testhexgrid3.cpp)
-  target_link_libraries(testhexgrid3 OpenGL::GL glfw Freetype::Freetype)
+  target_link_libraries(testhexgrid3 mathplot_tests OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   if(HDF5_FOUND)
     # Test hexgridsave (HexGrid's save feature)
     add_executable(testhexgridsave testhexgridsave.cpp)
-    target_link_libraries(testhexgridsave ${HDF5_C_LIBRARIES} OpenGL::GL glfw Freetype::Freetype)
+    target_sources(testhexgridsave PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+      FILES
+      ${PROJECT_SOURCE_DIR}/maths/sm/hdfdata.cppm
+      ${PROJECT_SOURCE_DIR}/maths/sm/hexgrid_hdf.cppm
+    )
+    target_link_libraries(testhexgridsave mathplot_tests ${HDF5_C_LIBRARIES} OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
   endif(HDF5_FOUND)
 
   add_executable(testbighexgrid testbighexgrid.cpp)
-  target_link_libraries(testbighexgrid OpenGL::GL glfw Freetype::Freetype)
+  target_link_libraries(testbighexgrid mathplot_tests OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(testbezderiv3 testbezderiv3.cpp)
   target_compile_definitions(testbezderiv3 PUBLIC FLT=double)
-  target_link_libraries(testbezderiv3 OpenGL::GL glfw Freetype::Freetype)
+  target_link_libraries(testbezderiv3 mathplot_tests OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
   add_test(testbezderiv3 testbezderiv3)
 
   add_executable(testVisCoordArrows testVisCoordArrows.cpp)
-  target_link_libraries(testVisCoordArrows OpenGL::GL glfw Freetype::Freetype)
+  target_link_libraries(testVisCoordArrows mathplot_tests OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   add_executable(testVisRemoveModel testVisRemoveModel.cpp)
-  target_link_libraries(testVisRemoveModel OpenGL::GL glfw Freetype::Freetype)
+  target_link_libraries(testVisRemoveModel mathplot_tests OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   # Test elliptical HexGrid code (visualized with mplot::Visual)
   add_executable(test_ellipseboundary test_ellipseboundary.cpp)
-  target_link_libraries(test_ellipseboundary OpenGL::GL glfw Freetype::Freetype)
+  target_link_libraries(test_ellipseboundary mathplot_tests OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 
   # Test circular HexGrid code
   add_executable(test_circleboundary test_circleboundary.cpp)
-  target_link_libraries(test_circleboundary OpenGL::GL glfw Freetype::Freetype)
+  target_link_libraries(test_circleboundary mathplot_tests OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
 endif()
 
 # Test the colour mapping
 add_executable(testColourMap testColourMap.cpp)
+target_link_libraries(testColourMap mathplot_tests)
 add_test(testColourMap testColourMap)
 
 add_executable(testrgbhsv testrgbhsv.cpp)
+target_link_libraries(testrgbhsv mathplot_tests)
 add_test(testrgbhsv testrgbhsv)
 
 # mplot::tools
 add_executable(testTools testTools.cpp)
+target_link_libraries(testTools mathplot_tests)
 add_test(testTools testTools)
 
 add_executable(testloadpng testloadpng.cpp)
+target_link_libraries(testloadpng mathplot_tests)
 add_test(testloadpng testloadpng)
 
 add_executable(testgraphnumberformat testgraphnumberformat.cpp)
+target_link_libraries(testgraphnumberformat mathplot_tests)
 add_test(testgraphnumberformat testgraphnumberformat)
 
-add_executable(testgraphnumberformat_ss testgraphnumberformat.cpp)
-target_compile_definitions(testgraphnumberformat_ss PUBLIC FORCE_NON_FORMAT)
-add_test(testgraphnumberformat_ss testgraphnumberformat_ss)
-
 add_executable(testmaketicks testmaketicks.cpp)
+target_link_libraries(testmaketicks mathplot_tests)
 add_test(testmaketicks testmaketicks)
 
 add_executable(testmakeformatticks testmakeformatticks.cpp)
+target_link_libraries(testmakeformatticks mathplot_tests)
 add_test(testmakeformatticks testmakeformatticks)
 
 add_executable(unordered_map_vec_set unordered_map_vec_set.cpp)
+target_link_libraries(unordered_map_vec_set mathplot_tests)
 add_test(unordered_map_vec_set unordered_map_vec_set)

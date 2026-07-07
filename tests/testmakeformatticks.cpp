@@ -1,7 +1,8 @@
-#include <deque>
 #include <iostream>
-#include <sm/range>
-#include <mplot/graphing.h>
+#include <deque>
+
+import sm.interval;
+import mplot.graphing;
 
 template<typename T>
 void print_ticks (const T& tcks)
@@ -21,7 +22,7 @@ int main()
     float a2 = 9.0f;
 
     for (unsigned int i = 2; i < 20; ++i) {
-        sm::range<float> nticks = {static_cast<float>(i), static_cast<float>(i)};
+        sm::interval<float> nticks = {static_cast<float>(i), static_cast<float>(i)};
         std::deque<float> ticks = mplot::graphing::maketicks (a1, a2, a1, a2, nticks);
         std::cout << "i ";
         print_ticks (ticks);
@@ -31,7 +32,7 @@ int main()
     std::cout << "\n\n";
 
     for (unsigned int i = 3; i < 30; ++i) {
-        sm::range<float> nticks = {static_cast<float>(i-1), static_cast<float>(i+1)};
+        sm::interval<float> nticks = {static_cast<float>(i-1), static_cast<float>(i+1)};
         std::deque<float> ticks = mplot::graphing::maketicks (a1, a2, a1, a2, nticks);
         std::cout << "i+-1 ";
         print_ticks (ticks);
@@ -41,7 +42,7 @@ int main()
     std::cout << "\n\n";
 
     for (unsigned int i = 4; i < 40; ++i) {
-        sm::range<float> nticks = {static_cast<float>(i-1), static_cast<float>(i+1)};
+        sm::interval<float> nticks = {static_cast<float>(i-1), static_cast<float>(i+1)};
         std::deque<float> ticks = mplot::graphing::maketicks (a1, a2, a1, a2, nticks);
         std::cout << "i+-2 ";
         print_ticks (ticks);
@@ -51,7 +52,7 @@ int main()
     std::cout << "\n\n";
 
     for (unsigned int i = 2; i < 20; ++i) {
-        sm::range<float> nticks = { 2, 12 };
+        sm::interval<float> nticks = { 2, 12 };
         float f = 22.0f * static_cast<float>(i);
         std::deque<float> ticks = mplot::graphing::maketicks (a1, a2+f, a1, a2+f, nticks);
         std::cout << "i ";
@@ -62,7 +63,7 @@ int main()
     std::cout << "\n\n";
     for (float l = 1.0f; l < 20.0f; l += 1.0f) {
         for (unsigned int i = 3; i < 20; ++i) {
-            sm::range<float> nticks = {static_cast<float>(i-1), static_cast<float>(i+1)};
+            sm::interval<float> nticks = {static_cast<float>(i-1), static_cast<float>(i+1)};
             std::deque<float> ticks = mplot::graphing::maketicks (a1, l, a1, l, nticks);
             std::cout << nticks << " ticks, data " << a1 << "-" << l << ": ";
             print_ticks (ticks);

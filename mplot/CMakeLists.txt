@@ -5,92 +5,83 @@
 # Header installation (list from ls *.h* -1, then re-ordered into functionality groups)
 install(
   FILES
-  colour.h
-  ColourMap.h
-  ColourMap_Lists.h
-  colourmaps_cet.h
-  colourmaps_crameri.h
-  GridFeatures.h
-  keys.h
+  BoolVisual.cppm
+  CartGridVisual.cppm
+  CMakeLists.txt
+  ColourBarVisual.cppm
+  colour.cppm
+  ColourMap.cppm
+  ColourMap_Lists.cppm
+  colourmaps_cet.cppm
+  colourmaps_crameri.cppm
+  ConeVisual.cppm
+  ConfigVisual.cppm
+  CoordArrows.cppm
+  CurvyTellyVisual.cppm
+  CyclicColourVisual.cppm
+  DatasetStyle.cppm
+  GeodesicVisualCE.cppm
+  GeodesicVisual.cppm
+  graphing.cppm
+  graphstyles.cppm
+  GraphVisual.cppm
+  GratingVisual.cppm
+  GridVisual.cppm
+  HealpixVisual.cppm
+  HexGridVisual.cppm
+  HSVWheelVisual.cppm
+  IcosaVisual.cppm
+  InstancedScatterVisual.cppm
+  keys.cppm
+  LengthscaleVisual.cppm
   lenthe_colormap.hpp
-  loadpng.h
+  loadpng.cppm
   lodepng.h
-  ReadCurves.h
-  tools.h
-  unicode.h
-  version.h
-
-  DatasetStyle.h
-  graphing.h
-  graphstyles.h
-  NavMesh.h
-  TextFeatures.h
-  TextGeometry.h
-
-  VisualCommon.h
-  VisualFont.h
+  mathplot-config.cmake
+  NavMesh.cppm
+  NormalsVisual.cppm
+  PointRowsMeshVisual.cppm
+  PointRowsVisual.cppm
+  PolarVisual.cppm
+  PolygonVisual.cppm
+  QuadsMeshVisual.cppm
+  QuadsVisual.cppm
+  QuiverVisual.cppm
+  ReadCurves.cppm
+  RectangleVisual.cppm
+  RhomboVisual.cppm
+  RingVisual.cppm
+  RodVisual.cppm
+  ScalarVisual.cppm
+  ScatterVisual.cppm
+  SphereVisual.cppm
+  SphericalProjectionVisual.cppm
+  TextFeatures.cppm
+  TextGeometry.cppm
+  tools.cppm
+  TriangleVisual.cppm
+  TriaxesVisual.cppm
+  TriFrameVisual.cppm
+  TxtVisual.cppm
+  unicode.cppm
+  VectorVisual.cppm
+  version.cppm
+  VerticesVisual.cppm
+  VisualCommon.cppm
+  Visual.cppm
+  VisualDataModel.cppm
   VisualDefaultShaders.hpp
-
-  VisualFaceBase.h
+  VisualFaceAsm.cpp
   VisualFaceAsm.hpp
-
-  VisualResourcesBase.h
-  VisualResources.h
-
-  VisualGlfw.h
-
-  VisualBase.h
-  VisualOwnable.h
-  Visual.h
-
-  VisualModelBase.h
-  VisualModel.h
-
-  VisualDataModel.h
-
-  VisualTextModelBase.h
-  VisualTextModel.h
-
-  CartGridVisual.h
-  ColourBarVisual.h
-  ConeVisual.h
-  ConfigVisual.h
-  CoordArrows.h
-  CurvyTellyVisual.h
-  CyclicColourVisual.h
-  GeodesicVisualCE.h
-  GeodesicVisual.h
-  GraphVisual.h
-  GratingVisual.h
-  GridVisual.h
-  HealpixVisual.h
-  HexGridVisual.h
-  HSVWheelVisual.h
-  IcosaVisual.h
-  InstancedScatterVisual.h
-  LengthscaleVisual.h
-  NormalsVisual.h
-  PointRowsMeshVisual.h
-  PointRowsVisual.h
-  PolarVisual.h
-  PolygonVisual.h
-  QuadsMeshVisual.h
-  QuadsVisual.h
-  QuiverVisual.h
-  RectangleVisual.h
-  RhomboVisual.h
-  RingVisual.h
-  RodVisual.h
-  ScatterVisual.h
-  SphereVisual.h
-  SphericalProjectionVisual.h
-  TriangleVisual.h
-  TriaxesVisual.h
-  TriFrameVisual.h
-  TxtVisual.h
-  VectorVisual.h
-  VerticesVisual.h
-  VoronoiVisual.h
+  VisualFace.cppm
+  VisualFont.cppm
+  VisualGlfw.cppm
+  VisualModel.cppm
+  VisualOwnable.cppm
+  VisualResources.cppm
+  VisualTextModel.cppm
+  VoronoiVisual.cppm
+  win_t.cppm
 
   DESTINATION ${CMAKE_INSTALL_PREFIX}/include/mplot
 )

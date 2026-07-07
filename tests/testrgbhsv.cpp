@@ -1,8 +1,9 @@
 #include <iostream>
-#include <sm/vec>
-#include <mplot/ColourMap.h>
 
-int main ()
+import sm.vec;
+import mplot.colourmap;
+
+int main()
 {
     int rtn = 0;
     sm::vec<float, 3> rgb_in = { 1, 0.727f, 0.339f };

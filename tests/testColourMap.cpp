@@ -1,9 +1,9 @@
-#include <limits>
-#include <vector>
-#include <list>
 #include <array>
 #include <iostream>
-#include <mplot/ColourMap.h>
+#include <cstdint>
+
+import sm.vec;
+import mplot.colourmap;
 
 int main ()
 {
@@ -25,7 +25,7 @@ int main ()
 
     mplot::ColourMap<double> cmd(mplot::ColourMapType::Jet);
     c = cmd.convert(0.5);
-    if (c != mid_jet) { --rtn;std::cout << "d fail\n"; }
+    if (c != mid_jet) { --rtn; std::cout << "d fail\n"; }
     std::cout << "(double) Colour: " << c[0] << "," << c[1] << ","<< c[2] << std::endl;
 
     mplot::ColourMap<unsigned char> cmuc(mplot::ColourMapType::Jet);
@@ -41,7 +41,7 @@ int main ()
     // Because 127 is prime, change range to 126 to get exact output suitable for testing
     cmc.range_max = 126;
     c = cmc.convert(63);
-    if (c != mid_jet) { --rtn;std::cout << "c fail\n"; }
+    if (c != mid_jet) { --rtn; std::cout << "c fail\n"; }
     std::cout << "(char) Colour: " << c[0] << "," << c[1] << ","<< c[2] << std::endl;
 
     // Int colour map has range 0-255 by default. Up this to something else
@@ -54,13 +54,13 @@ int main ()
     mplot::ColourMap<unsigned int> cmui(mplot::ColourMapType::Jet);
     cmui.range_max = 10000;
     c = cmui.convert(5000);
-    if (c != mid_jet) { --rtn;std::cout << "ui fail\n"; }
+    if (c != mid_jet) { --rtn; std::cout << "ui fail\n"; }
     std::cout << "(uint) Colour: " << c[0] << "," << c[1] << ","<< c[2] << std::endl;
 
     mplot::ColourMap<short> cms(mplot::ColourMapType::Jet);
     cms.range_max = 1000;
     c = cms.convert(500);
-    if (c != mid_jet) { --rtn;  std::cout << "s fail\n"; }
+    if (c != mid_jet) { --rtn; std::cout << "s fail\n"; }
     std::cout << "(short) Colour: " << c[0] << "," << c[1] << ","<< c[2] << std::endl;
 
     mplot::ColourMap<unsigned short> cmus(mplot::ColourMapType::Jet);
@@ -83,7 +83,7 @@ int main ()
 
     // rgb2hsv tests
     std::array<float, 3> rgb_in1 = { 1.0f, 0.0f, 0.0f };
-    uint32_t rgb_in2 = 0x00aa00;
+    std::uint32_t rgb_in2 = 0x00aa00;
     sm::vec<float> rgb_in3 = { 0.0f, 0.0f, 0.5f };
 
     std::array<float, 3> rgb_out1 = mplot::ColourMap<>::rgb2hsv (rgb_in1);

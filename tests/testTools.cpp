@@ -1,6 +1,9 @@
 // Test a few mplot::tools functions
-#include "mplot/tools.h"
-#include <cstring>
+#include <iostream>
+#include <string>
+#include <vector>
+
+import mplot.tools;
 
 int main()
 {

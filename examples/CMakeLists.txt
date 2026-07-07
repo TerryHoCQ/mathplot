@@ -8,6 +8,7 @@ set(MATHPLOT_EXAMPLES_MODULES
   ${MPLOT_MATHS_CORE_MODULES}
   ${MPLOT_MATHS_VISUALMODEL_MODULES}
   ${MPLOT_VISUALMODEL_MODULES}
+  ${PROJECT_SOURCE_DIR}/mplot/ReadCurves.cppm
   ${PROJECT_SOURCE_DIR}/mplot/compoundray/Visual.cppm
   ${PROJECT_SOURCE_DIR}/json/src/modules/json.cppm
   ${PROJECT_SOURCE_DIR}/maths/sm/config.cppm

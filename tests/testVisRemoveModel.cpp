@@ -1,18 +1,18 @@
 /*
  * Visualize a quiver field
  */
+#include <memory>
 #include <iostream>
-#include <fstream>
 #include <cmath>
-#include <array>
+#include <vector>
+#include <string>
 
-#include <sm/vec>
-#include <sm/scale>
+import sm.vec;
+import sm.scale;
 
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/QuiverVisual.h>
-#include <mplot/ScatterVisual.h>
+import mplot.visual;
+import mplot.quivervisual;
+import mplot.scattervisual;
 
 int main (int argc, char** argv)
 {
@@ -51,7 +51,7 @@ int main (int argc, char** argv)
         quivs.push_back ({0.3,  -0.1,  0});
 
         auto qvp = std::make_unique<mplot::QuiverVisual<float>> (&coords, offset, &quivs, mplot::ColourMapType::Cividis);
-        v.bindmodel (qvp);
+        qvp->set_parent (v.get_id());
         qvp->finalize();
         unsigned int visId = v.addVisualModelId (qvp);
         std::cout << "Added Visual with visId " << visId << std::endl;
@@ -69,7 +69,7 @@ int main (int argc, char** argv)
         std::vector<float> data = {0.1, 0.2, 0.5, 0.6, 0.95};
 
         auto sv = std::make_unique<mplot::ScatterVisual<float>> (offset);
-        v.bindmodel (sv);
+        sv->set_parent (v.get_id());
         sv->setDataCoords (&points);
         sv->setScalarData (&data);
         sv->radiusFixed = 0.03f;
@@ -82,7 +82,7 @@ int main (int argc, char** argv)
         // 10 seconds of viewing the quivers
         if (holdVis == true) {
             for (size_t ti = 0; ti < (size_t)std::round(10.0/0.018); ++ti) {
-                glfwWaitEventsTimeout(0.018);
+                v.waitevents (0.018);
                 v.render();
             }
         }
@@ -93,7 +93,7 @@ int main (int argc, char** argv)
         // 10 seconds of viewing the remaining scatter plot
         if (holdVis == true) {
             for (size_t ti = 0; ti < (size_t)std::round(10.0/0.018); ++ti) {
-                glfwWaitEventsTimeout(0.018);
+                v.waitevents (0.018);
                 v.render();
             }
         }
@@ -102,12 +102,7 @@ int main (int argc, char** argv)
         v.removeVisualModel (visPtr);
 
         v.render();
-        if (holdVis == true) {
-            while (v.readyToFinish() == false) {
-                glfwWaitEventsTimeout (0.018);
-                v.render();
-            }
-        }
+        if (holdVis == true) { v.keepOpen(); }
 
     } catch (const std::exception& e) {
         std::cerr << "Caught exception: " << e.what() << std::endl;

@@ -1,6 +1,10 @@
-#include <sm/vec>
-#include <sm/vvec>
-#include <mplot/loadpng.h>
+#include <iostream>
+#include <string>
+#include <stdexcept>
+
+import sm.vec;
+import sm.vvec;
+import mplot.loadpng;
 
 int main()
 {

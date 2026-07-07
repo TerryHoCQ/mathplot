@@ -1,14 +1,12 @@
 #include <iostream>
-
-#include <utility>
 #include <vector>
-#include <fstream>
+#include <stdexcept>
 #include <cmath>
 
-#include <sm/bezcoord>
-#include <sm/bezcurvepath>
+import sm.bezcoord;
+import sm.bezcurvepath;
 
-#include <mplot/ReadCurves.h>
+import mplot.readcurves;
 
 int main()
 {
@@ -16,10 +14,12 @@ int main()
 
     try {
         mplot::ReadCurves r("../../tests/trial.svg");
+        std::cout << "Made ReadCurves object\n";
         sm::bezcurvepath<float> bcp = r.getCorticalPath();
-        bcp.computePoints (0.01f);
-        std::vector<sm::bezcoord<float>> pts = bcp.getPoints();
-        std::cout << "Got " << pts.size() << " points with getPoints()" << std::endl;
+        std::cout << "got cortical path\n";
+        bcp.compute_points (0.01f);
+        std::vector<sm::bezcoord<float>> pts = bcp.get_points();
+        std::cout << "Got " << pts.size() << " points with get_points()" << std::endl;
         auto i = pts.begin();
         while (i != pts.end()) {
             std::cout << *i << std::endl;
