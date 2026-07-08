@@ -92,8 +92,8 @@ export namespace mplot
             // VisualResources provides font management. Ensure it exists in memory.
             mplot::VisualResources<glver>::i().create();
             // Connect the static set/releaseContext calls from VisualGlfw to the VisualResources calls
-            mplot::VisualResources<glver>::i().setContextDispatch = mplot::VisualGlfw<glver>::i().setContext;
-            mplot::VisualResources<glver>::i().releaseContextDispatch = mplot::VisualGlfw<glver>::i().releaseContext;
+            mplot::VisualResources<glver>::i().setContext_implementation = mplot::VisualGlfw<glver>::i().setContext;
+            mplot::VisualResources<glver>::i().releaseContext_implementation = mplot::VisualGlfw<glver>::i().releaseContext;
             // Set up the window that will present the OpenGL graphics.  This has to
             // happen BEFORE the call to VisualResources::freetype_init()
             this->init_window();

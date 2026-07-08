@@ -238,17 +238,29 @@ export namespace mplot
             return this->visual_keyed_shaderprogs[visual_id].gprog;
         }
 
+        /*!
+         * Set the window context. This has to be window-system agnostic here, so we have the
+         * std::function setContext_implementation that (if you are using GLFW windows) is linked at
+         * runtime to VisualGlfw::setContext(GLFWwindow*)
+         */
         void setContext (const std::uint32_t visual_id)
         {
             if (visual_id == std::numeric_limits<std::uint32_t>::max()) {
                 throw std::runtime_error ("VisualResources::setContext(): visual_id is unset");
             }
-            this->setContextDispatch (this->visual_keyed_windows[visual_id]);
+            if (this->setContext_implementation) {
+                this->setContext_implementation (this->visual_keyed_windows[visual_id]);
+            }
         }
-        std::function<void(mplot::win_t*)> setContextDispatch;    // For GLFW, should call VisualGlfw::setContext()
 
-        void releaseContext() { this->releaseContextDispatch(); }
-        std::function<void()> releaseContextDispatch;             // For GLFW, should call VisualGlfw::releaseContext()
+        //! setContext function call object
+        std::function<void(mplot::win_t*)> setContext_implementation;
+
+        //! Window-system agnostic releaseContext call (see also setContext)
+        void releaseContext() { if (this->releaseContext_implementation) { this->releaseContext_implementation(); } }
+
+        //! releaseContext function call object
+        std::function<void()> releaseContext_implementation;
 
         bool get_instanced_needs_update (const std::uint32_t visual_id)
         {
