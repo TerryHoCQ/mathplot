@@ -102,6 +102,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMPLOT_FONTS_DIR=\"\\\"${PROJECT_SOURCE
 # example, if you're compiling with mathplot in a subdirectory, you may need:
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMPLOT_FONTS_DIR=\"\\\"${PROJECT_SOURCE_DIR}/mathplot/fonts\\\"\"")
 
+
 # Lib finding
 
 set(OpenGL_GL_PREFERENCE "GLVND") # Following `cmake --help-policy CMP0072`
