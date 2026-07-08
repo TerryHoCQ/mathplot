@@ -2,16 +2,10 @@
 
 ![A banner image mathplot VisualModels](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/banner2.png?raw=true)
 
-![cmake ubuntu 24 gcc 11 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-ubu24-gcc12.yml/badge.svg)
-![cmake ubuntu 24 default (gcc 13) build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-ubuntu-2404.yml/badge.svg)
-![cmake ubuntu 24 gcc 14 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-ubu24-gcc14.yml/badge.svg)
-![cmake ubuntu 24 clang 16 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-ubu24-clang16.yml/badge.svg)
-![cmake ubuntu 24 clang 17 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-ubu24-clang16.yml/badge.svg)
-![cmake ubuntu 24 clang 18 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-ubu24-clang16.yml/badge.svg)
-![cmake ubuntu 22 default (gcc 11?) build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-ubuntu-2204.yml/badge.svg)
-![cmake mac 14 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-mac-14.yml/badge.svg)
-![cmake mac 15 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-mac-15.yml/badge.svg)
 ![cmake windows 22 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-windows-2022.yml/badge.svg)
+![cmake clang 20 build test](https://github.com/sebsjames/mathplot/actions/workflows/ubuntu-cmakeninja-clang20.yml/badge.svg)
+![cmake clang 22 build test](https://github.com/sebsjames/mathplot/actions/workflows/ubuntu-cmakeninja-clang22.yml/badge.svg)
+![cmake gcc 16 build test](https://github.com/sebsjames/mathplot/actions/workflows/ubuntu-cmakeninja-gcc16.yml/badge.svg)
 
 [![Mentioned in Awesome C++](https://awesome.re/mentioned-badge.svg)](https://github.com/myd7349/awesome-cpp?tab=readme-ov-file#data-visualization)
 
