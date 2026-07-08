@@ -1,10 +1,10 @@
 /*!
  * \file
  *
- * Declares a VisualResource class to hold the information about Freetype and any other
- * one-per-program resources.
- *
- * Importantly, holds some OpenGL state, especially the GL function pointers for each window.
+ * Declares a VisualResource class to hold the information about Freetype which is a one-per-program
+ * resource. Also holds the Glad contexts - the OpenGL function pointers for each window. Windows
+ * are referred to as mplot::win_t; the identity of win_t (which might be GLFWwindow or
+ * QtOpenGLWidget) is abstact in this file.
  *
  * \author Seb James
  * \date November 2020
@@ -38,8 +38,7 @@ import sm.vec;
 
 export namespace mplot
 {
-    //! Singleton resource class for mplot::Visual scenes. (base class, with no GL calls, and no
-    //! instance function)
+    //! Singleton resource class for mplot::Visual scenes.
     template <std::int32_t glver>
     class VisualResources
     {

@@ -1,7 +1,7 @@
 /*!
  * \file
  *
- * Singleton to manage init/deinit of GLFW3
+ * Singleton to manage init/deinit and context switching for GLFW3
  *
  * \author Seb James
  * \date March 2025
@@ -23,7 +23,7 @@ import mplot.gl.version;
 
 export namespace mplot
 {
-    //! Singleton resource class for mplot::Visual scenes.
+    //! Singleton resource class for mplot::Visual scenes providing GLFW3 windowing functionality.
     template<std::int32_t glver>
     class VisualGlfw
     {
