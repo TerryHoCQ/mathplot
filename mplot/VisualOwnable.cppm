@@ -17,7 +17,6 @@
 module;
 
 #include <cstdint>
-#include <fstream>
 #include <string>
 #include <array>
 #include <vector>
@@ -37,6 +36,8 @@ module;
 #include <mplot/gl/loadshaders_mx.h>
 
 #include <mplot/VisualDefaultShaders.hpp>
+
+#include <fstream>
 
 export module mplot.visualownable;
 
@@ -840,9 +841,9 @@ export namespace mplot
         /*
          * User-settable projection values for the near clipping distance, the far clipping distance
          */
-
         float zNear = 0.001f;
         float zFar = 300.0f;
+
         /*
          * User settable field of view of the camera in degrees. Note that the field of view is
          * measured from the top of the field to the bottom of the field (rather than from the left
