@@ -6,7 +6,7 @@ export struct Resources
 {
 private:
     Resources(){}
-    ~Resources();
+    ~Resources(){};
 public:
     void f() { if (f_impl) { f_impl(); } }
     std::function<void()> f_impl;
