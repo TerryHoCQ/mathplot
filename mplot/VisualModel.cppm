@@ -926,7 +926,7 @@ export namespace mplot
         // The hide attribute accessors
         void setHide (const bool _h = true) { this->flags.set (vm_bools::hide, _h); }
         void toggleHide() { this->flags.flip (vm_bools::hide); }
-        float hidden() const { return this->flags.test (vm_bools::hide); }
+        bool hidden() const { return this->flags.test (vm_bools::hide); }
 
         /*
          * Methods used by Visual::savegltf()
