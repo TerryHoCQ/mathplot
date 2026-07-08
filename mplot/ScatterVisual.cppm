@@ -10,6 +10,7 @@ module;
 #include <iostream>
 #include <vector>
 #include <array>
+#include <string>
 
 export module mplot.scattervisual;
 
