@@ -1,5 +1,9 @@
 // See also VisualFaceAsm.cpp
 
+#ifdef _MSC_VER
+# include <mplot/fonts/verafonts.h> // Includes vera fonts AND DejaVu fonts.
+#endif
+
 // These external pointers are set up by the inline assembly above
 #ifndef _MSC_VER
 extern const char __start_verabd_ttf[];

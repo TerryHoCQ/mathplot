@@ -68,7 +68,7 @@ asm("\t.global ___start_dvsansbi_ttf\n\t.global ___stop_dvsansbi_ttf\n___start_d
 
 #elif defined _MSC_VER
 
-# include <mplot/fonts/verafonts.h> // Includes vera fonts AND DejaVu fonts.
+//# include <mplot/fonts/verafonts.h> // Includes vera fonts AND DejaVu fonts. // Gone to VisualFaceAsm.hpp
 # include <cstdlib>
 
 #elif defined _mplot_WIN__INCBIN // Define this only for parsing this file with the incbin executable to create verafonts.h
