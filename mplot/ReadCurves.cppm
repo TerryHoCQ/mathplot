@@ -23,13 +23,12 @@ module;
 #include <cstdlib>
 #include <cstring>
 
-#include <rapidxml/rapidxml.hpp>
-
 export module mplot.readcurves;
 
 import mplot.tools;
 export import sm.bezcurvepath;
 import sm.bezcurve;
+import rapidxml;
 
 export namespace mplot
 {

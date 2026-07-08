@@ -123,6 +123,7 @@ macro(setup_module_variables_for_mathplot base_directory)
 
   set(MPLOT_READCURVES_MODULES
     ${base_directory}/mplot/tools.cppm
+    ${base_directory}/include/rapidxml-1.13/rapidxml/rapidxml.cppm
     ${base_directory}/mplot/ReadCurves.cppm
   )
 
