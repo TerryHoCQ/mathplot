@@ -21,7 +21,9 @@ add_library(mathplot_tests STATIC)
 target_sources(mathplot_tests PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
   FILES ${MATHPLOT_TESTS_MODULES}
 )
-target_link_libraries(mathplot_tests )
+if(OpenMP_CXX_FOUND)
+  target_link_libraries(mathplot_tests OpenMP::OpenMP_CXX)
+endif()
 
 # Test reading trial.svg
 set(TARGETTEST3 testreadcurves)
