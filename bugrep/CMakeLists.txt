@@ -33,3 +33,11 @@ list(REMOVE_DUPLICATES HEXGRIDBUG_MODULES)
 add_executable(hexgridbug hexgridbug.cpp)
 target_sources(hexgridbug PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR} FILES ${HEXGRIDBUG_MODULES})
 target_link_libraries(hexgridbug OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
+
+add_executable(124888_visual 124888_main.cpp)
+target_sources(124888_visual PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES
+  ${PROJECT_SOURCE_DIR}/bugrep/124888_resources.cpp
+  ${PROJECT_SOURCE_DIR}/bugrep/124888_specific.cpp
+  ${PROJECT_SOURCE_DIR}/bugrep/124888_visual.cpp
+)
