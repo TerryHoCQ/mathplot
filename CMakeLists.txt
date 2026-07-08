@@ -78,21 +78,8 @@ else()
   set(ARRAY_LITERAL_TEMPL_ARGS_ARE_OK 1)
 endif()
 
-# Note that we require OpenMP version 3 or above for ability to use
-# unsigned integral types in parallel for loops. At time of writing,
-# Visual Studio 2019 offers OpenMP 2 by default and 3 with the special
-# switch -openmp:llvm. I don't know how to get cmake to use the
-# special version, so OpenMP will not work at present on
-# Windows/VS2019. But then, you wouldn't use Windows for serious
-# numerical work anyway.
+# OpenMP only used for the fps targets
 find_package(OpenMP 3)
-if(OpenMP_CXX_FOUND)
-  message(STATUS "Found OpenMP version ${OpenMP_C_VERSION}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-  if(APPLE)
-    # FIXME: Check the OpenMP root environment variable, which is required on some Mac versions
-  endif()
-endif()
 
 # The code in VisualFace which builds the Vera family truetype fonts
 # into the program binary needs to have a define of MPLOT_FONTS_DIR,
@@ -101,7 +88,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMPLOT_FONTS_DIR=\"\\\"${PROJECT_SOURCE
 # Note that in client code you may have to do something similar. For
 # example, if you're compiling with mathplot in a subdirectory, you may need:
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMPLOT_FONTS_DIR=\"\\\"${PROJECT_SOURCE_DIR}/mathplot/fonts\\\"\"")
-
 
 # Lib finding
 
