@@ -17,6 +17,7 @@
 module;
 
 #include <cstdint>
+#include <fstream>
 #include <string>
 #include <array>
 #include <vector>
@@ -36,8 +37,6 @@ module;
 #include <mplot/gl/loadshaders_mx.h>
 
 #include <mplot/VisualDefaultShaders.hpp>
-
-#include <fstream>
 
 export module mplot.visualownable;
 
@@ -1065,8 +1064,7 @@ export namespace mplot
         //! Save all the VisualModels in this Visual out to a GLTF format file
         virtual void savegltf (const std::string& gltf_file)
         {
-            std::ofstream fout;
-            fout.open (gltf_file, std::ios::out|std::ios::trunc);
+            std::ofstream fout (gltf_file, std::ios::out|std::ios::trunc);
             if (!fout.is_open()) { throw std::runtime_error ("Visual::savegltf(): Failed to open file for writing"); }
             fout << "{\n  \"scenes\" : [ { \"nodes\" : [ ";
             for (std::size_t vmi = 0u; vmi < this->vm.size(); ++vmi) {
