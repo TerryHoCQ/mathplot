@@ -20,5 +20,5 @@ jobs:
     with:
       RUNNER_IMAGE: macos-15
       BUILD_TYPE: Release
-      CC: clang
-      CXX: clang++
+      CC: /usr/local/opt/llvm/bin/clang
+      CXX: /usr/local/opt/llvm/bin/clang++
