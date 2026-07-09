@@ -42,16 +42,16 @@ mplot::Visual v(1024, 768, "Example");
 ```
 The new VisualModel (a GraphVisual) must be created with `std::make_unique`
 ```c++
-auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({0,0,0}));
+auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>{0,0,0});
 ```
-Once we have the `unique_ptr`, we have to call the essential bindmodel function to wire up the callbacks:
+Once we have the `unique_ptr`, we have to call the essential `set_parent` function to wire up the callbacks. set_parent records the identifier (a simple uint32_t value) of the VisualModel's parent Visual.
 ```c++
-v.bindmodel (gv);
+gv->set_parent (v.get_id());
 ```
-After bindmodel, programs will then make any additional function calls to set up the object. Here we might set the data and change what kind of axes should be drawn.
+After set_parent, programs will then make any additional function calls to set up the object. Here we might set the data and change what kind of axes should be drawn.
 
 After set up, the `VisualModel::finalize()` function is the last piece of boilerplate code.
-`VisualModel::finalize` is as essential as `bindmodel`. `finalize`
+`VisualModel::finalize` is as essential as `set_parent`. `finalize`
 calls the virtual function `VisualModel::initializeVertices` which is
 defined as empty (rather than abstract) in `VisualModel`, but must be
 overridden in derived classes. The job of `initializeVertices` is to
@@ -65,33 +65,13 @@ Lastly, we transfer memory ownership to the parent Visual with `Visual::addVisua
 ```c++
 mplot::GraphVisual<float>* gv_ptr = v.addVisualModel (gv);
 ```
-In the example, `Visual::bindmodel` is used to set up these callback functions in VisualModel:
-
-```c++
-template <int glver = mplot::gl::version_4_1>
-class VisualModel
-{
-    ...
-    //! Get all shader progs
-    std::function<mplot::visgl::visual_shaderprogs(mplot::Visual<glver>*)> get_shaderprogs;
-    //! Get the graphics shader prog id
-    std::function<GLuint(mplot::Visual<glver>*)> get_gprog;
-    //! Get the text shader prog id
-    std::function<GLuint(mplot::Visual<glver>*)> get_tprog;
-    //! Set OpenGL context. Should call parentVis->setContext()
-    std::function<void(mplot::Visual<glver>*)> setContext;
-    ...
-};
-```
-
-Three of the functions ensure that the `VisualModel` can get access to the OpenGL shader program IDs in a way that avoids a circular header dependency between Visual.h and VisualModel.h. `VisualModel::render()` needs access to the shader information. The last function allows `VisualModel` to set the correct OpenGL context in any of its function calls that use the OpenGL library code.
 
 # Initializing Vertices
 
 `initializeVertices` implementations will fill these `vector` VisualModel members:
 ```c++
 //! CPU-side data for indices
-std::vector<GLuint> indices;
+std::vector<std::uint32_t> indices;
 //! CPU-side data for vertex positions
 std::vector<float> vertexPositions;
 //! CPU-side data for vertex normals
@@ -107,9 +87,9 @@ the vectors into the OpenGL context, using the OpenGL attributes
 
 ```c++
 //! The OpenGL Vertex Array Object
-GLuint vao;
+std::uint32_t vao;
 //! Vertex Buffer Objects stored in an array
-std::unique_ptr<GLuint[]> vbos;
+std::unique_ptr<std::uint32_t[]> vbos;
 ```
 
 Each triplet of elements in vertexPositions defines a coordinate in

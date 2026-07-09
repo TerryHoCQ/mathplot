@@ -2,10 +2,11 @@
 
 ![A banner image mathplot VisualModels](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/banner2.png?raw=true)
 
-![cmake windows 25 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-windows-2025.yml/badge.svg)
-![cmake clang 20 build test](https://github.com/sebsjames/mathplot/actions/workflows/ubuntu-cmakeninja-clang20.yml/badge.svg)
-![cmake clang 22 build test](https://github.com/sebsjames/mathplot/actions/workflows/ubuntu-cmakeninja-clang22.yml/badge.svg)
-![cmake gcc 16 build test](https://github.com/sebsjames/mathplot/actions/workflows/ubuntu-cmakeninja-gcc16.yml/badge.svg)
+![Windows 25 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-windows-2025.yml/badge.svg)
+![Mac OS clang20 build test](https://github.com/sebsjames/mathplot/actions/workflows/mac-cmakeninja-clang20.yml/badge.svg)
+![Ubuntu clang 20 build test](https://github.com/sebsjames/mathplot/actions/workflows/ubuntu-cmakeninja-clang20.yml/badge.svg)
+![Ubuntu clang 22 build test](https://github.com/sebsjames/mathplot/actions/workflows/ubuntu-cmakeninja-clang22.yml/badge.svg)
+![Ubuntu gcc 16 build test](https://github.com/sebsjames/mathplot/actions/workflows/ubuntu-cmakeninja-gcc16.yml/badge.svg)
 
 [![Mentioned in Awesome C++](https://awesome.re/mentioned-badge.svg)](https://github.com/myd7349/awesome-cpp?tab=readme-ov-file#data-visualization)
 

@@ -1,4 +1,4 @@
-name: Mac OS clang 20
+name: MacOS/clang22
 on:
   push:
     branches: [ "main" ]
