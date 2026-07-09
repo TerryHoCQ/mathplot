@@ -33,13 +33,14 @@ jobs:
 
     - name: Install GitHub CLI
       run: |
+        brew trust aws/tap
         brew update
         brew install gh
 
     - name: Install dependencies
       run: |
-        brew update
         brew trust aws/tap
+        brew update
         brew install glfw hdf5 llvm
 
     - name: Configure CMake
