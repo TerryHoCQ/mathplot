@@ -1064,6 +1064,9 @@ export namespace mplot
         //! Save all the VisualModels in this Visual out to a GLTF format file
         virtual void savegltf (const std::string& gltf_file)
         {
+#ifdef _MSC_VER // July 2026: VisualStudio throws an error with this std::ofstream. A bug in the compiler I think.
+            std::cout << "Cannot write glTF file " << gltf_file << " on Windows due to a VisualStudio bug.\n";
+#else
             std::ofstream fout (gltf_file, std::ios::out|std::ios::trunc);
             if (!fout.is_open()) { throw std::runtime_error ("Visual::savegltf(): Failed to open file for writing"); }
             fout << "{\n  \"scenes\" : [ { \"nodes\" : [ ";
@@ -1200,6 +1203,7 @@ export namespace mplot
                  << "  }\n";
             fout << "}\n";
             fout.close();
+#endif
         }
 
         void set_winsize (const std::int32_t _w, const std::int32_t _h) { this->window_w = _w; this->window_h = _h; }
