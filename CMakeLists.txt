@@ -45,13 +45,16 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -std=c++20 -xHOST -O3")
   else() # GCC or Clang
     if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
-      if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 15.3)
-        message("-- GCC version OK. 16/master compiles the examples; version 15.3+ is also expected to work")
+      if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16.1)
+        message("-- GCC version OK. (require 16.1+)")
       else()
-        message(WARNING "GCC version 16/master or 15.3+ is required to compile this project. Alternatively, try clang-20+")
+        message(WARNING "GCC version 16.1+ is required to compile this project. Alternatively, try clang-20+")
       endif()
     endif()
-    set(COMPREHENSIVE_WARNING_FLAGS "-Wall -Wextra -Wpedantic -pedantic-errors -Werror -Wfatal-errors -Wno-psabi")
+    # Warnings we suppress:
+    # -Wpsabi -- Reason forgotten
+    # -Wunknown-pragmas -- because sm::grid has some '#pragma omp' accelerated methods that we don't need in these examples
+    set(COMPREHENSIVE_WARNING_FLAGS "-Wall -Wextra -Wpedantic -pedantic-errors -Werror -Wfatal-errors -Wno-psabi -Wno-unknown-pragmas")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g ${COMPREHENSIVE_WARNING_FLAGS} -O3")
     if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
       # Make it possible to compile complex constexpr functions (gcc only)
