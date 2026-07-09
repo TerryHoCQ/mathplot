@@ -13,7 +13,7 @@
 
 Mathplot is a library for drawing **3D data visualization** objects called `VisualModels`.
 
-Mathplot is compatible with **Linux** (including **Raspberry Pi**), **Mac OS** and **Windows**.
+Mathplot is compatible with **Linux** (including **Raspberry Pi**), **Mac OS** and **Windows**, *but* compiler support is still catching up.  On Linux or Mac, you need to use LLVM/clang version 20 or higher; on Windows, VisualStudio seems to have a bug as it will not compile the code at present.
 
 You'll find all of the **library code** in the [**mplot**](https://github.com/sebsjames/mathplot/tree/main/mplot) directory and you can find **example code and screenshots** [here](https://github.com/sebsjames/mathplot/tree/main/examples). There is also a **template project** [that uses mathplot](https://github.com/sebsjames/mathplot_template) to help you incorporate the library into your own work.
 
