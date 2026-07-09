@@ -10,7 +10,8 @@
 #include <iostream>
 #include <string>
 
-#include "sm/config"
+import sm.config;
+import nlohmann.json;
 
 int main()
 {
@@ -38,15 +39,15 @@ int main()
 
         // Single values are easy to read. The first arg matches the name in the example
         // JSON, the second arg is the default to return if "testbool" is absent.
-        const bool testbool = config.getBool ("testbool", false);
+        const bool testbool = config.get<bool> ("testbool", false);
         std::cout << "\ntestbool from JSON: " << (testbool ? "true" : "false") << " (expect: true)\n";
 
         // Get an integer from the config, defaulting to 3 if there's no "testint":
-        const int testint = config.getInt ("testint", 3);
+        const int testint = config.get<int> ("testint", 3);
         std::cout << "\ntestint from JSON: " << testint << " (expect: 27)\n";
 
         // Get floating point numbers with getFloat() or getDouble():
-        const float testfloat = config.getFloat ("testfloat", 9.8f);
+        const float testfloat = config.get<float> ("testfloat", 9.8f);
         std::cout << "\ntestfloat from JSON: " << testfloat << " (expect: 7.63)\n";
 
         // A simple array of values:
@@ -67,12 +68,6 @@ int main()
             float x = v["x"];
             double y = v["y"];
             std::cout << "Array index " << j << ":  " << desc << ": (x=" << x << ", y=" << y << ")\n";
-        }
-
-        // Another way to iterate:
-        for (auto& [key, obj] : testarray_of_objects.items()) {
-            // Each obj is a json of objects
-            std::cout << "Array index " << key << ":  " << std::string(obj["desc"]) << ": (x=" << obj["x"] << ", y=" << obj["y"] << ")\n";
         }
 
     } else {

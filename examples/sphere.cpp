@@ -1,16 +1,13 @@
 /*
  * Visualize a Sphere
  */
+#include <memory>
 #include <iostream>
 #include <stdexcept>
-#include <string>
-#include <sstream>
+#include <cmath>
 
-#include <sm/vec>
-
-#include <mplot/Visual.h>
-#include <mplot/VisualModel.h>
-#include <mplot/colour.h>
+import mplot.visual;
+import mplot.visualmodel;
 
 // Quick visual that simply draws spheres
 template <int glver = mplot::gl::version_4_1>
@@ -33,25 +30,15 @@ public:
 
 int main()
 {
-    int rtn = 0;
-
     mplot::Visual v(1024, 768, "Sphere primitives");
     v.lightingEffects (true);
 
-    try {
-        sm::vec<float, 3> offset = { 0.0, 0.0, 0.0 };
+    sm::vec<float, 3> offset = { 0.0f, 0.0f, 0.0f };
 
-        auto pvm = std::make_unique<PrimitiveVisual<>> (offset);
-        v.bindmodel (pvm);
-        pvm->finalize();
-        v.addVisualModel (pvm);
+    auto pvm = std::make_unique<PrimitiveVisual<>> (offset);
+    pvm->set_parent (v.get_id());
+    pvm->finalize();
+    v.addVisualModel (pvm);
 
-        v.keepOpen();
-
-    } catch (const std::exception& e) {
-        std::cerr << "Caught exception: " << e.what() << std::endl;
-        rtn = -1;
-    }
-
-    return rtn;
+    v.keepOpen();
 }

@@ -2,17 +2,17 @@
  * Apply an inverse Mercator projection to a hexgrid to place it on a sphere. Then visualize.
  */
 
-#include <iostream>
+#include <memory>
 #include <cmath>
 
-#include <sm/mathconst>
-#include <sm/scale>
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/hexgrid>
+import sm.mathconst;
+import sm.scale;
+import sm.vec;
+import sm.hexgrid;
 
-#include <mplot/Visual.h>
-#include <mplot/ScatterVisual.h>
+import mplot.visual;
+import mplot.scattervisual;
+import mplot.colourmap;
 
 int main()
 {
@@ -33,7 +33,7 @@ int main()
     constexpr float hex_d = 0.1f;
     constexpr float hex_span = 3.0f * mc::two_pi * r_sph;
     sm::hexgrid hg(hex_d, hex_span, 0.0f);
-    hg.setCircularBoundary(0.6f * mc::pi * r_sph);
+    hg.set_circular_boundary(0.6f * mc::pi * r_sph);
 
     // hg has d_x and d_y. Can make up a new container of 3D locations for each hex.
     sm::vvec<sm::vec<float, 3>> sphere_coords (hg.num());
@@ -53,7 +53,7 @@ int main()
     data.linspace (0, 1, hg.num());
 
     auto sv = std::make_unique<mplot::ScatterVisual<float>> (offset);
-    v.bindmodel (sv);
+    sv->set_parent (v.get_id());
     sv->setDataCoords (&sphere_coords);
     sv->setScalarData (&data);
     sv->radiusFixed = 0.005f;

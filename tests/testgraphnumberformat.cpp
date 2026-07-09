@@ -1,13 +1,6 @@
 #include <iostream>
 
-// To test non-format code:
-#ifdef FORCE_NON_FORMAT
-# ifdef MPLOT_HAVE_STD_FORMAT
-#  undef MPLOT_HAVE_STD_FORMAT
-# endif
-#endif
-
-#include <mplot/graphing.h>
+import mplot.graphing;
 
 int main()
 {

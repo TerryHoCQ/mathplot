@@ -2,16 +2,18 @@
  * Use cartgridvisuals to illustrate use of ColourMapType::HSV colourmap.
  */
 
+#include <memory>
 #include <iostream>
+#include <array>
 #include <vector>
+#include <string>
 #include <cmath>
 
-#include <sm/mathconst>
-#include <sm/vec>
+import sm.vec;
 
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/HSVWheelVisual.h>
+import mplot.visual;
+import mplot.colourmap;
+import mplot.hsvwheelvisual;
 
 constexpr mplot::ColourMapType disctype = mplot::ColourMapType::DiscSixWhite; // or mplot::ColourMapType::HSV
 
@@ -94,7 +96,7 @@ int main()
     // Grid 1
     float hue_rotn = 0.0f;
     auto hsv_vis = std::make_unique<SquareGridVisual>(offset, hue_rotn);
-    v.bindmodel (hsv_vis);
+    hsv_vis->set_parent (v.get_id());
     //
     std::string lbl("hue rotation = 0");
     hsv_vis->addLabel (lbl, sm::vec<float>({0,-1,0}), tf);
@@ -108,7 +110,7 @@ int main()
     woffset[0] += 5.5f;
     woffset[1] -= 6.0f;
     auto hsvw_vis = std::make_unique<mplot::HSVWheelVisual<float>>(woffset);
-    v.bindmodel (hsvw_vis);
+    hsvw_vis->set_parent (v.get_id());
     hsvw_vis->setColour (mplot::colour::white);
     hsvw_vis->radius = 3.5f;
     hsvw_vis->tf.fontsize = 0.4f;
@@ -120,7 +122,7 @@ int main()
     offset[0] = -14.0f;
     hue_rotn = -sm::mathconst<float>::pi_over_2;
     auto hsv_vis2 = std::make_unique<SquareGridVisual>(offset, hue_rotn);
-    v.bindmodel (hsv_vis2);
+    hsv_vis2->set_parent (v.get_id());
     //
     namespace uc = mplot::unicode;
     std::string lbl2("hue rotation = ");
@@ -135,7 +137,7 @@ int main()
     woffset[0] += 5.5f;
     woffset[1] -= 6.0f;
     hsvw_vis = std::make_unique<mplot::HSVWheelVisual<float>>(woffset);
-    v.bindmodel (hsvw_vis);
+    hsvw_vis->set_parent (v.get_id());
     hsvw_vis->setFrameColour (mplot::colour::teal);
     hsvw_vis->setTextColour (mplot::colour::white);
     hsvw_vis->framelinewidth = 0.1f;
@@ -150,7 +152,7 @@ int main()
     offset[0] = 14.0f;
     hue_rotn = 0.0f;
     auto hsv_vis3 = std::make_unique<SquareGridVisual>(offset, hue_rotn, true);
-    v.bindmodel (hsv_vis3);
+    hsv_vis3->set_parent (v.get_id());
     //
     std::string lbl3("hue rotation = 0; direction reversed");
     hsv_vis3->addLabel (lbl3, sm::vec<float>({0,-1,0}), tf);
@@ -162,7 +164,7 @@ int main()
     woffset[0] += 5.5f;
     woffset[1] -= 6.0f;
     hsvw_vis = std::make_unique<mplot::HSVWheelVisual<float>>(woffset);
-    v.bindmodel (hsvw_vis);
+    hsvw_vis->set_parent (v.get_id());
     hsvw_vis->setColour (mplot::colour::white);
     hsvw_vis->labels = {"Fwds", "FL", "Left", "BL", "Back", "BR", "Right", "FR"};
     hsvw_vis->framelinewidth = 0.2f;

@@ -1,7 +1,8 @@
-#include <sm/vec>
-#include <mplot/Visual.h>
-#include <mplot/RhomboVisual.h>
-#include <mplot/ColourMap.h>
+#include <memory>
+
+import mplot.colourmap;
+import mplot.visual;
+import mplot.rhombovisual;
 
 int main()
 {
@@ -20,37 +21,37 @@ int main()
 
     offset = { -2, 0, 0.05 };
     auto rv = std::make_unique<mplot::RhomboVisual<>> (offset, e1, e2, e3, cmap.convert(1.0f));
-    v.bindmodel (rv);
+    rv->set_parent (v.get_id());
     rv->finalize();
     v.addVisualModel (rv);
 
     offset = { 2, 0, -1.7 };
     auto rv2 = std::make_unique<mplot::RhomboVisual<>> (offset, e1, e2, e3, cmap.convert(0.5f));
-    v.bindmodel (rv2);
+    rv2->set_parent (v.get_id());
     rv2->finalize();
     v.addVisualModel (rv2);
 
     offset = { 0, 2, 0.15 };
     auto rv3 = std::make_unique<mplot::RhomboVisual<>> (offset, e1, e2, e3, cmap.convert(0.3333f));
-    v.bindmodel (rv3);
+    rv3->set_parent (v.get_id());
     rv3->finalize();
     v.addVisualModel (rv3);
 
     offset = { 2, 2, 0.5 };
     auto rv4 = std::make_unique<mplot::RhomboVisual<>> (offset, e1, e2, e3, cmap.convert(0.25f));
-    v.bindmodel (rv4);
+    rv4->set_parent (v.get_id());
     rv4->finalize();
     v.addVisualModel (rv4);
 
     offset = { 0, -2.2, 0.9 };
     auto rv5 = std::make_unique<mplot::RhomboVisual<>> (offset, e1, e2, e3, cmap.convert(0.2f));
-    v.bindmodel (rv5);
+    rv5->set_parent (v.get_id());
     rv5->finalize();
     v.addVisualModel (rv5);
 
     offset = { 0, -1.8, 1.7 };
     auto rv6 = std::make_unique<mplot::RhomboVisual<>> (offset, e1, e2, e3, cmap.convert(0.1f));
-    v.bindmodel (rv6);
+    rv6->set_parent (v.get_id());
     rv6->finalize();
     v.addVisualModel (rv6);
     v.render();

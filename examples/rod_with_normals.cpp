@@ -1,6 +1,7 @@
 /*
  * Visualize a Rod
  */
+#include <memory>
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -8,12 +9,10 @@
 #include <stdexcept>
 #include <string>
 
-#include <sm/vec>
-
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/RodVisual.h>
-#include <mplot/NormalsVisual.h>
+import mplot.visual;
+import mplot.colourmap;
+import mplot.rodvisual;
+import mplot.normalsvisual;
 
 int main()
 {
@@ -34,13 +33,13 @@ int main()
         sm::vec<float, 3> start = { 0, 0, 0 };
         sm::vec<float, 3> end = { 0.25, 0, 0 };
         auto rvm = std::make_unique<mplot::RodVisual<>> (offset, start, end, 0.1f, colour1, colour1);
-        v.bindmodel (rvm);
+        rvm->set_parent (v.get_id());
         rvm->use_oriented_tube = false;
         rvm->finalize();
         auto rvmp1 = v.addVisualModel (rvm);
 
         auto nrm = std::make_unique<mplot::NormalsVisual<>> (rvmp1);
-        v.bindmodel (nrm);
+        nrm->set_parent (v.get_id());
         nrm->finalize();
         v.addVisualModel (nrm);
 
@@ -49,13 +48,13 @@ int main()
         sm::vec<float, 3> end2 = { 0.2, 0.4, 0.6 };
         // You can reuse the unique_ptr rvm, once you've transferred ownership with v.addVisualModel (rvm)
         rvm = std::make_unique<mplot::RodVisual<>>(offset, start2, end2, 0.05f, colour2);
-        v.bindmodel (rvm);
+        rvm->set_parent (v.get_id());
         rvm->finalize();
         auto rvmp2 = v.addVisualModel (rvm);
 
         // Create an associate normals model
         nrm = std::make_unique<mplot::NormalsVisual<>> (rvmp2);
-        v.bindmodel (nrm);
+        nrm->set_parent (v.get_id());
         nrm->finalize();
         v.addVisualModel (nrm);
 

@@ -1,31 +1,32 @@
-cmake_minimum_required(VERSION 3.14)
-project(mathplot)
+# 3.28.5: C++20 modules support 3.30 gives C++23 import std;
+cmake_minimum_required(VERSION 3.28.5)
+
+# For future import std; support
+# set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
+
+project(mathplot LANGUAGES CXX C)
 # Note that the project version is encoded in mplot/version.h and not in this CMakeLists.txt
 
 message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "  (This can be changed with `cmake -DCMAKE_INSTALL_PREFIX=/some/place`")
 
-#
-# The base C++ version in mathplot is current C++-17 but I am considering C++20 or 23
-#
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Add our cmake directory and our submodule maths's cmake dir to cmake modules path
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+
+# For future import std; support
+# set(CMAKE_CXX_EXTENSIONS ON)
+# Tell CMake that we explicitly want `import std`. This will initialize the
+# property on all targets declared after this to 1
+# set(CMAKE_CXX_MODULE_STD 1)
 
 include(CheckIncludeFileCXX) # CHECK_INCLUDE_FILE_CXX will be used in later scripts
 
-# If I *require* std::format, I can start using it across mathplot. That
-# limits us to gcc-13 on Ubuntu (though it's the libc++ that contains
-# <format>). For now, test and use it only in examples.
-check_include_file_cxx(format HAVE_STD_FORMAT)
-if(NOT HAVE_STD_FORMAT)
-  message(INFO " Your compiler does not appear to provide std::format, some examples won't build.")
-  message(INFO " In future, <format> may be required across mathplot.")
-endif()
-
 # Add the host definition to CXXFLAGS along with other switches
 if (APPLE)
-  set(CMAKE_CXX_FLAGS "-Wall -g -O3")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -O3")
 else()
   if(CMAKE_CXX_COMPILER_ID MATCHES MSVC OR CMAKE_CXX_COMPILER_FRONTEND_VARIANT MATCHES MSVC)
     # Set flags for Windows.
@@ -34,25 +35,27 @@ else()
     # /Zc:__cplusplus ensures __cplusplus define does not lie
     # /constexpr:steps is equivalent to -fconstexpr-steps or -fconstexpr-ops-limit
     if(CMAKE_CXX_COMPILER_ID MATCHES MSVC)
-      set(CMAKE_CXX_FLAGS "-DNOMINMAX /EHsc /Zc:__cplusplus /constexpr:steps500000000")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNOMINMAX /EHsc /Zc:__cplusplus /constexpr:steps500000000")
     else()
-      set(CMAKE_CXX_FLAGS "-DNOMINMAX /EHsc /Zc:__cplusplus /clang:-fconstexpr-steps=500000000")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNOMINMAX /EHsc /Zc:__cplusplus /clang:-fconstexpr-steps=500000000")
     endif()
   elseif(CMAKE_CXX_COMPILER_ID MATCHES Intel)
     # To use Intel compiler, you can call cmake as: `cmake -DCMAKE_CXX_COMPILER=icpc ..` or `CXX=icpc cmake ..`
     message(WARNING "Intel compiler has not been tested for some time")
-    set(CMAKE_CXX_FLAGS "-Wall -g -std=c++20 -xHOST -O3")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -std=c++20 -xHOST -O3")
   else() # GCC or Clang
     if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
-      # Add compiler version check, to ensure gcc is version 11 or later.
-      if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 11)
-        message(FATAL_ERROR "GCC version must be at least 11")
+      if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16.1)
+        message("-- GCC version OK. (require 16.1+)")
       else()
-        message(STATUS "GCC version ${CMAKE_CXX_COMPILER_VERSION} OK!")
+        message(WARNING "GCC version 16.1+ is required to compile this project. Alternatively, try clang-20+")
       endif()
     endif()
-    set(COMPREHENSIVE_WARNING_FLAGS "-Wall -Wextra -Wpedantic -pedantic-errors -Werror -Wfatal-errors -Wno-psabi")
-    set(CMAKE_CXX_FLAGS "-g ${COMPREHENSIVE_WARNING_FLAGS} -O3")
+    # Warnings we suppress:
+    # -Wpsabi -- Reason forgotten
+    # -Wunknown-pragmas -- because sm::grid has some '#pragma omp' accelerated methods that we don't need in these examples
+    set(COMPREHENSIVE_WARNING_FLAGS "-Wall -Wextra -Wpedantic -pedantic-errors -Werror -Wfatal-errors -Wno-psabi -Wno-unknown-pragmas")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g ${COMPREHENSIVE_WARNING_FLAGS} -O3")
     if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
       # Make it possible to compile complex constexpr functions (gcc only)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconstexpr-ops-limit=5000000000")
@@ -60,11 +63,6 @@ else()
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconstexpr-steps=500000000")
     endif()
   endif()
-endif()
-
-# If you tell the code you have std::format, then it may use it
-if(HAVE_STD_FORMAT)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMPLOT_HAVE_STD_FORMAT")
 endif()
 
 # In Visual Studio, if CMAKE_BUILD_TYPE is "Debug", some programs will run very slowly
@@ -83,21 +81,8 @@ else()
   set(ARRAY_LITERAL_TEMPL_ARGS_ARE_OK 1)
 endif()
 
-# Note that we require OpenMP version 3 or above for ability to use
-# unsigned integral types in parallel for loops. At time of writing,
-# Visual Studio 2019 offers OpenMP 2 by default and 3 with the special
-# switch -openmp:llvm. I don't know how to get cmake to use the
-# special version, so OpenMP will not work at present on
-# Windows/VS2019. But then, you wouldn't use Windows for serious
-# numerical work anyway.
+# OpenMP only used for the fps targets
 find_package(OpenMP 3)
-if(OpenMP_CXX_FOUND)
-  message(STATUS "Found OpenMP version ${OpenMP_C_VERSION}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-  if(APPLE)
-    # FIXME: Check the OpenMP root environment variable, which is required on some Mac versions
-  endif()
-endif()
 
 # The code in VisualFace which builds the Vera family truetype fonts
 # into the program binary needs to have a define of MPLOT_FONTS_DIR,
@@ -126,15 +111,10 @@ find_package(HDF5)
 if(HDF5_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HDF5_DEFINITIONS}")
 endif()
-find_package(Armadillo)
 
 include_directories(${OPENGL_INCLUDE_DIR})
 if(HDF5_FOUND)
   include_directories(${HDF5_INCLUDE_DIR})
-endif()
-if(ARMADILLO_FOUND)
-  # Two possible values for the armadillo include dirs
-  include_directories(${ARMADILLO_INCLUDE_DIR} ${ARMADILLO_INCLUDE_DIRS})
 endif()
 include_directories(${GLFW3_INCLUDE_DIR})
 
@@ -155,7 +135,9 @@ else()
 endif()
 
 # Use packaged nlohmann json
-find_package(nlohmann_json REQUIRED)
+# find_package(nlohmann_json REQUIRED)
+# Now nlohmann is submoduled to get an up-to-date version (for C++ modules)
+include_directories("${PROJECT_SOURCE_DIR}/json/include")
 
 # If Qt5 is present, then some optional Qt examples will be compiled
 find_package(Qt5 QUIET COMPONENTS Gui Core Widgets)
@@ -181,15 +163,40 @@ if (NOT HAVE_RAPIDXML)
   include_directories("${PROJECT_SOURCE_DIR}/include/rapidxml-1.13")
 endif() # else we have it in a directory included by default in the path
 
+#
+# sebsjames/maths module groups
+#
+
+# Include maths module defs
+include(${PROJECT_SOURCE_DIR}/maths/cmake/module_definitions.cmake)
+setup_module_variables_for_maths (${PROJECT_SOURCE_DIR}/maths ${PROJECT_SOURCE_DIR}/json)
+
+# Include our own module defs
+include(${PROJECT_SOURCE_DIR}/cmake/module_definitions.cmake)
+setup_module_variables_for_mathplot_maths (${PROJECT_SOURCE_DIR}/maths)
+setup_module_variables_for_mathplot (${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/json)
+
+
 # All the mathplot headers are here
 add_subdirectory(mplot)
 
 # Unit testing using the ctest framework
 option(BUILD_TESTS "Build tests" OFF)
 if(BUILD_TESTS)
+  message ("-- Building test programs (-DBUILD_TESTS=ON)")
   enable_testing()
   add_subdirectory(tests)
 endif(BUILD_TESTS)
+
+option(BUILD_BUGREP "Build bugrep" OFF)
+if(BUILD_BUGREP)
+  # bug reproduction
+  message ("-- Building bug report programs (-DBUILD_BUGREP=ON)")
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -freport-bug")
+  endif()
+  add_subdirectory(bugrep)
+endif(BUILD_BUGREP)
 
 # incbin for Visual Studio; code-generation for colour tables
 option(BUILD_UTILS "Build developer utils" OFF)

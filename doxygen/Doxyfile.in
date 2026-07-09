@@ -3,7 +3,7 @@
 #---------------------------------------------------------------------------
 # Project related configuration options
 #---------------------------------------------------------------------------
-PROJECT_NAME           = morphologica
+PROJECT_NAME           = mathplot
 PROJECT_NUMBER         = git main
 OUTPUT_DIRECTORY       = @CMAKE_CURRENT_BINARY_DIR@/doc_doxygen/
 OUTPUT_LANGUAGE        = English
@@ -63,11 +63,11 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = ../morph ../morph/nn ../morph/bn ../README.md ../morph/gl ../morph/qt ../morph/wx ../morph/linuxos
+INPUT                  = ../mplot ../mplot/compoundray ../mplot/fonts ../README.md ../mplot/fps ../mplot/gl ../mplot/glad ../mplot/healpix ../mplot/jcvoronoi ../mplot/qt ../mplot/wx ../maths/sm
 USE_MDFILE_AS_MAINPAGE = README.md
-FILE_PATTERNS          = *.h
+FILE_PATTERNS          = *
 RECURSIVE              = NO
-EXCLUDE                = ../morph/nlohmann ../morph/rapidxml.hpp ../morph/rapidxml_iterators.hpp ../morph/rapidxml_print.hpp ../morph/rapidxml_utils.hpp ../morph/lodepng.h
+EXCLUDE                = ../mplot/nlohmann
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       =
 EXAMPLE_PATH           =

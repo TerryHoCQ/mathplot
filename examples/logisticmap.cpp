@@ -1,17 +1,17 @@
 /*
  * Visualize a graph of the logistic map
  */
+#include <memory>
 #include <iostream>
-#include <fstream>
-#include <cmath>
-#include <array>
+#include <stdexcept>
+#include <set>
 
-#include <sm/vec>
-#include <sm/vvec>
+import sm.vec;
+import sm.vvec;
 
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/GraphVisual.h>
+import mplot.visual;
+import mplot.colourmap;
+import mplot.graphvisual;
 
 int main()
 {
@@ -25,8 +25,8 @@ int main()
     try {
         sm::vvec<double> absc;
         sm::vvec<double> ord;
-        auto gv = std::make_unique<mplot::GraphVisual<double>>(sm::vec<float>({0,0,0}));
-        v.bindmodel (gv);
+        auto gv = std::make_unique<mplot::GraphVisual<double>>(sm::vec<float>{});
+        gv->set_parent (v.get_id());
 
         double x = 0.5;
         double x1 = 0.0;

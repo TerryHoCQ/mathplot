@@ -1,17 +1,15 @@
 /*
  * Visualize a graph on which points are added with time.
  */
+#include <memory>
 #include <iostream>
-#include <fstream>
-#include <cmath>
-#include <array>
+#include <stdexcept>
 
-#include <sm/vec>
-#include <sm/vvec>
+import sm.vec;
+import sm.vvec;
 
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/GraphVisual.h>
+import mplot.visual;
+import mplot.graphvisual;
 
 int main()
 {
@@ -29,8 +27,8 @@ int main()
         sm::vvec<float> absc =  {-1.0, -.9, -.8, -.7, -.6, -.5, -.4, -.3, -.2, -.1, 0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1.0};
         sm::vvec<float> data = absc.pow(3);
         sm::vvec<float> data2 = absc.pow(5);
-        auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({0,0,0}));
-        v.bindmodel (gv);
+        auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>{});
+        gv->set_parent (v.get_id());
 
         // Optionally change the size of the graph and range of the axes
         gv->setsize (1.33, 1);

@@ -1,6 +1,7 @@
 #include <iostream>
-#include <sm/geometry_polyhedra>
-#include <sm/vec>
+
+import sm.vec;
+import sm.geometry_polyhedra;
 
 int main()
 {

@@ -6,11 +6,14 @@
  * Author Seb James
  * Date 2024
  */
-#include <iostream>
-#include <sm/vec>
-#include <sm/random>
-#include <mplot/Visual.h>
-#include <mplot/VoronoiVisual.h>
+#include <memory>
+#include <vector>
+#include <cmath>
+
+import sm.random;
+import mplot.colourmap;
+import mplot.visual;
+import mplot.voronoivisual;
 
 static constexpr int n_points = 1000;
 
@@ -39,7 +42,7 @@ int main()
 
     sm::vec<float, 3> offset = { 0.0f };
     auto vorv = std::make_unique<mplot::VoronoiVisual<float>> (offset);
-    v.bindmodel (vorv);
+    vorv->set_parent (v.get_id());
     vorv->show_voronoi2d = true; // true to show the 2D voronoi edges
     vorv->debug_dataCoords = false; // true to show coordinate spheres
     float length_scale = 4.0f / std::sqrt (n_points);

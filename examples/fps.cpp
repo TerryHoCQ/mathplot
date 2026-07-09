@@ -7,14 +7,15 @@
 #include <cmath>
 #include <chrono>
 #include <sstream>
+#include <memory>
 
-#include <sm/vec>
-#include <sm/hexgrid>
+import sm.vec;
+import sm.hexgrid;
 
-#include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/VisualTextModel.h>
-#include <mplot/HexGridVisual.h>
+import mplot.visual;
+import mplot.visualdatamodel;
+import mplot.visualtextmodel;
+import mplot.hexgridvisual;
 
 int main()
 {
@@ -29,7 +30,7 @@ int main()
     constexpr float hex_to_hex = 0.02f;
 
     sm::hexgrid hg(hex_to_hex, 15.0f, 0.0f);
-    hg.setEllipticalBoundary (4.0f, 4.0f);
+    hg.set_elliptical_boundary (4.0f, 4.0f);
     std::cout << "Number of hexes in grid:" << hg.num() << std::endl;
     std::stringstream sss;
     sss << "Surface evaluated at " << hg.num() << " coordinates";
@@ -48,7 +49,7 @@ int main()
     // Add a HexGridVisual to display the HexGrid within the mplot::Visual scene
     sm::vec<float, 3> offset = { 0.0f, -0.05f, 0.0f };
     auto hgv = std::make_unique<mplot::HexGridVisual<float>>(&hg, offset);
-    v.bindmodel (hgv);
+    hgv->set_parent (v.get_id());
     hgv->setScalarData (&data);
     hgv->hexVisMode = mplot::HexVisMode::Triangles;
     hgv->finalize();

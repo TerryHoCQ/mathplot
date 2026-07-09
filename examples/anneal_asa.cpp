@@ -3,23 +3,28 @@
  * progress of the algorithm.
  */
 
+#include <cstdint>
 #include <iostream>
 #include <string>
 #include <memory>
+#include <cmath>
+#include <vector>
+#include <list>
 
-#include <sm/vvec>
-#include <sm/vec>
-#include <sm/hex>
-#include <sm/hexgrid>
+import sm.vvec;
+import sm.vec;
+import sm.hex;
+import sm.hexgrid;
 
-#include <sm/anneal>
-#include <sm/config>
+import sm.anneal;
+import sm.config;
+
 #ifdef VISUALISE
-# include <mplot/Visual.h>
-# include <mplot/VisualDataModel.h>
-# include <mplot/HexGridVisual.h>
-# include <mplot/PolygonVisual.h>
-# include <mplot/GraphVisual.h>
+import mplot.visual;
+import mplot.visualdatamodel;
+import mplot.hexgridvisual;
+import mplot.polygonvisual;
+import mplot.graphvisual;
 #endif
 
 // Choose double or float for the precision used in the Anneal algorithm
@@ -76,14 +81,14 @@ int main (int argc, char** argv)
     if (argc > 1) {
         sm::config conf(argv[1]);
         if (conf.ready) {
-            anneal.temperature_ratio_scale = (F)conf.getDouble ("temperature_ratio_scale", 1e-2);
-            anneal.temperature_anneal_scale = (F)conf.getDouble ("temperature_anneal_scale", 200.0);
-            anneal.cost_parameter_scale_ratio = (F)conf.getDouble ("cost_parameter_scale_ratio", 3.0);
-            anneal.acc_gen_reanneal_ratio = (F)conf.getDouble ("acc_gen_reanneal_ratio", 1e-6);
-            anneal.delta_param = (F)conf.getDouble ("delta_param", 0.01);
-            anneal.objective_repeat_precision = (F)conf.getDouble ("objective_repeat_precision", 1e-6);
-            anneal.f_x_best_repeat_max = conf.getUInt ("f_x_best_repeat_max", 15);
-            anneal.reanneal_after_steps = conf.getUInt ("reanneal_after_steps", 100);
+            anneal.temperature_ratio_scale = (F)conf.get<double> ("temperature_ratio_scale", 1e-2);
+            anneal.temperature_anneal_scale = (F)conf.get<double> ("temperature_anneal_scale", 200.0);
+            anneal.cost_parameter_scale_ratio = (F)conf.get<double> ("cost_parameter_scale_ratio", 3.0);
+            anneal.acc_gen_reanneal_ratio = (F)conf.get<double> ("acc_gen_reanneal_ratio", 1e-6);
+            anneal.delta_param = (F)conf.get<double> ("delta_param", 0.01);
+            anneal.objective_repeat_precision = (F)conf.get<double> ("objective_repeat_precision", 1e-6);
+            anneal.f_x_best_repeat_max = conf.get<std::uint32_t> ("f_x_best_repeat_max", 15);
+            anneal.reanneal_after_steps = conf.get<std::uint32_t> ("reanneal_after_steps", 100);
         } else {
             std::cerr << "Failed to open JSON config in '" << argv[1]
                       << "', continuing with default ASA parameters.\n";
@@ -100,7 +105,7 @@ int main (int argc, char** argv)
 
     sm::vec<float, 3> offset = { 0.0, 0.0, 0.0 };
     auto hgv = std::make_unique<mplot::HexGridVisual<F>>(hg.get(), offset);
-    v.bindmodel (hgv);
+    hgv->set_parent (v.get_id());
     hgv->setScalarData (&obj_f);
 #ifdef USE_BOHACHEVSKY_FUNCTION
     hgv->addLabel ("Objective: See Bohachevsky et al.", { -0.5f, -0.75f, -0.1f });
@@ -115,25 +120,25 @@ int main (int argc, char** argv)
     // One object for the 'candidate' position
     std::array<float, 3> col = { 0, 1, 0 };
     auto cand_up = std::make_unique<mplot::PolygonVisual<>>(offset, polypos, sm::vec<float>({1,0,0}), 0.005f, 0.4f, col, 20);
-    v.bindmodel (cand_up);
+    cand_up->set_parent (v.get_id());
     cand_up->finalize();
     // A second object for the 'best' position
     col = { 1, 0, 0 };
     auto best_up = std::make_unique<mplot::PolygonVisual<>>(offset, polypos, sm::vec<float>({1,0,0}), 0.001f, 0.8f, col, 10);
-    v.bindmodel (best_up);
+    best_up->set_parent (v.get_id());
     best_up->finalize();
 
     // A third object for the currently accepted position
     col = { 1, 0, 0.7f };
     auto curr_up = std::make_unique<mplot::PolygonVisual<>> (offset, polypos, sm::vec<float>({1,0,0}), 0.005f, 0.6f, col, 20);
-    v.bindmodel (curr_up);
+    curr_up->set_parent (v.get_id());
     curr_up->finalize();
 
     // Fourth object marks the starting place
     col = { .5f, .5f, .5f };
     polypos[2] = objective(p);
     auto sp = std::make_unique<mplot::PolygonVisual<>> (offset, polypos, sm::vec<float>({1,0,0}), 0.005f, 0.6f, col, 20);
-    v.bindmodel (sp);
+    sp->set_parent (v.get_id());
     sp->finalize();
 
     auto candp = v.addVisualModel (cand_up);
@@ -144,7 +149,7 @@ int main (int argc, char** argv)
     // Add a graph to track T_i and T_cost
     sm::vec<float> spatOff = {1.2f, -0.5f, 0.0f};
     auto graph1 = std::make_unique<mplot::GraphVisual<F>> (spatOff);
-    v.bindmodel (graph1);
+    graph1->set_parent (v.get_id());
     graph1->twodimensional (true);
     graph1->setlimits (0, 1000, -10, 1);
     graph1->policy = mplot::stylepolicy::lines;
@@ -157,7 +162,7 @@ int main (int argc, char** argv)
 
     spatOff[0] += 1.1f;
     auto graph2 = std::make_unique<mplot::GraphVisual<F>> (spatOff);
-    v.bindmodel (graph2);
+    graph2->set_parent (v.get_id());
     graph2->twodimensional (true);
     graph2->setlimits (0, 1000, -1.0f, 1.0f);
     graph2->policy = mplot::stylepolicy::lines;
@@ -247,7 +252,7 @@ int main (int argc, char** argv)
 void setup_objective()
 {
     hg = std::make_unique<sm::hexgrid>(0.01f, 1.5f, 0.0f);
-    hg->setCircularBoundary(1);
+    hg->set_circular_boundary(1);
     obj_f.resize (hg->num());
 
     // Create 2 Gaussians and sum them as the main features
@@ -265,7 +270,7 @@ void setup_objective()
     for (auto& k : hg->hexen) {
         // Gaussian profile based on the hex's distance from centre, which is
         // already computed in each hex as hex::r. Don't want this for these. Want dist from some hex/coords
-        F r = k.distanceFrom (chex);
+        F r = k.distance_from (chex);
         gauss = (one_over_sigma_root_2_pi * std::exp ( -(r*r) / two_sigma_sq ));
         obj_f_a[k.vi] = gauss;
         sum += gauss;
@@ -278,7 +283,7 @@ void setup_objective()
     gauss =  F{0};
     sum =  F{0};
     for (auto& k : hg->hexen) {
-        F r = k.distanceFrom (chex2);
+        F r = k.distance_from (chex2);
         gauss = (one_over_sigma_root_2_pi * std::exp ( -(r*r) / two_sigma_sq ));
         obj_f_b[k.vi] = gauss;
         sum += gauss;
@@ -299,7 +304,7 @@ void setup_objective()
     one_over_sigma_root_2_pi = F{1} / sigma * F{2.506628275};
     two_sigma_sq = F{2} * sigma * sigma;
     sm::hexgrid kernel(F{0.01}, F{20}*sigma, 0);
-    kernel.setCircularBoundary (F{6}*sigma);
+    kernel.set_circular_boundary (F{6}*sigma);
     std::vector<F> kerneldata (kernel.num(), F{0});
     gauss = F{0};
     sum = F{0};
@@ -327,7 +332,7 @@ void setup_objective()
 void setup_objective_boha()
 {
     hg = std::make_unique<sm::hexgrid>(0.01f, 2.5f, 0.0f);
-    hg->setCircularBoundary(1.2f);
+    hg->set_circular_boundary(1.2f);
     obj_f.resize (hg->num());
     F a = F{1}, b = F{2}, c=F{0.3}, d=F{0.4}, alpha=sm::mathconst<F>::three_pi, gamma=sm::mathconst<F>::four_pi;
     for (auto h : hg->hexen) {
@@ -358,6 +363,6 @@ F objective_hg (const sm::vvec<F>& params)
     // Find the hex nearest the coordinate defined by params and return its value
     sm::vvec<float> _params = params.as_float();
     sm::vec<float, 2> coord = { _params[0], _params[1] };
-    std::list<sm::hex>::iterator hn = hg->findHexNearest (coord);
+    std::list<sm::hex>::iterator hn = hg->find_hex_nearest (coord);
     return obj_f[hn->vi];
 }

@@ -2,13 +2,14 @@
  * Demonstrates the VisualModel line-drawing primitives. Make sure they're visually
  * correct.
  */
+#include <memory>
 
-#include <sm/vec>
-#include <mplot/Visual.h>
-#include <mplot/VisualModel.h>
+import sm.vec;
+import mplot.visual;
+import mplot.visualmodel;
 
-namespace mplot {
-
+namespace mplot
+{
     // A test VisualModel which draws some lines
     template<int glver = mplot::gl::version_4_1>
     struct LinestestVisual : public VisualModel<glver>
@@ -104,9 +105,8 @@ int main()
 {
     mplot::Visual v(1024, 768, "Lines");
     auto vm = std::make_unique<mplot::LinestestVisual<>>();
-    v.bindmodel (vm);
+    vm->set_parent (v.get_id());
     vm->finalize();
     v.addVisualModel (vm);
     v.keepOpen();
-    return 0;
 }

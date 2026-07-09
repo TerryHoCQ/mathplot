@@ -1,8 +1,7 @@
 // Compute a Gaussian with a vvec
-#include <sm/vec>
-#include <sm/vvec>
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
+#include <memory>
+import mplot.visual;
+import mplot.graphvisual;
 
 int main()
 {
@@ -23,7 +22,7 @@ int main()
     // Graph x and y
     mplot::Visual v(1024, 768, "RGB");
     auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({0,0,0}));
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     mplot::DatasetStyle ds(mplot::stylepolicy::markers);
     ds.datalabel = "R";
     ds.markercolour = mplot::colour::crimson;

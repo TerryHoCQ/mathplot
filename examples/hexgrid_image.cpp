@@ -2,25 +2,23 @@
  * An example mplot::Visual scene, containing a HexGrid, onto which is sampled an image.
  */
 
-#include <iostream>
-#include <vector>
-#include <cmath>
+#include <memory>
+#include <string>
 
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/hexgrid>
+import sm.vec;
+import sm.vvec;
+import sm.hexgrid;
 
-#include <mplot/loadpng.h>
-#include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/HexGridVisual.h>
+import mplot.loadpng;
+import mplot.visual;
+import mplot.hexgridvisual;
 
 int main()
 {
-    mplot::Visual v(1600, 1000, "Demo of sm::hexgrid::resampleImage");
+    mplot::Visual v(1600, 1000, "Demo of sm::hexgrid::resample_image");
 
     sm::hexgrid hg(0.01f, 3.0f, 0.0f);
-    hg.setCircularBoundary (1.2f);
+    hg.set_circular_boundary (1.2f);
 
     // Load an image with the help of mplot::loadpng().
     std::string fn = "../examples/bike256.png";
@@ -33,11 +31,11 @@ int main()
     sm::vec<float,2> image_offset = {0.0f, 0.0f};
 
     // Here's the HexGrid method that will resample the square pixel grid onto the hex grid
-    sm::vvec<float> hex_image_data = hg.resampleImage (image_data, dims[1], image_scale, image_offset);
+    sm::vvec<float> hex_image_data = hg.resample_image (image_data, dims[1], image_scale, image_offset);
 
     // Now visualise with a HexGridVisual
     auto hgv = std::make_unique<mplot::HexGridVisual<float>>(&hg, sm::vec<float>({0,0,0}));
-    v.bindmodel (hgv);
+    hgv->set_parent (v.get_id());
 
     // Set the image data as the scalar data for the HexGridVisual
     hgv->setScalarData (&hex_image_data);

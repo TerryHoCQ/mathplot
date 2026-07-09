@@ -1,12 +1,18 @@
 /*
  * Demonstrate the CurvyTellyVisual as a way to draw a stripey pipe
  */
-#include <sm/mathconst>
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/grid>
-#include <mplot/compoundray/Visual.h>
-#include <mplot/CurvyTellyVisual.h>
+#include <memory>
+#include <iostream>
+
+import sm.mathconst;
+import sm.vec;
+import sm.vvec;
+import sm.grid;
+import sm.quaternion;
+import mplot.loadpng;
+import mplot.colourmap;
+import mplot.compoundray.visual;
+import mplot.curvytellyvisual;
 
 int main()
 {
@@ -39,7 +45,7 @@ int main()
 
     sm::vec<float> offset = { 0, 0, -length/2 };
     auto ctv = std::make_unique<mplot::CurvyTellyVisual<float>>(&grid, offset);
-    v.bindmodel (ctv);
+    ctv->set_parent (v.get_id());
     ctv->setScalarData (&stripe_data);
     ctv->radius = radius;
     ctv->angle_to_subtend = sm::mathconst<float>::two_pi; // 2pi is default

@@ -1,0 +1,551 @@
+/*!
+ * \file
+ *
+ * Declares a class to hold vertices of the quads that are the backing for a sequence of text
+ * characters. This is for use in VisualModel-derived classes. Within the backend, the
+ * VisualTextModel classes are used directly.
+ *
+ * \author Seb James
+ * \date Oct 2020 - Mar 2026
+ */
+module;
+
+#if defined __gl3_h_ || defined __gl_h_
+// GL headers have been externally included
+#else
+# include <mplot/glad/gl.h>
+#endif
+
+#include <cstdint>
+#include <memory>
+#include <iostream>
+#include <string>
+#include <vector>
+#include <array>
+#include <limits>
+
+export module mplot.visualtextmodel;
+
+import mplot.visualresources;
+import mplot.visualcommon;
+export import mplot.textgeometry;
+export import mplot.textfeatures;
+export import mplot.unicode;
+export import mplot.visualface;
+import mplot.colour;
+import mplot.gl.version;
+import mplot.gl.util;
+
+import sm.mathconst;
+import sm.quaternion;
+import sm.mat;
+import sm.vec;
+
+export namespace mplot
+{
+    /*!
+     * This is the base class for VisualTextModel containing common code, but no GL function calls.
+     */
+    template <std::int32_t glver = mplot::gl::version_4_1>
+    struct VisualTextModel
+    {
+    public:
+        VisualTextModel (mplot::TextFeatures _tfeatures)
+        {
+            this->tfeatures = _tfeatures;
+            this->fontscale = tfeatures.fontsize / static_cast<float>(tfeatures.fontres);
+        }
+
+        ~VisualTextModel()
+        {
+            if (this->vbos != nullptr) {
+                // To be a visualresources get
+                GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
+                _glfn->DeleteBuffers (this->numVBO, this->vbos.get());
+                _glfn->DeleteVertexArrays (1, &this->vao);
+            }
+        }
+
+        //! Render the VisualTextModel
+        void render()
+        {
+            if (this->hide == true) { return; }
+
+            std::int32_t prev_shader;
+            std::uint32_t tshaderprog = mplot::VisualResources<glver>::i().get_tprog (this->parentVis);
+            GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
+
+            _glfn->GetIntegerv (GL_CURRENT_PROGRAM, &prev_shader);
+
+            // Ensure the correct program is in play for this VisualModel
+            _glfn->UseProgram (tshaderprog);
+
+            // Set uniforms
+            std::int32_t loc_tc = _glfn->GetUniformLocation (tshaderprog, static_cast<const char*>("textColor"));
+            if (loc_tc != -1) { _glfn->Uniform3f (loc_tc, this->clr_text[0], this->clr_text[1], this->clr_text[2]); }
+            std::int32_t loc_a = _glfn->GetUniformLocation (tshaderprog, static_cast<const char*>("alpha"));
+            if (loc_a != -1) { _glfn->Uniform1f (loc_a, this->alpha); }
+            std::int32_t loc_v = _glfn->GetUniformLocation (tshaderprog, static_cast<const char*>("v_matrix"));
+            if (loc_v != -1) { _glfn->UniformMatrix4fv (loc_v, 1, GL_FALSE, this->scenematrix.arr.data()); }
+            std::int32_t loc_m = _glfn->GetUniformLocation (tshaderprog, static_cast<const char*>("m_matrix"));
+            if (loc_m != -1) { _glfn->UniformMatrix4fv (loc_m, 1, GL_FALSE, this->viewmatrix.arr.data()); }
+
+            _glfn->ActiveTexture (GL_TEXTURE0);
+
+            // It is only necessary to bind the vertex array object before rendering
+            _glfn->BindVertexArray (this->vao);
+
+            // We have a max of (2^32)-1 characters. Should be enough.
+            for (std::uint32_t i = 0U; i < this->quads.size(); ++i) {
+                // Bind the right texture for the quad.
+                _glfn->BindTexture (GL_TEXTURE_2D, this->quad_ids[i]);
+                // This is 'draw a subset of the elements from the vertex array
+                // object'. You say how many indices to draw and which base *vertex* you
+                // start from. In my scheme, I have 4 vertices for each two triangles
+                // that are constructed. Thus, I draw 6 indices, but increment the base
+                // vertex by 4 for each letter.
+                _glfn->DrawElementsBaseVertex (GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, 4*i);
+            }
+
+            _glfn->BindVertexArray(0);
+            _glfn->UseProgram (prev_shader);
+
+            mplot::gl::Util::checkError (__FILE__, __LINE__, _glfn);
+        }
+
+        //! Compute the geometry for a sample text.
+        mplot::TextGeometry getTextGeometry (const std::string& _txt)
+        {
+            mplot::TextGeometry geom;
+
+            if (!mplot::VisualResources<glver>::i().test_glfn (this->parentVis)) { return geom; }
+            if (this->face == nullptr) {
+                GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
+                this->face = VisualResources<glver>::i().getVisualFace (this->tfeatures, this->parentVis, _glfn);
+            }
+
+            // First convert string from ASCII/UTF-8 into Unicode.
+            std::basic_string<char32_t> utxt = mplot::unicode::fromUtf8(_txt);
+            // on g++ 15 there's an issue with operator!= when used in a module
+            for (std::basic_string<char32_t>::const_iterator c = utxt.cbegin(); c != utxt.cend(); c++) {
+                mplot::visgl::CharInfo ci = this->face->glchars[*c];
+                float drop = (ci.size.y() - ci.bearing.y()) * this->fontscale;
+                geom.max_drop = (drop > geom.max_drop) ? drop : geom.max_drop;
+                float bearingy = ci.bearing.y() * this->fontscale;
+                geom.max_bearingy = (bearingy > geom.max_bearingy) ? bearingy : geom.max_bearingy;
+                geom.total_advance += ((ci.advance>>6)*this->fontscale);
+            }
+            return geom;
+        }
+
+        //! Return the geometry for the stored txt
+        mplot::TextGeometry getTextGeometry()
+        {
+            mplot::TextGeometry geom;
+
+            if (!mplot::VisualResources<glver>::i().test_glfn (this->parentVis)) { return geom; }
+            if (this->face == nullptr) {
+                GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
+                this->face = VisualResources<glver>::i().getVisualFace (this->tfeatures, this->parentVis, _glfn);
+            }
+
+            for (std::basic_string<char32_t>::const_iterator c = this->txt.begin(); c != this->txt.end(); c++) {
+                mplot::visgl::CharInfo ci = this->face->glchars[*c];
+                float drop = (ci.size.y() - ci.bearing.y()) * this->fontscale;
+                geom.max_drop = (drop > geom.max_drop) ? drop : geom.max_drop;
+                float bearingy = ci.bearing.y() * this->fontscale;
+                geom.max_bearingy = (bearingy > geom.max_bearingy) ? bearingy : geom.max_bearingy;
+                geom.total_advance += ((ci.advance>>6)*this->fontscale);
+            }
+            return geom;
+        }
+
+        //! Set up a new text at a given position, with the given colour.
+        void setupText (const std::string& _txt,
+                        const sm::vec<float> _offset, std::array<float, 3> _clr = {0,0,0})
+        {
+            this->viewmatrix.translate (_offset);
+            this->clr_text = _clr;
+            this->setupText (_txt);
+        }
+
+        //! Set up a new text at a given position, with the given colour and a pre-rotation
+        void setupText (const std::string& _txt,
+                        const sm::quaternion<float>& _rotation, const sm::vec<float> _offset,
+                        std::array<float, 3> _clr = {0,0,0})
+        {
+            this->viewmatrix.translate (_offset);
+            this->viewmatrix.rotate (_rotation);
+            this->clr_text = _clr;
+            this->setupText (_txt);
+        }
+
+        void setupText (const std::string& _txt)
+        {
+            // Convert std::string _txt to std::basic_string<uchar32_t> text and call the other setupText
+            this->setupText (mplot::unicode::fromUtf8 (_txt));
+        }
+
+        //! With the given text and font size information, create the quads for the text.
+        void setupText (const std::basic_string<char32_t>& _txt)
+        {
+            constexpr bool debug_textquads = false;
+
+            if (this->face == nullptr) {
+                GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
+                this->face = VisualResources<glver>::i().getVisualFace (this->tfeatures, this->parentVis, _glfn);
+            }
+
+            this->txt = _txt;
+            // With glyph information from txt, set up this->quads.
+            this->quads.clear();
+            this->quad_ids.clear();
+            // Our string of letters starts at this location
+            float letter_pos = 0.0f;
+            float letter_y = 0.0f;
+            float text_epsilon = 0.0f;
+            for (std::basic_string<char32_t>::const_iterator c = this->txt.begin(); c != this->txt.end(); c++) {
+
+                if (*c == '\n') {
+                    // Skip newline, but add a y offset and reset letter_pos
+                    letter_pos = 0.0f;
+                    mplot::visgl::CharInfo ch = this->face->glchars['h'];
+                    letter_y += this->line_spacing * -ch.size.y() * this->fontscale;
+                    continue;
+                }
+
+                // Add a quad to this->quads
+                mplot::visgl::CharInfo ci = this->face->glchars[*c];
+
+                float xpos = letter_pos + ci.bearing.x() * this->fontscale;
+                float ypos = letter_y - (ci.size.y() - ci.bearing.y()) * this->fontscale;
+                float w = ci.size.x() * this->fontscale;
+                float h = ci.size.y() * this->fontscale;
+
+                // Update extents
+                if (xpos < this->extents[0]) { this->extents[0] = xpos; } // left
+                if (xpos+w > this->extents[1]) { this->extents[1] = xpos+w; } // right
+                if (ypos < this->extents[2]) { this->extents[2] = ypos; } // bottom
+                if (ypos+h > this->extents[3]) { this->extents[3] = ypos+h; } // top
+
+                // What's the order of the vertices for the quads? It is:
+                // Bottom left, Top left, top right, bottom right.
+                std::array<float,12> tbox = { xpos,   ypos,     text_epsilon,
+                                              xpos,   ypos+h,   text_epsilon,
+                                              xpos+w, ypos+h,   text_epsilon,
+                                              xpos+w, ypos,     text_epsilon };
+                text_epsilon -= 10.0f * std::numeric_limits<float>::epsilon();
+                if constexpr (debug_textquads == true) {
+                    std::cout << "Text box added as quad from\n("
+                              << tbox[0] << "," << tbox[1] << "," << tbox[2]
+                              << ") to (" << tbox[3] << "," << tbox[4] << "," << tbox[5]
+                              << ") to (" << tbox[6] << "," << tbox[7] << "," << tbox[8]
+                              << ") to (" << tbox[9] << "," << tbox[10] << "," << tbox[11]
+                              << "). w="<<w<<", h="<<h<<"\n";
+                    std::cout << "Texture ID for that character is: " << ci.textureID << std::endl;
+                }
+                this->quads.push_back (tbox);
+                this->quad_ids.push_back (ci.textureID);
+
+                // The value in ci.advance has to be divided by 64 to bring it into the
+                // same units as the ci.size and ci.bearing values.
+                letter_pos += ((ci.advance>>6)*this->fontscale);
+            }
+
+            // Ensure we've cleared out vertex info
+            this->vertexPositions.clear();
+            this->vertexNormals.clear();
+            this->vertexColors.clear();
+            this->vertexTextures.clear();
+            this->indices.clear();
+
+            this->initializeVertices();
+
+            this->postVertexInit();
+        }
+
+    protected:
+
+        //! Common code to call after the vertices have been set up.
+        void postVertexInit()
+        {
+            GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
+            if (this->vbos == nullptr) {
+                // Create vertex array object
+                _glfn->GenVertexArrays (1, &this->vao); // Safe for OpenGL 4.4-
+            }
+
+            _glfn->BindVertexArray (this->vao);
+
+            if (this->vbos == nullptr) {
+                // Create the vertex buffer objects
+                this->vbos = std::make_unique<std::uint32_t[]>(this->numVBO);
+                _glfn->GenBuffers (this->numVBO, this->vbos.get()); // OpenGL 4.4- safe
+            }
+
+            // Set up the indices buffer - bind and buffer the data in this->indices
+            _glfn->BindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->vbos[this->idxVBO]);
+
+            //std::cout << "indices.size(): " << this->indices.size() << std::endl;
+            std::size_t sz = this->indices.size() * sizeof(std::uint32_t);
+            _glfn->BufferData(GL_ELEMENT_ARRAY_BUFFER, sz, this->indices.data(), GL_STATIC_DRAW);
+
+            // Binds data from the "C++ world" to the OpenGL shader world for
+            // "position", "normalin" and "color"
+            // (bind, buffer and set vertex array object attribute)
+            this->setupVBO (this->vbos[this->posnVBO], this->vertexPositions, visgl::posnLoc);
+            this->setupVBO (this->vbos[this->normVBO], this->vertexNormals, visgl::normLoc);
+            this->setupVBO (this->vbos[this->colVBO], this->vertexColors, visgl::colLoc);
+            this->setupVBO (this->vbos[this->textureVBO], this->vertexTextures, visgl::textureLoc);
+
+            // Possibly release (unbind) the vertex buffers, but have to unbind vertex
+            // array object first.
+            _glfn->BindVertexArray(0); // carefully unbind
+        }
+
+        //! A face for this text. The face is specfied by tfeatures.font
+        mplot::visgl::VisualFace* face = nullptr;
+
+        //! Set up a vertex buffer object - bind, buffer and set vertex array object attribute
+        void setupVBO (std::uint32_t& buf, std::vector<float>& dat, std::uint32_t bufferAttribPosition)
+        {
+            std::size_t sz = dat.size() * sizeof(float);
+            GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
+            _glfn->BindBuffer (GL_ARRAY_BUFFER, buf);
+            _glfn->BufferData (GL_ARRAY_BUFFER, sz, dat.data(), GL_STATIC_DRAW);
+            _glfn->VertexAttribPointer (bufferAttribPosition, 3, GL_FLOAT, GL_FALSE, 0, (void*)(0));
+            _glfn->EnableVertexAttribArray (bufferAttribPosition);
+        }
+
+    public:
+        //! Set clr_text to a value suitable to be visible on the background colour bgcolour
+        void setVisibleOn (const std::array<float, 4>& bgcolour)
+        {
+            constexpr float factor = 0.85f;
+            this->clr_text = {1.0f - bgcolour[0] * factor, 1.0f - bgcolour[1] * factor, 1.0f - bgcolour[2] * factor};
+        }
+
+        //! Setter for VisualTextModel::viewmatrix, the model view
+        void setViewMatrix (const sm::mat<float, 4>& mv) { this->viewmatrix = mv; }
+
+        //! Setter for VisualTextModel::scenematrix, the scene view
+        void setSceneMatrix (const sm::mat<float, 4>& sv) { this->scenematrix = sv; }
+
+        //! Set the translation specified by \a v0 into the scene translation
+        template <std::size_t N = 3> requires (N == 3) || (N == 4)
+        void setSceneTranslation (const sm::vec<float, N>& v0)
+        {
+            this->scenematrix.set_identity();
+            this->scenematrix.translate (v0);
+        }
+
+        //! Set a translation (only) into the scene view matrix
+        template <std::size_t N = 3> requires (N == 3) || (N == 4)
+        void addSceneTranslation (const sm::vec<float, N>& v0) { this->scenematrix.pretranslate (v0); }
+
+        //! Set a rotation (only) into the scene view matrix
+        void setSceneRotation (const sm::quaternion<float>& r)
+        {
+            auto _offset = this->scenematrix.translation();
+            this->scenematrix.set_identity();
+            this->scenematrix.translate (_offset);
+            this->scenematrix.rotate (r);
+        }
+
+        //! Add a rotation to the scene view matrix
+        void addSceneRotation (const sm::quaternion<float>& r) { this->scenematrix.rotate (r); }
+
+        //! Set a translation to the model view matrix
+        template <std::size_t N = 3> requires (N == 3) || (N == 4)
+        void setViewTranslation (const sm::vec<float, N>& v0)
+        {
+            this->viewmatrix.set_identity();
+            this->viewmatrix.translate (v0);
+        }
+
+        //! Add a translation to the model view matrix
+        void addViewTranslation (const sm::vec<float>& v0) { this->viewmatrix.pretranslate (v0); }
+
+        //! Set a rotation (only) into the model view matrix
+        void setViewRotation (const sm::quaternion<float>& r)
+        {
+            auto tr = this->viewmatrix.translation();
+            this->viewmatrix.set_identity();
+            this->viewmatrix.translate (tr);
+            this->viewmatrix.rotate (r);
+        }
+
+        //! Apply a further rotation to the model view matrix
+        void addViewRotation (const sm::quaternion<float>& r) { this->viewmatrix.rotate (r); }
+
+
+        float width() const { return this->extents[1] - this->extents[0]; }
+        float height() const { return this->extents[3] - this->extents[2]; }
+
+        std::string getText() const
+        {
+            std::string s = {};
+            for (auto c : txt) { s += unicode::toUtf8 (c); }
+            return s;
+        }
+
+        std::string debugText() const { return this->getText(); }
+
+    protected:
+
+        //! Initialize the vertices that will represent the Quads.
+        void initializeVertices() {
+
+            constexpr bool debug_textquads = false;
+
+            std::uint32_t nquads = static_cast<std::uint32_t>(this->quads.size());
+
+            for (std::uint32_t qi = 0; qi < nquads; ++qi) {
+
+                std::array<float, 12> quad = this->quads[qi];
+
+                if constexpr (debug_textquads == true) {
+                    std::cout << "Quad box from (" << quad[0] << "," << quad[1] << "," << quad[2]
+                              << ") to (" << quad[3] << "," << quad[4] << "," << quad[5]
+                              << ") to (" << quad[6] << "," << quad[7] << "," << quad[8]
+                              << ") to (" << quad[9] << "," << quad[10] << "," << quad[11] << ")" << std::endl;
+                }
+
+                this->vertex_push (quad[0], quad[1],  quad[2],  this->vertexPositions); //1
+                this->vertex_push (quad[3], quad[4],  quad[5],  this->vertexPositions); //2
+                this->vertex_push (quad[6], quad[7],  quad[8],  this->vertexPositions); //3
+                this->vertex_push (quad[9], quad[10], quad[11], this->vertexPositions); //4
+
+                // Add the info for drawing the textures on the quads
+                this->vertex_push (0.0f, 1.0f, 0.0f, this->vertexTextures);
+                this->vertex_push (0.0f, 0.0f, 0.0f, this->vertexTextures);
+                this->vertex_push (1.0f, 0.0f, 0.0f, this->vertexTextures);
+                this->vertex_push (1.0f, 1.0f, 0.0f, this->vertexTextures);
+
+                // All same colours
+                this->vertex_push (this->clr_backing, this->vertexColors);
+                this->vertex_push (this->clr_backing, this->vertexColors);
+                this->vertex_push (this->clr_backing, this->vertexColors);
+                this->vertex_push (this->clr_backing, this->vertexColors);
+
+                // All same normals
+                this->vertex_push (0.0f, 0.0f, 1.0f, this->vertexNormals);
+                this->vertex_push (0.0f, 0.0f, 1.0f, this->vertexNormals);
+                this->vertex_push (0.0f, 0.0f, 1.0f, this->vertexNormals);
+                this->vertex_push (0.0f, 0.0f, 1.0f, this->vertexNormals);
+
+                // Two triangles per quad
+                // qi * 4 + 1, 2 3 or 4
+                std::uint32_t ib = static_cast<std::uint32_t>(qi) * 4u;
+                this->indices.push_back (ib++); // 0
+                this->indices.push_back (ib++); // 1
+                this->indices.push_back (ib);   // 2
+
+                this->indices.push_back (ib++); // 2
+                this->indices.push_back (ib);   // 3
+                ib -= 3;
+                this->indices.push_back (ib);   // 0
+            }
+        }
+
+    public:
+        // A VisualTextModel may be given a name
+        std::string name = "VisualTextModel";
+
+        //! The colour of the text
+        std::array<float, 3> clr_text = {0.0f, 0.0f, 0.0f};
+        //! Line spacing, in multiples of the height of an 'h'
+        float line_spacing = 1.4f;
+        //! Parent Visual. The mplot::Visual ID to which I belong. max means unset.
+        std::uint32_t parentVis = std::numeric_limits<std::uint32_t>::max();
+
+        //! Setter for the parent pointer, parentVis
+        void set_parent (const std::uint32_t _vis)
+        {
+            if (this->parentVis != std::numeric_limits<std::uint32_t>::max()) {
+                throw std::runtime_error ("VisualTextModel: Set the parent pointer once only!");
+            }
+            this->parentVis = _vis;
+        }
+
+    protected:
+        // The text features for this VisualTextModel
+        mplot::TextFeatures tfeatures;
+
+        // face is in derived class
+
+        //! The colour of the backing quad's vertices. Doesn't have any effect.
+        std::array<float, 3> clr_backing = {1.0f, 1.0f, 0.0f};
+
+        //! A scaling factor based on the desired width of an 'm'
+        float fontscale = 1.0f; //  fontscale = tfeatures.fontsize/(float)tfeatures.fontres;
+
+        //! A rotation of the parent model
+        sm::quaternion<float> parent_rotation = {};
+
+        //! The text-model-specific view matrix and a scene matrix
+        sm::mat<float, 4> viewmatrix = {};
+        //! Before, I wrote: We protect the scene matrix as updating it with the parent
+        //! model's scene matrix likely involves also adding an additional
+        //! translation. Now, I'm still slightly confused as to whether I *need* to have a
+        //! copy of the scenematrix *here*.
+        sm::mat<float, 4> scenematrix = {};
+
+        //! The text string stored for debugging
+        std::basic_string<char32_t> txt;
+        //! The Quads that form the 'medium' for the text textures. 12 float = 4 corners
+        std::vector<std::array<float,12>> quads = {};
+        //! left, right, top and bottom extents of the text for this
+        //! VisualTextModel. setupText should modify these as it sets up quads. Order of
+        //! numbers is left, right, bottom, top
+        sm::vec<float, 4> extents = { 1e7, -1e7, 1e7, -1e7 };
+        //! The texture ID for each quad - so that we draw the right texture image over each quad.
+        std::vector<std::uint32_t> quad_ids = {};
+        //! Position within vertex buffer object (if I use an array of VBO)
+        enum VBOPos { posnVBO, normVBO, colVBO, idxVBO, textureVBO, numVBO };
+        //! The OpenGL Vertex Array Object
+        std::uint32_t vao = 0;
+        //! Single vbo to use as in example
+        std::uint32_t vbo = 0;
+        //! Vertex Buffer Objects stored in an array
+        std::unique_ptr<std::uint32_t[]> vbos;
+        //! CPU-side data for indices
+        std::vector<std::uint32_t> indices = {};
+        //! CPU-side data for quad vertex positions
+        std::vector<float> vertexPositions = {};
+        //! CPU-side data for quad vertex normals
+        std::vector<float> vertexNormals = {};
+        //! CPU-side data for vertex colours
+        std::vector<float> vertexColors = {};
+        //! data for textures
+        std::vector<float> vertexTextures = {};
+        //! A model-wide alpha value for the shader
+        float alpha = 1.0f;
+        //! If true, then calls to VisualModel::render should return
+        bool hide = false;
+
+        //! Push three floats onto the vector of floats \a vp
+        void vertex_push (const float& x, const float& y, const float& z, std::vector<float>& vp)
+        {
+            vp.emplace_back (x);
+            vp.emplace_back (y);
+            vp.emplace_back (z);
+        }
+        //! Push array of 3 floats onto the vector of floats \a vp
+        void vertex_push (const std::array<float, 3>& arr, std::vector<float>& vp)
+        {
+            vp.emplace_back (arr[0]);
+            vp.emplace_back (arr[1]);
+            vp.emplace_back (arr[2]);
+        }
+        //! Push mplot::vec of 3 floats onto the vector of floats \a vp
+        template<std::size_t N = 3> requires (N == 3 || N == 4)
+        void vertex_push (const sm::vec<float, N>& vec, std::vector<float>& vp)
+        {
+            vp.emplace_back (vec[0]);
+            vp.emplace_back (vec[1]);
+            vp.emplace_back (vec[2]);
+        }
+    };
+
+} // namespace mplot

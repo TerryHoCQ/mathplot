@@ -1,10 +1,10 @@
 // Twinax graph
-#include <sm/vec>
-#include <sm/vvec>
-
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
-#include <mplot/unicode.h>
+#include <memory>
+import sm.vec;
+import sm.vvec;
+import sm.random;
+import mplot.visual;
+import mplot.graphvisual;
 
 int main()
 {
@@ -14,7 +14,7 @@ int main()
     mplot::Visual v(1024, 768, "Twinax GraphVisual example");
     // Create a new GraphVisual with offset within the scene of 0,0,0
     auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>({0,0,0}));
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     // This is going to be a twin axis graph
     gv->axisstyle = mplot::axisstyle::twinax;
     // Data for the x axis. A vvec is like std::vector, but with built-in maths methods

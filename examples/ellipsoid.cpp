@@ -1,18 +1,10 @@
 /*
  * Visualize an ellipsoid
  */
-#include <iostream>
-#include <stdexcept>
-#include <string>
-#include <sstream>
+#include <memory>
 
-#include <sm/vec>
-#include <sm/mat>
-
-#include <mplot/Visual.h>
-#include <mplot/VisualModel.h>
-#include <mplot/colour.h>
-#include <mplot/NormalsVisual.h>
+import mplot.visual;
+import mplot.normalsvisual;
 
 // Quick visual that simply draws ellipsoid
 template <int glver = mplot::gl::version_4_1>
@@ -39,7 +31,7 @@ int main()
     v.lightingEffects (true);
 
     auto pvm = std::make_unique<PrimitiveVisual<>> (sm::vec<>{});
-    v.bindmodel (pvm);
+    pvm->set_parent (v.get_id());
     pvm->finalize();
     auto pvmp = v.addVisualModel (pvm);
 
@@ -47,7 +39,7 @@ int main()
     if constexpr (show_normals) {
         // Create an associate normals model
         auto nrm = std::make_unique<mplot::NormalsVisual<>> (pvmp);
-        v.bindmodel (nrm);
+        nrm->set_parent (v.get_id());
         nrm->finalize();
         v.addVisualModel (nrm);
     }

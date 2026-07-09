@@ -1,10 +1,13 @@
 // Demo Zernike polynomials
 
+#include <memory>
+#include <cmath>
 #include <format>
-#include <sm/algo>
-#include <sm/vvec>
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
+
+import sm.algo;
+import sm.vvec;
+import mplot.visual;
+import mplot.graphvisual;
 
 int main()
 {
@@ -23,13 +26,13 @@ int main()
         sm::vec<float> offset = {1.4f * n, 2.4f, 0};
         sm::vec<float> offset2 = {1.4f * n, 0, 0};
         auto gv = std::make_unique<mplot::GraphVisual<double>> (offset);
-        v.bindmodel (gv);
+        gv->set_parent (v.get_id());
         gv->xlabel = "rho";
         gv->ylabel = "Rnm";
         gv->setlimits (0.0, 1.0, -10.0, 10.0);
 
         auto gv2 = std::make_unique<mplot::GraphVisual<double>> (offset2);
-        v.bindmodel (gv2);
+        gv2->set_parent (v.get_id());
         gv2->xlabel = "rho";
         gv2->ylabel = "Rnm";
         gv2->setlimits (0.0, 1.0, -10.0, 10.0);

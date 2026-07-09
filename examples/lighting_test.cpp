@@ -1,10 +1,12 @@
 // This draws several objects with the different primitives. It then spins the diffuse light around
 // so that you can insepect that all the objects are lit/shaded correctly.
+#include <memory>
+#include <array>
+#include <cmath>
 
-#include <sm/mathconst>
-#include <sm/vec>
-#include <mplot/Visual.h>
-#include <mplot/VisualModel.h>
+import sm.vec;
+import mplot.visual;
+import mplot.visualmodel;
 
 template <int glver = mplot::gl::version_4_1>
 struct my_vm : public mplot::VisualModel<glver>
@@ -48,7 +50,7 @@ int main()
 
     // Make our model
     auto mvm = std::make_unique<my_vm<>>(sm::vec<float>{0,0,0});
-    v.bindmodel (mvm);
+    mvm->set_parent (v.get_id());
     mvm->finalize();
     v.addVisualModel (mvm);
 

@@ -1,14 +1,16 @@
-#include <utility>
+#include <memory>
 #include <iostream>
+#include <string>
 #include <cmath>
+#include <vector>
+#include <stdexcept>
 
-#include <sm/hexgrid>
-#include <sm/vec>
+import sm.hexgrid;
+import sm.vec;
 
-#include "mplot/Visual.h"
-#include "mplot/HexGridVisual.h"
-#include "mplot/ColourMap.h"
-#include "mplot/tools.h"
+import mplot.visual;
+import mplot.hexgridvisual;
+import mplot.tools;
 
 int main (int argc, char** argv)
 {
@@ -26,11 +28,11 @@ int main (int argc, char** argv)
 
     try {
         sm::hexgrid hg(0.01, 3, 0);
-        hg.setCircularBoundary (1);
+        hg.set_circular_boundary (1);
 
         std::cout << hg.extent() << std::endl;
         std::cout << "Number of hexes in grid:" << hg.num() << std::endl;
-        std::cout << "Last vector index:" << hg.lastVectorIndex() << std::endl;
+        std::cout << "Last vector index:" << hg.last_vector_index() << std::endl;
 
         if (hg.num() != 36624) { rtn = -1; }
 
@@ -46,7 +48,7 @@ int main (int argc, char** argv)
 
         sm::vec<float, 3> offset = { 0.0, 0.0, 0.0 };
         auto hgv = std::make_unique<mplot::HexGridVisual<float>> (&hg, offset);
-        v.bindmodel (hgv);
+        hgv->set_parent (v.get_id());
         hgv->setScalarData (&data);
         hgv->cm.setType (mplot::ColourMapType::Rainbow);
         hgv->zScale.set_params(0,0);

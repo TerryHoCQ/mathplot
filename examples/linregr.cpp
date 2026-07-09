@@ -1,13 +1,13 @@
 /*
  * Linear regression, with visualisation
  */
+#include <memory>
 #include <iostream>
 
-#include <sm/vvec>
-#include <sm/algo>
+import sm.algo;
 
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
+import mplot.visual;
+import mplot.graphvisual;
 
 int main()
 {
@@ -23,8 +23,8 @@ int main()
 
     // Visualise data and linear fit
     mplot::Visual v(1024, 768, "Linear regression");
-    auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({0,0,0}));
-    v.bindmodel (gv);
+    auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>{0,0,0});
+    gv->set_parent (v.get_id());
 
     // The first dataset shows the data points
     mplot::DatasetStyle ds(mplot::stylepolicy::markers);
@@ -46,11 +46,7 @@ int main()
     v.addVisualModel (gv);
 
     // Render the graph until user exits
-    v.render();
-    while (v.readyToFinish() == false) {
-        v.waitevents (0.018);
-        v.render();
-    }
+    v.keepOpen();
 
     return 0;
 }

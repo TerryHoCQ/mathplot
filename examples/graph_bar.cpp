@@ -2,11 +2,10 @@
  * Bargraph example
  */
 
-#include <iostream>
-#include <sm/vec>
-#include <sm/vvec>
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
+#include <memory>
+
+import mplot.visual;
+import mplot.graphvisual;
 
 int main()
 {
@@ -16,7 +15,7 @@ int main()
 
     mplot::Visual v(1024, 768, "Bar graph");
     auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({0,0,0}));
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
 
     mplot::DatasetStyle ds(mplot::stylepolicy::bar); // Draw a bar graph by creating a bar policy DatasetStyle
     ds.markercolour = mplot::colour::aquamarine;     // markercolour sets the bar 'fill' colour

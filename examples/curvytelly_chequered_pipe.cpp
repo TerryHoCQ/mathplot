@@ -1,17 +1,23 @@
 /*
  * Demonstrate the CurvyTellyVisual as a way to draw a chequered pipe
  */
-#include <sm/mathconst>
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/grid>
-#include <mplot/compoundray/Visual.h>
-#include <mplot/CurvyTellyVisual.h>
+#include <memory>
+#include <iostream>
+
+import sm.mathconst;
+import sm.vec;
+import sm.vvec;
+import sm.grid;
+import sm.quaternion;
+import mplot.loadpng;
+import mplot.colourmap;
+import mplot.compoundray.visual;
+import mplot.curvytellyvisual;
 
 int main()
 {
     // compoundray::Visual is a version of Visual that can output compound-ray compatible glTF
-    mplot::compoundray::Visual<> v(1600, 1000, "CurvyTellyVisual as a stripey pipe");
+    mplot::compoundray::Visual<> v(1600, 1000, "CurvyTellyVisual as a chequered pipe");
 
     // Make a Grid to display the stripes.
     // In x, make it as many wide as there will be facets on the tube.
@@ -37,7 +43,7 @@ int main()
 
     sm::vec<float> offset = { 0, 0, -length/2 };
     auto ctv = std::make_unique<mplot::CurvyTellyVisual<float>>(&grid, offset);
-    v.bindmodel (ctv);
+    ctv->set_parent (v.get_id());
     ctv->setScalarData (&stripe_data);
     ctv->radius = radius;
     ctv->angle_to_subtend = sm::mathconst<float>::two_pi; // 2pi is default

@@ -1,4 +1,6 @@
-#include <mplot/Visual.h>
+import mplot.visual;
+import mplot.gl.version;
+
 int main()
 {
     mplot::Visual<mplot::gl::version_4_1> v(600, 400, "Hello World!");

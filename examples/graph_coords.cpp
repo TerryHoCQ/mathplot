@@ -1,10 +1,10 @@
 // This version uses containers of coordinates to set the graph data.
-
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/random>
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
+#include <memory>
+import sm.vec;
+import sm.vvec;
+import sm.random;
+import mplot.visual;
+import mplot.graphvisual;
 
 int main()
 {
@@ -12,7 +12,7 @@ int main()
     v.setSceneTrans (sm::vec<float,3>{-0.458656f, -0.428112f, -2.5f});
 
     auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>{0,0,0});
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
 
     // Choose marker policy for this graph
     gv->policy = mplot::stylepolicy::markers;
@@ -36,7 +36,7 @@ int main()
     auto gvp = v.addVisualModel (gv);
 
     while (v.readyToFinish() == false) {
-        glfwWaitEventsTimeout (0.01667); // 16.67 ms ~ 60 Hz
+        v.waitevents (0.01667); // 16.67 ms ~ 60 Hz
 
         // Re-draw numbers for the coordinates
         x1 = {rn1.get(), rn1.get()};

@@ -1,6 +1,8 @@
 #include <iostream>
-#include <sm/range>
-#include <mplot/graphing.h>
+#include <deque>
+
+import sm.interval;
+import mplot.graphing;
 
 void usage (char** argv)
 {
@@ -22,7 +24,7 @@ int main (int argc, char** argv)
     }
     std::cout << "Data range: " << a1 << " to " << a2 << std::endl;
 
-    sm::range<float> nticks = {3, 8};
+    sm::interval<float> nticks = {3, 8};
     if (argc > 4) {
         nticks.min = std::atof (argv[3]);
         nticks.max = std::atof (argv[4]);
@@ -30,7 +32,7 @@ int main (int argc, char** argv)
         usage(argv);
         return -1;
     }
-    std::cout << "Number of ticks range: " << nticks << std::endl;
+    std::cout << "Number of ticks interval: " << nticks << std::endl;
 
     std::deque<float> ticks = mplot::graphing::maketicks (a1, a2, a1, a2, nticks);
 

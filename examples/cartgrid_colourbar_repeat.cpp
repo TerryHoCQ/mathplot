@@ -5,14 +5,15 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <memory>
 
-#include <sm/vec>
-#include <sm/cartgrid>
+import sm.vec;
+import sm.cartgrid;
 
-#include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/CartGridVisual.h>
-#include <mplot/ColourBarVisual.h>
+import mplot.visual;
+import mplot.visualdatamodel;
+import mplot.cartgridvisual;
+import mplot.colourbarvisual;
 
 int main()
 {
@@ -36,20 +37,20 @@ int main()
 
     // *NB* This call (or any other 'set boundary' call) is essential, as it sets up the
     // d_ vectors in the cartgrid. Without it, the cartgrid will be unusable!
-    cg.setBoundaryOnOuterEdge();
+    cg.set_boundary_on_outer_edge();
 
     // Make some dummy data (a sine wave) to make an interesting surface
     std::vector<float> data(cg.num(), 0.0);
-    for (unsigned int ri=0; ri<cg.num(); ++ri) {
+    for (unsigned int ri = 0; ri < cg.num(); ++ri) {
         //std::cout << cg.d_x.size() << std::endl;
         //std::cout << "cg.d_x["<<ri<<"]=" << cg.d_x[ri] << std::endl;
-        data[ri] = 0.05f + 0.05f*std::sin(20.0f*cg.d_x[ri]) * std::sin(10.0f*cg.d_y[ri]) ; // Range 0->1
+        data[ri] = 0.05f + 0.05f * std::sin (20.0f * cg.d_x[ri]) * std::sin (10.0f * cg.d_y[ri]) ; // Range 0->1
     }
 
     // Add a CartGridVisual to display the cartgrid within the mplot::Visual scene
     sm::vec<float, 3> offset = { 0.0f, -0.05f, 0.0f };
     auto cgv = std::make_unique<mplot::CartGridVisual<float>>(&cg, offset);
-    v.bindmodel (cgv);
+    cgv->set_parent (v.get_id());
     cgv->cartVisMode = mplot::CartVisMode::RectInterp;
     cgv->setScalarData (&data);
     cgv->cm.setType (mplot::ColourMapType::Twilight);
@@ -59,7 +60,7 @@ int main()
     // Add the colour bar
     sm::vec<float, 3> cboffset = {1.0f, 0.0f, 0.0f};
     auto cbv =  std::make_unique<mplot::ColourBarVisual<float>>(cboffset);
-    v.bindmodel (cbv);
+    cbv->set_parent (v.get_id());
     cbv->orientation = mplot::colourbar_orientation::vertical;
     cbv->tickside = mplot::colourbar_tickside::right_or_below;
     cbv->cm = modelp->cm;
@@ -81,7 +82,7 @@ int main()
         if (offset[0] > 1.0f) { offset[0] = 0.0f; }
 
         cgv = std::make_unique<mplot::CartGridVisual<float>>(&cg, offset);
-        v.bindmodel (cgv);
+        cgv->set_parent (v.get_id());
         cgv->cartVisMode = mplot::CartVisMode::RectInterp;
         cgv->setScalarData (&data);
         cgv->cm.setType (mplot::ColourMapType::Twilight);
@@ -89,7 +90,7 @@ int main()
         modelp = v.addVisualModel (cgv);
 
         cbv = std::make_unique<mplot::ColourBarVisual<float>>(cboffset);
-        v.bindmodel (cbv);
+        cbv->set_parent (v.get_id());
         cbv->orientation = mplot::colourbar_orientation::vertical;
         cbv->tickside = mplot::colourbar_tickside::right_or_below;
         cbv->cm = modelp->cm;

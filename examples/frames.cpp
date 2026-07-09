@@ -1,11 +1,12 @@
 /*
  * Demonstrating coordinate frame transformations
  */
-#include <iostream>
-#include <sm/vec>
-#include <sm/mat>
-#include <mplot/Visual.h>
-#include <mplot/CoordArrows.h> // This is the only VisualModel derived class not called SomethingVisual!
+#include <memory>
+
+import sm.vec;
+import sm.mat;
+import mplot.visual;
+import mplot.coordarrows; // This is the only VisualModel derived class not called SomethingVisual!
 
 int main()
 {
@@ -15,7 +16,7 @@ int main()
     // A is the end location coordinate arrows (darker)
     sm::vec<float> offset = {};
     auto cavm = std::make_unique<mplot::CoordArrows<>> (offset);
-    v.bindmodel (cavm);
+    cavm->set_parent (v.get_id());
     cavm->x_axis_col = mplot::colour::maroon;
     cavm->y_axis_col = mplot::colour::darkgreen;
     cavm->z_axis_col = mplot::colour::midnightblue;
@@ -24,7 +25,7 @@ int main()
 
     // B is the starting location coordinate arrows (lighter)
     cavm = std::make_unique<mplot::CoordArrows<>> (offset);
-    v.bindmodel (cavm);
+    cavm->set_parent (v.get_id());
     cavm->x_axis_col = mplot::colour::firebrick1;
     cavm->y_axis_col = mplot::colour::palegreen3;
     cavm->z_axis_col = mplot::colour::steelblue1;
@@ -32,7 +33,7 @@ int main()
     auto cB = v.addVisualModel (cavm);
 
     cavm = std::make_unique<mplot::CoordArrows<>> (offset);
-    v.bindmodel (cavm);
+    cavm->set_parent (v.get_id());
     cavm->finalize();
     auto cC = v.addVisualModel (cavm);
 

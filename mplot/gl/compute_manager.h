@@ -26,7 +26,7 @@
 #include <GLFW/glfw3.h> // GLFW is our only supported way to getting OpenGL context for mplot::gl_compute
 
 #include <chrono>
-#include <mplot/VisualDefaultShaders.h>
+#include <mplot/VisualDefaultShaders.hpp>
 #include <mplot/VisualGlfw.h>
 
 namespace mplot::gl

@@ -1,9 +1,7 @@
 // Example of 1D convolutions with vvec
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/mathconst>
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
+#include <memory>
+import mplot.visual;
+import mplot.graphvisual;
 
 int main()
 {
@@ -25,8 +23,8 @@ int main()
 
     // Graph x and y
     mplot::Visual v(1024, 768, "1D convolutions with sm::vvec");
-    auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>({0,0,0}));
-    v.bindmodel (gv);
+    auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>{0,0,0});
+    gv->set_parent (v.get_id());
     gv->setdata (x, y, "raw");
     gv->setdata (x, y2, "smth");
     gv->finalize();

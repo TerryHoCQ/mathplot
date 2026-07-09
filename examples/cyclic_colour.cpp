@@ -2,15 +2,13 @@
  * Use cartgridvisuals to illustrate use of ColourMapType::HSV colourmap.
  */
 
-#include <iostream>
-#include <vector>
-#include <cmath>
+#include <memory>
+#include <string>
 
-#include <sm/vec>
-
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/CyclicColourVisual.h>
+import sm.vec;
+import mplot.visual;
+import mplot.colourmap;
+import mplot.cycliccolourvisual;
 
 int main()
 {
@@ -27,7 +25,7 @@ int main()
     // HSVWHeel for Grid1
     sm::vec<float, 3> woffset = offset;
     auto hsvw_vis = std::make_unique<mplot::CyclicColourVisual<float>>(woffset);
-    v.bindmodel (hsvw_vis);
+    hsvw_vis->set_parent (v.get_id());
     hsvw_vis->setColour (mplot::colour::white);
     hsvw_vis->cm = mplot::ColourMapType::CET_C6;// CET_C6
     hsvw_vis->finalize();

@@ -5,12 +5,13 @@
 #include <stdexcept>
 #include <string>
 #include <sstream>
+#include <memory>
 
-#include <sm/vec>
+import sm.vec;
 
-#include <mplot/Visual.h>
-#include <mplot/RingVisual.h>
-#include <mplot/ColourMap.h>
+import mplot.visual;
+import mplot.ringvisual;
+import mplot.colourmap;
 
 int main()
 {
@@ -21,7 +22,7 @@ int main()
     sm::vec<float, 3> offset = { -6.0f, 0.0f, 0.0f };
     for (int i = 0; i < 6; ++i) {
         auto rvm = std::make_unique<mplot::RingVisual<>> (offset);
-        v.bindmodel (rvm);
+        rvm->set_parent (v.get_id());
         rvm->clr = cmap.convert (i/6.0f);
         rvm->segments = segs[i];
         rvm->finalize();

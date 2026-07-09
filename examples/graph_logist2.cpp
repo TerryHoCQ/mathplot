@@ -1,9 +1,13 @@
 // Graph the logistic function
+#include <memory>
+#include <iostream>
 #include <sstream>
-#include <sm/vvec>
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
-#include <sm/config>
+#include <stdexcept>
+
+import sm.config;
+
+import mplot.visual;
+import mplot.graphvisual;
 
 int main()
 {
@@ -15,7 +19,7 @@ int main()
     v.setSceneTrans (sm::vec<float,3>({-0.732852f, 0.0348977f, -5.0f}));
     // Create a GraphVisual object (obtaining a unique_ptr to the object) with a spatial offset within the scene of 0,0,0
     auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>{-0.5f,-0.5f,0.0f});
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     // Params are read from a JSON file
     double x0=0, k=0, g1x0=0, g1x1=0;
     {
@@ -42,7 +46,7 @@ int main()
     mplot::GraphVisual<double>* gvptr = v.addVisualModel (gv);
 
     auto gv2 = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>{1.0f,-0.5f,0.0f});
-    v.bindmodel (gv2);
+    gv2->set_parent (v.get_id());
     sm::vvec<double> x2;
     x2.linspace (0, 1, 100);
     gv2->setlimits (0,1,0,1);

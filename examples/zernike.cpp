@@ -1,13 +1,16 @@
 // Demo Zernike polynomials
 
+#include <memory>
 #include <format>
+#include <cmath>
 #include <complex>
 #include <algorithm>
-#include <sm/mathconst>
-#include <sm/algo>
-#include <sm/vvec>
-#include <mplot/Visual.h>
-#include <mplot/PolarVisual.h>
+
+import sm.algo;
+import sm.vvec;
+import mplot.colourmap;
+import mplot.visual;
+import mplot.polarvisual;
 
 int main()
 {
@@ -40,7 +43,7 @@ int main()
             if constexpr (require_n_minus_abs_m_even) { if ((n - std::abs(m)) % 2 != 0) { continue; } }
 
             auto pv = std::make_unique<mplot::PolarVisual<double>> (sm::vec<float>{1.25f * n, 1.25f * m, 0});
-            v.bindmodel (pv);
+            pv->set_parent (v.get_id());
             pv->cm.setType (mplot::ColourMapType::Cork);
             pv->setFrameColour (mplot::colour::goldenrod1);
             pv->setTextColour (mplot::colour::black);

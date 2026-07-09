@@ -2,14 +2,15 @@
 #include <cstdint>
 #include <set>
 #include <unordered_map>
-#include <sm/vec>
+
+import sm.vec;
 
 int main()
 {
-    std::unordered_map<sm::vec<float, 3>, std::set<uint32_t>, sm::vec<float, 3>::hash> equiv_v;
+    std::unordered_map<sm::vec<float, 3>, std::set<std::uint32_t>, sm::vec<float, 3>::hash> equiv_v;
 
-    std::set<uint32_t> st = { 1, 2, 3 };
-    std::set<uint32_t> st2 = { 4, 5, 6 };
+    std::set<std::uint32_t> st = { 1, 2, 3 };
+    std::set<std::uint32_t> st2 = { 4, 5, 6 };
 
     sm::vec<float, 3> vc = { 0.1f, 0.2f, 0.3f };
 

@@ -4,13 +4,12 @@
  * near 1.
  */
 
-#include <iostream>
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/random>
-#include <sm/histo>
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
+#include <memory>
+
+import sm.random;
+import sm.histo;
+import mplot.visual;
+import mplot.graphvisual;
 
 int main()
 {
@@ -43,7 +42,7 @@ int main()
 
     // Create a new GraphVisual with offset within the scene of 0,0,0
     auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({0,0,0}));
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->setdata (h); // to become gv->add_bargraph (h [,mplot::colour::darkorchid1] [,mplot::colour::orchid2])
     gv->xlabel = "Scalar product";
     gv->ylabel = "Proportion";
@@ -51,11 +50,7 @@ int main()
     v.addVisualModel (gv);
 
     // Render the graph until user exits
-    v.render();
-    while (v.readyToFinish() == false) {
-        v.waitevents (0.018);
-        v.render();
-    }
+    v.keepOpen();
 
     return 0;
 }

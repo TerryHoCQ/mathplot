@@ -5,13 +5,14 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <memory>
 
-#include <sm/vec>
-#include <sm/cartgrid>
+import sm.vec;
+import sm.cartgrid;
 
-#include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/CartGridVisual.h>
+import mplot.visual;
+import mplot.visualdatamodel;
+import mplot.cartgridvisual;
 
 int main()
 {
@@ -36,7 +37,7 @@ int main()
 
     // *NB* This call (or any other 'set boundary' call) is essential, as it sets up the
     // d_ vectors in the cartgrid. Without it, the cartgrid will be unusable!
-    cg.setBoundaryOnOuterEdge();
+    cg.set_boundary_on_outer_edge();
 
     // Make some dummy data (a sine wave) to make an interesting surface
     std::vector<float> data(cg.num(), 0.0);
@@ -49,7 +50,7 @@ int main()
     // Add a CartGridVisual to display the CartGrid within the mplot::Visual scene
     sm::vec<float, 3> offset = { 0.0f, -0.05f, 0.0f };
     auto cgv = std::make_unique<mplot::CartGridVisual<float>>(&cg, offset);
-    v.bindmodel (cgv);
+    cgv->set_parent (v.get_id());
     cgv->cartVisMode = mplot::CartVisMode::RectInterp;
     cgv->setScalarData (&data);
     cgv->cm.setType (mplot::ColourMapType::Twilight);

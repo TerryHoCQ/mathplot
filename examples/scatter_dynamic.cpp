@@ -1,19 +1,11 @@
 /*
  * A dynamic, updating version of the scatter plot example
  */
-#include <iostream>
-#include <fstream>
+#include <memory>
 #include <cmath>
-#include <array>
-#include <iostream>
 
-#include <sm/mathconst>
-#include <sm/vec>
-#include <sm/vvec>
-
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/ScatterVisual.h>
+import mplot.visual;
+import mplot.scattervisual;
 
 int main()
 {
@@ -28,7 +20,7 @@ int main()
 
     // Do the initial set up of the ScatterVisual object
     auto sv = std::make_unique<mplot::ScatterVisual<float>> (offset);
-    v.bindmodel (sv);
+    sv->set_parent (v.get_id());
     sm::vvec<sm::vec<float, 3>> points(20*20);
     sm::vvec<float> data(20*20);
     sv->setDataCoords (&points);

@@ -2,24 +2,18 @@
 
 ![A banner image mathplot VisualModels](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/banner2.png?raw=true)
 
-![cmake ubuntu 24 gcc 11 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-ubu24-gcc12.yml/badge.svg)
-![cmake ubuntu 24 default (gcc 13) build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-ubuntu-2404.yml/badge.svg)
-![cmake ubuntu 24 gcc 14 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-ubu24-gcc14.yml/badge.svg)
-![cmake ubuntu 24 clang 16 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-ubu24-clang16.yml/badge.svg)
-![cmake ubuntu 24 clang 17 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-ubu24-clang16.yml/badge.svg)
-![cmake ubuntu 24 clang 18 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-ubu24-clang16.yml/badge.svg)
-![cmake ubuntu 22 default (gcc 11?) build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-ubuntu-2204.yml/badge.svg)
-![cmake mac 14 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-mac-14.yml/badge.svg)
-![cmake mac 15 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-mac-15.yml/badge.svg)
-![cmake windows 22 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-windows-2022.yml/badge.svg)
+![cmake windows 25 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-windows-2025.yml/badge.svg)
+![cmake clang 20 build test](https://github.com/sebsjames/mathplot/actions/workflows/ubuntu-cmakeninja-clang20.yml/badge.svg)
+![cmake clang 22 build test](https://github.com/sebsjames/mathplot/actions/workflows/ubuntu-cmakeninja-clang22.yml/badge.svg)
+![cmake gcc 16 build test](https://github.com/sebsjames/mathplot/actions/workflows/ubuntu-cmakeninja-gcc16.yml/badge.svg)
 
 [![Mentioned in Awesome C++](https://awesome.re/mentioned-badge.svg)](https://github.com/myd7349/awesome-cpp?tab=readme-ov-file#data-visualization)
 
-**Header-only library code to visualize C++ numerical simulations using modern OpenGL.**
+**Modular C++20 library code to visualize numerical simulations using modern OpenGL.**
 
 Mathplot is a library for drawing **3D data visualization** objects called `VisualModels`.
 
-Mathplot is compatible with **Linux** (including **Raspberry Pi**), **Mac OS** and **Windows**.
+Mathplot is compatible with **Linux** (including **Raspberry Pi**), **Mac OS** and **Windows**, *but* compiler support is still catching up.  On Linux or Mac, you need to use LLVM/clang version 20 or higher; on Windows, VisualStudio seems to have a bug as it will not compile the code at present.
 
 You'll find all of the **library code** in the [**mplot**](https://github.com/sebsjames/mathplot/tree/main/mplot) directory and you can find **example code and screenshots** [here](https://github.com/sebsjames/mathplot/tree/main/examples). There is also a **template project** [that uses mathplot](https://github.com/sebsjames/mathplot_template) to help you incorporate the library into your own work.
 
@@ -29,21 +23,34 @@ Mathplot can be **integrated with GUI frameworks** including [Qt](https://doc.qt
 
 ## Quick Start
 
+### Compilers that compile all the examples
+
+* clang-20
+* clang-21
+* clang-22
+* clang-23 (prerelease)
+
+### Compilers that are almost there
+
+* GCC (just [Bug 124888](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=124888) to resolve)
+
 This quick start shows dependency installation for Linux, because on this platform, it's a single call to apt (or your favourite package manager). If you're using a Mac, see [README.build.mac](https://github.com/sebsjames/mathplot/tree/main/README.build.mac.md) for help getting dependencies in place. It's [README.build.windows](https://github.com/sebsjames/mathplot/tree/main/README.build.windows.md) for Windows users. For notes on supported compilers, see [README.build.compiler](https://github.com/sebsjames/mathplot/tree/main/README.build.compiler.md)
 
 ```bash
 # Install dependencies for building graph1.cpp and (almost) all the other examples (assuming Debian-like OS)
-sudo apt install build-essential cmake git wget \
-                 nlohmann-json3-dev librapidxml-dev \
-                 freeglut3-dev libglu1-mesa-dev libxmu-dev libxi-dev \
-                 libglfw3-dev libfreetype-dev libarmadillo-dev libhdf5-dev
+sudo apt install build-essential cmake git ninja-build \
+                 librapidxml-dev freeglut3-dev libglu1-mesa-dev libxmu-dev \
+                 libxi-dev libglfw3-dev libfreetype-dev libhdf5-dev
 
-git clone --recurse-submodules git@github.com:sebsjames/mathplot   # Get your copy of the morphologica code
+# Install a very up to date compiler
+sudo apt install clang-20 clang-tools-20
+
+git clone --recurse-submodules git@github.com:sebsjames/mathplot   # Get your copy of the mathplot code
 cd mathplot
 mkdir build         # Create a build directory
 cd build
-cmake ..            # Call cmake to generate the makefiles
-make graph1         # Compile a single one of the examples. Add VERBOSE=1 to see the compiler commands.
+cmake .. -GNinja    # Call cmake to generate the makefiles
+ninja graph1        # Compile a single one of the examples. Add VERBOSE=1 to see the compiler commands.
 ./examples/graph1   # Run the program. You should see a graph of a cubic function.
 # After closing the graph1 program, open its source code and modify something (see examples/graph2.cpp for ideas)
 gedit ../examples/graph1.cpp
@@ -51,19 +58,19 @@ gedit ../examples/graph1.cpp
 The program graph1.cpp is:
 ```c++
 // Visualize a graph. Minimal example showing how a default graph appears
-#include <sm/vvec> // vvec is part of Seb's maths library
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
+#include <memory>
+import mplot.visual;
+import mplot.graphvisual; // exports sm.vvec and sm.vec
 
 int main()
 {
-    // Set up your mplot::Visual 'scene environment'.
+    // Set up a mplot::Visual 'scene environment'.
     mplot::Visual v(1024, 768, "Made with mplot::GraphVisual");
-    // Create a new GraphVisual object with offset within the scene of 0,0,0
+    // Create a GraphVisual object (obtaining a unique_ptr to the object) with a spatial offset within the scene of 0,0,0
     auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>({0,0,0}));
-    // Boilerplate bindmodel function call - do this for every model you add to a Visual
-    v.bindmodel (gv);
-    // Data for the x axis. sm::vvec is like std::vector, but with built-in maths methods
+    // This mandatory line of boilerplate code sets the parent ID in GraphVisual
+    gv->set_parent (v.get_id());
+    // Data for the x axis. A vvec is like std::vector, but with built-in maths methods
     sm::vvec<double> x;
     // This works like numpy's linspace() (the 3 args are "start", "end" and "num"):
     x.linspace (-0.5, 0.8, 14);
@@ -71,10 +78,12 @@ int main()
     gv->setdata (x, x.pow(3));
     // finalize() makes the GraphVisual compute the vertices of the OpenGL model
     gv->finalize();
-    // Add the GraphVisual OpenGL model to the Visual scene (which takes ownership of the unique_ptr)
+    // Add the GraphVisual OpenGL model to the Visual scene, transferring ownership of the unique_ptr
     v.addVisualModel (gv);
     // Render the scene on the screen until user quits with 'Ctrl-q'
     v.keepOpen();
+    // Because v owns the unique_ptr to the GraphVisual, its memory will be deallocated when v goes out of scope.
+    return 0;
 }
 ```
 The program generates a clean looking graph...
@@ -100,7 +109,7 @@ plt.show()
 ```
 ## What is Mathplot?
 
-This header-only C++ code provides **dynamic runtime visualization**
+This modular C++ code provides **dynamic runtime visualization**
 for your programs. It was developed to visualize simulations of dynamical
 systems and agent-based models in real-time.
 
@@ -121,7 +130,7 @@ A modern OpenGL visualization scheme called
 
 See [the reference documentation website](https://sebsjames.github.io/mathplot/) for a guide to the main classes.
 
-Mathplot code is enclosed in the **mplot** namespace. If the reference site doesn't cover it, then the header files (They're all in [mplot/](https://github.com/sebsjames/mathplot/tree/main/mplot)) contain code documentation.
+Mathplot code is enclosed in the **mplot** namespace. If the reference site doesn't cover it, then the source code (found in [mplot/](https://github.com/sebsjames/mathplot/tree/main/mplot)) contains code documentation.
 
 You can find example programs which are compiled when you do the standard
 cmake-driven build of mathplot in both the [tests/](https://github.com/sebsjames/mathplot/tree/main/tests) subdirectory

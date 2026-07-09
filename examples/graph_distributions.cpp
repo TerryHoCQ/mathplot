@@ -2,16 +2,17 @@
  * Showing all the random distributions in <sm/random>
  */
 
+#include <memory>
 #include <iostream>
-#include <format>
 #include <string>
-#include <sm/mathconst>
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/histo>
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
+#include <cmath>
+#include <format>
+#include <sstream>
 
+import sm.random;
+import sm.vvec;
+import mplot.visual;
+import mplot.graphvisual;
 
 template<typename F>
 void draw_graph (mplot::Visual<>& v, sm::histo<F, float>& h, const sm::vvec<float>& pd,
@@ -22,7 +23,7 @@ void draw_graph (mplot::Visual<>& v, sm::histo<F, float>& h, const sm::vvec<floa
     // Create a new GraphVisual. Note the type for the GraphVisual has to match the *second*
     // template type for the histo.
     auto gv = std::make_unique<mplot::GraphVisual<float>> (locn);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     if (!proportions) {
         gv->setdata (h, "samples", mplot::histo_view::densities);
         ds.datalabel = "PDF";

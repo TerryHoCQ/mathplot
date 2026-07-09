@@ -1,26 +1,28 @@
 /*
  * Test convolution of some data defined on a CartGrid (using CartGrid::convolve)
  */
+#include <memory>
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include <string>
 #include <cmath>
 
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/cartgrid>
+import sm.vec;
+import sm.vvec;
+import sm.cartgrid;
 
-#include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/CartGridVisual.h>
+import mplot.visual;
+import mplot.visualdatamodel;
+import mplot.cartgridvisual;
 
-int main()
+std::int32_t main()
 {
-    int rtn = 0;
+    std::int32_t rtn = 0;
 
     // This'll be a 256x64 grid. This constructor creates a 'non-centred' cartgrid.
     sm::cartgrid cg(0.01f, 0.01f, 0.0f, 0.0f, 256*0.01f-0.01f, 64*0.01f-0.01f);
-    cg.setBoundaryOnOuterEdge();
+    cg.set_boundary_on_outer_edge();
 
     // Populate a vector of floats with data
     sm::vvec<float> data (cg.num());
@@ -30,7 +32,7 @@ int main()
     // Create a small CartGrid to contain the convolution kernel
     //mplot::cartgrid kernel (0.01f, 0.01f, 0.05f, 0.05f);
     sm::cartgrid kernel (0.01f, 0.01f, 0.0f, 0.0f, 5*0.01f-0.01f, 5*0.01f-0.01f);
-    kernel.setBoundaryOnOuterEdge();
+    kernel.set_boundary_on_outer_edge();
 
     sm::vvec<float> kdata(kernel.num());
 
@@ -69,7 +71,7 @@ int main()
 
     sm::vec<float, 3> offset = { 0.0f, 0.0f, 0.0f };
     auto cgv = std::make_unique<mplot::CartGridVisual<float>>(&cg, offset);
-    v.bindmodel (cgv);
+    cgv->set_parent (v.get_id());
     cgv->cartVisMode = mplot::CartVisMode::RectInterp;
     cgv->setScalarData (&data);
     cgv->cm.setType (mplot::ColourMapType::GreyscaleInv);
@@ -81,7 +83,7 @@ int main()
 
     offset = { 0.0f, -0.3f, 0.0f };
     auto cgvk = std::make_unique<mplot::CartGridVisual<float>>(&kernel, offset);
-    v.bindmodel (cgvk);
+    cgvk->set_parent (v.get_id());
     cgvk->cartVisMode = mplot::CartVisMode::RectInterp;
     cgvk->setScalarData (&kdata);
     cgvk->cm.setType (mplot::ColourMapType::GreyscaleInv);
@@ -93,7 +95,7 @@ int main()
 
     offset = { 0.0f, -1.3f, 0.0f };
     auto cgvr = std::make_unique<mplot::CartGridVisual<float>>(&cg, offset);
-    v.bindmodel (cgvr);
+    cgvr->set_parent (v.get_id());
     cgvr->cartVisMode = mplot::CartVisMode::RectInterp;
     cgvr->setScalarData (&convolved);
     cgvr->cm.setType (mplot::ColourMapType::GreyscaleInv);

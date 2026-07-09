@@ -1,10 +1,13 @@
 // A line graph showing how line segments work nicely
 // Also demonstrates crossing points
 
+#include <memory>
 #include <format>
-#include <sm/vvec>
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
+#include <sstream>
+
+import sm.vvec;
+import mplot.visual;
+import mplot.graphvisual;
 
 int main()
 {
@@ -15,7 +18,7 @@ int main()
     auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>{ 0.0f, 0.0f, 0.0f });
 
     // This mandatory line of boilerplate code sets the parent pointer in GraphVisual and binds some functions
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
 
     // Data for the x axis. A vvec is like std::vector, but with built-in maths methods
     sm::vvec<double> y;

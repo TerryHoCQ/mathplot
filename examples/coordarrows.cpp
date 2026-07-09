@@ -1,10 +1,11 @@
 /*
  * Visualize a CoordArrows VisualModel
  */
+#include <memory>
 #include <iostream>
-#include <sm/vec>
-#include <mplot/Visual.h>
-#include <mplot/CoordArrows.h> // This is the only VisualModel derived class not called SomethingVisual!
+import sm.vec;
+import mplot.visual;
+import mplot.coordarrows; // This is the only VisualModel derived class not called SomethingVisual!
 
 int main()
 {
@@ -21,7 +22,7 @@ int main()
     // An extra CoordArrows model, with defaults
     sm::vec<float> offset = {};
     auto cavm = std::make_unique<mplot::CoordArrows<>> (offset);
-    v.bindmodel (cavm);
+    cavm->set_parent (v.get_id());
     cavm->finalize();
     v.addVisualModel (cavm);
 
@@ -34,7 +35,7 @@ int main()
     // An CoordArrows model, with non-defaults
     offset[0] += 1.5f;
     cavm = std::make_unique<mplot::CoordArrows<>> (offset);
-    v.bindmodel (cavm);
+    cavm->set_parent (v.get_id());
     cavm->init (ux, uy, -uz);
 
     cavm->lengths = sm::vec<float>{1,1,1}; // this is the default already
@@ -50,7 +51,7 @@ int main()
     // One more, for good measure
     offset[0] += 1.5f;
     cavm = std::make_unique<mplot::CoordArrows<>> (offset);
-    v.bindmodel (cavm);
+    cavm->set_parent (v.get_id());
     cavm->init (ux, uz, uy);
     cavm->init (sm::vec<float>{1,1,0.5}, 1.5f, 0.13f);
     cavm->x_label = "X'";

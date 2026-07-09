@@ -9,9 +9,10 @@
  * Author: Seb James.
  */
 
+#include <cstdint>
 #include <iostream>
 #include <stdexcept>
-#include <sm/vec>
+import sm.vec;
 #include <mplot/gl/util_nomx.h>
 
 namespace mplot::gl
@@ -19,7 +20,7 @@ namespace mplot::gl
     // Set up a single texture suitable for filling with values within the
     // compute shader. Note: fixed format of GL_RGBA and GL_FLOAT; could set these
     // with template params.
-    void setup_texture (const GLuint image_texture_unit, unsigned int& texture_id, sm::vec<GLsizei, 2> dims)
+    void setup_texture (const std::uint32_t image_texture_unit, std::uint32_t& texture_id, sm::vec<std::int32_t, 2> dims)
     {
         glGenTextures (1, &texture_id); // generate a texture name and place it in texture_id
         // Bind a texture (GL_TEXTURE_2D) to the texture name
@@ -39,8 +40,8 @@ namespace mplot::gl
 
     // Set up a shader-read-only texture with the provided rgb image data
     template <bool gles = false>
-    void setup_texture (const GLuint image_texture_unit, unsigned int& texture_id,
-                        sm::vec<GLsizei, 2> dims, float* rgb_data)
+    void setup_texture (const std::uint32_t image_texture_unit, std::uint32_t& texture_id,
+                        sm::vec<std::int32_t, 2> dims, float* rgb_data)
     {
         if constexpr (gles == false) {
             // This may not be perfect, but seemed to work with a non-GLES context
@@ -57,7 +58,7 @@ namespace mplot::gl
             glBindImageTexture (image_texture_unit, texture_id, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
             mplot::gl::Util::checkError (__FILE__, __LINE__);
         } else {
-            throw std::runtime_error ("Fix setup_texture (const GLuint, unsigned int&, sm::vec<GLsizei,2>, float* rgb_data) to work on OpenGL ES");
+            throw std::runtime_error ("Fix setup_texture (const std::uint32_t, std::uint32_t&, sm::vec<std::int32_t,2>, float* rgb_data) to work on OpenGL ES");
         }
     }
 
@@ -66,8 +67,8 @@ namespace mplot::gl
 
     // Set up a shader-read-only texture with the provided rgb image data.
     // Just can't figure out how to make this work in GL 3.1 ES!
-    void setup_texture (const GLuint image_texture_unit, unsigned int& texture_id,
-                        sm::vec<GLsizei, 2> dims, float* rgb_data)
+    void setup_texture (const std::uint32_t image_texture_unit, std::uint32_t& texture_id,
+                        sm::vec<std::int32_t, 2> dims, float* rgb_data)
     {
         std::cout << "setup_texture for READ_ONLY access of an image in shader\n";
 
@@ -98,7 +99,7 @@ namespace mplot::gl
 # endif
         mplot::gl::Util::checkError (__FILE__, __LINE__);
 
-        GLint imstatus;
+        std::int32_t imstatus;
         glGetTexParameteriv (GL_TEXTURE_2D, GL_TEXTURE_IMMUTABLE_FORMAT, &imstatus);
         std::cout << "IMMUTABLE_TEXTURE?: " << (imstatus?"Yes! immutable":"No, mutable") << std::endl;
 
@@ -118,19 +119,19 @@ namespace mplot::gl
     // Set up a shader-read-only texture with the provided rgb image data.  This is an
     // attempt to create one mutable texture, and an immutable one and copy the texture from
     // the mutable to the immutable. Doesn't work.
-    void setup_texture_alt (const GLuint image_texture_unit, unsigned int& texture_id,
-                            sm::vec<GLsizei, 2> dims, float* rgb_data)
+    void setup_texture_alt (const std::uint32_t image_texture_unit, std::uint32_t& texture_id,
+                            sm::vec<std::int32_t, 2> dims, float* rgb_data)
     {
         std::cout << "setup_texture for READ_ONLY access of an image in shader\n";
 
-        unsigned int texture_id_tmp = 0;
+        std::uint32_t texture_id_tmp = 0;
         glGenTextures (1, &texture_id_tmp);
 
         glGenTextures (1, &texture_id); // Generates texture name, placing it in texture_id.
         std::cout << "After glGenTextures, we have texture_id: " << texture_id
                   << " and image_texture_unit is " << image_texture_unit << std::endl;
 
-        GLuint image_texture_unit_tmp = image_texture_unit + 10;
+        std::uint32_t image_texture_unit_tmp = image_texture_unit + 10;
 
         // Bind a texture (GL_TEXTURE_2D) to the texture name
         glBindTexture (GL_TEXTURE_2D, texture_id_tmp);
@@ -156,7 +157,7 @@ namespace mplot::gl
         glActiveTexture (GL_TEXTURE0+image_texture_unit);
         mplot::gl::Util::checkError (__FILE__, __LINE__);
 
-        GLint imstatus;
+        std::int32_t imstatus;
         glGetTexParameteriv (GL_TEXTURE_2D, GL_TEXTURE_IMMUTABLE_FORMAT, &imstatus);
         std::cout << "IMMUTABLE_TEXTURE?: " << (imstatus?"Yes! immutable":"No, mutable") << std::endl;
 

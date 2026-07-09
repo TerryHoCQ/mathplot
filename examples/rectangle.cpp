@@ -1,10 +1,11 @@
 /*
  * Visualize a rectangle
  */
+#include <memory>
 #include <iostream>
-#include <sm/vec>
-#include <mplot/Visual.h>
-#include <mplot/RectangleVisual.h>
+
+import mplot.visual;
+import mplot.rectanglevisual;
 
 int main()
 {
@@ -16,7 +17,7 @@ int main()
         sm::vec<float, 2> dims = { 0.4f, 2.0f };
         float angle = 0.0f;
         auto rv = std::make_unique<mplot::RectangleVisual<>> (offset, dims, angle, mplot::colour::maroon);
-        v.bindmodel (rv);
+        rv->set_parent (v.get_id());
         rv->finalize();
         v.addVisualModel (rv);
 

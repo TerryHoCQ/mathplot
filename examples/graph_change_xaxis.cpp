@@ -1,16 +1,16 @@
 // This is a graph which updates on each step to make sure the x axis tick labelling works
+#include <memory>
 #include <cstdint>
-#include <sm/vvec>
-#include <sm/mathconst>
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
+
+import mplot.visual;
+import mplot.graphvisual;
 
 int main()
 {
     mplot::Visual v(1024, 768, "Continuous redrawing of GraphVisual");
 
-    auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>({0,0,0}));
-    v.bindmodel (gv);
+    auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>{0,0,0});
+    gv->set_parent (v.get_id());
 
     sm::vvec<double> x;
     x.linspace (-sm::mathconst<double>::pi, sm::mathconst<double>::pi, 100);
@@ -29,7 +29,7 @@ int main()
     auto gvp = v.addVisualModel (gv);
 
     double dx_step = 0.01;
-    int64_t count = 0;
+    std::int64_t count = 0;
     double f = 1.0;
     while (v.readyToFinish() == false) {
         v.waitevents (0.016); // 16.67 ms ~ 60 Hz

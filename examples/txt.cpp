@@ -1,9 +1,11 @@
 /*
  * TxtVisual example
  */
-#include <sm/vec>
-#include <mplot/Visual.h>
-#include <mplot/TxtVisual.h>
+#include <memory>
+
+import sm.vec;
+import mplot.visual;
+import mplot.txtvisual;
 
 int main()
 {
@@ -14,7 +16,7 @@ int main()
                                                     "You can use newline characters [here]-->\n"
                                                     "in the source and these are reflected in the output.",
                                                     sm::vec<float>{1.0f, 0.0f, 0.5f}, mplot::TextFeatures (0.1f));
-    v.bindmodel (tv);
+    tv->set_parent (v.get_id());
     tv->finalize();
     v.addVisualModel (tv);
 

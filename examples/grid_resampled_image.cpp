@@ -1,17 +1,18 @@
+#include <memory>
 #include <iostream>
 #include <vector>
 #include <cmath>
 
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/grid>
-#include <sm/hexgrid>
+import sm.vec;
+import sm.vvec;
+import sm.grid;
+import sm.hexgrid;
 
-#include <mplot/loadpng.h>
-#include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/GridVisual.h>
-#include <mplot/HexGridVisual.h>
+import mplot.loadpng;
+import mplot.visual;
+import mplot.visualdatamodel;
+import mplot.gridvisual;
+import mplot.hexgridvisual;
 
 int main()
 {
@@ -55,7 +56,7 @@ int main()
     // Resample to hexgrid too, for good measure
     sm::vec<float, 2> g2_dx = g2.get_dx();
     sm::hexgrid hg(g2_dx[0], g2.width()*2.0f, 0.0f);
-    hg.setRectangularBoundary (g2.width(), g2.height()); // Make rectangular boundary same size as g2
+    hg.set_rectangular_boundary (g2.width(), g2.height()); // Make rectangular boundary same size as g2
 
     // Here's the hexgrid method that will resample the square pixel grid onto the hex
     // grid Because hexgrids are not naturally rectangular, a scaling of {1,1} does not
@@ -63,11 +64,11 @@ int main()
     // scales the interpreted image (which is interpreted as having width 1.0) to the
     // correct dimensions.
     sm::vec<float,2> hex_image_scale = { g2.width(), g2.width() };
-    sm::vvec<float> hex_image_data = hg.resampleImage (image_data, dims[0], hex_image_scale, image_offset);
+    sm::vvec<float> hex_image_data = hg.resample_image (image_data, dims[0], hex_image_scale, image_offset);
 
     // Visualise original with a GridVisual
     auto gv1 = std::make_unique<mplot::GridVisual<float>>(&g1, sm::vec<float>({0,0,0}));
-    v.bindmodel (gv1);
+    gv1->set_parent (v.get_id());
     gv1->gridVisMode = mplot::GridVisMode::RectInterp;
     gv1->setScalarData (&image_data);
     gv1->cm.setType (mplot::ColourMapType::GreyscaleInv); // inverse greyscale is good for a monochrome image
@@ -78,7 +79,7 @@ int main()
 
     // Visualize resampled
     auto gv2 = std::make_unique<mplot::GridVisual<float>>(&g2, sm::vec<float>{ 0.0f, -2.0f, 0.0f });
-    v.bindmodel (gv2);
+    gv2->set_parent (v.get_id());
     gv2->gridVisMode = mplot::GridVisMode::RectInterp;
     gv2->setScalarData (&img_resampled);
     gv2->cm.setType (mplot::ColourMapType::GreyscaleInv);
@@ -88,7 +89,7 @@ int main()
     v.addVisualModel (gv2);
 
     auto hgv = std::make_unique<mplot::HexGridVisual<float>>(&hg, sm::vec<float>{ g2.width() / 2.0f, g2.height() / 2.0f - 4.0f , 0.0f });
-    v.bindmodel (hgv);
+    hgv->set_parent (v.get_id());
     hgv->setScalarData (&hex_image_data);
     hgv->cm.setType (mplot::ColourMapType::GreyscaleInv);
     hgv->zScale.null_scaling();

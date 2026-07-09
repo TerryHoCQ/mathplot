@@ -2,18 +2,19 @@
  * A 3D surface with an associated 2D colourbar.
  */
 
+#include <memory>
 #include <iostream>
 #include <vector>
 #include <cmath>
 
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/hexgrid>
+import sm.vec;
+import sm.vvec;
+import sm.hexgrid;
 
-#include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/HexGridVisual.h>
-#include <mplot/ColourBarVisual.h>
+import mplot.visual;
+//import mplot.visualdatamodel;
+import mplot.hexgridvisual;
+import mplot.colourbarvisual;
 
 int main()
 {
@@ -34,7 +35,7 @@ int main()
 
     // A hexgrid to show in the scene.
     sm::hexgrid hg(0.01f, 3.0f, 0.0f);
-    hg.setCircularBoundary (0.6f);
+    hg.set_circular_boundary (0.6f);
     std::cout << "Number of pixels in grid:" << hg.num() << std::endl;
 
     // Make some data for the surface
@@ -46,7 +47,7 @@ int main()
     // Add a HexGridVisual to display the hexgrid within the mplot::Visual scene
     sm::vec<float, 3> offset = { 0.0f, -0.05f, 0.0f };
     auto hgv = std::make_unique<mplot::HexGridVisual<float>>(&hg, offset);
-    v.bindmodel (hgv);
+    hgv->set_parent (v.get_id());
     hgv->cm.setType (colour_map_type); // This is how we set the colour map type in HexGridVisual
     hgv->setScalarData (&data);
     hgv->hexVisMode = mplot::HexVisMode::Triangles;
@@ -55,8 +56,8 @@ int main()
 
     // Add the colour bar
     offset = {0.8f, -0.3f, 0.0f};
-    auto cbv =  std::make_unique<mplot::ColourBarVisual<float>>(offset);
-    v.bindmodel (cbv);
+    auto cbv = std::make_unique<mplot::ColourBarVisual<float>>(offset);
+    cbv->set_parent (v.get_id());
     cbv->orientation = mplot::colourbar_orientation::vertical;
     cbv->tickside = mplot::colourbar_tickside::right_or_below;
     // Copy colourmap and scale to colourbar visual
@@ -68,8 +69,8 @@ int main()
 
     // Add a horizontal colourbar, too
     offset = {-0.3f, -1.0f, 0.0f};
-    cbv =  std::make_unique<mplot::ColourBarVisual<float>>(offset);
-    v.bindmodel (cbv);
+    cbv = std::make_unique<mplot::ColourBarVisual<float>>(offset);
+    cbv->set_parent (v.get_id());
     cbv->orientation = mplot::colourbar_orientation::horizontal;
     cbv->tickside = mplot::colourbar_tickside::left_or_above;
     cbv->cm = hgvp->cm;

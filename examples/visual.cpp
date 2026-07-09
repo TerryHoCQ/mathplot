@@ -2,16 +2,16 @@
  * An example mplot::Visual scene, containing a HexGrid.
  */
 
+#include <memory>
 #include <iostream>
 #include <vector>
 #include <cmath>
 
-#include <sm/vec>
-#include <sm/hexgrid>
+import sm.vec;
+import sm.hexgrid;
 
-#include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/HexGridVisual.h>
+import mplot.visual;
+import mplot.hexgridvisual;
 
 int main()
 {
@@ -43,19 +43,19 @@ int main()
 
     // Create a hexgrid to show in the scene
     sm::hexgrid hg(0.01, 3, 0);
-    hg.setCircularBoundary (0.3);
+    hg.set_circular_boundary (0.3);
     std::cout << "Number of hexes in grid:" << hg.num() << std::endl;
 
     // Make some dummy data (a sine wave) to make an interesting surface
     std::vector<float> data(hg.num(), 0.0);
-    for (unsigned int hi=0; hi<hg.num(); ++hi) {
-        data[hi] = 0.05 + 0.05*std::sin(10*hg.d_x[hi]); // Range 0->1
+    for (unsigned int hi = 0; hi < hg.num(); ++hi) {
+        data[hi] = 0.05f + 0.05f * std::sin (10.0f * hg.d_x[hi]); // Range 0->1
     }
 
     // Add a HexGridVisual to display the hexgrid within the mplot::Visual scene
     sm::vec<float, 3> offset = { 0.0, -0.05, 0.0 };
     auto hgv = std::make_unique<mplot::HexGridVisual<float>>(&hg, offset);
-    v.bindmodel (hgv);
+    hgv->set_parent (v.get_id());
     hgv->setScalarData (&data);
     hgv->finalize();
     v.addVisualModel (hgv);

@@ -1,13 +1,12 @@
 #include <iostream>
-
-#include <utility>
+#include <stdexcept>
 #include <vector>
-#include <fstream>
+#include <cmath>
 
-#include <sm/bezcoord>
-#include <sm/bezcurvepath>
+import sm.bezcoord;
+import sm.bezcurvepath;
 
-#include <mplot/ReadCurves.h>
+import mplot.readcurves;
 
 int main()
 {
@@ -17,8 +16,8 @@ int main()
         mplot::ReadCurves r("../../tests/whiskerbarrels_withcentres.svg");
         //r.save (0.001f);
         sm::bezcurvepath<float> bcp = r.getCorticalPath();
-        bcp.computePoints (0.01f);
-        std::vector<sm::bezcoord<float>> pts = bcp.getPoints();
+        bcp.compute_points (0.01f);
+        std::vector<sm::bezcoord<float>> pts = bcp.get_points();
         auto i = pts.begin();
         while (i != pts.end()) {
             std::cout << *i << std::endl;
@@ -30,9 +29,9 @@ int main()
              << " " << pts[23].x()
              << " " << pts[23].y()
              << std::endl;
-        if ((fabs(pts[23].t() - 0.110523112118) < 0.000001f)
-            && (fabs(pts[23].x() - 0.74002712965) < 0.000001f)
-            && (fabs(pts[23].y() - 0.393309623003) < 0.000001f)) {
+        if ((std::abs(pts[23].t() - 0.110523112118) < 0.000001f)
+            && (std::abs(pts[23].x() - 0.74002712965) < 0.000001f)
+            && (std::abs(pts[23].y() - 0.393309623003) < 0.000001f)) {
             std::cout << "rtn IS 0" << std::endl;
             rtn = 0;
         } else {

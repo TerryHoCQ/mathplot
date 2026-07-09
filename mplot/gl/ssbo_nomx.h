@@ -10,9 +10,9 @@
  */
 
 #include <cstddef>
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/range>
+import sm.vec;
+import sm.vvec;
+import sm.interval;
 #include <mplot/gl/util_nomx.h>
 
 namespace mplot::gl
@@ -158,10 +158,10 @@ namespace mplot::gl
         // ssbo_idx: The Index of the Shader Storage Buffer Object that we're reading from
         // ssbo_name: The name (really a number) of the Shader Storage Buffer Object that we're reading from
         // ssbo_num_elements: The number of elements of type T in the SSBO.
-        sm::range<T> get_range()
+        sm::interval<T> get_range()
         {
             std::size_t sz = this->data.size();
-            sm::range<T> r;
+            sm::interval<T> r;
             r.search_init();
             glBindBufferBase (GL_SHADER_STORAGE_BUFFER, index, this->name);
             mplot::gl::Util::checkError (__FILE__, __LINE__);

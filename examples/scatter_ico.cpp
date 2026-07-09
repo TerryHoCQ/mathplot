@@ -4,26 +4,22 @@
  * triangles for the faces and another set of scatter plot spheres for the face centres.
  */
 
+#include <memory>
 #include <iostream>
-#include <fstream>
 #include <cmath>
 #include <array>
 
-#include <sm/scale>
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/geometry>
-
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/ScatterVisual.h>
-#include <mplot/TriangleVisual.h>
+import sm.geometry;
+import sm.geometry_polyhedra;
+import mplot.visual;
+import mplot.scattervisual;
+import mplot.trianglevisual;
 
 int main()
 {
     int rtn = -1;
 
-    mplot::Visual v(1024, 768, "mplot::ScatterVisual");
+    mplot::Visual v(1024, 768, "mplot::ScatterVisual Icosahedron");
     v.showCoordArrows (true);
     v.lightingEffects();
 
@@ -43,7 +39,7 @@ int main()
         sm::vvec<float> data2(20, 0.95f);
 
         auto sv = std::make_unique<mplot::ScatterVisual<float>> (offset);
-        v.bindmodel (sv);
+        sv->set_parent (v.get_id());
         sv->setDataCoords (&ico.vertices);
         sv->setScalarData (&data);
         sv->radiusFixed = 0.01f;
@@ -55,7 +51,7 @@ int main()
 
         // Use a second scatter visual to show the centre of each face, numbered in a different colour
         sv = std::make_unique<mplot::ScatterVisual<float>> (offset);
-        v.bindmodel (sv);
+        sv->set_parent (v.get_id());
         sv->setDataCoords (&fcentres);
         sv->setScalarData (&data2);
         sv->radiusFixed = 0.01f;
@@ -74,7 +70,7 @@ int main()
                                                                  ico.vertices[ico.faces[i][1]],
                                                                  ico.vertices[ico.faces[i][2]],
                                                                  colr);
-            v.bindmodel (tv);
+            tv->set_parent (v.get_id());
             tv->setAlpha (0.8f);
             tv->finalize();
             v.addVisualModel (tv);

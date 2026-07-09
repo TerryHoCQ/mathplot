@@ -2,19 +2,18 @@
  * An interactive version of the colourbar program (the code is more involved)
  */
 
+#include <memory>
 #include <iostream>
 #include <vector>
 #include <cmath>
 
-#include <sm/range>
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/hexgrid>
+import sm.interval;
+import sm.vec;
+import sm.vvec;
 
-#include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/HexGridVisual.h>
-#include <mplot/ColourBarVisual.h>
+import mplot.visual;
+import mplot.hexgridvisual;
+import mplot.colourbarvisual;
 
 // This is the standard way to incorporate key-operations into a mathplot program. See also myvisual.cpp.
 struct myvisual final : public mplot::Visual<>
@@ -23,7 +22,7 @@ struct myvisual final : public mplot::Visual<>
     {
         // Set up hexgrid
         this->hg = std::make_unique<sm::hexgrid>(0.01f, 3.0f, 0.0f);
-        this->hg->setCircularBoundary (0.6f);
+        this->hg->set_circular_boundary (0.6f);
         std::cout << "Number of pixels in grid:" << this->hg->num() << std::endl;
         // Initialize the function
         this->wobbly_function();
@@ -73,7 +72,7 @@ protected:
         // Add a HexGridVisual to display the hexgrid within the mplot::Visual scene
         sm::vec<float, 3> offset = { 0.0f, -0.05f, 0.0f };
         auto hgv = std::make_unique<mplot::HexGridVisual<float>>(this->hg.get(), offset);
-        this->bindmodel (hgv);
+        hgv->set_parent (this->get_id());
         hgv->cm.setType (this->colour_map_type); // This is how we set the colour map type in HexGridVisual
         hgv->setScalarData (&this->data);
         hgv->hexVisMode = mplot::HexVisMode::HexInterp;
@@ -82,11 +81,11 @@ protected:
 
         // Add the colour bar
         offset = {0.8f, -0.3f, 0.0f};
-        auto cbv =  std::make_unique<mplot::ColourBarVisual<float>>(offset);
-        this->bindmodel (cbv);
+        auto cbv = std::make_unique<mplot::ColourBarVisual<float>>(offset);
+        cbv->set_parent (this->get_id());
         cbv->orientation = mplot::colourbar_orientation::vertical;
         cbv->tickside = mplot::colourbar_tickside::right_or_below;
-        cbv->number_of_ticks_range = sm::range<float>{4, 6};
+        cbv->number_of_ticks_range = sm::interval<float>{4, 6};
         // Copy colourmap and scale to colourbar visual
         cbv->cm = this->hgvp->cm;
         cbv->scale = this->hgvp->colourScale;
@@ -96,12 +95,12 @@ protected:
 
         // Add a horizontal colourbar, too
         offset = {-0.3f, -1.0f, 0.0f};
-        cbv =  std::make_unique<mplot::ColourBarVisual<float>>(offset);
-        this->bindmodel (cbv);
+        cbv = std::make_unique<mplot::ColourBarVisual<float>>(offset);
+        cbv->set_parent (this->get_id());
         cbv->orientation = mplot::colourbar_orientation::horizontal;
         cbv->tickside = mplot::colourbar_tickside::left_or_above;
         cbv->cm = this->hgvp->cm;
-        cbv->number_of_ticks_range = sm::range<float>{2, 3};
+        cbv->number_of_ticks_range = sm::interval<float>{2, 3};
         cbv->scale = this->hgvp->colourScale;
         std::string lbl = "ColourMapType: " + mplot::ColourMap<float>::colourMapTypeToStr (this->colour_map_type);
         cbv->addLabel (lbl, sm::vec<float>{0.0f, -0.08f, 0.0f}, mplot::TextFeatures(0.05f));

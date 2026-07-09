@@ -1,7 +1,7 @@
 // Visualize a graph. Minimal example showing how a default graph appears
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
-#include <sm/vvec>
+#include <memory>
+import mplot.visual;
+import mplot.graphvisual; // exports sm.vvec and sm.vec
 
 int main()
 {
@@ -10,7 +10,7 @@ int main()
     // Create a GraphVisual object (obtaining a unique_ptr to the object) with a spatial offset within the scene of 0,0,0
     auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>({0,0,0}));
     // This mandatory line of boilerplate code sets the parent pointer in GraphVisual and binds some functions
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     // Data for the x axis. A vvec is like std::vector, but with built-in maths methods
     sm::vvec<double> x;
     // This works like numpy's linspace() (the 3 args are "start", "end" and "num"):

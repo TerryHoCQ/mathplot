@@ -3,15 +3,16 @@
  */
 
 #include <iostream>
+#include <memory>
 #include <vector>
 #include <cmath>
 
-#include <sm/vec>
-#include <sm/hexgrid>
+import sm.vec;
+import sm.hexgrid;
 
-#include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/HexGridVisual.h>
+import mplot.visual;
+import mplot.visualdatamodel;
+import mplot.hexgridvisual;
 
 int main()
 {
@@ -35,7 +36,7 @@ int main()
     // Create a HexGrid to show in the scene. Hexes outside the circular boundary will
     // all be discarded.
     sm::hexgrid hg(0.01f, 3.0f, 0.0f);
-    hg.setCircularBoundary (0.6f);
+    hg.set_circular_boundary (0.6f);
     std::cout << "Number of pixels in grid:" << hg.num() << std::endl;
 
 
@@ -48,7 +49,7 @@ int main()
     // Add a HexGridVisual to display the HexGrid within the sm::Visual scene
     sm::vec<float, 3> offset = { 0.0f, -0.05f, 0.0f };
     auto hgv = std::make_unique<mplot::HexGridVisual<float, mplot::gl::version_4_1>>(&hg, offset);
-    v.bindmodel (hgv);
+    hgv->set_parent (v.get_id());
     hgv->wireframe (true);
     hgv->cm.setType (mplot::ColourMapType::Ice);
     hgv->setScalarData (&data);

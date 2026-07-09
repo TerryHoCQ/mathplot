@@ -5,8 +5,8 @@
 #include <sstream>
 #include <cstddef>
 
-#include <sm/vec>
-#include <sm/vvec>
+import sm.vec;
+import sm.vvec;
 
 #include <mplot/gl/version.h>
 #include <mplot/gl/util_nomx.h>

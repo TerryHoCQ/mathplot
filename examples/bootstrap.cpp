@@ -2,17 +2,21 @@
 // distributions and results of bootstrap. Edit examples/bootstrap.json to change the distribution
 // parameters.
 
+#include <memory>
+#include <iostream>
 #include <string>
+#include <cmath>
 #include <sstream>
+#include <random>
 
-#include <sm/vvec>
-#include <sm/bootstrap>
-#include <sm/random>
-#include <sm/histo>
+import sm.vvec;
+import sm.bootstrap;
+import sm.random;
+import sm.histo;
+import sm.config;
 
-#include <mplot/Visual.h>
-#include <mplot/GraphVisual.h>
-#include <sm/config>
+import mplot.visual;
+import mplot.graphvisual;
 
 int main()
 {
@@ -46,7 +50,7 @@ int main()
     // GraphVisual<float> to display histo<T, float>
     sm::histo<double, float> h(dist, 100);
     auto gv = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({-2,0,0}));
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->setdata (h);
     gv->xlabel = "Value";
     gv->ylabel = "Proportion";
@@ -82,7 +86,7 @@ int main()
 
     sm::histo<double, float> h2(dist2, 100);
     auto gv2 = std::make_unique<mplot::GraphVisual<float>> (sm::vec<float>({0,0,0}));
-    v.bindmodel (gv2);
+    gv2->set_parent (v.get_id());
     gv2->setdata(h); // Add both to second graph
     gv2->setdata (h2);
     gv2->xlabel = "Value";

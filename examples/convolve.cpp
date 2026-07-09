@@ -5,15 +5,16 @@
 #include <vector>
 #include <string>
 #include <cmath>
+#include <memory>
 
-#include <sm/random>
-#include <sm/scale>
-#include <sm/vec>
-#include <sm/hexgrid>
+import sm.random;
+import sm.scale;
+import sm.vec;
+import sm.hexgrid;
 
-#include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/HexGridVisual.h>
+import mplot.visual;
+import mplot.visualdatamodel;
+import mplot.hexgridvisual;
 
 int main()
 {
@@ -26,7 +27,7 @@ int main()
 
     // Create an elliptical hexgrid for the input/output domains
     sm::hexgrid hg(0.01, 3, 0);
-    hg.setEllipticalBoundary (0.45, 0.3);
+    hg.set_elliptical_boundary (0.45, 0.3);
 
     // Populate a vector of floats with data
     std::vector<float> data (hg.num(), 0.0f);
@@ -41,7 +42,7 @@ int main()
     // Create a circular HexGrid to contain the Gaussian convolution kernel
     float sigma = 0.025f;
     sm::hexgrid kernel(0.01, 20.0f*sigma, 0);
-    kernel.setCircularBoundary (6.0f*sigma);
+    kernel.set_circular_boundary (6.0f*sigma);
     std::vector<float> kerneldata (kernel.num(), 0.0f);
     // Once-only parts of the calculation of the Gaussian.
     float one_over_sigma_root_2_pi = 1 / sigma * 2.506628275;
@@ -73,7 +74,7 @@ int main()
     // Visualize the 3 maps
     sm::vec<float, 3> offset = { -0.5, 0.0, 0.0 };
     auto hgv = std::make_unique<mplot::HexGridVisual<float>>(&hg, offset);
-    v.bindmodel (hgv);
+    hgv->set_parent (v.get_id());
     hgv->setScalarData (&data);
     hgv->cm.setType(mplot::ColourMapType::Viridis);
     hgv->addLabel ("Input", { -0.3f, -0.45f, 0.01f }, mplot::TextFeatures(0.1f, mplot::colour::white));
@@ -83,7 +84,7 @@ int main()
 
     offset[1] += 0.6f;
     auto kgv = std::make_unique<mplot::HexGridVisual<float>>(&kernel, offset);
-    v.bindmodel (kgv);
+    kgv->set_parent (v.get_id());
     kgv->setScalarData (&kerneldata);
     kgv->cm.setType(mplot::ColourMapType::Viridis);
     kgv->finalize();
@@ -95,7 +96,7 @@ int main()
     offset[1] -= 0.6f;
     offset[0] += 1.0f;
     auto rgv = std::make_unique<mplot::HexGridVisual<float>>(&hg, offset);
-    v.bindmodel (rgv);
+    rgv->set_parent (v.get_id());
     rgv->setScalarData (&convolved);
     rgv->cm.setType(mplot::ColourMapType::Viridis);
     rgv->finalize();

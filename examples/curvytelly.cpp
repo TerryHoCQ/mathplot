@@ -1,14 +1,17 @@
 /*
  * Demonstrate the CurvyTellyVisual by showing an image
  */
-#include <sm/mathconst>
-#include <sm/vec>
-#include <sm/vvec>
-#include <sm/grid>
-#include <sm/quaternion>
-#include <mplot/loadpng.h>
-#include <mplot/Visual.h>
-#include <mplot/CurvyTellyVisual.h>
+#include <memory>
+
+import sm.mathconst;
+import sm.vec;
+import sm.vvec;
+import sm.grid;
+import sm.quaternion;
+import mplot.loadpng;
+import mplot.colourmap;
+import mplot.visual;
+import mplot.curvytellyvisual;
 
 int main()
 {
@@ -24,7 +27,7 @@ int main()
 
     sm::vec<float> offset = { 0, 0, 0 };
     auto ctv = std::make_unique<mplot::CurvyTellyVisual<float>>(&grid, offset);
-    v.bindmodel (ctv);
+    ctv->set_parent (v.get_id());
     ctv->setScalarData (&image_data);
     ctv->cm.setType (mplot::ColourMapType::Magma);
     ctv->radius = 10.0f;     // The radius of curvature of the telly

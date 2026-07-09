@@ -4,26 +4,29 @@
  * landscape model, following the exact contour defined by the landscape's mesh.
  */
 
+#include <cstdint>
 #include <iostream>
 #include <fstream>
 #include <cmath>
 #include <array>
 #include <stdexcept>
 #include <string>
+#include <memory>
 
-#include <sm/vec>
-#include <sm/mat>
-#include <sm/vvec>
-#include <sm/random>
+import sm.random;
+import sm.vec;
+import sm.mat;
+import sm.vvec;
 
-#include <mplot/gl/version.h>
-constexpr int32_t glver = mplot::gl::version_4_3;
+import mplot.gl.version;
 
-#include <mplot/Visual.h>
-#include <mplot/ColourMap.h>
-#include <mplot/CoordArrows.h>
-#include <mplot/InstancedScatterVisual.h>
-#include <mplot/GeodesicVisual.h>
+import mplot.visual;
+import mplot.colourmap;
+import mplot.coordarrows;
+import mplot.instancedscattervisual;
+import mplot.geodesicvisual;
+
+constexpr std::int32_t glver = mplot::gl::version_4_3;
 
 int main (int argc, char** argv)
 {
@@ -51,7 +54,7 @@ int main (int argc, char** argv)
 
     // A CoordArrows is our "crawling" agent
     auto ca = std::make_unique<mplot::CoordArrows<glver>> (arrows_loc);
-    v.bindmodel (ca);
+    ca->set_parent (v.get_id());
     ca->finalize();
     [[maybe_unused]] auto cap = v.addVisualModel (ca);
 
@@ -61,7 +64,7 @@ int main (int argc, char** argv)
     sm::vvec<sm::vec<float, 3>> sv_points = {};
     sm::vvec<float> sv_data = {};
     auto isv = std::make_unique<mplot::InstancedScatterVisual<glver>> (sphere_loc);
-    v.bindmodel (isv);
+    isv->set_parent (v.get_id());
     isv->max_instances = max_bc;
     isv->radiusFixed = 0.01f;
     isv->finalize();
@@ -71,7 +74,7 @@ int main (int argc, char** argv)
     mplot::ColourMap<float> cm (mplot::ColourMapType::Jet);
     auto cl = cm.convert (0.5f);
     auto gv = std::make_unique<mplot::GeodesicVisual<float, glver>> (sphere_loc, radius);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->iterations = geo_itrns;
     std::string lbl = "GeodesicVisual with computed NavMesh";
     gv->addLabel (lbl, {0, -(radius + 0.1f), 0}, mplot::TextFeatures (0.06f));

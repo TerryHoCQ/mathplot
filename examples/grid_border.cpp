@@ -2,16 +2,17 @@
  * An example mplot::Visual scene, containing a Gridv, and using GridvVisual
  */
 
+#include <memory>
 #include <iostream>
-#include <vector>
-#include <cmath>
+#include <string>
+#include <cstdlib>
 
-#include <sm/vec>
-#include <sm/grid>
+import sm.vec;
+import sm.vvec;
+import sm.grid;
 
-#include <mplot/Visual.h>
-#include <mplot/VisualDataModel.h>
-#include <mplot/GridVisual.h>
+import mplot.visual;
+import mplot.gridvisual;
 
 int main()
 {
@@ -48,7 +49,7 @@ int main()
 
     // 1) visualizing vector with GridVisMode = RectInterp
     auto gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::RectInterp;
     gv->setVectorData (&data);
     gv->cm.setType (mplot::ColourMapType::Twilight);
@@ -59,7 +60,7 @@ int main()
     // 2) same as 1 with zScale set to 0
     offset = { step * grid.width(), step * grid.height(), 0.0f };
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::RectInterp;
     gv->setVectorData (&data);
     gv->cm.setType (mplot::ColourMapType::Twilight);
@@ -71,7 +72,7 @@ int main()
     // 3) same as 2 with border ON and border colour set to cyan
     offset = { 3 * step * grid.width(), step * grid.height(), 0.0f };
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::RectInterp;
     gv->setVectorData (&data);
     gv->cm.setType (mplot::ColourMapType::Twilight);
@@ -87,7 +88,7 @@ int main()
     // 4) same as 2 with border ON and border colour set to cyan
     offset = { 5 * step * grid.width(), step * grid.height(), 0.0f };
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::RectInterp;
     gv->setVectorData (&data);
     gv->cm.setType (mplot::ColourMapType::Twilight);
@@ -102,7 +103,7 @@ int main()
     // 5) same as 2 + grid
     offset = { step * grid.width(), -step * grid.height(), 0.0f };
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::RectInterp;
     gv->setVectorData (&data);
     gv->cm.setType (mplot::ColourMapType::Twilight);
@@ -117,7 +118,7 @@ int main()
     // 6) show both border and grid
     offset = { 3 * step * grid.width(), -step * grid.height(), 0.0f };
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::RectInterp;
     gv->setVectorData (&data);
     gv->cm.setType (mplot::ColourMapType::Twilight);
@@ -136,7 +137,7 @@ int main()
     // 7) show how to use the selected pixel option
     offset = { step * grid.width(), -3 * step * grid.height(), 0.0f };
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::RectInterp;
     gv->setVectorData (&data);
     gv->cm.setType (mplot::ColourMapType::Twilight);
@@ -162,7 +163,7 @@ int main()
     // 8) show how to use the selected pixel option with grid
     offset = { 3 * step * grid.width(), -3 * step * grid.height(), 0.0f };
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
-    v.bindmodel (gv);
+    gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::RectInterp;
     gv->setVectorData (&data);
     gv->cm.setType (mplot::ColourMapType::Twilight);
