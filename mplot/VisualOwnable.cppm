@@ -30,8 +30,7 @@ module;
 #include <functional>
 #include <cstddef>
 #include <chrono>
-
-#include <nlohmann/json.hpp>
+#include <cmath>
 
 #include <mplot/gl/shaders.h>
 #include <mplot/gl/loadshaders_mx.h>
@@ -54,6 +53,7 @@ import mplot.gl.util;
 import mplot.tools;
 import mplot.loadpng; // Use Lode Vandevenne's PNG encoder
 export import mplot.keys;
+import nlohmann.json;
 
 import sm.mathconst;
 export import sm.vec;

@@ -80,7 +80,7 @@ macro(setup_module_variables_for_mathplot_maths base_directory)
   )
 endmacro()
 
-macro(setup_module_variables_for_mathplot base_directory)
+macro(setup_module_variables_for_mathplot base_directory json_directory)
 
   # Base modules for mathplot. With these (and
   # MPLOT_MATHS_CORE_MODULES) you can build helloworld
@@ -119,6 +119,7 @@ macro(setup_module_variables_for_mathplot base_directory)
     ${base_directory}/mplot/jcvoronoi/jc_voronoi.cppm
     ${base_directory}/mplot/healpix/healpix_bare.cppm
     ${base_directory}/mplot/fps/profiler.cppm
+    ${json_directory}/src/modules/json.cppm
   )
 
   set(MPLOT_READCURVES_MODULES
