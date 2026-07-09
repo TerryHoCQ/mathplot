@@ -20,5 +20,5 @@ jobs:
     with:
       RUNNER_IMAGE: macos-15
       BUILD_TYPE: Release
-      CC: clang-20
-      CXX: clang++-20
+      CC: clang
+      CXX: clang++
