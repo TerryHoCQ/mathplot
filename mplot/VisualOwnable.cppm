@@ -1064,7 +1064,25 @@ export namespace mplot
         //! Save all the VisualModels in this Visual out to a GLTF format file
         virtual void savegltf (const std::string& gltf_file)
         {
-#ifdef _MSC_VER // July 2026: VisualStudio throws an error with this std::ofstream. A bug in the compiler I think.
+#ifdef _MSC_VER
+            /*
+             * July 2026: VisualStudio throws an error with this std::ofstream. A bug in the compiler I think.
+             *
+             * Error output:
+             *
+             * D:\a\mathplot\mathplot\mplot\VisualOwnable.cppm(1067,27): error C2079:
+             * 'fout' uses undefined class 'std::basic_ofstream<char,std::char_traits<char>>'
+             * [D:\a\mathplot\mathplot\build\examples\anneal_asa.vcxproj]
+             *  (compiling source file '../../examples/anneal_asa.cpp')
+             * D:\a\mathplot\mathplot\mplot\VisualOwnable.cppm(1067,27):
+             * the template instantiation context (the oldest one first) is
+             * D:\a\mathplot\mathplot\examples\anneal_asa.cpp(101,21):
+             * see reference to class template instantiation 'mplot::Visual<262145>' being compiled
+             * D:\a\mathplot\mathplot\mplot\Visual.cppm(59,34):
+             * see reference to class template instantiation 'mplot::VisualOwnable<262145>' being compiled
+             * D:\a\mathplot\mathplot\mplot\VisualOwnable.cppm(1065,22):
+             * while compiling class template member function 'void mplot::VisualOwnable<262145>::savegltf(const std::string &)'
+             */
             std::cout << "Cannot write glTF file " << gltf_file << " on Windows due to a VisualStudio bug.\n";
 #else
             std::ofstream fout (gltf_file, std::ios::out|std::ios::trunc);
