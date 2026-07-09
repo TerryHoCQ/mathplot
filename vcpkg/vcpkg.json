@@ -12,8 +12,6 @@
         "freetype",
         "glfw3",
         "hdf5",
-        "nlohmann-json",
-        "opengl",
-        "rapidxml"
+        "opengl"
     ]
 }
