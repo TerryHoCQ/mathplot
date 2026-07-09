@@ -1,4 +1,4 @@
-name: MacOS/clang22
+name: MacOS/clang (homebrew)
 on:
   push:
     branches: [ "main" ]
