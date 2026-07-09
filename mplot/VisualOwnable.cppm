@@ -17,20 +17,20 @@
 module;
 
 #include <cstdint>
+#include <iostream>
 #include <fstream>
 #include <string>
 #include <array>
 #include <vector>
 #include <map>
-// clang was happy with a tuple:
-//#include <tuple>
-// g++ generated an error with the tuple, so could use a pair:
 #include <utility>
 #include <memory>
 #include <functional>
 #include <cstddef>
 #include <chrono>
 #include <cmath>
+#include <limits>
+#include <stdexcept>
 
 #include <mplot/gl/shaders.h>
 #include <mplot/gl/loadshaders_mx.h>
@@ -2185,7 +2185,7 @@ export namespace mplot
                 if (fout.is_open()) { fout << "{\n"; }
             }
 
-            //std::multimap<float, std::tuple<sm::vec<float>, mplot::VisualModel<glver>*> > possible_centres; // tuple
+            //std::multimap<float, std::tuple<sm::vec<float>, mplot::VisualModel<glver>*> > possible_centres; // tuple: didn't work with g++
             std::multimap<float, std::pair<sm::vec<float>, mplot::VisualModel<glver>*> > possible_centres;    // pair
             auto vmi = this->vm.begin();
             while (vmi != this->vm.end()) {
