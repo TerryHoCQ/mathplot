@@ -82,7 +82,10 @@ else()
 endif()
 
 # OpenMP only used for the fps targets
-find_package(OpenMP 3)
+option(USE_OPENMP "Search for, and use OpenMP in sm::grid and the fps example" OFF)
+if(USE_OPENMP)
+  find_package(OpenMP 3)
+endif()
 
 # The code in VisualFace which builds the Vera family truetype fonts
 # into the program binary needs to have a define of MPLOT_FONTS_DIR,
