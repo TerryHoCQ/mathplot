@@ -50,7 +50,7 @@ export namespace mplot
             glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, mplot::gl::version::major (glver));
             glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, mplot::gl::version::minor (glver));
 #ifdef __APPLE__
-            glfwWindowHint (GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+            glfwWindowHint (GLFW_OPENGL_FORWARD_COMPAT, true);
             glfwWindowHint (GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #endif
             // Tell glfw that we'd like to do anti-aliasing.
