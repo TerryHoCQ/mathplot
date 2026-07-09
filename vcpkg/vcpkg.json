@@ -1,7 +1,6 @@
 {
     "name": "mathplot",
     "dependencies": [
-        "armadillo",
         {
           "name": "egl",
           "platform": "linux"
