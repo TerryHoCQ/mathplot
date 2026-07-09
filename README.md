@@ -3,7 +3,7 @@
 ![A banner image mathplot VisualModels](https://github.com/sebsjames/mathplot/blob/main/examples/screenshots/banner2.png?raw=true)
 
 ![Windows 25 build test](https://github.com/sebsjames/mathplot/actions/workflows/cmake-windows-2025.yml/badge.svg)
-![Mac OS clang20 build test](https://github.com/sebsjames/mathplot/actions/workflows/mac-cmakeninja-clang20.yml/badge.svg)
+![Mac OS homebrew clang build test](https://github.com/sebsjames/mathplot/actions/workflows/mac-cmakeninja-clang.yml/badge.svg)
 ![Ubuntu clang 20 build test](https://github.com/sebsjames/mathplot/actions/workflows/ubuntu-cmakeninja-clang20.yml/badge.svg)
 ![Ubuntu clang 22 build test](https://github.com/sebsjames/mathplot/actions/workflows/ubuntu-cmakeninja-clang22.yml/badge.svg)
 ![Ubuntu gcc 16 build test](https://github.com/sebsjames/mathplot/actions/workflows/ubuntu-cmakeninja-gcc16.yml/badge.svg)
