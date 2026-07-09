@@ -1,6 +1,6 @@
 # C++ Modules
 
-Around March 2026 I wanted to try to improve the 35 second build time of [a project](https://github.com/sebsjames/antpov) I was working on.
+Around March 2026 I wanted to try to improve the 35 second build time of [a project](https://github.com/BrainBeatsBrawn/antpov) I was working on.
 
 I was originally building the project with gcc-13 (and sometimes gcc-14), and linking the library [compound-ray](https://github.com/sebsjames/compound-ray)) containing CUDA and OptiX code, which was compiled with gcc-12 and CUDA's nvcc.
 The build time was about 35 seconds, regardless of which source code file I changed and of how trivial that change was.

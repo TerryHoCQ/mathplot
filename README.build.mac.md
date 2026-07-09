@@ -1,34 +1,14 @@
 # Build mathplot on Apple Mac
 
-You don't need to *build* mathplot to use the headers, but
-you *will* need to install the dependencies.
+You don't need to *build* mathplot to use the headers, but you *will* need to install the dependencies.
 
-The cmake-driven mathplot build process compiles a set of test and
-example programs which require all of the dependencies to be met.
+The cmake-driven mathplot build process compiles a set of test and example programs which require all of the dependencies to be met.
 
-Programs that ```#include``` mathplot headers will also need to link to
-some or all of those dependencies. Finally, you'll need the cmake
-program and a C++ compiler which can compile c++-17 code.
+You'll need a C++ compiler that can compiler C++20 modules. That's *not* Apple Clang provided by XCode at present. Instead, you can brew install llvm.
 
 ## Installation dependencies for Mac
 
-You will need XCode from the App Store. If you just installed XCode,
-then you'll need to agree to its licence terms. To do this, run
-
-```
-sudo xcodebuild -license
-```
-
-scroll through the legalese and type 'agree' (assuming that you
-do). Also, do make sure to run XCode at least once from the launcher
-as this will prompt it to download and install some additional
-components. Finally, it seems to be necessary to "install command line
-tools" to get a working compiler. To do so (at least on MacOS
-Catalina):
-
-```
-xcode-select --install
-```
+Install LLVM/Clang version 20 or above by your preferred method.
 
 Installation of most of the other dependencies can be achieved using Mac
 ports (Option 1, below). This does lead to the installation of a great deal of
@@ -79,8 +59,7 @@ The mathplot github actions for mac runners use brew to install
 dependencies. The command for the basic dependencies is
 
 ```sh
-brew install libomp glfw hdf5 # nlohmann-json
-# nlohmann-json was removed as I have to bundle a very up to date version for C++ modules support
+brew install libomp glfw hdf5 llvm
 ```
 
 #### HDF5
@@ -109,13 +88,11 @@ If present, the Qt5 components Core, Gui and Widgets components are used to comp
 
 ### Common manual dependency builds
 
-Whether or not you used mac ports to install hdf5, glfw3 also needs to be built separately (I've not investigated
-whether there is a mac ports version of glfw).
+Whether or not you used mac ports to install hdf5, glfw3 also needs to be built separately (I've not investigated whether there is a mac ports version of glfw).
 
 #### glfw3
 
-The modern OpenGL code in mathplot requires the GL-window managing
-library GLFW3. Compile it like this:
+The modern OpenGL code in mathplot requires the GL-window managing library GLFW3. Compile it like this:
 
 ```
 cd ~/src
@@ -130,25 +107,25 @@ sudo make install
 
 ## Build mathplot on Mac
 
-To build mathplot itself, it's the usual CMake process:
+To build mathplot itself, it's a CMake/ninja process:
 
 ```sh
 cd ~/src
 git clone https://github.com/sebsjames/mathplot.git
 cd mathplot
+git submodule init
+git submodule update
 mkdir build
 cd build
-# If you have OpenMP, you can add -DCOMPILE_WITH_OPENMP=1
-cmake ..
-make -j$(nproc)
-sudo make install
+cmake .. -GNinja
+ninja
 ```
 
 ## Tests
 
 To run the tests you have to build them by changing your cmake command in the recipe above to:
 ```sh
-cmake .. -DBUILD_TESTS=ON
+cmake .. -GNinja -DBUILD_TESTS=ON
 ```
 
 To run the test suite, use the `ctest` command in the build directory.

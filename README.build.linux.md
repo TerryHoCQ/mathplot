@@ -19,12 +19,13 @@ mathplot code depends on OpenGL, Freetype and glfw3. HDF5 is an optional depende
 To install the visualization dependencies on Ubuntu or Debian Linux:
 
 ```sh
-sudo apt install build-essential cmake ninja git \
-                 librapidxml-dev \
+sudo apt install build-essential cmake ninja-build git \
                  freeglut3-dev libglu1-mesa-dev libxmu-dev libxi-dev \
                  libglfw3-dev libfreetype-dev
 # nlohmann-json3-dev was removed as I have to bundle a very up to date version for C++ modules support
 ```
+NB: cmake must be version 3.28.5 or higher. On Ubuntu 24.04 the package managed version is too old; I compile the latest CMake from source and install in /usr/local
+
 For the optional dependencies it's:
 ```sh
 sudo apt install libhdf5-dev qtcreator qtbase5-dev libwxgtk3.2-dev libegl-dev libgbm-dev
@@ -75,56 +76,14 @@ cmake .. -GNinja -DBUILD_TESTS=ON -DBUILD_EXAMPLES=OFF # Build tests but not exa
 There is also the flag `BUILD_OPTIONAL_EXAMPLES` to enable any programs that use additional dependencies that can't be tested for in the base `CMakeLists.txt`. Currently, that's just one example that uses libgbm.
 
 If you need to build the test programs with a specific compiler, such
-as g++-11 or clang, then you just change the cmake call in the recipe
+as g++-17 or clang, then you just change the cmake call in the recipe
 above. It becomes:
 
 ```sh
-CXX=g++-16 cmake .. -DBUILD_TESTS=ON
+CXX=g++-17 cmake .. -DBUILD_TESTS=ON
 ```
 To run the test suite, use the `ctest` command in the build directory or `make test`.
 
 ### Build the client code
 
 See the top level README for a quick description of how to include mathplot in your client code and [README.cmake.md] for more information.
-
-### Building some of the dependencies manually
-
-Only necessary if the package managed libs don't work.
-
-#### HDF5 library build
-
-You will also need HDF5 installed on your system. There _is_ an HDF5 package for Ubuntu, but I couldn't get the mathplot cmake build process to find it nicely, so I compiled my own version of HDF5 and installed in /usr/local. To do what I did, download HDF5 (https://portal.hdfgroup.org/display/support/Downloads), and do a compile and install like this:
-
-```sh
-mkdir -p ~/src
-cd ~/src
-cp path/to/hdf5-1.10.x.tar.gz ./
-gunzip hdf5-1.10.x.tar.gz
-tar xvf hdf5-1.10.x.tar
-cd hdf5-1.10.x
-mkdir build
-cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
-make -j$(nproc)
-sudo make install
-```
-
-#### glfw3 library build
-
-The modern OpenGL code in Visual/HexGridVisual requires the library GLFW3.
-
-It's possible to apt install glfw on recent versions of Ubuntu. Doing so
-will install libglfw.a. These build instructions install libglfw3.a (into
-/usr/local/lib/).
-
-```
-sudo apt install libxinerama-dev libxrandr-dev libxcursor-dev
-cd ~/src
-git clone https://github.com/glfw/glfw.git
-cd glfw
-mkdir build
-cd build
-cmake ..
-make
-sudo make install
-```

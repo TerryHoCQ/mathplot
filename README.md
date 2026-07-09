@@ -109,7 +109,7 @@ plt.show()
 ```
 ## What is Mathplot?
 
-This header-only C++ code provides **dynamic runtime visualization**
+This modular C++ code provides **dynamic runtime visualization**
 for your programs. It was developed to visualize simulations of dynamical
 systems and agent-based models in real-time.
 
@@ -130,7 +130,7 @@ A modern OpenGL visualization scheme called
 
 See [the reference documentation website](https://sebsjames.github.io/mathplot/) for a guide to the main classes.
 
-Mathplot code is enclosed in the **mplot** namespace. If the reference site doesn't cover it, then the header files (They're all in [mplot/](https://github.com/sebsjames/mathplot/tree/main/mplot)) contain code documentation.
+Mathplot code is enclosed in the **mplot** namespace. If the reference site doesn't cover it, then the source code (found in [mplot/](https://github.com/sebsjames/mathplot/tree/main/mplot)) contains code documentation.
 
 You can find example programs which are compiled when you do the standard
 cmake-driven build of mathplot in both the [tests/](https://github.com/sebsjames/mathplot/tree/main/tests) subdirectory
