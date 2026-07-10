@@ -1,5 +1,6 @@
 // Twinax graph
 #include <memory>
+#include <string>
 import sm.vec;
 import sm.vvec;
 import sm.random;
