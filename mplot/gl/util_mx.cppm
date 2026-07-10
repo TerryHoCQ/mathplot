@@ -23,7 +23,6 @@ export namespace mplot::gl::Util
     std::uint32_t checkError (const char *file, std::int32_t line, GladGLContext* glfn)
     {
         std::uint32_t errorCode = 0;
-#ifndef __APPLE__ // MacOS didn't like multiple calls to glGetError(); don't know why
         std::uint32_t ecount = 0;
         std::string error;
 
@@ -75,7 +74,7 @@ export namespace mplot::gl::Util
             ++ecount;
         }
         if (ecount) { throw std::runtime_error (error); }
-#endif
+
         return errorCode;
     }
 } // namespace
