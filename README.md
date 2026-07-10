@@ -16,7 +16,7 @@
 
 Mathplot is a library for drawing **3D data visualization** objects called `VisualModels`.
 
-Mathplot is compatible with **Linux** (including **Raspberry Pi**), **Mac OS** and **Windows**, *but* compiler support is still catching up.  On Linux or Mac, you need to use LLVM/clang version 20 or higher; on Windows, VisualStudio seems to have a bug as it will not compile the code at present.
+Mathplot is compatible with **Linux** (including **Raspberry Pi**), **Mac OS** and **Windows**, *but* compiler support is still patchy.  On Linux or Mac, you need to use LLVM/clang version 20 or higher (Apple Clang from Xcode does not support C++ modules). GCC is currently [known not to compile the code](https://github.com/sebsjames/mathplot/issues/148). On Windows, [VisualStudio also seems to have a modules-related bug](https://github.com/sebsjames/mathplot/issues/149) as it does not compile the code either.
 
 You'll find all of the **library code** in the [**mplot**](https://github.com/sebsjames/mathplot/tree/main/mplot) directory and you can find **example code and screenshots** [here](https://github.com/sebsjames/mathplot/tree/main/examples). There is also a **template project** [that uses mathplot](https://github.com/sebsjames/mathplot_template) to help you incorporate the library into your own work.
 
@@ -36,6 +36,7 @@ Mathplot can be **integrated with GUI frameworks** including [Qt](https://doc.qt
 ### Compilers that are almost there
 
 * GCC (just [Bug 124888](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=124888) to resolve)
+* VisualStudio
 
 This quick start shows dependency installation for Linux, because on this platform, it's a single call to apt (or your favourite package manager). If you're using a Mac, see [README.build.mac](https://github.com/sebsjames/mathplot/tree/main/README.build.mac.md) for help getting dependencies in place. It's [README.build.windows](https://github.com/sebsjames/mathplot/tree/main/README.build.windows.md) for Windows users. For notes on supported compilers, see [README.build.compiler](https://github.com/sebsjames/mathplot/tree/main/README.build.compiler.md)
 
