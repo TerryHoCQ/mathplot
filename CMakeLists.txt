@@ -25,43 +25,39 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 include(CheckIncludeFileCXX) # CHECK_INCLUDE_FILE_CXX will be used in later scripts
 
 # Add the host definition to CXXFLAGS along with other switches
-if (APPLE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -O3")
-else()
-  if(CMAKE_CXX_COMPILER_ID MATCHES MSVC OR CMAKE_CXX_COMPILER_FRONTEND_VARIANT MATCHES MSVC)
-    # Set flags for Windows.
-    # -DNOMINMAX to prefer std::min and std::max
-    # /EHsc required for use of exceptions
-    # /Zc:__cplusplus ensures __cplusplus define does not lie
-    # /constexpr:steps is equivalent to -fconstexpr-steps or -fconstexpr-ops-limit
-    if(CMAKE_CXX_COMPILER_ID MATCHES MSVC)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNOMINMAX /EHsc /Zc:__cplusplus /constexpr:steps500000000")
+if(CMAKE_CXX_COMPILER_ID MATCHES MSVC OR CMAKE_CXX_COMPILER_FRONTEND_VARIANT MATCHES MSVC)
+  # Set flags for Windows.
+  # -DNOMINMAX to prefer std::min and std::max
+  # /EHsc required for use of exceptions
+  # /Zc:__cplusplus ensures __cplusplus define does not lie
+  # /constexpr:steps is equivalent to -fconstexpr-steps or -fconstexpr-ops-limit
+  if(CMAKE_CXX_COMPILER_ID MATCHES MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNOMINMAX /EHsc /Zc:__cplusplus /constexpr:steps500000000")
+  else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNOMINMAX /EHsc /Zc:__cplusplus /clang:-fconstexpr-steps=500000000")
+  endif()
+elseif(CMAKE_CXX_COMPILER_ID MATCHES Intel)
+  # To use Intel compiler, you can call cmake as: `cmake -DCMAKE_CXX_COMPILER=icpc ..` or `CXX=icpc cmake ..`
+  message(WARNING "Intel compiler has not been tested for some time")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -std=c++20 -xHOST -O3")
+else() # GCC or Clang
+  if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16.1)
+      message("-- GCC version OK. (require 16.1+)")
     else()
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNOMINMAX /EHsc /Zc:__cplusplus /clang:-fconstexpr-steps=500000000")
+      message(WARNING "GCC version 16.1+ is required to compile this project. Alternatively, try clang-20+")
     endif()
-  elseif(CMAKE_CXX_COMPILER_ID MATCHES Intel)
-    # To use Intel compiler, you can call cmake as: `cmake -DCMAKE_CXX_COMPILER=icpc ..` or `CXX=icpc cmake ..`
-    message(WARNING "Intel compiler has not been tested for some time")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -std=c++20 -xHOST -O3")
-  else() # GCC or Clang
-    if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
-      if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16.1)
-        message("-- GCC version OK. (require 16.1+)")
-      else()
-        message(WARNING "GCC version 16.1+ is required to compile this project. Alternatively, try clang-20+")
-      endif()
-    endif()
-    # Warnings we suppress:
-    # -Wpsabi -- Reason forgotten
-    # -Wunknown-pragmas -- because sm::grid has some '#pragma omp' accelerated methods that we don't need in these examples
-    set(COMPREHENSIVE_WARNING_FLAGS "-Wall -Wextra -Wpedantic -pedantic-errors -Werror -Wfatal-errors -Wno-psabi -Wno-unknown-pragmas")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g ${COMPREHENSIVE_WARNING_FLAGS} -O3")
-    if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
-      # Make it possible to compile complex constexpr functions (gcc only)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconstexpr-ops-limit=5000000000")
-    else()
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconstexpr-steps=500000000")
-    endif()
+  endif()
+  # Warnings we suppress:
+  # -Wpsabi -- Reason forgotten
+  # -Wunknown-pragmas -- because sm::grid has some '#pragma omp' accelerated methods that we don't need in these examples
+  set(COMPREHENSIVE_WARNING_FLAGS "-Wall -Wextra -Wpedantic -pedantic-errors -Werror -Wfatal-errors -Wno-psabi -Wno-unknown-pragmas")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g ${COMPREHENSIVE_WARNING_FLAGS} -O3")
+  if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
+    # Make it possible to compile complex constexpr functions (gcc only)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconstexpr-ops-limit=5000000000")
+  else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconstexpr-steps=500000000")
   endif()
 endif()
 
