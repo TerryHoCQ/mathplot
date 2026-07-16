@@ -18,7 +18,7 @@ Mathplot is a library for drawing **3D data visualization** objects called `Visu
 
 Mathplot is compatible with **Linux** (including **Raspberry Pi**), **Mac OS** and **Windows**, *but* compiler support is still patchy.  On Linux or Mac, you need to use LLVM/clang version 20 or higher (Apple Clang from Xcode does not support C++ modules). GCC is currently [known not to compile the code](https://github.com/sebsjames/mathplot/issues/148). On Windows, [VisualStudio also seems to have a modules-related bug](https://github.com/sebsjames/mathplot/issues/149) as it does not compile the code either.
 
-You'll find all of the **library code** in the [**mplot**](https://github.com/sebsjames/mathplot/tree/main/mplot) directory and you can find **example code and screenshots** [here](https://github.com/sebsjames/mathplot/tree/main/examples). There is also a **template project** [that uses mathplot](https://github.com/sebsjames/mathplot_template) to help you incorporate the library into your own work.
+You'll find all of the **library code** in the [**mplot**](https://github.com/sebsjames/mathplot/tree/main/mplot) directory and you can find **example code** [here](https://github.com/sebsjames/mathplot/tree/main/examples). Take a look at the [**screenshot gallery**](https://sebsjames.github.io/mathplot/#gallery). There is also a **template project** [that uses mathplot](https://github.com/sebsjames/mathplot_template) to help you incorporate the library into your own work.
 
 Mathplot has a **documentation and reference** website at https://sebsjames.github.io/mathplot/.
 
