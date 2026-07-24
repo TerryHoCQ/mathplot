@@ -9,12 +9,6 @@ import mplot.visual;
 import mplot.geodesicvisual;
 import mplot.normalsvisual;
 
-#include <iostream>
-#include <fstream>
-#include <cmath>
-#include <array>
-#include <stdexcept>
-
 int main()
 {
     mplot::Visual v(1024, 768, "Geodesic Polyhedra with normals");
