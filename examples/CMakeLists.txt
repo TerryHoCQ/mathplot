@@ -15,6 +15,7 @@ set(MATHPLOT_EXAMPLES_MODULES
   ${PROJECT_SOURCE_DIR}/maths/sm/config.cppm
   ${PROJECT_SOURCE_DIR}/maths/sm/winder.cppm
   ${PROJECT_SOURCE_DIR}/maths/sm/bootstrap.cppm
+  ${PROJECT_SOURCE_DIR}/maths/sm/rungekutta4.cppm
 )
 list(REMOVE_DUPLICATES MATHPLOT_EXAMPLES_MODULES)
 add_library(mathplot_examples STATIC)
@@ -43,6 +44,10 @@ target_link_libraries(vectorvis mathplot_examples)
 
 add_executable(cray_eye cray_eye.cpp)
 target_link_libraries(cray_eye mathplot_examples)
+
+# Demo of sm::rungekutta4, the 4th order Runge-Kutta ODE solver
+add_executable(rungekutta rungekutta.cpp)
+target_link_libraries(rungekutta mathplot_examples)
 
 # Note that for graph1, we DON'T use the static library mathplot_examples, just as a standalone example
 add_executable(graph1 graph1.cpp)
