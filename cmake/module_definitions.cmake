@@ -3,88 +3,89 @@
 # build process itself, and by client projects.
 #
 
-# Sets up variables the define the sebsjames/maths modules used
-# building mathplot. Pass in the path to the sebsjames/maths root.
-macro(setup_module_variables_for_mathplot_maths base_directory)
+# Sets up variables that define list of the modules used building
+# mathplot. Pass in the path to the mathplot root, the sebsjames/maths
+# root and to nlohmann/json
+macro(setup_module_variables_for_mathplot base_directory maths_directory json_directory)
 
   # These are set assuming a submoduled maths.
   set(MPLOT_MATHS_CORE_MODULES
-    ${base_directory}/sm/mathconst.cppm
-    ${base_directory}/sm/constexpr_math.cppm
-    ${base_directory}/sm/interval.cppm
-    ${base_directory}/sm/polysolve.cppm
-    ${base_directory}/sm/bessel_i0.cppm
-    ${base_directory}/sm/random.cppm
-    ${base_directory}/sm/vec.cppm
-    ${base_directory}/sm/quaternion.cppm
-    ${base_directory}/sm/mat.cppm
-    ${base_directory}/sm/trait_tests.cppm
-    ${base_directory}/sm/util.cppm
-    ${base_directory}/sm/base64.cppm
-    ${base_directory}/sm/crc32.cppm
-    ${base_directory}/sm/flags.cppm
-    ${base_directory}/sm/algo.cppm
-    ${base_directory}/sm/geometry.cppm
-    ${base_directory}/sm/geometry_polyhedra.cppm
-    ${base_directory}/sm/vvec.cppm
-    ${base_directory}/sm/scale.cppm
-    ${base_directory}/sm/centroid.cppm
-    ${base_directory}/sm/spline.cppm
-    ${base_directory}/sm/winder.cppm
+    ${maths_directory}/sm/mathconst.cppm
+    ${maths_directory}/sm/constexpr_math.cppm
+    ${maths_directory}/sm/interval.cppm
+    ${maths_directory}/sm/polysolve.cppm
+    ${maths_directory}/sm/bessel_i0.cppm
+    ${maths_directory}/sm/random.cppm
+    ${maths_directory}/sm/vec.cppm
+    ${maths_directory}/sm/quaternion.cppm
+    ${maths_directory}/sm/mat.cppm
+    ${maths_directory}/sm/trait_tests.cppm
+    ${maths_directory}/sm/util.cppm
+    ${maths_directory}/sm/base64.cppm
+    ${maths_directory}/sm/crc32.cppm
+    ${maths_directory}/sm/flags.cppm
+    ${maths_directory}/sm/algo.cppm
+    ${maths_directory}/sm/geometry.cppm
+    ${maths_directory}/sm/geometry_polyhedra.cppm
+    ${maths_directory}/sm/vvec.cppm
+    ${maths_directory}/sm/scale.cppm
+    ${maths_directory}/sm/centroid.cppm
+    ${maths_directory}/sm/spline.cppm
+    ${maths_directory}/sm/winder.cppm
   )
 
   # The modules required for hexgrids
   set(MPLOT_MATHS_HEXGRID_MODULES
-    ${base_directory}/sm/nm_simplex.cppm
-    ${base_directory}/sm/binomial.cppm
-    ${base_directory}/sm/bezcoord.cppm
-    ${base_directory}/sm/bezcurve.cppm
-    ${base_directory}/sm/bezcurvepath.cppm
-    ${base_directory}/sm/hex.cppm
-    ${base_directory}/sm/hexgrid.cppm
+    ${maths_directory}/sm/nm_simplex.cppm
+    ${maths_directory}/sm/binomial.cppm
+    ${maths_directory}/sm/bezcoord.cppm
+    ${maths_directory}/sm/bezcurve.cppm
+    ${maths_directory}/sm/bezcurvepath.cppm
+    ${maths_directory}/sm/hex.cppm
+    ${maths_directory}/sm/hexgrid.cppm
   )
 
   # The modules required for cartgrids
   set(MPLOT_MATHS_CARTGRID_MODULES
-    ${base_directory}/sm/nm_simplex.cppm
-    ${base_directory}/sm/binomial.cppm
-    ${base_directory}/sm/bezcoord.cppm
-    ${base_directory}/sm/bezcurve.cppm
-    ${base_directory}/sm/bezcurvepath.cppm
-    ${base_directory}/sm/boxfilter.cppm
-    ${base_directory}/sm/grid.cppm
-    ${base_directory}/sm/rect.cppm
-    ${base_directory}/sm/cartgrid.cppm
+    ${maths_directory}/sm/nm_simplex.cppm
+    ${maths_directory}/sm/binomial.cppm
+    ${maths_directory}/sm/bezcoord.cppm
+    ${maths_directory}/sm/bezcurve.cppm
+    ${maths_directory}/sm/bezcurvepath.cppm
+    ${maths_directory}/sm/boxfilter.cppm
+    ${maths_directory}/sm/grid.cppm
+    ${maths_directory}/sm/rect.cppm
+    ${maths_directory}/sm/cartgrid.cppm
   )
 
   # Modules in addition to core required for ReadCurves.cppm
   set(MPLOT_MATHS_READCURVES_MODULES
-    ${base_directory}/sm/nm_simplex.cppm
-    ${base_directory}/sm/binomial.cppm
-    ${base_directory}/sm/bezcoord.cppm
-    ${base_directory}/sm/bezcurve.cppm
-    ${base_directory}/sm/bezcurvepath.cppm
+    ${maths_directory}/sm/nm_simplex.cppm
+    ${maths_directory}/sm/binomial.cppm
+    ${maths_directory}/sm/bezcoord.cppm
+    ${maths_directory}/sm/bezcurve.cppm
+    ${maths_directory}/sm/bezcurvepath.cppm
   )
 
   # Maths used in individual VisualModels, but not the mathplot core
   set(MPLOT_MATHS_VISUALMODEL_MODULES
-    ${base_directory}/sm/histo.cppm
-    ${base_directory}/sm/grid.cppm
-    ${base_directory}/sm/nm_simplex.cppm
-    ${base_directory}/sm/bezcoord.cppm
-    ${base_directory}/sm/binomial.cppm
-    ${base_directory}/sm/bezcurve.cppm
-    ${base_directory}/sm/bezcurvepath.cppm
-    ${base_directory}/sm/hex.cppm
-    ${base_directory}/sm/hexgrid.cppm
+    ${maths_directory}/sm/histo.cppm
+    ${maths_directory}/sm/grid.cppm
+    ${maths_directory}/sm/nm_simplex.cppm
+    ${maths_directory}/sm/bezcoord.cppm
+    ${maths_directory}/sm/binomial.cppm
+    ${maths_directory}/sm/bezcurve.cppm
+    ${maths_directory}/sm/bezcurvepath.cppm
+    ${maths_directory}/sm/hex.cppm
+    ${maths_directory}/sm/hexgrid.cppm
   )
-endmacro()
 
-macro(setup_module_variables_for_mathplot base_directory json_directory)
-
-  # Base modules for mathplot. With these (and
-  # MPLOT_MATHS_CORE_MODULES) you can build helloworld
+  # Base modules for mathplot. With these you can build helloworld and programs containing (most) VisualModels.
   set(MPLOT_CORE_MODULES
+    ${MPLOT_MATHS_CORE_MODULES}
+    ${MPLOT_MATHS_VISUALMODEL_MODULES}
+    ${MPLOT_MATHS_CARTGRID_MODULES}
+    ${MPLOT_MATHS_HEXGRID_MODULES}
     ${base_directory}/mplot/keys.cppm
     ${base_directory}/mplot/version.cppm
     ${base_directory}/mplot/tools.cppm
@@ -121,6 +122,7 @@ macro(setup_module_variables_for_mathplot base_directory json_directory)
     ${base_directory}/mplot/fps/profiler.cppm
     ${json_directory}/src/modules/json.cppm
   )
+  list(REMOVE_DUPLICATES MPLOT_CORE_MODULES)
 
   set(MPLOT_READCURVES_MODULES
     ${base_directory}/mplot/tools.cppm
@@ -128,8 +130,9 @@ macro(setup_module_variables_for_mathplot base_directory json_directory)
     ${base_directory}/mplot/ReadCurves.cppm
   )
 
-  # All the VisualModel modules
-  set(MPLOT_VISUALMODEL_MODULES
+  # (Possibly) all the VisualModel modules. Usually, you will make
+  # your own list of just the ones you want to compile.
+  set(MPLOT_ALL_VISUALMODEL_MODULES
     ${base_directory}/mplot/GraphVisual.cppm
     ${base_directory}/mplot/GridVisual.cppm
     ${base_directory}/mplot/RodVisual.cppm
@@ -167,6 +170,6 @@ macro(setup_module_variables_for_mathplot base_directory json_directory)
     ${base_directory}/mplot/PolygonVisual.cppm
     ${base_directory}/mplot/TriFrameVisual.cppm
     ${base_directory}/mplot/PolarVisual.cppm
-)
+  )
 
 endmacro()
