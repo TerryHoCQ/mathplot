@@ -13,9 +13,6 @@ message(STATUS "  (This can be changed with `cmake -DCMAKE_INSTALL_PREFIX=/some/
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Add our cmake directory and our submodule maths's cmake dir to cmake modules path
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
-
 # For future import std; support
 # set(CMAKE_CXX_EXTENSIONS ON)
 # Tell CMake that we explicitly want `import std`. This will initialize the
@@ -103,7 +100,7 @@ else()
   find_package(OpenGL REQUIRED EGL) # GL ES 3.1 used in one gl compute example
 endif()
 
-find_package(glfw3 3.2...3.4 REQUIRED)
+find_package(glfw3 3.2 REQUIRED)
 # Find the HDF5 library. To prefer the use of static linking of HDF5, set HDF5_USE_STATIC_LIBRARIES first
 #set(HDF5_USE_STATIC_LIBRARIES ON)
 find_package(HDF5)
