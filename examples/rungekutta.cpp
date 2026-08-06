@@ -1,16 +1,16 @@
 /*
  * Visualize sm::rungekutta4, the 4th order Runge-Kutta ODE solver.
  *
- * Four systems are integrated, each using a different State type, to show that the
- * same rungekutta4 code handles a single scalar ODE, a fixed-size system of ODEs
- * (sm::vec<T, N>) and a system of an arbitrary number of ODEs (sm::vvec<T>) alike. The
- * fourth system is a classic stiff linear system, included to show how a widely
- * separated pair of eigenvalues challenges an explicit method like RK4.
+ * Four systems are integrated, each using a different dependent variable type, to show that the
+ * same rungekutta4 code handles a single scalar ODE, a fixed-size system of ODEs (sm::vec<T, N>)
+ * and a system of an arbitrary number of ODEs (sm::vvec<T>). The fourth system is a classic
+ * stiff linear system, included to show how a widely separated pair of eigenvalues challenges an
+ * explicit method like RK4.
  *
- * For each system, two graphs are shown: the numerical (RK4) solution overlaid with the
- * known analytic solution, and the delta between the two at every timestep. Axis limits
- * are set manually from the union of all series plotted on a graph, because
- * GraphVisual only auto-scales an axis from the first dataset added to it.
+ * For each system, two graphs are shown: the numerical (RK4) solution overlaid with the known
+ * analytic solution, and the delta between the two at every timestep. Axis limits are set manually
+ * from the union of all series plotted on a graph, because GraphVisual only auto-scales an axis
+ * from the first dataset added to it.
  */
 #include <memory>
 #include <iostream>
@@ -22,6 +22,7 @@
 
 import mplot.visual;
 import mplot.graphvisual; // exports sm.vvec and sm.vec
+import mplot.unicode;
 import sm.rungekutta4;
 
 int main()
@@ -38,14 +39,35 @@ int main()
 
         mplot::Visual v(1600, 1200, "sm::rungekutta4 examples");
         v.backgroundWhite();
-        v.lightingEffects();
 
-        constexpr float col_step = 1.4f;
-        constexpr float row_step = 3.0f;
+        constexpr float col_step = 1.8f;
+        constexpr float row_step = 1.6f;
 
         // Zoom/pan out so that all 4 rows x 2 columns of graphs are in view
-        v.setSceneTransXY (-col_step * 0.5f, 1.5f * row_step);
-        v.setSceneTransZ (-22.0f);
+        v.setSceneTrans (sm::vec<float,3>{ float{-3.16188}, float{1.03305}, float{-10.4181} });
+        v.setSceneRotation (sm::quaternion<float>{ float{1}, float{0}, float{0}, float{0} });
+
+
+        mplot::ColourMap<float> num_cm (mplot::ColourMapType::Oslo);
+        mplot::ColourMap<float> ana_cm (mplot::ColourMapType::Bamako);
+        mplot::ColourMap<float> delt_cm (mplot::ColourMapType::Lajolla);
+
+        mplot::DatasetStyle ds_numeric (mplot::stylepolicy::markers);
+        ds_numeric.datalabel = "rk4";
+        ds_numeric.markercolour = num_cm.convert (0.4f);
+        ds_numeric.markersize *= 0.6f;
+        ds_numeric.markerstyle = mplot::markerstyle::circle;
+
+        mplot::DatasetStyle ds_analytic (mplot::stylepolicy::markers);
+        ds_analytic.datalabel = "analytic";
+        ds_analytic.markercolour = ana_cm.convert (0.4f);
+        ds_analytic.markerstyle = mplot::markerstyle::circle;
+
+        mplot::DatasetStyle ds_delta (mplot::stylepolicy::markers);
+        ds_delta.datalabel = mplot::unicode::toUtf8 (mplot::unicode::Delta);
+        ds_delta.markercolour = delt_cm.convert (0.4f);
+        ds_delta.markersize *= 0.6f;
+        ds_delta.markerstyle = mplot::markerstyle::circle;
 
         // 1) A single scalar ODE: dx/dt = -x, x(0) = 1. Analytic solution: x(t) = exp(-t)
         {
@@ -54,20 +76,23 @@ int main()
             sm::vvec<double> analytic = (t * -1.0).exp();
             sm::vvec<double> delta = numerical - analytic;
 
-            auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>({0, 0, 0}));
+            auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>{0, 0, 0});
             gv->set_parent (v.get_id());
             gv->setlimits (t.min(), t.max(), std::min (numerical.min(), analytic.min()), std::max (numerical.max(), analytic.max()));
-            gv->setdata (t, numerical, "numerical");
-            gv->setdata (t, analytic, "analytic");
+            gv->setdata (t, numerical, ds_numeric);
+            ds_analytic.datalabel = "analytic: x(t) = exp(-t)";
+            gv->setdata (t, analytic, ds_analytic);
             gv->xlabel = "t";
             gv->ylabel = "x";
+            gv->addLabel ("Scalar ODE: dx/dt = -x, x(0) = 1", sm::vec<float>{0.8, 1.3}, mplot::TextFeatures(0.09f));
             gv->finalize();
             v.addVisualModel (gv);
 
-            auto gvd = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>({col_step, 0, 0}));
+            auto gvd = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>{col_step, 0, 0});
             gvd->set_parent (v.get_id());
             gvd->setlimits (t.min(), t.max(), delta.min(), delta.max());
-            gvd->setdata (t, delta, "delta");
+            ds_delta.datalabel = mplot::unicode::toUtf8(mplot::unicode::Delta) + "x";
+            gvd->setdata (t, delta, ds_delta);
             gvd->xlabel = "t";
             gvd->ylabel = "numerical - analytic";
             gvd->finalize();
@@ -112,15 +137,22 @@ int main()
             auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>({0, -row_step, 0}));
             gv->set_parent (v.get_id());
             gv->setlimits (t.min(), t.max(), ymin, ymax);
+            gv->addLabel ("Simple harmonic motion: dx/dt = v, dv/dt = -x", sm::vec<float>{0.7, 1.3}, mplot::TextFeatures(0.09f));
 
-            auto gvd = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>({col_step, -row_step, 0}));
+            auto gvd = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>{col_step, -row_step, 0});
             gvd->set_parent (v.get_id());
             gvd->setlimits (t.min(), t.max(), dmin, dmax);
 
             for (unsigned int c = 0; c < 2; ++c) {
-                gv->setdata (t, num_c[c], "numerical " + labels[c]);
-                gv->setdata (t, an_c[c], "analytic " + labels[c]);
-                gvd->setdata (t, delta_c[c], "delta " + labels[c]);
+                ds_numeric.datalabel = "rk4 " + labels[c];
+                ds_numeric.markercolour = num_cm.convert (0.1f * (c + 4));
+                gv->setdata (t, num_c[c], ds_numeric);
+                ds_analytic.datalabel = "analytic " + labels[c];
+                ds_analytic.markercolour = ana_cm.convert (0.1f * (c + 4));
+                gv->setdata (t, an_c[c], ds_analytic);
+                ds_delta.datalabel = mplot::unicode::toUtf8(mplot::unicode::Delta) + labels[c];
+                ds_delta.markercolour = delt_cm.convert (0.1f * (c + 4));
+                gvd->setdata (t, delta_c[c], ds_delta);
             }
 
             gv->xlabel = "t";
@@ -173,18 +205,27 @@ int main()
                 dmax = std::max (dmax, delta_c[c].max());
             }
 
-            auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>({0, -2 * row_step, 0}));
+            auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>{2 * col_step + 0, 0, 0});
             gv->set_parent (v.get_id());
             gv->setlimits (t.min(), t.max(), ymin, ymax);
+            gv->addLabel ("Five exponential decays", sm::vec<float>{1.2, 1.3}, mplot::TextFeatures(0.09f));
 
-            auto gvd = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>({col_step, -2 * row_step, 0}));
+            auto gvd = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>{2 * col_step + col_step, 0, 0});
             gvd->set_parent (v.get_id());
             gvd->setlimits (t.min(), t.max(), dmin, dmax);
 
             for (unsigned int c = 0; c < n_comp; ++c) {
-                gv->setdata (t, num_c[c], "numerical[" + std::to_string (c) + "]");
-                gv->setdata (t, an_c[c], "analytic[" + std::to_string (c) + "]");
-                gvd->setdata (t, delta_c[c], "delta[" + std::to_string (c) + "]");
+                ds_numeric.datalabel = "rk4[" + std::to_string (c) + "]";
+                ds_numeric.markercolour = num_cm.convert (0.1f * (c + 4));
+                gv->setdata (t, num_c[c], ds_numeric);
+
+                ds_analytic.datalabel = "analytic[" + std::to_string (c) + "]";
+                ds_analytic.markercolour = ana_cm.convert (0.1f * (c + 4));
+                gv->setdata (t, an_c[c], ds_analytic);
+
+                ds_delta.datalabel = mplot::unicode::toUtf8(mplot::unicode::Delta) + "[" + std::to_string (c) + "]";
+                ds_delta.markercolour = delt_cm.convert (0.1f * (c + 4));
+                gvd->setdata (t, delta_c[c], ds_delta);
             }
 
             gv->xlabel = "t";
@@ -240,18 +281,25 @@ int main()
             double dmin = std::min (delta_c[0].min(), delta_c[1].min());
             double dmax = std::max (delta_c[0].max(), delta_c[1].max());
 
-            auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>({0, -3 * row_step, 0}));
+            auto gv = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>{2 * col_step, -row_step, 0});
             gv->set_parent (v.get_id());
             gv->setlimits (t.min(), t.max(), ymin, ymax);
+            gv->addLabel ("Stiff linear system:\ndx/dt = 998x - 1998y, dy/dt = 1000x - 2000y", sm::vec<float>{0.8, 1.3}, mplot::TextFeatures(0.09f));
 
-            auto gvd = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>({col_step, -3 * row_step, 0}));
+            auto gvd = std::make_unique<mplot::GraphVisual<double>> (sm::vec<float>{2 * col_step + col_step, -row_step, 0});
             gvd->set_parent (v.get_id());
             gvd->setlimits (t.min(), t.max(), dmin, dmax);
 
             for (unsigned int c = 0; c < 2; ++c) {
-                gv->setdata (t, num_c[c], "numerical " + labels[c]);
-                gv->setdata (t, an_c[c], "analytic " + labels[c]);
-                gvd->setdata (t, delta_c[c], "delta " + labels[c]);
+                ds_numeric.datalabel = "rk4 " + labels[c];
+                ds_numeric.markercolour = num_cm.convert (0.1f * (c + 4));
+                gv->setdata (t, num_c[c], ds_numeric);
+                ds_analytic.datalabel = "analytic " + labels[c];
+                ds_analytic.markercolour = ana_cm.convert (0.1f * (c + 4));
+                gv->setdata (t, an_c[c], ds_analytic);
+                ds_delta.datalabel = mplot::unicode::toUtf8(mplot::unicode::Delta) + labels[c];
+                ds_delta.markercolour = delt_cm.convert (0.1f * (c + 4));
+                gvd->setdata (t, delta_c[c], ds_delta);
             }
 
             gv->xlabel = "t";
