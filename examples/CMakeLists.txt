@@ -45,9 +45,7 @@ target_link_libraries(rungekutta mathplot_examples)
 # Note that for graph1, we DON'T use the static library mathplot_examples, just as a standalone example
 add_executable(graph1 graph1.cpp)
 target_sources(graph1 PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
-  FILES ${MPLOT_MATHS_CORE_MODULES} ${MPLOT_CORE_MODULES}
-  ${PROJECT_SOURCE_DIR}/maths/sm/histo.cppm
-  ${PROJECT_SOURCE_DIR}/maths/sm/grid.cppm
+  FILES ${MPLOT_CORE_MODULES}
   ${PROJECT_SOURCE_DIR}/mplot/GraphVisual.cppm
 )
 target_link_libraries(graph1 OpenGL::GL glfw Freetype::Freetype glad mplot_fontdata)
