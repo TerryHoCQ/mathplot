@@ -970,7 +970,7 @@ export namespace mplot
                 idx_bytes[b++] = i >> 16 & 0xff;
                 idx_bytes[b++] = i >> 24 & 0xff;
             }
-            return base64::encode (idx_bytes);
+            return sm::base64::encode (idx_bytes);
         }
 
         /*!
@@ -1043,7 +1043,7 @@ export namespace mplot
                 _bytes[b++] = fb.bytes[2];
                 _bytes[b++] = fb.bytes[3];
             }
-            return base64::encode (_bytes);
+            return sm::base64::encode (_bytes);
         }
         std::size_t next_vpos_idx = 0;
         void init_vpos_accessor() { this->next_vpos_idx = 0; }
@@ -1080,7 +1080,7 @@ export namespace mplot
                 _bytes[b++] = fb.bytes[2];
                 _bytes[b++] = fb.bytes[3];
             }
-            return base64::encode (_bytes);
+            return sm::base64::encode (_bytes);
         }
         std::size_t vnorm_size() { return this->vertexNormals.size(); }
         std::string vnorm_max() { return this->vnorm_maxes.str_mat(); }
@@ -1098,7 +1098,7 @@ export namespace mplot
                 _bytes[b++] = fb.bytes[2];
                 _bytes[b++] = fb.bytes[3];
             }
-            return base64::encode (_bytes);
+            return sm::base64::encode (_bytes);
         }
         std::size_t next_vnorm_idx = 0;
         void init_vnorm_accessor() { this->next_vnorm_idx = 0; }
