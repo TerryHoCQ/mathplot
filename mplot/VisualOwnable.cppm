@@ -569,6 +569,8 @@ export namespace mplot
         // Use the separating axis theorem for two boxes to solve this.
         bool collision_detect (const sm::mat<float, 3, 4>& obb1, const sm::mat<float, 3, 4>& obb2)
         {
+            std::cout << "Detect collision between obb1 at " << obb1.col(0)
+                      << " and obb2 at " << obb2.col(0) << std::endl;
             bool collision = false;
             // call functions from sm::geometry implementing separating axes theorem test
             return collision;
