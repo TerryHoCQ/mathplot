@@ -566,6 +566,14 @@ export namespace mplot
             }
         }
 
+        // Use the separating axis theorem for two boxes to solve this.
+        bool collision_detect (const sm::mat<float, 3, 4>& obb1, const sm::mat<float, 3, 4>& obb2)
+        {
+            bool collision = false;
+            // call functions from sm::geometry implementing separating axes theorem test
+            return collision;
+        }
+
         //! Compute a translation vector for text position, using Visual::text_z.
         sm::vec<float, 3> textPosition (const sm::vec<float, 2> p0_coord)
         {

@@ -325,6 +325,12 @@ export namespace mplot
             for (std::size_t i = 0; i < this->vertexPositions.size(); i += 3) {
                 this->bb.update (sm::vec<float>{ vertexPositions[i], vertexPositions[i+1], vertexPositions[i+2] });
             }
+            // Compute the OBB half-extent axis vectors, too.
+            const sm::vec<float> obb_ext = this->bb.span() / 2.0f;
+            this->bb_x = { obb_ext[0], 0, 0 }; // or obb_ext[0] * sm::vec<>::ux();
+            this->bb_y = { 0, obb_ext[1], 0 };
+            this->bb_z = { 0, 0, obb_ext[2] };
+
             // After finding the bounding box, make up the vertices to display it:
             this->computeBoundingBox();
         }
@@ -939,6 +945,7 @@ export namespace mplot
         {
             return (this->viewmatrix * sm::vec<float, 3>{0,0,0}).less_one_dim();
         }
+
         //! The centre of mass of the bounding box may not be the VisualModel's origin
         sm::vec<float> get_viewmatrix_bb_centre() const
         {
@@ -953,6 +960,31 @@ export namespace mplot
             vmbb.max = (this->viewmatrix * this->bb.max).less_one_dim();
             return vmbb;
         }
+
+        /*!
+         * Returns a 3x4 matrix whose columns are the vectors obb_centre, obb_x, obb_y and obb_z for
+         * the axis aligned bounding box *after* it has been transformed (oriented) with the passed
+         * in @_viewmatrix.
+         */
+        sm::mat<float, 3, 4> get_viewmatrix_obb (const sm::mat<float, 4>& _viewmatrix) const
+        {
+            const sm::vec<float> obb_centre = (_viewmatrix * (this->bb.mid() / 2.0f)).less_one_dim();
+            const sm::vec<float> obb_x_end = (_viewmatrix * (obb_centre + this->bb_x)).less_one_dim();
+            const sm::vec<float> obb_y_end = (_viewmatrix * (obb_centre + this->bb_y)).less_one_dim();
+            const sm::vec<float> obb_z_end = (_viewmatrix * (obb_centre + this->bb_z)).less_one_dim();
+            sm::mat<float, 3, 4> obb;
+            obb.set_col (0, obb_centre);
+            obb.set_col (1, obb_x_end - obb_centre);
+            obb.set_col (2, obb_y_end - obb_centre);
+            obb.set_col (3, obb_z_end - obb_centre);
+            return obb;
+        }
+
+        /*!
+         * Returns a 3x4 matrix whose columns are the vectors obb_centre, obb_x, obb_y and obb_z for
+         * the axis aligned bounding box *after* it has been oriented with this model's viewmatrix.
+         */
+        sm::mat<float, 3, 4> get_viewmatrix_obb() const { return this->get_viewmatrix_obb (this->viewmatrix); }
 
         //! Return the number of elements in this->indices
         std::size_t indices_size() { return this->indices.size(); }
@@ -1231,9 +1263,25 @@ export namespace mplot
         void show_bb (const bool val) { this->flags.set (vm_bools::show_bb, val); }
         void compute_bb (const bool val) { this->flags.set (vm_bools::compute_bb, val); }
 
-        //! An interval can be used for a bounding box for this VisualModel
+        /*!
+         * An interval can be used for an axis-aligned bounding box for this VisualModel. You can
+         * get the centre and the half-extents to use this as an oriented bounding box from:
+         *
+         * // check bb.valid() if required
+         * sm::vec<float> bb_cent = bb.mid();
+         * sm::vec<float> bb_ext = bb.span() / 2.0f;
+         * sm::vec<float> bb_x = bb_ext[0] * sm::vec<>::ux();
+         * sm::vec<float> bb_y = bb_ext[0] * sm::vec<>::uy();
+         * sm::vec<float> bb_z = bb_ext[0] * sm::vec<>::uz();
+         *
+         * Finally, apply the view matrix to bb_cent and bb_x/y/z (see get_viewmatrix_obb)
+         */
         sm::interval<sm::vec<float>> bb;
         std::array<float, 3> colour_bb = mplot::colour::grey90;
+        // Bounding box half-extent vectors (which can be converted into an oriented bb with the viewmatrix)
+        sm::vec<float> bb_x = {};
+        sm::vec<float> bb_y = {};
+        sm::vec<float> bb_z = {};
 
         void twodimensional (const bool val) { this->flags.set (vm_bools::twodimensional, val); }
         bool twodimensional() const { return this->flags.test (vm_bools::twodimensional); }
@@ -3778,6 +3826,18 @@ export namespace mplot
             this->computeTube (c1, c5, sm::vec<float>::uy(), -sm::vec<float>::ux(), cl, cl, r, segs, zrot, true);
             this->computeTube (c2, c6, sm::vec<float>::uy(), -sm::vec<float>::ux(), cl, cl, r, segs, zrot, true);
             this->computeTube (c3, c7, sm::vec<float>::uy(), -sm::vec<float>::ux(), cl, cl, r, segs, zrot, true);
+
+            // Oriented bounding box local axes/half-extents
+            constexpr bool show_obb_vectors = true;
+            if constexpr (show_obb_vectors) {
+                const sm::vec<float> obb_centre = this->bb.mid();
+                this->computeTube (obb_centre, obb_centre + this->bb_x, sm::vec<float>::uy(), sm::vec<float>::uz(),
+                                   cl, mplot::colour::crimson, r, segs, zrot, true);
+                this->computeTube (obb_centre, obb_centre + this->bb_y, sm::vec<float>::uz(), sm::vec<float>::ux(),
+                                   cl, mplot::colour::springgreen2, r, segs, zrot, true);
+                this->computeTube (obb_centre, obb_centre + this->bb_z, sm::vec<float>::ux(), sm::vec<float>::uy(),
+                                   cl, mplot::colour::blue2, r, segs, zrot, true);
+            }
         }
     };
 
