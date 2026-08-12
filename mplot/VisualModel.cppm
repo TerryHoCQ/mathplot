@@ -964,9 +964,11 @@ export namespace mplot
         }
 
         /*!
-         * Returns a 3x4 matrix whose columns are the vectors obb_centre, obb_x, obb_y and obb_z for
-         * the axis aligned bounding box *after* it has been transformed (oriented) with the passed
-         * in @_viewmatrix.
+         * Returns a 3x4 matrix whose columns are the vectors obb_centre, obb_x, obb_y and obb_z
+         * (the half-extent vectors) for the axis aligned bounding box *after* it has been
+         * transformed (oriented) with the passed in @_viewmatrix.
+         *
+         * The returned mat can be passed to Visual::collision_detect(obb1, obb2)
          */
         sm::mat<float, 3, 4> get_viewmatrix_obb (const sm::mat<float, 4>& _viewmatrix) const
         {
@@ -1268,16 +1270,7 @@ export namespace mplot
 
         /*!
          * An interval can be used for an axis-aligned bounding box for this VisualModel. You can
-         * get the centre and the half-extents to use this as an oriented bounding box from:
-         *
-         * // check bb.valid() if required
-         * sm::vec<float> bb_cent = bb.mid();
-         * sm::vec<float> bb_ext = bb.span() / 2.0f;
-         * sm::vec<float> bb_x = bb_ext[0] * sm::vec<>::ux();
-         * sm::vec<float> bb_y = bb_ext[0] * sm::vec<>::uy();
-         * sm::vec<float> bb_z = bb_ext[0] * sm::vec<>::uz();
-         *
-         * Finally, apply the view matrix to bb_cent and bb_x/y/z (see get_viewmatrix_obb)
+         * get the centre with bb.mid().
          */
         sm::interval<sm::vec<float>> bb;
         std::array<float, 3> colour_bb = mplot::colour::grey90;
