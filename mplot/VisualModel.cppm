@@ -952,7 +952,9 @@ export namespace mplot
             return (this->viewmatrix * this->bb.mid()).less_one_dim();
         }
 
-        //! Apply the viewmatrix to the model's bounding box and return it
+        //! Apply the viewmatrix to the model's bounding box and return it. You probably don't want
+        //! this, instead, get_viewmatrix_obb gets the oriented bounding box, and with that you can
+        //! collision detect with the separarating axis theorem.
         sm::interval<sm::vec<float>> get_viewmatrix_modelbb() const
         {
             sm::interval<sm::vec<float>> vmbb;
@@ -968,10 +970,11 @@ export namespace mplot
          */
         sm::mat<float, 3, 4> get_viewmatrix_obb (const sm::mat<float, 4>& _viewmatrix) const
         {
-            const sm::vec<float> obb_centre = (_viewmatrix * (this->bb.mid() / 2.0f)).less_one_dim();
-            const sm::vec<float> obb_x_end = (_viewmatrix * (obb_centre + this->bb_x)).less_one_dim();
-            const sm::vec<float> obb_y_end = (_viewmatrix * (obb_centre + this->bb_y)).less_one_dim();
-            const sm::vec<float> obb_z_end = (_viewmatrix * (obb_centre + this->bb_z)).less_one_dim();
+            const sm::vec<float> bb_centre = this->bb.mid();
+            const sm::vec<float> obb_x_end = (_viewmatrix * (bb_centre + this->bb_x)).less_one_dim();
+            const sm::vec<float> obb_y_end = (_viewmatrix * (bb_centre + this->bb_y)).less_one_dim();
+            const sm::vec<float> obb_z_end = (_viewmatrix * (bb_centre + this->bb_z)).less_one_dim();
+            const sm::vec<float> obb_centre = (_viewmatrix * bb_centre).less_one_dim();
             sm::mat<float, 3, 4> obb;
             obb.set_col (0, obb_centre);
             obb.set_col (1, obb_x_end - obb_centre);

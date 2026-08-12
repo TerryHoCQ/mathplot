@@ -1,5 +1,5 @@
 /*
- * Two cuboids. Once movable and rotatable. For collision detection development.
+ * Two cuboids. One movable and rotatable. For collision detection development.
  */
 #include <iostream>
 #include <array>
@@ -13,9 +13,6 @@ import sm.mat;
 
 import mplot.visual;
 import mplot.colour;
-import mplot.colourmap;
-import mplot.textfeatures;
-
 import mplot.rhombovisual;
 
 // A derived Visual to handle key commands
@@ -29,6 +26,7 @@ struct myvisual final : public mplot::Visual<>
         rot_up, rot_down, rot_left, rot_right, rot_roll_left, rot_roll_right
     };
     sm::flags<move_sense> move_state;
+    bool moving() { return this->move_state.any(); }
 protected:
     void key_callback_extra (int key, [[maybe_unused]] int scancode, int action, int mods) override
     {
@@ -110,16 +108,17 @@ int main()
     sm::vec<float> offset = {1,0,0};
 
     // Cuboid rhombos
-    sm::vec<float> e1 = sm::vec<>::ux() * 1;
-    sm::vec<float> e2 = sm::vec<>::uy() * 1;
-    sm::vec<float> e3 = sm::vec<>::uz() * 1;
+    sm::vec<float> e1 = sm::vec<>::ux();
+    sm::vec<float> e2 = sm::vec<>::uy();
+    sm::vec<float> e3 = sm::vec<>::uz();
 
     auto rv1 = std::make_unique<mplot::RhomboVisual<>> (-offset, e1, e2, e3, mplot::colour::blueviolet);
     rv1->set_parent (v.get_id());
     rv1->finalize();
     [[maybe_unused]] auto rv1p = v.addVisualModel (rv1);
 
-    e3 *= 2.0f;
+    e1 *= 2.0f;
+    offset = {};
     auto rv2 = std::make_unique<mplot::RhomboVisual<>> (offset, e1, e2, e3, mplot::colour::seagreen2);
     rv2->set_parent (v.get_id());
     rv2->finalize();
@@ -128,8 +127,11 @@ int main()
     sm::mat<float, 4> moving_vm = rv2p->getViewMatrix();
 
     // Movement increment
-    const float mvinc = 0.05f;
-    const float anginc = 0.02f;
+    const float mvinc = 0.005f;
+    const float anginc = 0.002f;
+
+    // Get the unchanging oriented bounding box for rv1p.
+    auto obb1 = rv1p->get_viewmatrix_obb();
 
     while (!v.readyToFinish()) {
         v.render();
@@ -178,6 +180,31 @@ int main()
             sm::quaternion<float> qr (sm::vec<>::uz(), -anginc);
             moving_vm.rotate (qr);
             rv2p->setViewMatrix (moving_vm);
+        }
+
+
+        if (v.moving()) {
+            // Now detect collision
+            auto obb2 = rv2p->get_viewmatrix_obb();
+            if (v.collision_detect (obb1, obb2)) { // or maybe rv2p->collision_detect (obb1);
+                if (rv1p->col != mplot::colour::crimson) {
+                    rv1p->col = mplot::colour::crimson;
+                    rv1p->reinit();
+                }
+                if (rv2p->col != mplot::colour::indian_red) {
+                    rv2p->col = mplot::colour::indian_red;
+                    rv2p->reinit();
+                }
+            } else {
+                if (rv1p->col != mplot::colour::blueviolet) {
+                    rv1p->col = mplot::colour::blueviolet;
+                    rv1p->reinit();
+                }
+                if (rv2p->col != mplot::colour::seagreen2) {
+                    rv2p->col = mplot::colour::seagreen2;
+                    rv2p->reinit();
+                }
+            }
         }
     }
 

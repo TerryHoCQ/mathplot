@@ -566,13 +566,134 @@ export namespace mplot
             }
         }
 
+        // A single separating axis test for two boxes whose centres are c1 and c2 and sizes given by x1/y1/z1 and x2/y2/z2
+        bool separating_axis_test (const sm::vec<>& axis,
+                                   const sm::vec<>& c1, const sm::vec<>& x1, const sm::vec<>& y1, const sm::vec<>& z1,
+                                   const sm::vec<>& c2, const sm::vec<>& x2, const sm::vec<>& y2, const sm::vec<>& z2)
+        {
+            //std::cout << "c1 = " << c1 << " and c2 = " << c2 << std::endl;
+            //std::cout << "c2 - c1 = " << c2 - c1 << " length " << (c2 - c1).length() << std::endl;
+            auto l_on_axis = std::abs((c2 - c1).dot (axis));
+            //std::cout << "l on axis " << axis << " = " << l_on_axis << std::endl;
+            auto sum_1 = std::abs (x1.dot (axis)) + std::abs (y1.dot (axis)) + std::abs (z1.dot (axis)); // Don't need all
+            //std::cout << "sum_1: " << x1 << "." << axis << ": " << std::abs (x1.dot (axis))
+            //          << " + " << y1 << "." << axis << ": " << std::abs (y1.dot (axis))
+            //          << " + " << z1 << "." << axis << ": " << std::abs (z1.dot (axis)) << " = " << sum_1 << std::endl;
+            auto sum_2 = std::abs (x2.dot (axis)) + std::abs (y2.dot (axis)) + std::abs (z2.dot (axis));
+            //std::cout << "sum_2: " << x2 << "." << axis << ": " << std::abs (x2.dot (axis))
+            //          << " + " << y2 << "." << axis << ": " << std::abs (y2.dot (axis))
+            //          << " + " << z2 << "." << axis << ": " << std::abs (z2.dot (axis)) << " = " << sum_2 << std::endl;
+            const bool separates = l_on_axis > (sum_1 + sum_2);
+            return separates;
+        }
+
         // Use the separating axis theorem for two boxes to solve this.
         bool collision_detect (const sm::mat<float, 3, 4>& obb1, const sm::mat<float, 3, 4>& obb2)
         {
-            std::cout << "Detect collision between obb1 at " << obb1.col(0)
-                      << " and obb2 at " << obb2.col(0) << std::endl;
-            bool collision = false;
-            // call functions from sm::geometry implementing separating axes theorem test
+            //std::cout << "Detect collision between obb1 at " << obb1.col(0)
+            //          << " and obb2 at " << obb2.col(0) << std::endl;
+
+            // Face normals. Our obb_x/y/z axes
+            sm::vec<> c1 = obb1.col(0);
+            sm::vec<> x1 = obb1.col(1);
+            //std::cout << "x1: " << x1 << std::endl;
+            sm::vec<> nx1 = obb1.col(1);
+            nx1.renormalize();
+            sm::vec<> y1 = obb1.col(2);
+            //std::cout << "y1: " << y1 << std::endl;
+            sm::vec<> ny1 = obb1.col(2);
+            ny1.renormalize();
+            sm::vec<> z1 = obb1.col(3);
+            //std::cout << "z1: " << z1 << std::endl;
+            sm::vec<> nz1 = obb1.col(3);
+            nz1.renormalize();
+
+            sm::vec<> c2 = obb2.col(0);
+            sm::vec<> x2 = obb2.col(1);
+            //std::cout << "x2: " << x2 << std::endl;
+            sm::vec<> nx2 = obb2.col(1);
+            nx2.renormalize();
+            sm::vec<> y2 = obb2.col(2);
+            //std::cout << "y2: " << y2 << std::endl;
+            sm::vec<> ny2 = obb2.col(2);
+            ny2.renormalize();
+            sm::vec<> z2 = obb2.col(3);
+            //std::cout << "z2: " << z2 << std::endl;
+            sm::vec<> nz2 = obb2.col(3);
+            nz2.renormalize();
+
+            bool t1 = separating_axis_test (nx1, c1, x1, y1, z1, c2, x2, y2, z2);
+            //std::cout << "Separates on axis nx1? " << (t1 ? "T" : "F") << std::endl;
+            bool t2 = separating_axis_test (ny1, c1, x1, y1, z1, c2, x2, y2, z2);
+            //std::cout << "Separates on axis ny1? " << (t2 ? "T" : "F") << std::endl;
+            bool t3 = separating_axis_test (nz1, c1, x1, y1, z1, c2, x2, y2, z2);
+            //std::cout << "Separates on axis nz1? " << (t3 ? "T" : "F") << std::endl;
+
+            bool t4 = separating_axis_test (nx2, c1, x1, y1, z1, c2, x2, y2, z2);
+            //std::cout << "Separates on axis nx2? " << (t4 ? "T" : "F") << std::endl;
+            bool t5 = separating_axis_test (ny2, c1, x1, y1, z1, c2, x2, y2, z2);
+            //std::cout << "Separates on axis ny2? " << (t5 ? "T" : "F") << std::endl;
+            bool t6 = separating_axis_test (nz2, c1, x1, y1, z1, c2, x2, y2, z2);
+            //std::cout << "Separates on axis nz2? " << (t6 ? "T" : "F") << std::endl;
+
+            sm::vec<> cpx1x2 = x1.cross(x2);
+            cpx1x2.renormalize();
+            sm::vec<> cpx1y2 = x1.cross(y2);
+            cpx1y2.renormalize();
+            sm::vec<> cpx1z2 = x1.cross(z2);
+            cpx1z2.renormalize();
+
+            bool t7 = separating_axis_test (cpx1x2, c1, x1, y1, z1, c2, x2, y2, z2);
+            //std::cout << "Separates on axis cpx1x2? " << (t7 ? "T" : "F") << std::endl;
+            bool t8 = separating_axis_test (cpx1y2, c1, x1, y1, z1, c2, x2, y2, z2);
+            //std::cout << "Separates on axis cpx1y2? " << (t8 ? "T" : "F") << std::endl;
+            bool t9 = separating_axis_test (cpx1z2, c1, x1, y1, z1, c2, x2, y2, z2);
+            //std::cout << "Separates on axis cpx1z2? " << (t9 ? "T" : "F") << std::endl;
+
+            sm::vec<> cpy1x2 = y1.cross(x2);
+            cpy1x2.renormalize();
+            sm::vec<> cpy1y2 = y1.cross(y2);
+            cpy1y2.renormalize();
+            sm::vec<> cpy1z2 = y1.cross(z2);
+            cpy1z2.renormalize();
+
+            bool t10 = separating_axis_test (cpy1x2, c1, x1, y1, z1, c2, x2, y2, z2);
+            //std::cout << "Separates on axis cpy1x2? " << (t10 ? "T" : "F") << std::endl;
+            bool t11 = separating_axis_test (cpy1y2, c1, x1, y1, z1, c2, x2, y2, z2);
+            //std::cout << "Separates on axis cpy1y2? " << (t11 ? "T" : "F") << std::endl;
+            bool t12 = separating_axis_test (cpy1z2, c1, x1, y1, z1, c2, x2, y2, z2);
+            //std::cout << "Separates on axis cpy1z2? " << (t12 ? "T" : "F") << std::endl;
+
+            sm::vec<> cpz1x2 = z1.cross(x2);
+            cpz1x2.renormalize();
+            sm::vec<> cpz1y2 = z1.cross(y2);
+            cpz1y2.renormalize();
+            sm::vec<> cpz1z2 = z1.cross(z2);
+            cpz1z2.renormalize();
+
+            bool t13 = separating_axis_test (cpz1x2, c1, x1, y1, z1, c2, x2, y2, z2);
+            //std::cout << "Separates on axis cpz1x2? " << (t13 ? "T" : "F") << std::endl;
+            bool t14 = separating_axis_test (cpz1y2, c1, x1, y1, z1, c2, x2, y2, z2);
+            //std::cout << "Separates on axis cpz1y2? " << (t14 ? "T" : "F") << std::endl;
+            bool t15 = separating_axis_test (cpz1z2, c1, x1, y1, z1, c2, x2, y2, z2);
+            //std::cout << "Separates on axis cpz1z2? " << (t15 ? "T" : "F") << std::endl;
+
+            bool collision = (t1 == false
+                              && t2 == false
+                              && t3 == false
+                              && t4 == false
+                              && t5 == false
+                              && t6 == false
+                              && t7 == false
+                              && t8 == false
+                              && t9 == false
+                              && t10 == false
+                              && t11 == false
+                              && t12 == false
+                              && t13 == false
+                              && t14 == false
+                              && t15 == false);
+
             return collision;
         }
 
