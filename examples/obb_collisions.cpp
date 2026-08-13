@@ -115,14 +115,14 @@ int main()
     auto rv1 = std::make_unique<mplot::RhomboVisual<>> (-offset, e1, e2, e3, mplot::colour::blueviolet);
     rv1->set_parent (v.get_id());
     rv1->finalize();
-    [[maybe_unused]] auto rv1p = v.addVisualModel (rv1);
+    auto rv1p = v.addVisualModel (rv1);
 
     e1 *= 2.0f;
     offset = {};
     auto rv2 = std::make_unique<mplot::RhomboVisual<>> (offset, e1, e2, e3, mplot::colour::seagreen2);
     rv2->set_parent (v.get_id());
     rv2->finalize();
-    [[maybe_unused]] auto rv2p = v.addVisualModel (rv2);
+    auto rv2p = v.addVisualModel (rv2);
 
     sm::mat<float, 4> moving_vm = rv2p->getViewMatrix();
 
@@ -185,8 +185,7 @@ int main()
 
         if (v.moving()) {
             // Now detect collision
-            auto obb2 = rv2p->get_viewmatrix_obb();
-            if (v.collision_detect (obb1, obb2)) { // or maybe rv2p->collision_detect (obb1);
+            if (rv2p->collision_detect (obb1)) { // or use rv2p->collision_detect (rv1p)
                 if (rv1p->col != mplot::colour::crimson) {
                     rv1p->col = mplot::colour::crimson;
                     rv1p->reinit();

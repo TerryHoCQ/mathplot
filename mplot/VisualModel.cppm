@@ -991,6 +991,25 @@ export namespace mplot
          */
         sm::mat<float, 3, 4> get_viewmatrix_obb() const { return this->get_viewmatrix_obb (this->viewmatrix); }
 
+        /*!
+         * Find collision between this model's oriented bounding box and another oriented bounding box.
+         */
+        bool collision_detect (const sm::mat<float, 3, 4>& obb2)
+        {
+            const sm::mat<float, 3, 4> obb1 = this->get_viewmatrix_obb (this->viewmatrix);
+            return sm::geometry::obb_collision_detect<float>(obb1, obb2);
+        }
+
+        /*!
+         * Find collision between this model's oriented bounding box and another model.
+         */
+        bool collision_detect (const VisualModel<glver>* mdl2)
+        {
+            const sm::mat<float, 3, 4> obb1 = this->get_viewmatrix_obb (this->viewmatrix);
+            const sm::mat<float, 3, 4> obb2 = mdl2->get_viewmatrix_obb();
+            return sm::geometry::obb_collision_detect<float>(obb1, obb2);
+        }
+
         //! Return the number of elements in this->indices
         std::size_t indices_size() { return this->indices.size(); }
         float indices_max() { return this->idx_max; }
