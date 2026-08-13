@@ -35,6 +35,9 @@ target_link_libraries(geodesic mathplot_examples)
 add_executable(vectorvis vectorvis.cpp)
 target_link_libraries(vectorvis mathplot_examples)
 
+add_executable(obb_collisions obb_collisions.cpp)
+target_link_libraries(obb_collisions mathplot_examples)
+
 add_executable(cray_eye cray_eye.cpp)
 target_link_libraries(cray_eye mathplot_examples)
 
