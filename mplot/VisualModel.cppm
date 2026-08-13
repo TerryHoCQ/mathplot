@@ -37,6 +37,7 @@ module;
 export module mplot.visualmodel;
 
 export import sm.mathconst;
+import sm.geometry;
 import sm.geometry_polyhedra;
 export import sm.quaternion;
 export import sm.mat;
