@@ -325,11 +325,11 @@ export namespace mplot
             for (std::size_t i = 0; i < this->vertexPositions.size(); i += 3) {
                 this->bb.update (sm::vec<float>{ vertexPositions[i], vertexPositions[i+1], vertexPositions[i+2] });
             }
-            // Compute the OBB half-extent axis vectors, too.
-            const sm::vec<float> obb_ext = this->bb.span() / 2.0f;
-            this->bb_x = { obb_ext[0], 0, 0 }; // or obb_ext[0] * sm::vec<>::ux();
-            this->bb_y = { 0, obb_ext[1], 0 };
-            this->bb_z = { 0, 0, obb_ext[2] };
+            // Construct the half-extent axis vectors, too.
+            const sm::vec<float> bb_ext = this->bb.span() / 2.0f;
+            this->bb_x = { bb_ext[0], 0, 0 }; // i.e. bb_ext[0] * sm::vec<>::ux();
+            this->bb_y = { 0, bb_ext[1], 0 };
+            this->bb_z = { 0, 0, bb_ext[2] };
 
             // After finding the bounding box, make up the vertices to display it:
             this->computeBoundingBox();
@@ -3823,8 +3823,8 @@ export namespace mplot
             this->computeTube (c2, c6, sm::vec<float>::uy(), -sm::vec<float>::ux(), cl, cl, r, segs, zrot, true);
             this->computeTube (c3, c7, sm::vec<float>::uy(), -sm::vec<float>::ux(), cl, cl, r, segs, zrot, true);
 
-            // Oriented bounding box local axes/half-extents
-            constexpr bool show_obb_vectors = true;
+            // Oriented bounding box local axes/half-extents may be useful when debugging
+            constexpr bool show_obb_vectors = false;
             if constexpr (show_obb_vectors) {
                 const sm::vec<float> obb_centre = this->bb.mid();
                 this->computeTube (obb_centre, obb_centre + this->bb_x, sm::vec<float>::uy(), sm::vec<float>::uz(),
