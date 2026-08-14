@@ -326,6 +326,23 @@ export namespace mplot
             return rtn;
         }
 
+        /*!
+         * For the pointer vmp, if it is owned by a unique_ptr in Visual::vm, then return the index
+         * into Visual::vm at which it lives. This is its model ID. If it does not exist in
+         * Visual::vm, then return std::numeric_limits<uint32_t>::max().
+         */
+        const std::uint32_t getVisualModelId (const mplot::VisualModel<glver>* vmp) const
+        {
+            std::uint32_t rtn = std::numeric_limits<uint32_t>::max();
+            for (std::uint32_t modelId = 0; modelId < this->vm.size(); ++modelId) {
+                if (this->vm[modelId].get() == vmp) {
+                    rtn = modelId;
+                    break;
+                }
+            }
+            return rtn;
+        }
+
         void setFollowedVM (const mplot::VisualModel<glver>* vm_to_follow)
         {
             for (std::uint32_t modelId = 0; modelId < this->vm.size(); ++modelId) {
