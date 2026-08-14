@@ -331,7 +331,7 @@ export namespace mplot
          * into Visual::vm at which it lives. This is its model ID. If it does not exist in
          * Visual::vm, then return std::numeric_limits<uint32_t>::max().
          */
-        const std::uint32_t getVisualModelId (const mplot::VisualModel<glver>* vmp) const
+        std::uint32_t getVisualModelId (const mplot::VisualModel<glver>* vmp) const
         {
             std::uint32_t rtn = std::numeric_limits<uint32_t>::max();
             for (std::uint32_t modelId = 0; modelId < this->vm.size(); ++modelId) {
