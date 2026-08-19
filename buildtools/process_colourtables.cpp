@@ -12,7 +12,8 @@
 #include <format>
 #include <cstdlib>
 #include <cstring>
-#include <mplot/tools.h>
+
+import mplot.tools;
 
 enum class ctabletype {
     Crameri,
@@ -128,7 +129,7 @@ int main()
         std::string name_upperfirst = name;
         // Replace non-allowed chars with _
         std::string::size_type ptr = std::string::npos;
-        while ((ptr = name_upperfirst.find_last_not_of (CHARS_NUMERIC_ALPHA"_", ptr)) != std::string::npos) {
+        while ((ptr = name_upperfirst.find_last_not_of (mplot::chars_numeric_alpha_underscore, ptr)) != std::string::npos) {
             name_upperfirst[ptr] = '_';
             ptr--;
         }

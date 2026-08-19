@@ -1,6 +1,8 @@
 #include <string>
+#include <vector>
 #include <iostream>
-#include <mplot/tools.h>
+
+import mplot.tools;
 
 int main (int argc, char** argv)
 {

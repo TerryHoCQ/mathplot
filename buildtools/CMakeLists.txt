@@ -3,16 +3,18 @@ if(WIN32)
   add_executable(incbin incbin.c)
 endif()
 
+# Compile tools into a library
+add_library(tools_lib STATIC)
+target_sources(tools_lib PUBLIC FILE_SET CXX_MODULES BASE_DIRS ${PROJECT_SOURCE_DIR}
+  FILES ${PROJECT_SOURCE_DIR}/mplot/tools.cppm
+)
+
 # Permit #include <mplot/header.h>
-include_directories(BEFORE ${PROJECT_SOURCE_DIR})
+#include_directories(BEFORE ${PROJECT_SOURCE_DIR})
 if(NOT WIN32)
-  # Colourmap processing is not Windows compatible
-  # Using std::format in process_colourtables
-  check_include_file_cxx(format HAVE_STD_FORMAT)
-  if(HAVE_STD_FORMAT)
-    add_executable(process_colourtables process_colourtables.cpp)
-    set_property(TARGET process_colourtables PROPERTY CXX_STANDARD 20)
-  endif()
+  add_executable(process_colourtables process_colourtables.cpp)
+  target_link_libraries(process_colourtables tools_lib)
 endif()
 
 add_executable(screenshots_to_markdown screenshots_to_markdown.cpp)
+target_link_libraries(screenshots_to_markdown tools_lib)
