@@ -23,7 +23,6 @@ int main (int argc, char** argv)
 
         std::string basepath (cpp);
         mplot::tools::stripUnixFile (basepath);
-
         basepath += "/screenshots/";
 
         std::string basename = cpp;
