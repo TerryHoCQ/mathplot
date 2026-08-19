@@ -38,6 +38,26 @@ export module mplot.tools;
 export namespace mplot
 {
     /*!
+     * Exported versions of the Character set definitions above. Note/fixme: We are now using C++20
+     * and up, so we could lose the defines above and have constexpr std::string versions of these
+     * character sets.
+     */
+    //@{
+    constexpr std::string_view chars_numeric {CHARS_NUMERIC};
+    constexpr std::string_view chars_alpha {CHARS_ALPHA};
+    constexpr std::string_view chars_alphalower {CHARS_ALPHALOWER};
+    constexpr std::string_view chars_alphaupper {CHARS_ALPHAUPPER};
+    constexpr std::string_view chars_numeric_alpha {CHARS_NUMERIC_ALPHA};
+    constexpr std::string_view chars_numeric_alphalower {CHARS_NUMERIC_ALPHALOWER};
+    constexpr std::string_view chars_numeric_alphaupper {CHARS_NUMERIC_ALPHAUPPER};
+    //@}
+
+    /*!
+     * Just the alpha and numeric characters plus the underscore
+     */
+    constexpr std::string_view chars_numeric_alpha_underscore {CHARS_NUMERIC_ALPHA"_"};
+
+    /*!
      * Chars which are safe for IP domainnames. Allow numeric and alpha chars, the underscore and the
      * hyphen. colon is strictly allowed, but best avoided.
      */
