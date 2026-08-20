@@ -393,38 +393,37 @@ export namespace mplot
             }
 
             if (this->show_voronoi2d) {
+                sm::vec<float> t0 = {0.0f};
+                sm::vec<float> t1 = {0.0f};
+                sm::quaternion<float> rqinv = {};
                 if (this->data_z_direction != sm::vec<>::uz()) {
                     // Apply rotations then compute
-                    sm::vec<float> t0 = {0.0f};
-                    sm::vec<float> t1 = {0.0f};
-                    sm::quaternion<float> rqinv = rq.invert();
+                    rqinv = rq.invert();
+                } // else show the 2D Voronoi diagram's edges at z=0
 
-                    for (std::int32_t i = 0; i < vorman.diagram_numsites(); ++i) {
-                        const sm::jcv::site<float>* site = &sites[i];
-                        const sm::jcv::graphedge<float>* e = site->edges;
-                        while (e) {
-                            t0 = rqinv * sm::vec<float>{ e->pos[0].x() * this->zoom, e->pos[0].y() * this->zoom, 0.0f };
-                            t1 = rqinv * sm::vec<float>{ e->pos[1].x() * this->zoom, e->pos[1].y() * this->zoom, 0.0f };
-                            this->computeTube (t0, t1, mplot::colour::black, mplot::colour::black, this->voronoi_grid_thickness, 6);
-                            e = e->next;
-                        }
+                for (std::int32_t i = 0; i < vorman.diagram_numsites(); ++i) {
+                    const sm::jcv::site<float>* site = &sites[i];
+                    const sm::jcv::graphedge<float>* e = site->edges;
+                    while (e) {
+                        t0 = rqinv * sm::vec<float>{ e->pos[0].x() * this->zoom, e->pos[0].y() * this->zoom, 0.0f };
+                        t1 = rqinv * sm::vec<float>{ e->pos[1].x() * this->zoom, e->pos[1].y() * this->zoom, 0.0f };
+                        this->computeTube (t0, t1, mplot::colour::black, mplot::colour::black, this->voronoi_grid_thickness, 6);
+                        e = e->next;
                     }
+                }
+            }
 
-                } else {
-                    // Show the 2D Voronoi diagram's edges at z=0
-                    for (std::int32_t i = 0; i < vorman.diagram_numsites(); ++i) {
-                        const sm::jcv::site<float>* site = &sites[i];
-                        const sm::jcv::graphedge<float>* e = site->edges;
-                        while (e) {
-                            this->computeTube ({ e->pos[0].x() * this->zoom, e->pos[0].y() * this->zoom, 0.0f },
-                                               { e->pos[1].x() * this->zoom, e->pos[1].y() * this->zoom, 0.0f },
-                                               mplot::colour::black, mplot::colour::black, this->voronoi_grid_thickness, 6);
-                            //this->addLabel (e->pos[0].str(),
-                            //                e->pos[0].less_one_dim().plus_one_dim() * this->zoom + labelOffset,
-                            //                mplot::TextFeatures(labelSize) );
-                            e = e->next;
-                        }
-                    }
+            if (this->show_delaunay2d) {
+                sm::vec<float> t0 = {0.0f};
+                sm::vec<float> t1 = {0.0f};
+                sm::quaternion<float> rqinv = {};
+                if (this->data_z_direction != sm::vec<>::uz()) { rqinv = rq.invert(); }
+                vorman.delaunay_begin();
+                sm::jcv::delaunay_edge<float> de;
+                while (vorman.delaunay_next (&de) != 0) {
+                    t0 = rqinv * sm::vec<float>{ de.pos[0].x() * this->zoom, de.pos[0].y() * this->zoom, 0.0f };
+                    t1 = rqinv * sm::vec<float>{ de.pos[1].x() * this->zoom, de.pos[1].y() * this->zoom, 0.0f };
+                    this->computeTube (t0, t1, mplot::colour::indigo, mplot::colour::indigo, this->voronoi_grid_thickness, 6);
                 }
             }
 
@@ -527,6 +526,8 @@ export namespace mplot
         bool debug_edges = false;
         //! If true, show 2D Voronoi edges
         bool show_voronoi2d = false;
+        //! If true, show 2D Delaunay Triangulation
+        bool show_delaunay2d = false;
         //! The thickness of the lines (tubes) used to draw the 2D Voronoi grid (if show_voronoi2d is true)
         float voronoi_grid_thickness = 0.01f;
         //! If true, show black spheres at dataCoord locations
