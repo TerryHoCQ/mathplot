@@ -78,6 +78,7 @@ macro(setup_module_variables_for_mathplot base_directory maths_directory json_di
     ${maths_directory}/sm/bezcurvepath.cppm
     ${maths_directory}/sm/hex.cppm
     ${maths_directory}/sm/hexgrid.cppm
+    ${maths_directory}/sm/jc_voronoi.cppm
   )
 
   # Base modules for mathplot. With these you can build helloworld and programs containing (most) VisualModels.
@@ -117,7 +118,6 @@ macro(setup_module_variables_for_mathplot base_directory maths_directory json_di
     ${base_directory}/mplot/DatasetStyle.cppm
     ${base_directory}/mplot/VisualDataModel.cppm
     ${base_directory}/mplot/compoundray/Ommatidium.cppm
-    ${base_directory}/mplot/jcvoronoi/jc_voronoi.cppm
     ${base_directory}/mplot/healpix/healpix_bare.cppm
     ${base_directory}/mplot/fps/profiler.cppm
     ${json_directory}/src/modules/json.cppm

@@ -493,6 +493,9 @@ target_link_libraries(voronoi_function mathplot_examples)
 add_executable(voronoi_function_flat voronoi_function_flat.cpp)
 target_link_libraries(voronoi_function_flat mathplot_examples)
 
+add_executable(voronoi_delaunay voronoi_delaunay.cpp)
+target_link_libraries(voronoi_delaunay mathplot_examples)
+
 add_executable(voronoi_fixed voronoi_fixed.cpp)
 target_link_libraries(voronoi_fixed mathplot_examples)
 
