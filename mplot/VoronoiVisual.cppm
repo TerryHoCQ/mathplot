@@ -30,7 +30,7 @@ import sm.centroid;
 import mplot.colourmap;
 import mplot.tools;
 import mplot.visualdatamodel;
-import jc.voronoi;
+import sm.jcv;
 
 export namespace mplot
 {
@@ -107,7 +107,7 @@ export namespace mplot
             }
 
             // Generate the 2D Voronoi diagram
-            jcv::manager<float> vorman;
+            sm::jcv::manager<float> vorman;
             if (this->border_width == -1) { this->border_width = 4.0f / std::sqrt (ncoords); }
             vorman.border_width = this->border_width;
 
@@ -201,7 +201,7 @@ export namespace mplot
             }
 
             // We obtain access to the Voronoi cell sites:
-            const jcv::site<float>* sites = vorman.diagram_get_sites();
+            const sm::jcv::site<float>* sites = vorman.diagram_get_sites();
 
             // Now scan through the Voronoi cell 'sites' and 'edges' to re-assign z
             // values in the edges. This is not going to be particularly efficient, but
@@ -223,11 +223,11 @@ export namespace mplot
             for (std::int32_t i = 0; i < vorman.diagram_numsites(); ++i) {
 
                 // We have the current edge_1, the next edge_2 and the previous edge_0
-                const jcv::site<float>* site = &sites[i];
-                jcv::graphedge<float>* edge_first = site->edges; // The very first edge
-                jcv::graphedge<float>* edge_1 = edge_first;
-                jcv::graphedge<float>* edge_2 = edge_first;
-                jcv::graphedge<float>* edge_0 = edge_first;
+                const sm::jcv::site<float>* site = &sites[i];
+                sm::jcv::graphedge<float>* edge_first = site->edges; // The very first edge
+                sm::jcv::graphedge<float>* edge_1 = edge_first;
+                sm::jcv::graphedge<float>* edge_2 = edge_first;
+                sm::jcv::graphedge<float>* edge_0 = edge_first;
                 while (edge_0->next) { edge_0 = edge_0->next; }
 
                 while (edge_1) {
@@ -283,8 +283,8 @@ export namespace mplot
 
             // Now go through edge_end_zsums and edges and update z values
             for (std::int32_t i = 0; i < vorman.diagram_numsites(); ++i) {
-                const jcv::site<float>* site = &sites[i];
-                jcv::graphedge<float>* edge_1 = site->edges; // The very first edge
+                const sm::jcv::site<float>* site = &sites[i];
+                sm::jcv::graphedge<float>* edge_1 = site->edges; // The very first edge
                 while (edge_1) {
                     // For each edge, set z from the map
                     float zsum0 = 0.0f;
@@ -320,8 +320,8 @@ export namespace mplot
                 sm::vec<float> t2 = {0.0f};
                 sm::quaternion<float> rqinv = rq.invert();
                 for (std::int32_t i = 0; i < vorman.diagram_numsites(); ++i) {
-                    const jcv::site<float>* site = &sites[i];
-                    const jcv::graphedge<float>* e = site->edges;
+                    const sm::jcv::site<float>* site = &sites[i];
+                    const sm::jcv::graphedge<float>* e = site->edges;
                     std::uint32_t site_triangles = 0;
                     while (e) {
                         // NB: There are 3 each of pos/col/norm vertices (and 3 indices) per
@@ -341,8 +341,8 @@ export namespace mplot
             } else {
                 // No need to inverse rotate
                 for (std::int32_t i = 0; i < vorman.diagram_numsites(); ++i) {
-                    const jcv::site<float>* site = &sites[i];
-                    const jcv::graphedge<float>* e = site->edges;
+                    const sm::jcv::site<float>* site = &sites[i];
+                    const sm::jcv::graphedge<float>* e = site->edges;
                     std::uint32_t site_triangles = 0;
                     while (e) {
                         this->computeTriangle (site->p, e->pos[0], e->pos[1], this->setColour(site->index));
@@ -368,8 +368,8 @@ export namespace mplot
                     sm::vec<float> t1 = {0.0f};
                     sm::quaternion<float> rqinv = rq.invert();
                     for (std::int32_t i = 0; i < vorman.diagram_numsites(); ++i) {
-                        const jcv::site<float>* site = &sites[i];
-                        const jcv::graphedge<float>* e = site->edges;
+                        const sm::jcv::site<float>* site = &sites[i];
+                        const sm::jcv::graphedge<float>* e = site->edges;
                         while (e) {
                             t0 = rqinv * (e->pos[0] * this->zoom);
                             t1 = rqinv * (e->pos[1] * this->zoom);
@@ -381,8 +381,8 @@ export namespace mplot
                 } else {
                     // No rotations required
                     for (std::int32_t i = 0; i < vorman.diagram_numsites(); ++i) {
-                        const jcv::site<float>* site = &sites[i];
-                        const jcv::graphedge<float>* e = site->edges;
+                        const sm::jcv::site<float>* site = &sites[i];
+                        const sm::jcv::graphedge<float>* e = site->edges;
                         while (e) {
                             this->computeTube (e->pos[0] * this->zoom, e->pos[1] * this->zoom,
                                                mplot::colour::royalblue, mplot::colour::goldenrod2, this->voronoi_grid_thickness, 12);
@@ -400,8 +400,8 @@ export namespace mplot
                     sm::quaternion<float> rqinv = rq.invert();
 
                     for (std::int32_t i = 0; i < vorman.diagram_numsites(); ++i) {
-                        const jcv::site<float>* site = &sites[i];
-                        const jcv::graphedge<float>* e = site->edges;
+                        const sm::jcv::site<float>* site = &sites[i];
+                        const sm::jcv::graphedge<float>* e = site->edges;
                         while (e) {
                             t0 = rqinv * sm::vec<float>{ e->pos[0].x() * this->zoom, e->pos[0].y() * this->zoom, 0.0f };
                             t1 = rqinv * sm::vec<float>{ e->pos[1].x() * this->zoom, e->pos[1].y() * this->zoom, 0.0f };
@@ -413,8 +413,8 @@ export namespace mplot
                 } else {
                     // Show the 2D Voronoi diagram's edges at z=0
                     for (std::int32_t i = 0; i < vorman.diagram_numsites(); ++i) {
-                        const jcv::site<float>* site = &sites[i];
-                        const jcv::graphedge<float>* e = site->edges;
+                        const sm::jcv::site<float>* site = &sites[i];
+                        const sm::jcv::graphedge<float>* e = site->edges;
                         while (e) {
                             this->computeTube ({ e->pos[0].x() * this->zoom, e->pos[0].y() * this->zoom, 0.0f },
                                                { e->pos[1].x() * this->zoom, e->pos[1].y() * this->zoom, 0.0f },

@@ -21,7 +21,7 @@ import sm.mat;
 import sm.interval;
 import sm.geometry;
 import sm.centroid;
-import jc.voronoi;
+import sm.jcv;
 
 export import mplot.gl.version;
 export import mplot.visualmodel;
@@ -470,7 +470,7 @@ export namespace mplot::compoundray
             // rectangle to pass to diagram_generate.
             int ncoords = static_cast<int>(this->omm2d.size());
 
-            jcv::manager<double> vorman; // we need double precision for projections, float may run into trouble
+            sm::jcv::manager<double> vorman; // we need double precision for projections, float may run into trouble
             vorman.border_width = this->border_width;
 
             std::vector<sm::vec<double, 3>> boundary;
@@ -502,11 +502,11 @@ export namespace mplot::compoundray
             }
 
             // We obtain access to the Voronoi cell sites:
-            const jcv::site<double>* sites = vorman.diagram_get_sites();
+            const sm::jcv::site<double>* sites = vorman.diagram_get_sites();
 
             for (int i = 0; i < diag_nsites && i < ncoords; ++i) {
-                const jcv::site<double>* site = &sites[i];
-                jcv::graphedge<double>* e = site->edges; // The very first edge
+                const sm::jcv::site<double>* site = &sites[i];
+                sm::jcv::graphedge<double>* e = site->edges; // The very first edge
                 while (e) {
                     // Set z. Should be done in jcvoronoi, but haven't found out how
                     e->pos[0][2] = this->omm2d[i][2];
@@ -524,8 +524,8 @@ export namespace mplot::compoundray
             sm::vvec<std::array<float, 3>> flat_colours; // fewer elements than flat_triangles
             // To draw triangles iterate over the 'sites' and draw triangles
             for (int i = 0; i < diag_nsites && i < ncoords; ++i) {
-                const jcv::site<double>* site = &sites[i];
-                const jcv::graphedge<double>* e = site->edges;
+                const sm::jcv::site<double>* site = &sites[i];
+                const sm::jcv::graphedge<double>* e = site->edges;
                 this->projections[pri].site_indices[i] = site->index;
                 std::array<float, 3> colour = mplot::colour::black;
                 if (site->index + this->projections[pri].start_i < ommData->size()) {

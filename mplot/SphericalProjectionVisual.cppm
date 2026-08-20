@@ -15,7 +15,7 @@ import sm.quaternion;
 
 import mplot.gl.version;
 import mplot.visualmodel;
-import jc.voronoi;
+import sm.jcv;
 
 export namespace mplot
 {
@@ -85,7 +85,7 @@ export namespace mplot
             // diagram_generate.
             std::int32_t ncoords = static_cast<std::int32_t>(this->xy.size());
 
-            jcv::manager<double> vorman; // we need double precision for projections, float may run into trouble
+            sm::jcv::manager<double> vorman; // we need double precision for projections, float may run into trouble
             vorman.border_width = this->border_width;
             vorman.diagram_generate (this->xy);
 
@@ -95,11 +95,11 @@ export namespace mplot
             }
 
             // We obtain access to the Voronoi cell sites:
-            const jcv::site<double>* sites = vorman.diagram_get_sites();
+            const sm::jcv::site<double>* sites = vorman.diagram_get_sites();
 
             for (std::int32_t i = 0; i < vorman.diagram_numsites() && i < ncoords; ++i) {
-                const jcv::site<double>* site = &sites[i];
-                jcv::graphedge<double>* e = site->edges; // The very first edge
+                const sm::jcv::site<double>* site = &sites[i];
+                sm::jcv::graphedge<double>* e = site->edges; // The very first edge
                 while (e) {
                     // Set z. Should be done in jcvoronoi, but haven't found out how
                     e->pos[0][2] = this->xy[i][2];
@@ -110,8 +110,8 @@ export namespace mplot
 
             // To draw triangles iterate over the 'sites' and draw triangles
             for (std::int32_t i = 0; i < vorman.diagram_numsites() && i < ncoords; ++i) {
-                const jcv::site<double>* site = &sites[i];
-                const jcv::graphedge<double>* e = site->edges;
+                const sm::jcv::site<double>* site = &sites[i];
+                const sm::jcv::graphedge<double>* e = site->edges;
                 std::array<float, 3> c = mplot::colour::black;
                 if (static_cast<std::size_t>(site->index) < this->colour.size()) { c = this->colour[site->index]; }
                 while (e) {
