@@ -138,6 +138,7 @@ macro(setup_module_variables_for_mathplot base_directory maths_directory json_di
     ${base_directory}/mplot/RodVisual.cppm
     ${base_directory}/mplot/RhomboVisual.cppm
     ${base_directory}/mplot/VectorVisual.cppm
+    ${base_directory}/mplot/PlaneVisual.cppm
     ${base_directory}/mplot/SphereVisual.cppm
     ${base_directory}/mplot/ConeVisual.cppm
     ${base_directory}/mplot/QuiverVisual.cppm

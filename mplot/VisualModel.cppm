@@ -2057,22 +2057,17 @@ export namespace mplot
         }
 
         /*!
-         * Compute a tube. This version requires unit vectors for orientation of the
-         * tube end faces/vertices (useful for graph markers). The other version uses a
-         * randomly chosen vector to do this.
+         * Compute a flat polygon.
          *
-         * Create a tube from \a start to \a end, with radius \a r and a colour which
-         * transitions from the colour \a colStart to \a colEnd.
+         * Create a flat polygon with segments outer edges. Radius \a r and colour \a col.
          *
-         * \param idx The index into the 'vertex array'
          * \param vstart The centre of the polygon
          * \param _ux a vector in the x axis direction for the end face
-         * \param _uy a vector in the y axis direction
+         * \param _uy a vector in the y axis direction. If not same length as _ux, distortions will be seen
          * \param col The polygon colour
-         * \param r Radius of the tube
-         * \param segments Number of segments used to render the tube
-         * \param rotation A rotation in the ux/uy plane to orient the vertices of the
-         * tube. Useful if this is to be a short tube used as a graph marker.
+         * \param r Radius
+         * \param segments Number of segments used to render the polygon
+         * \param rotation A rotation in the ux/uy plane to orient the vertices of the polygon.
          */
         void computeFlatPoly (sm::vec<float> vstart,
                               sm::vec<float> _ux, sm::vec<float> _uy,
@@ -2118,7 +2113,22 @@ export namespace mplot
 
             // Update idx
             this->idx += nverts;
-        } // end computeFlatPloy with ux/uy vectors for faces
+        } // end computeFlatPoly with ux/uy vectors for faces
+
+        void computeFlatPoly (sm::vec<float> vcentre,
+                              sm::vec<float> _normal,
+                              std::array<float, 3> col,
+                              float r = 1.0f, std::int32_t segments = 12)
+        {
+            // Find random _ux given _normal.
+            _normal.renormalize();
+            sm::vec<float> rand_vec;
+            rand_vec.randomize();
+            sm::vec<float> inplane1 = rand_vec.cross (_normal);
+            inplane1.renormalize();
+            sm::vec<float> inplane2 = _normal.cross (inplane1);
+            this->computeFlatPoly (vcentre, inplane1, inplane2, col, r, segments, 0.0f);
+        }
 
         /*!
          * Make a ring of radius r, comprised of flat segments
