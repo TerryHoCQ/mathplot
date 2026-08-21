@@ -40,6 +40,9 @@ export namespace mplot
             if (this->style == plane_style::circle) {
                 this->computeFlatPoly (sm::vec<float>{}, this->normal, this->colour, this->dim1, 24);
             }
+            if (this->show_normal) {
+                this->computeArrow (sm::vec<>{}, this->normal, this->norm_colour, dim1 / 100.0f);
+            }
         }
 
         // The plane's normal
@@ -52,7 +55,11 @@ export namespace mplot
         float dim1 = 100.0f;
         float dim2 = 100.0f;
 
+        bool show_normal = false;
+
         std::array<float, 3> colour = mplot::colour::black;
+
+        std::array<float, 3> norm_colour = mplot::colour::blue2;
     };
 
 } // namespace mplot
