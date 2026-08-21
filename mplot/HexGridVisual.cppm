@@ -253,7 +253,7 @@ export namespace mplot
             float datum = 0.0f;
             float third = 0.3333333f;
             float half = 0.5f;
-            sm::vec<float> vtx_0, vtx_1, vtx_2, vtx_tmp;
+            sm::vec<float> vtx_0, vtx_1, vtx_2, /* vtx_3, vtx_4, vtx_5, vtx_6, */ vtx_tmp;
 
             sm::vec<float> coordC = { 0.0f, 0.0f, 0.0f };
             sm::vec<float> coordNE = coordC;
@@ -315,6 +315,9 @@ export namespace mplot
                 vtx_0 = this->dataCoords == nullptr ? sm::vec<float>{ _x, _y, datumC } : coordC;
                 this->vertex_push (this->zoom * vtx_0, this->vertexPositions);
 
+                // The rotation from the transformation in the hexgrid (if any)
+                sm::mat<float, 3> lt = this->hg->tfm.linear();
+
                 // NE vertex
                 if (this->dataCoords == nullptr) {
                     if (this->hg->has_nne(hi) && this->hg->has_ne(hi)) {
@@ -329,7 +332,9 @@ export namespace mplot
                     } else {
                         datum = datumC;
                     }
-                    vtx_1 = { (_x+sr), (_y+vne), datum };
+                    // Have to rotate after subtracting the center.
+                    sm::vec<float> crnr = lt * sm::vec<float>{ sr, vne, 0 };
+                    vtx_1 = crnr + sm::vec<float>{ _x, _y, datum };
                 } else {
                     // Similar logic, but for the coordinate, not just the data value
                     if (this->hg->has_nne(hi) && this->hg->has_ne(hi)) {
@@ -361,7 +366,8 @@ export namespace mplot
                     } else {
                         datum = datumC;
                     }
-                    vtx_2 = { (_x+sr), (_y-vne), datum };
+                    sm::vec<float> crnr = lt * sm::vec<float>{ sr, -vne, 0 };
+                    vtx_2 = crnr + sm::vec<float>{ _x, _y, datum };
                 } else {
                     if (this->hg->has_ne(hi) && this->hg->has_nse(hi)) {
                         vtx_2 = third * (coordC + coordNE + coordNSE);
@@ -391,7 +397,8 @@ export namespace mplot
                     } else {
                         datum = datumC;
                     }
-                    vtx_tmp = { _x, (_y-lr), datum };
+                    sm::vec<float> crnr = lt * sm::vec<float>{ 0, -lr, 0 };
+                    vtx_tmp = crnr + sm::vec<float>{ _x, _y, datum };
                 } else {
                     if (this->hg->has_nse(hi) && this->hg->has_nsw(hi)) {
                         vtx_tmp = third * (coordC + coordNSE + coordNSW);
@@ -420,7 +427,8 @@ export namespace mplot
                     } else {
                         datum = datumC;
                     }
-                    vtx_tmp = { (_x-sr), (_y-vne), datum };
+                    sm::vec<float> crnr = lt * sm::vec<float>{ -sr, -vne, 0 };
+                    vtx_tmp = crnr + sm::vec<float>{ _x, _y, datum };
                 } else {
                     if (this->hg->has_nw(hi) && this->hg->has_nsw(hi)) {
                         vtx_tmp = third * (coordC + coordNW + coordNSW);
@@ -449,7 +457,8 @@ export namespace mplot
                     } else {
                         datum = datumC;
                     }
-                    vtx_tmp = { (_x-sr), (_y+vne), datum };
+                    sm::vec<float> crnr = lt * sm::vec<float>{ -sr, vne, 0 };
+                    vtx_tmp = crnr + sm::vec<float>{ _x, _y, datum };
                 } else {
                     if (this->hg->has_nnw(hi) && this->hg->has_nw(hi)) {
                         vtx_tmp = third * (coordC + coordNNW + coordNW);
@@ -478,7 +487,8 @@ export namespace mplot
                     } else {
                         datum = datumC;
                     }
-                    vtx_tmp = { _x, (_y+lr), datum };
+                    sm::vec<float> crnr = lt * sm::vec<float>{ 0, lr, 0 };
+                    vtx_tmp = crnr + sm::vec<float>{ _x, _y, datum };
                 } else {
                     if (this->hg->has_nnw(hi) && this->hg->has_nne(hi)) {
                         vtx_tmp = third * (coordC + coordNNW + coordNNE);
