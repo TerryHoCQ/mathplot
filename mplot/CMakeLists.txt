@@ -5,6 +5,7 @@
 # Header installation (list from ls *.h* -1, then re-ordered into functionality groups)
 install(
   FILES
+  BezCurvePathVisual.cppm
   BoolVisual.cppm
   CartGridVisual.cppm
   CMakeLists.txt
