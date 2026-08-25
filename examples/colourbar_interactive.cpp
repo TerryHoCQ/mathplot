@@ -21,7 +21,7 @@ struct myvisual final : public mplot::Visual<>
     myvisual (int width, int height, const std::string& title) : mplot::Visual<> (width, height, title)
     {
         // Set up hexgrid
-        this->hg = std::make_unique<sm::hexgrid>(0.01f, 3.0f, 0.0f);
+        this->hg = std::make_unique<sm::hexgrid<float>>(0.01f, 3.0f, 0.0f);
         this->hg->set_circular_boundary (0.6f);
         std::cout << "Number of pixels in grid:" << this->hg->num() << std::endl;
         // Initialize the function
@@ -40,7 +40,7 @@ protected:
     sm::vvec<float> data;
 
     // A hexgrid to show in the scene.
-    std::unique_ptr<sm::hexgrid> hg;
+    std::unique_ptr<sm::hexgrid<float>> hg;
 
     // A colourmap for the wobbly function
     static constexpr mplot::ColourMapType colour_map_type = mplot::ColourMapType::Inferno;

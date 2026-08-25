@@ -58,16 +58,16 @@ export namespace mplot
                 // Start the curve with the end->start segment
                 const sm::bezcoord<T> pe = bcp->points[bcp->points.size() - 1]; // end
                 const sm::bezcoord<T> ps = bcp->points[0];                      // start
-                const sm::vec<float> ve = {pe.x(), pe.y(), this->z};
-                const sm::vec<float> vs = {ps.x(), ps.y(), this->z};
+                const sm::vec<float> ve = {static_cast<float>(pe.x()), static_cast<float>(pe.y()), this->z};
+                const sm::vec<float> vs = {static_cast<float>(ps.x()), static_cast<float>(ps.y()), this->z};
                 this->computeFlatLine (ve, vs, sm::vec<float>::uz(), this->colour, this->width);
             }
             // now have bcp->points, tangents and normals
             for (std::uint32_t i = 1; i < bcp->points.size(); ++i) {
                 const sm::bezcoord<T> p0 = bcp->points[i - 1];
                 const sm::bezcoord<T> p1 = bcp->points[i];
-                const sm::vec<float> v0 = {p0.x(), p0.y(), this->z};
-                const sm::vec<float> v1 = {p1.x(), p1.y(), this->z};
+                const sm::vec<float> v0 = {static_cast<float>(p0.x()), static_cast<float>(p0.y()), this->z};
+                const sm::vec<float> v1 = {static_cast<float>(p1.x()), static_cast<float>(p1.y()), this->z};
                 // Draw line segment from p0 to p1
                 this->computeFlatLine (v0, v1, sm::vec<float>::uz(), this->colour, this->width);
             }

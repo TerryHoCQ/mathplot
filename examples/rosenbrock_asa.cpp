@@ -47,7 +47,7 @@ int main()
     v.lightingEffects (true);
 
     sm::vec<float> offset = {0,0,0};
-    sm::hexgrid hg (0.01, 10, 0);
+    sm::hexgrid<float> hg (0.01, 10, 0);
     hg.set_circular_boundary (2.5);
     std::vector<FLT> banana_vals(hg.num(), 0.0f);
     for (size_t i = 0; i < hg.num(); ++i) {
