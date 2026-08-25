@@ -32,9 +32,6 @@ export namespace mplot
 
         float width = 0.05f;
 
-        // Invert y for the path?
-        bool invert_y = false;
-
         float z = 0.0f;
 
         // Is the path a closed loop? If so, draw a line to close it
@@ -50,7 +47,7 @@ export namespace mplot
             }
 
             // For each curve in path, draw curve. Easy.
-            this->bcp->compute_points (this->step, this->invert_y);
+            this->bcp->compute_points (this->step);
 
             if (this->bcp->points.size() < 2) {
                std::cerr << "BezCurvePathVisual: There are no points in the path to visualize\n";

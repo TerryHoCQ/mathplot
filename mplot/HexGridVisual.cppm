@@ -29,13 +29,13 @@ export namespace mplot
     };
 
     //! The template argument T is the type of the data which this HexGridVisual
-    //! will visualize.
+    //! will visualize and the type for the hexgrid.
     template <class T, int32_t glver = mplot::gl::version_4_1>
     class HexGridVisual : public VisualDataModel<T,glver>
     {
     public:
         //! Simplest constructor. Use this in all new code!
-        HexGridVisual(const sm::hexgrid* _hg, const sm::vec<float> _offset)
+        HexGridVisual(const sm::hexgrid<T>* _hg, const sm::vec<float> _offset)
         {
             this->viewmatrix.translate (_offset);
             this->zScale.set_params (1, 0);
@@ -1052,7 +1052,7 @@ export namespace mplot
     protected:
         //! The hexgrid to visualize. This is not expected to change (update methods may
         //! assume the hexgrid has remained unaltered)
-        const sm::hexgrid* hg;
+        const sm::hexgrid<T>* hg;
     };
 
 } // namespace mplot
