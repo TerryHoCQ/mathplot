@@ -21,7 +21,7 @@ int main()
         std::string curvepath = "../../tests/trialmod.svg";
         mplot::ReadCurves r(curvepath);
 
-        sm::hexgrid hg(0.02, 7, 0);
+        sm::hexgrid<float> hg(0.02, 7, 0);
         hg.set_boundary (r.getCorticalPath());
 
         std::cout << hg.extent() << std::endl;

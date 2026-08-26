@@ -27,7 +27,7 @@ int main()
 
         mplot::ReadCurves r(curvepath);
 
-        sm::hexgrid hg(0.01, 3, 0);
+        sm::hexgrid<float> hg(0.01, 3, 0);
         hg.set_boundary (r.getCorticalPath());
 
         std::cout << hg.extent() << std::endl;
@@ -46,7 +46,7 @@ int main()
     std::cout << "Generated " << mplot::tools::timeNow() << std::endl;
     // Now read it back
     try {
-        sm::hexgrid hg;
+        sm::hexgrid<float> hg;
         sm::hexgrid_load (hg, "../trialhexgrid.h5");
 
         std::cout << "Read " << mplot::tools::timeNow() << std::endl;

@@ -27,7 +27,7 @@ int main (int argc, char** argv)
     std::cout << "NB: Provide a cmd line arg (anything) to see the graphical window for this program" << std::endl;
 
     try {
-        sm::hexgrid hg(0.01, 3, 0);
+        sm::hexgrid<float> hg(0.01, 3, 0);
         hg.set_circular_boundary (1);
 
         std::cout << hg.extent() << std::endl;

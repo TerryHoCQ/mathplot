@@ -26,7 +26,7 @@ int main()
     v.zNear = 0.001;
 
     try {
-        sm::hexgrid hg(0.002, 8, 0);
+        sm::hexgrid<float> hg(0.002, 8, 0);
         hg.set_elliptical_boundary (1.6, 2);
 
         std::cout << hg.extent() << std::endl;
