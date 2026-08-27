@@ -42,7 +42,7 @@ int main()
     v.addLabel ("This is a\nmplot::HexGridVisual\nobject", {0.26f, -0.16f, 0.0f});
 
     // Create a hexgrid to show in the scene
-    sm::hexgrid hg(0.01, 3, 0);
+    sm::hexgrid<float> hg(0.01, 3, 0);
     hg.set_circular_boundary (0.3);
     std::cout << "Number of hexes in grid:" << hg.num() << std::endl;
 

@@ -26,7 +26,7 @@ int main()
     v.setSceneTransZ (-3.0f);
 
     // Create an elliptical hexgrid for the input/output domains
-    sm::hexgrid hg(0.01, 3, 0);
+    sm::hexgrid<float> hg(0.01, 3, 0);
     hg.set_elliptical_boundary (0.45, 0.3);
 
     // Populate a vector of floats with data
@@ -41,7 +41,7 @@ int main()
 
     // Create a circular HexGrid to contain the Gaussian convolution kernel
     float sigma = 0.025f;
-    sm::hexgrid kernel(0.01, 20.0f*sigma, 0);
+    sm::hexgrid<float> kernel(0.01, 20.0f*sigma, 0);
     kernel.set_circular_boundary (6.0f*sigma);
     std::vector<float> kerneldata (kernel.num(), 0.0f);
     // Once-only parts of the calculation of the Gaussian.

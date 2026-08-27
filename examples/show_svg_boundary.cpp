@@ -53,7 +53,7 @@ int main(int argc, char** argv)
         // Read the curves
         mplot::ReadCurves r(argv[1]);
         // Create a HexGrid
-        sm::hexgrid hg(hexdia, gridspan, 0);
+        sm::hexgrid<float> hg(hexdia, gridspan, 0);
         // Apply the curves as a boundary
         std::cout << "Number of hexes before setting boundary: " << hg.num() << std::endl;
         hg.set_boundary (r.getCorticalPath());

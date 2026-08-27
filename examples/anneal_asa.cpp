@@ -31,7 +31,7 @@ import mplot.graphvisual;
 typedef double F;
 
 // A global hexgrid for the locations of the objective function
-std::unique_ptr<sm::hexgrid> hg;
+std::unique_ptr<sm::hexgrid<F>> hg;
 // And a vvec to be the data
 sm::vvec<F> obj_f;
 
@@ -251,7 +251,7 @@ int main (int argc, char** argv)
 // This sets up a noisy 2D objective function with multiple peaks
 void setup_objective()
 {
-    hg = std::make_unique<sm::hexgrid>(0.01f, 1.5f, 0.0f);
+    hg = std::make_unique<sm::hexgrid<F>>(F{0.01}, F{1.5}, F{0});
     hg->set_circular_boundary(1);
     obj_f.resize (hg->num());
 
@@ -265,8 +265,8 @@ void setup_objective()
     F two_sigma_sq = F{2} * sigma * sigma;
     F gauss = F{0};
     F sum = F{0};
-    sm::hex chex = *hg->vhexen[200];
-    sm::hex chex2 = *hg->vhexen[2000];
+    sm::hex<F> chex = *hg->vhexen[200];
+    sm::hex<F> chex2 = *hg->vhexen[2000];
     for (auto& k : hg->hexen) {
         // Gaussian profile based on the hex's distance from centre, which is
         // already computed in each hex as hex::r. Don't want this for these. Want dist from some hex/coords
@@ -303,7 +303,7 @@ void setup_objective()
     sigma = F{0.005};
     one_over_sigma_root_2_pi = F{1} / sigma * F{2.506628275};
     two_sigma_sq = F{2} * sigma * sigma;
-    sm::hexgrid kernel(F{0.01}, F{20}*sigma, 0);
+    sm::hexgrid<F> kernel(F{0.01}, F{20}*sigma, 0);
     kernel.set_circular_boundary (F{6}*sigma);
     std::vector<F> kerneldata (kernel.num(), F{0});
     gauss = F{0};
@@ -331,7 +331,7 @@ void setup_objective()
 // during the anneal, we'll use the actual function values
 void setup_objective_boha()
 {
-    hg = std::make_unique<sm::hexgrid>(0.01f, 2.5f, 0.0f);
+    hg = std::make_unique<sm::hexgrid<F>>(0.01f, 2.5f, 0.0f);
     hg->set_circular_boundary(1.2f);
     obj_f.resize (hg->num());
     F a = F{1}, b = F{2}, c=F{0.3}, d=F{0.4}, alpha=sm::mathconst<F>::three_pi, gamma=sm::mathconst<F>::four_pi;
@@ -361,8 +361,7 @@ F objective_boha (const sm::vvec<F>& params)
 F objective_hg (const sm::vvec<F>& params)
 {
     // Find the hex nearest the coordinate defined by params and return its value
-    sm::vvec<float> _params = params.as_float();
-    sm::vec<float, 2> coord = { _params[0], _params[1] };
-    std::list<sm::hex>::iterator hn = hg->find_hex_nearest (coord);
+    sm::vec<F, 2> coord = { params[0], params[1] };
+    std::list<sm::hex<F>>::iterator hn = hg->find_hex_nearest (coord);
     return obj_f[hn->vi];
 }

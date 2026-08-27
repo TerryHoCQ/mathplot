@@ -71,7 +71,7 @@ int main()
     std::cout << "test point on banana function = " << test << " (should be 0).\n";
 
     // Evaluate banana function and plot
-    sm::hexgrid hg (0.01, 10, 0);
+    sm::hexgrid<float> hg (0.01, 10, 0);
     hg.set_circular_boundary (2.5);
     std::vector<FLT> banana_vals(hg.num(), 0.0f);
     for (std::size_t i = 0; i < hg.num(); ++i) {
