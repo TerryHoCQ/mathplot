@@ -117,7 +117,6 @@ macro(setup_module_variables_for_mathplot base_directory maths_directory json_di
     ${base_directory}/mplot/graphstyles.cppm
     ${base_directory}/mplot/DatasetStyle.cppm
     ${base_directory}/mplot/VisualDataModel.cppm
-    ${base_directory}/mplot/compoundray/Ommatidium.cppm
     ${base_directory}/mplot/healpix/healpix_bare.cppm
     ${base_directory}/mplot/fps/profiler.cppm
     ${json_directory}/src/modules/json.cppm
@@ -144,7 +143,6 @@ macro(setup_module_variables_for_mathplot base_directory maths_directory json_di
     ${base_directory}/mplot/QuiverVisual.cppm
     ${base_directory}/mplot/NormalsVisual.cppm
     ${base_directory}/mplot/GeodesicVisual.cppm
-    ${base_directory}/mplot/compoundray/EyeVisual.cppm
     ${base_directory}/mplot/InstancedScatterVisual.cppm
     ${base_directory}/mplot/HexGridVisual.cppm
     ${base_directory}/mplot/CartGridVisual.cppm

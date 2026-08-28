@@ -41,9 +41,6 @@ target_link_libraries(planevis mathplot_examples)
 add_executable(obb_collisions obb_collisions.cpp)
 target_link_libraries(obb_collisions mathplot_examples)
 
-add_executable(cray_eye cray_eye.cpp)
-target_link_libraries(cray_eye mathplot_examples)
-
 # Demo of sm::rungekutta4, the 4th order Runge-Kutta ODE solver
 add_executable(rungekutta rungekutta.cpp)
 target_link_libraries(rungekutta mathplot_examples)
