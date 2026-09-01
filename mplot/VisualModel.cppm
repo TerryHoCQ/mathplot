@@ -1326,7 +1326,7 @@ export namespace mplot
 
         // A vector of meshgroups to be appended to the end of this VisualModel. The vertices in
         // these meshgroups are added after the call to initializeVertices.
-        std::vector<const mplot::meshgroup> extra_meshgroups;
+        std::vector<mplot::meshgroup> extra_meshgroups;
 
         // Add a meshgroup by pointer. These are appended at the end of initializeVertices
         void addMeshgroup (const mplot::meshgroup& mg) { this->extra_meshgroups.push_back (mg); }
