@@ -430,6 +430,8 @@ export namespace mplot
             // NB: Do NOT call clearTexts() here! We're only updating the model itself.
             this->idx = 0u;
             this->initializeVertices();
+            // Add additional meshgroups
+            for (auto mg : this->extra_meshgroups) { this->computeMeshgroup (mg); }
             this->update_bb();
             this->reinit_buffers();
         }
@@ -458,6 +460,7 @@ export namespace mplot
             this->idx_bb = 0u;
 
             this->initializeVertices();
+            for (auto mg : this->extra_meshgroups) { this->computeMeshgroup (mg); }
             this->update_bb();
             this->reinit_buffers();
         }
@@ -719,6 +722,7 @@ export namespace mplot
         {
             mplot::VisualResources<glver>::i().setContext (this->parentVis); // need context? yes for text.
             this->initializeVertices();
+            for (auto mg : this->extra_meshgroups) { this->computeMeshgroup (mg); }
             this->update_bb();
             this->flags.set (vm_bools::postVertexInitRequired, true);
             // Release context after creating and finalizing this VisualModel. On Visual::render(),
@@ -1320,6 +1324,13 @@ export namespace mplot
         std::vector<float> getVertexNormals() { return this->vertexNormals; }
         std::vector<float> getVertexColors() { return this->vertexColors; }
 
+        // A vector of meshgroups to be appended to the end of this VisualModel. The vertices in
+        // these meshgroups are added after the call to initializeVertices.
+        std::vector<mplot::meshgroup> extra_meshgroups;
+
+        // Add a meshgroup by pointer. These are appended at the end of initializeVertices
+        void addMeshgroup (const mplot::meshgroup& mg) { this->extra_meshgroups.push_back (mg); }
+
     protected:
 
         //! The model-specific view matrix. Used to transform the pose of the model in the scene.
@@ -1447,7 +1458,6 @@ export namespace mplot
             vp.emplace_back (vec[2]);
         }
 
-    protected:
         /*!
          * Add the given meshgroup to this VisualModel
          */
