@@ -431,7 +431,7 @@ export namespace mplot
             this->idx = 0u;
             this->initializeVertices();
             // Add additional meshgroups
-            for (auto mg : this->extra_meshgroups) { this->computeMeshgroup (*mg); }
+            for (auto mg : this->extra_meshgroups) { this->computeMeshgroup (mg); }
             this->update_bb();
             this->reinit_buffers();
         }
@@ -460,7 +460,7 @@ export namespace mplot
             this->idx_bb = 0u;
 
             this->initializeVertices();
-            for (auto mg : this->extra_meshgroups) { this->computeMeshgroup (*mg); }
+            for (auto mg : this->extra_meshgroups) { this->computeMeshgroup (mg); }
             this->update_bb();
             this->reinit_buffers();
         }
@@ -722,7 +722,7 @@ export namespace mplot
         {
             mplot::VisualResources<glver>::i().setContext (this->parentVis); // need context? yes for text.
             this->initializeVertices();
-            for (auto mg : this->extra_meshgroups) { this->computeMeshgroup (*mg); }
+            for (auto mg : this->extra_meshgroups) { this->computeMeshgroup (mg); }
             this->update_bb();
             this->flags.set (vm_bools::postVertexInitRequired, true);
             // Release context after creating and finalizing this VisualModel. On Visual::render(),
@@ -1324,11 +1324,12 @@ export namespace mplot
         std::vector<float> getVertexNormals() { return this->vertexNormals; }
         std::vector<float> getVertexColors() { return this->vertexColors; }
 
-        // A vector of pointers to meshgroups to be appended to the end of this VisualModel
-        std::vector<const mplot::meshgroup*> extra_meshgroups;
+        // A vector of meshgroups to be appended to the end of this VisualModel. The vertices in
+        // these meshgroups are added after the call to initializeVertices.
+        std::vector<const mplot::meshgroup> extra_meshgroups;
 
         // Add a meshgroup by pointer. These are appended at the end of initializeVertices
-        void addMeshgroup (const mplot::meshgroup* mg) { this->extra_meshgroups.push_back (mg); }
+        void addMeshgroup (const mplot::meshgroup& mg) { this->extra_meshgroups.push_back (mg); }
 
     protected:
 
