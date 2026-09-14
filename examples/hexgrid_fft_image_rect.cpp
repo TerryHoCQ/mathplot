@@ -193,14 +193,11 @@ int main()
     v.addVisualModel (fhgv);
 #endif
 
-#if 0
     // Reconstruct with inverse FFT
-    sm::vvec<std::complex<float>> reconstructed = sm::hexfft::ifft<float> (hg, fft_data);
-    sm::vvec<float> ifft_r (reconstructed.size());
-    for (std::uint32_t i = 0; i < ifft_r.size(); ++i) {
-        ifft_r[i] = std::real(reconstructed[i]);
-    }
+    //sm::vvec<std::complex<float>> reconstructed = sm::hexfft::ifft<float> (hg, fft_data);
+    hfft.inverse();
 
+#if 0
     d0.zero();
     d1.zero();
     X0.zero();
