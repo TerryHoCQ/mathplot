@@ -75,6 +75,13 @@ int main()
     hfft.init (&hg1);
     hfft.forward (data1);
 
+    sm::vvec<float> fft_r (hfft.hex_data.size());
+    sm::vvec<float> fft_i (hfft.hex_data.size());
+    for (std::uint32_t i = 0; i < fft_r.size(); ++i) {
+        fft_r[i] = std::real(hfft.hex_data[i]);
+        fft_i[i] = std::imag(hfft.hex_data[i]);
+    }
+
     // Data on grids
     // rows/cols:
     sm::vec<float, 2> grid_spacing = {hfft.hg->d, hfft.hg->d};
@@ -137,8 +144,7 @@ int main()
     fhgv->set_parent (v.get_id());
     fhgv->zoom = (hfft.Uscale);
     fhgv->zScale.null_scaling();
-    fhgv->setScalarData (&data1);
-    fhgv->colourScale.compute_scaling (-900, 1200);
+    fhgv->setScalarData (&fft_r);
     fhgv->cm.setType (mplot::ColourMapType::GreyscaleInv);
     fhgv->finalize();
     v.addVisualModel (fhgv);

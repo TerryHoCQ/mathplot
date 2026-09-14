@@ -78,16 +78,16 @@ int main()
                                         sm::griddomainwrap::none,
                                         sm::gridorder::bottomleft_to_topright_colmaj);
 
-    sm::vvec<float> d0 (hfft.d_asa.first.size());
-    sm::vvec<float> d1 (hfft.d_asa.first.size());
-    sm::vvec<float> X0 (hfft.X_asa.first.size());
-    sm::vvec<float> X1 (hfft.X_asa.first.size());
+    sm::vvec<float> d0 (hfft.d0.size());
+    sm::vvec<float> d1 (hfft.d0.size());
+    sm::vvec<float> X0 (hfft.X0.size());
+    sm::vvec<float> X1 (hfft.X0.size());
 
     for (std::uint32_t i = 0; i < d0.size(); ++i) {
-        d0[i] = std::real (hfft.d_asa.first[i]);
-        d1[i] = std::real (hfft.d_asa.second[i]);
-        X0[i] = std::real (hfft.X_asa.first[i]);
-        X1[i] = std::real (hfft.X_asa.second[i]);
+        d0[i] = std::real (hfft.d0[i]);
+        d1[i] = std::real (hfft.d1[i]);
+        X0[i] = std::real (hfft.X0[i]);
+        X1[i] = std::real (hfft.X1[i]);
     }
 
     std::cout << "X0 mean/sd/range: " << X0.mean() << ", " << X0.std() << ", " << X0.range() << std::endl;
@@ -122,7 +122,7 @@ int main()
     gv->setScalarData (&d0);
     gv->zScale.set_params (0, 0);
     gv->cm.setType (mplot::ColourMapType::GreyscaleInv);
-    gv->addLabel ("d_asa.first (odd input rows)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
+    gv->addLabel ("d0 (odd input rows)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
     gv->finalize();
     v.addVisualModel (gv);
 
@@ -132,7 +132,7 @@ int main()
     gv->setScalarData (&d1);
     gv->zScale.set_params (0, 0);
     gv->cm.setType (mplot::ColourMapType::GreyscaleInv);
-    gv->addLabel ("d_asa.second (even)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
+    gv->addLabel ("d1 (even)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
     gv->finalize();
     v.addVisualModel (gv);
 
@@ -154,7 +154,7 @@ int main()
     gv->setScalarData (&X0);
     gv->zScale.set_params (0, 0);
     gv->cm.setType (mplot::ColourMapType::GreyscaleInv);
-    gv->addLabel ("X_asa.first (odd)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
+    gv->addLabel ("X0 (odd)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
     gv->finalize();
     v.addVisualModel (gv);
 
@@ -164,7 +164,7 @@ int main()
     gv->setScalarData (&X1);
     gv->zScale.set_params (0, 0);
     gv->cm.setType (mplot::ColourMapType::GreyscaleInv);
-    gv->addLabel ("X_asa.second (even)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
+    gv->addLabel ("X1 (even)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
     gv->finalize();
     v.addVisualModel (gv);
 
@@ -206,17 +206,17 @@ int main()
     X0.zero();
     X1.zero();
 
-    std::cout << "hfft.d_asa.first.size(): "<< hfft.d_asa.first.size() << std::endl;
-    std::cout << "hfft.d_asa.second.size(): "<< hfft.d_asa.second.size() << std::endl;
-    std::cout << "hfft.X_asa.first.size(): "<< hfft.X_asa.first.size() << std::endl;
-    std::cout << "hfft.X_asa.second.size(): "<< hfft.X_asa.second.size() << std::endl;
+    std::cout << "hfft.d0.size(): "<< hfft.d0.size() << std::endl;
+    std::cout << "hfft.d1.size(): "<< hfft.d1.size() << std::endl;
+    std::cout << "hfft.X0.size(): "<< hfft.X0.size() << std::endl;
+    std::cout << "hfft.X1.size(): "<< hfft.X1.size() << std::endl;
     // Re-extract data to view
-    if (d0.size() == hfft.d_asa.first.size()) {
+    if (d0.size() == hfft.d0.size()) {
         for (std::uint32_t i = 0; i < d0.size(); ++i) {
-            d0[i] = std::real (hfft.d_asa.first[i]);
-            d1[i] = std::real (hfft.d_asa.second[i]);
-            X0[i] = std::real (hfft.X_asa.first[i]);
-            X1[i] = std::real (hfft.X_asa.second[i]);
+            d0[i] = std::real (hfft.d0[i]);
+            d1[i] = std::real (hfft.d1[i]);
+            X0[i] = std::real (hfft.X0[i]);
+            X1[i] = std::real (hfft.X1[i]);
         }
     }
     // FFT
@@ -226,7 +226,7 @@ int main()
     gv->setScalarData (&X0);
     gv->zScale.set_params (0, 0);
     gv->cm.setType (mplot::ColourMapType::GreyscaleInv);
-    gv->addLabel ("X_asa.first (odd)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
+    gv->addLabel ("X0 (odd)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
     gv->finalize();
     v.addVisualModel (gv);
 
@@ -236,7 +236,7 @@ int main()
     gv->setScalarData (&X1);
     gv->zScale.set_params (0, 0);
     gv->cm.setType (mplot::ColourMapType::GreyscaleInv);
-    gv->addLabel ("X_asa.second (even)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
+    gv->addLabel ("X1 (even)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
     gv->finalize();
     v.addVisualModel (gv);
 
@@ -246,7 +246,7 @@ int main()
     gv->setScalarData (&d0);
     gv->zScale.set_params (0, 0);
     gv->cm.setType (mplot::ColourMapType::GreyscaleInv);
-    gv->addLabel ("d_asa.first (odd input rows)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
+    gv->addLabel ("d0 (odd input rows)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
     gv->finalize();
     v.addVisualModel (gv);
 
@@ -256,7 +256,7 @@ int main()
     gv->setScalarData (&d1);
     gv->zScale.set_params (0, 0);
     gv->cm.setType (mplot::ColourMapType::GreyscaleInv);
-    gv->addLabel ("d_asa.second (even)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
+    gv->addLabel ("d1 (even)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
     gv->finalize();
     v.addVisualModel (gv);
 
