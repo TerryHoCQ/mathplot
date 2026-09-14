@@ -73,7 +73,6 @@ int main()
 
     sm::hexfft::fft<float, true> hfft;
     hfft.init (&hg1);
-
     hfft.forward (data1);
 
     // Data on grids
@@ -83,16 +82,16 @@ int main()
     sm::grid<std::uint32_t, float> grid(hfft.asa_cols, hfft.asa_rows, grid_spacing, null_offset,
                                         sm::griddomainwrap::none,
                                         sm::gridorder::bottomleft_to_topright_colmaj);
-    sm::vvec<float> d0 (hfft.d_asa.first.size());
-    sm::vvec<float> d1 (hfft.d_asa.first.size());
-    sm::vvec<float> X0 (hfft.X_asa.first.size());
-    sm::vvec<float> X1 (hfft.X_asa.first.size());
+    sm::vvec<float> d0 (hfft.d0.size());
+    sm::vvec<float> d1 (hfft.d1.size());
+    sm::vvec<float> X0 (hfft.X0.size());
+    sm::vvec<float> X1 (hfft.X1.size());
 
     for (std::uint32_t i = 0; i < d0.size(); ++i) {
-        d0[i] = std::real (hfft.d_asa.first[i]);
-        d1[i] = std::real (hfft.d_asa.second[i]);
-        X0[i] = std::real (hfft.X_asa.first[i]);
-        X1[i] = std::real (hfft.X_asa.second[i]);
+        d0[i] = std::real (hfft.d0[i]);
+        d1[i] = std::real (hfft.d1[i]);
+        X0[i] = std::real (hfft.X0[i]);
+        X1[i] = std::real (hfft.X1[i]);
     }
 
     offset[1] -= (hfft.hg->width() / 2) + 1.25f * hfft.asa_rows * grid_spacing[1];
@@ -143,7 +142,7 @@ int main()
     fhgv->cm.setType (mplot::ColourMapType::GreyscaleInv);
     fhgv->finalize();
     v.addVisualModel (fhgv);
-    v.keepOpen();
 
+    v.keepOpen();
     return 0;
 }

@@ -25,7 +25,6 @@ int main()
     mplot::Visual v(1600, 1000, "Hexagonal FFT");
 
     sm::hexgrid<float, sm::hexalign::point_up> hg(0.01f, 4.0f, 0.0f);
-    //hg.set_even_rectangular_boundary (2.0f, 2.0f);
     hg.set_rectangular_boundary (2.0f, 2.0f);
 
     // Need flat_up for the frequency space
@@ -58,45 +57,48 @@ int main()
     v.addVisualModel (hgv);
 
     // Transform with FFT
-    sm::hexfft::spectrum<float> fft_data = sm::hexfft::fft (hg, hex_image_data);
+    sm::hexfft::fft<float, true> hfft;
+    hfft.init (&hg);
+    hfft.forward (hex_image_data);
 
-    std::cout << "fft_data cols = " << fft_data.cols << ", and rows = " << fft_data.rows << std::endl;
 
-    sm::vvec<float> fft_r (fft_data.hex_data.size());
-    sm::vvec<float> fft_i (fft_data.hex_data.size());
+    std::cout << "fft_data cols = " << hfft.asa_cols << ", and rows = " << hfft.asa_rows << std::endl;
+
+    sm::vvec<float> fft_r (hfft.hex_data.size());
+    sm::vvec<float> fft_i (hfft.hex_data.size());
     for (std::uint32_t i = 0; i < fft_r.size(); ++i) {
-        fft_r[i] = std::real(fft_data.hex_data[i]);
-        fft_i[i] = std::imag(fft_data.hex_data[i]);
+        fft_r[i] = std::real(hfft.hex_data[i]);
+        fft_i[i] = std::imag(hfft.hex_data[i]);
     }
 
     // rows/cols:
     constexpr sm::vec<float, 2> grid_spacing = {0.01f, 0.01f};
     constexpr sm::vec<float, 2> null_offset = {0.0f, 0.0f};
-    sm::grid<std::uint32_t, float> grid(fft_data.cols, fft_data.rows, grid_spacing, null_offset,
+    sm::grid<std::uint32_t, float> grid(hfft.asa_cols, hfft.asa_rows, grid_spacing, null_offset,
                                         sm::griddomainwrap::none,
                                         sm::gridorder::bottomleft_to_topright_colmaj);
 
-    sm::vvec<float> d0 (fft_data.d_asa.first.size());
-    sm::vvec<float> d1 (fft_data.d_asa.first.size());
-    sm::vvec<float> X0 (fft_data.X_asa.first.size());
-    sm::vvec<float> X1 (fft_data.X_asa.first.size());
+    sm::vvec<float> d0 (hfft.d_asa.first.size());
+    sm::vvec<float> d1 (hfft.d_asa.first.size());
+    sm::vvec<float> X0 (hfft.X_asa.first.size());
+    sm::vvec<float> X1 (hfft.X_asa.first.size());
 
     for (std::uint32_t i = 0; i < d0.size(); ++i) {
-        d0[i] = std::real (fft_data.d_asa.first[i]);
-        d1[i] = std::real (fft_data.d_asa.second[i]);
-        X0[i] = std::real (fft_data.X_asa.first[i]);
-        X1[i] = std::real (fft_data.X_asa.second[i]);
+        d0[i] = std::real (hfft.d_asa.first[i]);
+        d1[i] = std::real (hfft.d_asa.second[i]);
+        X0[i] = std::real (hfft.X_asa.first[i]);
+        X1[i] = std::real (hfft.X_asa.second[i]);
     }
 
     std::cout << "X0 mean/sd/range: " << X0.mean() << ", " << X0.std() << ", " << X0.range() << std::endl;
     std::cout << "X1 mean/sd/range: " << X1.mean() << ", " << X1.std() << ", " << X1.range() << std::endl;
 
     // Write out png of d1 for comparative image.
-    sm::vvec<std::uint8_t> d1_rgb (fft_data.cols * fft_data.rows * 4);
+    sm::vvec<std::uint8_t> d1_rgb (hfft.asa_cols * hfft.asa_rows * 4);
     std::uint32_t j = 0;
-    for (std::uint32_t i = fft_data.rows - 1; i != std::numeric_limits<std::uint32_t>::max(); --i) {
-        for (std::uint32_t k = 0; k < fft_data.cols; ++k) { // col
-            float val = std::round (d1[i * fft_data.cols + k] * 255.0f);
+    for (std::uint32_t i = hfft.asa_rows - 1; i != std::numeric_limits<std::uint32_t>::max(); --i) {
+        for (std::uint32_t k = 0; k < hfft.asa_cols; ++k) { // col
+            float val = std::round (d1[i * hfft.asa_cols + k] * 255.0f);
             if (val < 0.0f || val > 255.0f) {
                 d1_rgb[j++] = static_cast<std::uint8_t>(0u);
                 d1_rgb[j++] = static_cast<std::uint8_t>(0u);
@@ -110,7 +112,7 @@ int main()
             }
         }
     }
-    mplot::png_encode ("../examples/bike256_d1.png", d1_rgb.data(), fft_data.cols, fft_data.rows);
+    mplot::png_encode ("../examples/bike256_d1.png", d1_rgb.data(), hfft.asa_cols, hfft.asa_rows);
 
     float hshift1 = 0.75f;
     // Grid 1 ds.first
@@ -134,6 +136,17 @@ int main()
     gv->finalize();
     v.addVisualModel (gv);
 
+    // Viz the ASA-compliant hexgrid
+    auto hgv1 = std::make_unique<mplot::HexGridVisual<float, sm::hexalign::point_up, mplot::gl::version_4_1>>(hfft.hg_asa.get(), sm::vec<float>{-4.5f, -2.0f - 2 * hshift1});
+    hgv1->set_parent (v.get_id());
+    hgv1->cm.setType (mplot::ColourMapType::GreyscaleInv);
+    hgv1->showboundary = true;
+    hgv1->zScale.null_scaling();
+    hgv1->setScalarData (&hfft.data_asa_real);
+    hgv1->addLabel ("ASA hexgrid", sm::vec<>{ 0.0f, -hfft.hg_asa->width()/1.8f }, mplot::TextFeatures(0.02f));
+    hgv1->finalize();
+    v.addVisualModel (hgv1);
+
     // FFT
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, sm::vec<float>{-2.0f, 0.0f - hshift1});
     gv->set_parent (v.get_id());
@@ -155,10 +168,10 @@ int main()
     gv->finalize();
     v.addVisualModel (gv);
 
-    // Real part
-    auto fhgv = std::make_unique<mplot::HexGridVisual<float, sm::hexalign::flat_up>>(fft_data.hgf.get(), sm::vec<float>{2.5f, 1.0f});
+    // Real part of FFT on a hexgrid
+    auto fhgv = std::make_unique<mplot::HexGridVisual<float, sm::hexalign::flat_up>>(hfft.hgf.get(), sm::vec<float>{2.5f, 1.0f});
     fhgv->set_parent (v.get_id());
-    fhgv->zoom = (fft_data.Uscale);
+    fhgv->zoom = (hfft.Uscale);
     fhgv->setScalarData (&fft_r);
     fhgv->colourScale.compute_scaling (-900, 1200);
     fhgv->cm.setType (mplot::ColourMapType::GreyscaleInv);
@@ -169,7 +182,7 @@ int main()
 
 #if 0
     // Imaginary part
-    fhgv = std::make_unique<mplot::HexGridVisual<float, sm::hexalign::flat_up>>(fft_data.hgf.get(), sm::vec<float>{4.5f, 5.0f});
+    fhgv = std::make_unique<mplot::HexGridVisual<float, sm::hexalign::flat_up>>(hfft.hgf.get(), sm::vec<float>{4.5f, 5.0f});
     fhgv->set_parent (v.get_id());
     fhgv->setScalarData (&fft_i);
     fhgv->colourScale.compute_scaling (-900, 1200);
@@ -193,17 +206,17 @@ int main()
     X0.zero();
     X1.zero();
 
-    std::cout << "fft_data.d_asa.first.size(): "<< fft_data.d_asa.first.size() << std::endl;
-    std::cout << "fft_data.d_asa.second.size(): "<< fft_data.d_asa.second.size() << std::endl;
-    std::cout << "fft_data.X_asa.first.size(): "<< fft_data.X_asa.first.size() << std::endl;
-    std::cout << "fft_data.X_asa.second.size(): "<< fft_data.X_asa.second.size() << std::endl;
+    std::cout << "hfft.d_asa.first.size(): "<< hfft.d_asa.first.size() << std::endl;
+    std::cout << "hfft.d_asa.second.size(): "<< hfft.d_asa.second.size() << std::endl;
+    std::cout << "hfft.X_asa.first.size(): "<< hfft.X_asa.first.size() << std::endl;
+    std::cout << "hfft.X_asa.second.size(): "<< hfft.X_asa.second.size() << std::endl;
     // Re-extract data to view
-    if (d0.size() == fft_data.d_asa.first.size()) {
+    if (d0.size() == hfft.d_asa.first.size()) {
         for (std::uint32_t i = 0; i < d0.size(); ++i) {
-            d0[i] = std::real (fft_data.d_asa.first[i]);
-            d1[i] = std::real (fft_data.d_asa.second[i]);
-            X0[i] = std::real (fft_data.X_asa.first[i]);
-            X1[i] = std::real (fft_data.X_asa.second[i]);
+            d0[i] = std::real (hfft.d_asa.first[i]);
+            d1[i] = std::real (hfft.d_asa.second[i]);
+            X0[i] = std::real (hfft.X_asa.first[i]);
+            X1[i] = std::real (hfft.X_asa.second[i]);
         }
     }
     // FFT
@@ -253,7 +266,7 @@ int main()
     hgv->setScalarData (&ifft_r);
     hgv->cm.setType (mplot::ColourMapType::GreyscaleInv);
     hgv->zScale.set_params (0, 0);
-    hgv->addLabel ("Reconstructed from fft_data.hex_data", sm::vec<float>({-0.75,-1.2,0}), mplot::TextFeatures(0.05f));
+    hgv->addLabel ("Reconstructed from hfft.hex_data", sm::vec<float>({-0.75,-1.2,0}), mplot::TextFeatures(0.05f));
     hgv->finalize();
     v.addVisualModel (hgv);
 
