@@ -27,12 +27,14 @@ int main()
 
     // Create a HexGrid to show in the scene. Hexes outside the circular boundary will
     // all be discarded.
-    constexpr std::int32_t Nwidth = 15;
+    constexpr std::int32_t Nwidth = 36;
     const float d = 0.1f;
     sm::hexgrid<float, sm::hexalign::point_up> hg1(d, Nwidth * d, 0.0f);
-    hg1.set_even_rectangular_boundary (1.0f, 1.0f);
+    hg1.set_rectangular_boundary (12u, 12u);
     std::cout << "Number of pixels in point_up grid:" << hg1.num() << std::endl;
 
+    sm::vec<float, 3> offset = { 0.0f, -0.05f, 0.0f };
+#if 0
     // Recreate the points
     sm::vec<float, 2> cnt = { d / 4.0f, d * std::sin(sm::mathconst<float>::deg2rad * 60) * 0.5f };
     std::vector<sm::bezcoord<float>> bpoints = hg1.rectangle_compute (1.0f, 1.0f, cnt);
@@ -41,10 +43,8 @@ int main()
     for (auto p : bpoints) {
         points.push_back ({p.x(), p.y(), 0.0f});
         pdata.push_back (1.0f);
-        std::cout << p << std::endl;
+        //std::cout << p << std::endl;
     }
-
-    sm::vec<float, 3> offset = { 0.0f, -0.05f, 0.0f };
 
     // ScatterVisual...
     auto sv = std::make_unique<mplot::ScatterVisual<float>> (offset);
@@ -55,6 +55,7 @@ int main()
     sv->cm.setType (mplot::ColourMapType::Plasma);
     sv->finalize();
     v.addVisualModel (sv);
+#endif
 
     auto V = sm::hexfft::make_V<float>();
     V *= d;
@@ -76,6 +77,7 @@ int main()
     auto hgv1 = std::make_unique<mplot::HexGridVisual<float, sm::hexalign::point_up, mplot::gl::version_4_1>>(&hg1, offset);
     hgv1->set_parent (v.get_id());
     hgv1->cm.setType (mplot::ColourMapType::Ice);
+    hgv1->showboundary = true;
     hgv1->zScale.null_scaling();
     hgv1->setScalarData (&data1);
     hgv1->hexVisMode = visMode;
@@ -89,7 +91,7 @@ int main()
 
     sm::hexfft::spectrum<float> fft_data = sm::hexfft::fft (hg1, data1);
 
-    auto fhgv = std::make_unique<mplot::HexGridVisual<float, sm::hexalign::flat_up>>(fft_data.hgf.get(), sm::vec<float>{2.0f, 0.0f});
+    auto fhgv = std::make_unique<mplot::HexGridVisual<float, sm::hexalign::flat_up>>(fft_data.hgf.get(), sm::vec<float>{3.0f, 0.0f});
     fhgv->set_parent (v.get_id());
     fhgv->zoom = (fft_data.Uscale);
     fhgv->zScale.null_scaling();
