@@ -7,17 +7,20 @@
 #include <vector>
 #include <cmath>
 #include <format>
+#include <complex>
 
 import sm.vec;
 import sm.mat;
 import sm.hexgrid;
 import sm.hexfft;
+import sm.grid;
 
 import mplot.visual;
 import mplot.visualdatamodel;
 import mplot.hexgridvisual;
 import mplot.vectorvisual;
 import mplot.scattervisual;
+import mplot.gridvisual;
 
 int main()
 {
@@ -30,32 +33,9 @@ int main()
     constexpr std::int32_t Nwidth = 36;
     const float d = 0.1f;
     sm::hexgrid<float, sm::hexalign::point_up> hg1(d, Nwidth * d, 0.0f);
-    hg1.set_rectangular_boundary (12u, 12u);
+    //hg1.set_rectangular_boundary (12u, 12u);
+    hg1.set_circular_boundary (0.5f);
     std::cout << "Number of pixels in point_up grid:" << hg1.num() << std::endl;
-
-    sm::vec<float, 3> offset = { 0.0f, -0.05f, 0.0f };
-#if 0
-    // Recreate the points
-    sm::vec<float, 2> cnt = { d / 4.0f, d * std::sin(sm::mathconst<float>::deg2rad * 60) * 0.5f };
-    std::vector<sm::bezcoord<float>> bpoints = hg1.rectangle_compute (1.0f, 1.0f, cnt);
-    sm::vvec<sm::vec<float, 3>> points;
-    sm::vvec<float> pdata;
-    for (auto p : bpoints) {
-        points.push_back ({p.x(), p.y(), 0.0f});
-        pdata.push_back (1.0f);
-        //std::cout << p << std::endl;
-    }
-
-    // ScatterVisual...
-    auto sv = std::make_unique<mplot::ScatterVisual<float>> (offset);
-    sv->set_parent (v.get_id());
-    sv->setDataCoords (&points);
-    sv->setScalarData (&pdata);
-    sv->radiusFixed = 0.01f;
-    sv->cm.setType (mplot::ColourMapType::Plasma);
-    sv->finalize();
-    v.addVisualModel (sv);
-#endif
 
     auto V = sm::hexfft::make_V<float>();
     V *= d;
@@ -73,6 +53,8 @@ int main()
     // sm::HexVisMode::HexInterp to see the hexagons or sm::HexVisMode::Triangles for a smoother surface plot
     const mplot::HexVisMode visMode = mplot::HexVisMode::HexInterp;
 
+    sm::vec<> offset = {};
+
     // Add a HexGridVisual to display the HexGrid within the sm::Visual scene
     auto hgv1 = std::make_unique<mplot::HexGridVisual<float, sm::hexalign::point_up, mplot::gl::version_4_1>>(&hg1, offset);
     hgv1->set_parent (v.get_id());
@@ -89,11 +71,72 @@ int main()
     // flat_up
     //
 
-    sm::hexfft::spectrum<float> fft_data = sm::hexfft::fft (hg1, data1);
+    sm::hexfft::fft<float, true> hfft;
+    hfft.init (&hg1);
 
-    auto fhgv = std::make_unique<mplot::HexGridVisual<float, sm::hexalign::flat_up>>(fft_data.hgf.get(), sm::vec<float>{3.0f, 0.0f});
+    hfft.forward (data1);
+
+    // Data on grids
+    // rows/cols:
+    sm::vec<float, 2> grid_spacing = {hfft.hg->d, hfft.hg->d};
+    constexpr sm::vec<float, 2> null_offset = {0.0f, 0.0f};
+    sm::grid<std::uint32_t, float> grid(hfft.asa_cols, hfft.asa_rows, grid_spacing, null_offset,
+                                        sm::griddomainwrap::none,
+                                        sm::gridorder::bottomleft_to_topright_colmaj);
+    sm::vvec<float> d0 (hfft.d_asa.first.size());
+    sm::vvec<float> d1 (hfft.d_asa.first.size());
+    sm::vvec<float> X0 (hfft.X_asa.first.size());
+    sm::vvec<float> X1 (hfft.X_asa.first.size());
+
+    for (std::uint32_t i = 0; i < d0.size(); ++i) {
+        d0[i] = std::real (hfft.d_asa.first[i]);
+        d1[i] = std::real (hfft.d_asa.second[i]);
+        X0[i] = std::real (hfft.X_asa.first[i]);
+        X1[i] = std::real (hfft.X_asa.second[i]);
+    }
+
+    offset[1] -= (hfft.hg->width() / 2) + 1.25f * hfft.asa_rows * grid_spacing[1];
+
+    // Grid 1 ds.first
+    auto gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
+    gv->set_parent (v.get_id());
+    gv->gridVisMode = mplot::GridVisMode::RectInterp;
+    gv->setScalarData (&d0);
+    gv->zScale.null_scaling();
+    gv->cm.setType (mplot::ColourMapType::GreyscaleInv);
+    gv->addLabel ("d_asa.first (odd input rows)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
+    gv->finalize();
+    v.addVisualModel (gv);
+
+    offset[1] -= 1.25f * hfft.asa_rows * grid_spacing[1];
+
+    gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
+    gv->set_parent (v.get_id());
+    gv->gridVisMode = mplot::GridVisMode::RectInterp;
+    gv->setScalarData (&d1);
+    gv->zScale.null_scaling();
+    gv->cm.setType (mplot::ColourMapType::GreyscaleInv);
+    gv->addLabel ("d_asa.second (even)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
+    gv->finalize();
+    v.addVisualModel (gv);
+
+    offset[1] -= 1.25f * 2 * hfft.asa_rows * grid_spacing[1];
+
+    // Viz the ASA-compliant hexgrid
+    hgv1 = std::make_unique<mplot::HexGridVisual<float, sm::hexalign::point_up, mplot::gl::version_4_1>>(hfft.hg_asa.get(), offset);
+    hgv1->set_parent (v.get_id());
+    hgv1->cm.setType (mplot::ColourMapType::Ice);
+    hgv1->showboundary = true;
+    hgv1->zScale.null_scaling();
+    hgv1->setScalarData (&hfft.data_asa_real);
+    hgv1->hexVisMode = visMode;
+    hgv1->addLabel ("ASA hexgrid", sm::vec<>{ 0.0f, -hg1.width()/1.8f }, mplot::TextFeatures(0.02f));
+    hgv1->finalize();
+    v.addVisualModel (hgv1);
+
+    auto fhgv = std::make_unique<mplot::HexGridVisual<float, sm::hexalign::flat_up>>(hfft.hgf.get(), sm::vec<float>{3.0f, 0.0f});
     fhgv->set_parent (v.get_id());
-    fhgv->zoom = (fft_data.Uscale);
+    fhgv->zoom = (hfft.Uscale);
     fhgv->zScale.null_scaling();
     fhgv->setScalarData (&data1);
     fhgv->colourScale.compute_scaling (-900, 1200);
