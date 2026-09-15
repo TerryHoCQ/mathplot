@@ -111,7 +111,7 @@ int main()
     gv->setScalarData (&d0);
     gv->zScale.null_scaling();
     gv->cm.setType (mplot::ColourMapType::GreyscaleInv);
-    gv->addLabel ("d0 (odd input rows)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
+    gv->addLabel ("d0 (odd input rows)", sm::vec<float>({0,-0.1,0}), mplot::TextFeatures(0.05f));
     gv->finalize();
     v.addVisualModel (gv);
 
@@ -123,7 +123,7 @@ int main()
     gv->setScalarData (&d1);
     gv->zScale.null_scaling();
     gv->cm.setType (mplot::ColourMapType::GreyscaleInv);
-    gv->addLabel ("d1 (even)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
+    gv->addLabel ("d1 (even)", sm::vec<float>({0,-0.1,0}), mplot::TextFeatures(0.05f));
     gv->finalize();
     v.addVisualModel (gv);
 
@@ -135,7 +135,7 @@ int main()
     gv->setScalarData (&X0);
     gv->zScale.null_scaling();
     gv->cm.setType (mplot::ColourMapType::Ice);
-    gv->addLabel ("X0 (odd input rows)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
+    gv->addLabel ("X0 (odd input rows)", sm::vec<float>({0,-0.1,0}), mplot::TextFeatures(0.05f));
     gv->finalize();
     auto x0_scale = gv->colourScale;
     v.addVisualModel (gv);
@@ -149,7 +149,7 @@ int main()
     gv->colourScale = x0_scale;
     gv->zScale.null_scaling();
     gv->cm.setType (mplot::ColourMapType::Ice);
-    gv->addLabel ("X1 (even)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
+    gv->addLabel ("X1 (even)", sm::vec<float>({0,-0.1,0}), mplot::TextFeatures(0.05f));
     gv->finalize();
     v.addVisualModel (gv);
 
@@ -182,8 +182,8 @@ int main()
 
     // Re-show the X0/X1 grids
     for (std::uint32_t i = 0; i < hfft.X0.size(); ++i) {
-        //d0[i] = std::real (hfft.d0[i]);
-        //d1[i] = std::real (hfft.d1[i]);
+        d0[i] = std::real (hfft.d0[i]);
+        d1[i] = std::real (hfft.d1[i]);
         X0[i] = std::real (hfft.X0[i]);
         X1[i] = std::real (hfft.X1[i]);
     }
@@ -197,12 +197,11 @@ int main()
     gv->zScale.null_scaling();
     gv->colourScale = x0_scale;
     gv->cm.setType (mplot::ColourMapType::Ice);
-    gv->addLabel ("X0 (odd input rows)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
+    gv->addLabel ("X0 (odd input rows)", sm::vec<float>({0,-0.1,0}), mplot::TextFeatures(0.05f));
     gv->finalize();
     v.addVisualModel (gv);
 
     offset[1] -= 1.25f * hfft.asa_rows * grid_spacing[1];
-
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
     gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::RectInterp;
@@ -210,9 +209,47 @@ int main()
     gv->zScale.null_scaling();
     gv->colourScale = x0_scale;
     gv->cm.setType (mplot::ColourMapType::Ice);
-    gv->addLabel ("X1 (even)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
+    gv->addLabel ("X1 (even)", sm::vec<float>({0,-0.1,0}), mplot::TextFeatures(0.05f));
     gv->finalize();
     v.addVisualModel (gv);
+
+    offset[0] += 1.25f * hfft.asa_cols * grid_spacing[0];
+    offset[1] += 1.25f * hfft.asa_rows * grid_spacing[1];
+    gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
+    gv->set_parent (v.get_id());
+    gv->gridVisMode = mplot::GridVisMode::RectInterp;
+    gv->setScalarData (&d0);
+    gv->zScale.null_scaling();
+    //gv->colourScale = x0_scale;
+    gv->cm.setType (mplot::ColourMapType::GreyscaleInv);
+    gv->addLabel ("d0 (odd input rows)", sm::vec<float>({0,-0.1,0}), mplot::TextFeatures(0.05f));
+    gv->finalize();
+    v.addVisualModel (gv);
+
+    offset[1] -= 1.25f * hfft.asa_rows * grid_spacing[1];
+    gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
+    gv->set_parent (v.get_id());
+    gv->gridVisMode = mplot::GridVisMode::RectInterp;
+    gv->setScalarData (&d1);
+    gv->zScale.null_scaling();
+    //gv->colourScale = x0_scale;
+    gv->cm.setType (mplot::ColourMapType::GreyscaleInv);
+    gv->addLabel ("d1 (even)", sm::vec<float>({0,-0.1,0}), mplot::TextFeatures(0.05f));
+    gv->finalize();
+    v.addVisualModel (gv);
+
+    offset[0] += 1.0f;
+    // Viz the ASA-compliant hexgrid
+    hgv1 = std::make_unique<mplot::HexGridVisual<float, sm::hexalign::point_up, mplot::gl::version_4_1>>(hfft.hg_asa.get(), offset);
+    hgv1->set_parent (v.get_id());
+    hgv1->cm.setType (mplot::ColourMapType::Ice);
+    hgv1->showboundary = true;
+    hgv1->zScale.null_scaling();
+    hgv1->setScalarData (&hfft.data_asa_real);
+    hgv1->hexVisMode = visMode;
+    hgv1->addLabel ("ASA hexgrid", sm::vec<>{ 0.0f, -hg1.width()/1.8f }, mplot::TextFeatures(0.02f));
+    hgv1->finalize();
+    v.addVisualModel (hgv1);
 
     v.keepOpen();
     return 0;
