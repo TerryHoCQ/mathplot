@@ -76,11 +76,11 @@ int main()
     hfft.init (&hg1);
     hfft.forward (data1);
 
-    sm::vvec<float> fft_r (hfft.hex_data.size());
-    sm::vvec<float> fft_i (hfft.hex_data.size());
+    sm::vvec<float> fft_r (hfft.X_hexgrid.size());
+    sm::vvec<float> fft_i (hfft.X_hexgrid.size());
     for (std::uint32_t i = 0; i < fft_r.size(); ++i) {
-        fft_r[i] = std::real(hfft.hex_data[i]);
-        fft_i[i] = std::imag(hfft.hex_data[i]);
+        fft_r[i] = std::real(hfft.X_hexgrid[i]);
+        fft_i[i] = std::imag(hfft.X_hexgrid[i]);
     }
 
     // Data on grids
@@ -178,7 +178,7 @@ int main()
     fhgv->finalize();
     v.addVisualModel (fhgv);
 
-    hfft.inverse();
+   sm::vvec<std::complex<float>> invimg = hfft.inverse();
 
     // Re-show the X0/X1 grids
     for (std::uint32_t i = 0; i < hfft.X0.size(); ++i) {
@@ -248,6 +248,23 @@ int main()
     hgv1->setScalarData (&hfft.data_asa_real);
     hgv1->hexVisMode = visMode;
     hgv1->addLabel ("ASA hexgrid", sm::vec<>{ 0.0f, -hg1.width()/1.8f }, mplot::TextFeatures(0.02f));
+    hgv1->finalize();
+    v.addVisualModel (hgv1);
+
+    // Final image
+    offset[1] += 1.5f;
+    offset[0] += 0.5f;
+    sm::vvec<float> img_r (invimg.size(), 0.0f);
+    for (std::uint32_t i = 0; i < invimg.size(); ++i) { img_r[i] = std::real (invimg[i]); }
+
+    hgv1 = std::make_unique<mplot::HexGridVisual<float, sm::hexalign::point_up, mplot::gl::version_4_1>>(&hg1, offset);
+    hgv1->set_parent (v.get_id());
+    hgv1->cm.setType (mplot::ColourMapType::Ice);
+    hgv1->showboundary = true;
+    hgv1->zScale.null_scaling();
+    hgv1->setScalarData (&img_r);
+    hgv1->hexVisMode = visMode;
+    hgv1->addLabel ("hexalign::point_up", sm::vec<>{ 0.0f, -hg1.width()/1.8f }, mplot::TextFeatures(0.02f));
     hgv1->finalize();
     v.addVisualModel (hgv1);
 

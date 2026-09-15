@@ -20,16 +20,17 @@ import mplot.visual;
 import mplot.hexgridvisual;
 import mplot.gridvisual;
 
-int main()
+int main (int argc, char** argv)
 {
+    float outrad = 1000.0f;
+    if (argc > 1) {
+        outrad = std::stof (argv[1]);
+    }
+
     mplot::Visual v(1600, 1000, "Hexagonal FFT");
 
     sm::hexgrid<float, sm::hexalign::point_up> hg(0.01f, 4.0f, 0.0f);
     hg.set_rectangular_boundary (2.0f, 2.0f);
-
-    // Need flat_up for the frequency space
-    //sm::hexgrid<float, sm::hexalign::flat_up> hgf(0.01f, 8.0f, 0.0f);
-    //hgf.set_rectangular_boundary (4.0f, 4.0f);
 
     // Load a rectangular image with the help of mplot::loadpng().
     std::string fn = "../examples/bike256.png";
@@ -61,14 +62,13 @@ int main()
     hfft.init (&hg);
     hfft.forward (hex_image_data);
 
-
     std::cout << "fft_data cols = " << hfft.asa_cols << ", and rows = " << hfft.asa_rows << std::endl;
 
-    sm::vvec<float> fft_r (hfft.hex_data.size());
-    sm::vvec<float> fft_i (hfft.hex_data.size());
+    sm::vvec<float> fft_r (hfft.X_hexgrid.size());
+    sm::vvec<float> fft_i (hfft.X_hexgrid.size());
     for (std::uint32_t i = 0; i < fft_r.size(); ++i) {
-        fft_r[i] = std::real(hfft.hex_data[i]);
-        fft_i[i] = std::imag(hfft.hex_data[i]);
+        fft_r[i] = std::real(hfft.X_hexgrid[i]);
+        fft_i[i] = std::imag(hfft.X_hexgrid[i]);
     }
 
     // rows/cols:
@@ -193,29 +193,26 @@ int main()
     v.addVisualModel (fhgv);
 #endif
 
+    auto X_hexsave = hfft.X_hexgrid;
+
+    // Modify data on hexgrid?
+    sm::algo::hexgrid::mask_inside_radius<float, sm::hexalign::flat_up, std::complex<float>> (*hfft.hgf, hfft.X_hexgrid, outrad, std::complex<float>{0.0f, 0.0f});
     // Reconstruct with inverse FFT
-    //sm::vvec<std::complex<float>> reconstructed = sm::hexfft::ifft<float> (hg, fft_data);
-    hfft.inverse();
+    sm::vvec<std::complex<float>> invimg = hfft.inverse();
 
-#if 0
-    d0.zero();
-    d1.zero();
-    X0.zero();
-    X1.zero();
+    hfft.X_hexgrid = X_hexsave;
+    sm::algo::hexgrid::mask_outside_radius<float, sm::hexalign::flat_up, std::complex<float>> (*hfft.hgf, hfft.X_hexgrid, outrad, std::complex<float>{0.0f, 0.0f});
+    sm::vvec<std::complex<float>> invimg_out = hfft.inverse();
 
-    std::cout << "hfft.d0.size(): "<< hfft.d0.size() << std::endl;
-    std::cout << "hfft.d1.size(): "<< hfft.d1.size() << std::endl;
-    std::cout << "hfft.X0.size(): "<< hfft.X0.size() << std::endl;
-    std::cout << "hfft.X1.size(): "<< hfft.X1.size() << std::endl;
-    // Re-extract data to view
-    if (d0.size() == hfft.d0.size()) {
-        for (std::uint32_t i = 0; i < d0.size(); ++i) {
-            d0[i] = std::real (hfft.d0[i]);
-            d1[i] = std::real (hfft.d1[i]);
-            X0[i] = std::real (hfft.X0[i]);
-            X1[i] = std::real (hfft.X1[i]);
-        }
+
+    // Re-show the X0/X1 grids
+    for (std::uint32_t i = 0; i < hfft.X0.size(); ++i) {
+        d0[i] = std::real (hfft.d0[i]);
+        d1[i] = std::real (hfft.d1[i]);
+        X0[i] = std::real (hfft.X0[i]);
+        X1[i] = std::real (hfft.X1[i]);
     }
+
     // FFT
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, sm::vec<float>{4.0f, 0.0f - hshift1});
     gv->set_parent (v.get_id());
@@ -258,16 +255,29 @@ int main()
     v.addVisualModel (gv);
 
     // Reconstructed
-    hgv = std::make_unique<mplot::HexGridVisual<float>>(&hg, sm::vec<float>{13.5f});
+    sm::vvec<float> img_r (invimg.size(), 0.0f);
+    for (std::uint32_t i = 0; i < invimg.size(); ++i) { img_r[i] = std::real (invimg[i]); }
+
+    hgv = std::make_unique<mplot::HexGridVisual<float>>(&hg, sm::vec<float>{6.5f, -3.0f});
     hgv->set_parent (v.get_id());
-    hgv->setScalarData (&ifft_r);
+    hgv->setScalarData (&img_r);
     hgv->cm.setType (mplot::ColourMapType::GreyscaleInv);
     hgv->zScale.set_params (0, 0);
-    hgv->addLabel ("Reconstructed from hfft.hex_data", sm::vec<float>({-0.75,-1.2,0}), mplot::TextFeatures(0.05f));
+    hgv->addLabel ("FFT masked inside radius", sm::vec<float>({-0.75,-1.2,0}), mplot::TextFeatures(0.05f));
     hgv->finalize();
     v.addVisualModel (hgv);
 
-#endif
+    sm::vvec<float> img_rout (invimg_out.size(), 0.0f);
+    for (std::uint32_t i = 0; i < invimg.size(); ++i) { img_rout[i] = std::real (invimg_out[i]); }
+
+    hgv = std::make_unique<mplot::HexGridVisual<float>>(&hg, sm::vec<float>{8.5f, -3.0f});
+    hgv->set_parent (v.get_id());
+    hgv->setScalarData (&img_rout);
+    hgv->cm.setType (mplot::ColourMapType::GreyscaleInv);
+    hgv->zScale.set_params (0, 0);
+    hgv->addLabel ("FFT masked outside radius", sm::vec<float>({-0.75,-1.2,0}), mplot::TextFeatures(0.05f));
+    hgv->finalize();
+    v.addVisualModel (hgv);
 
     v.keepOpen();
 
