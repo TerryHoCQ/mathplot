@@ -48,7 +48,8 @@ int main()
         data1[hi] = 0.05f + 0.05f * std::sin (2.0f * xy[0]) * std::sin (1.0f * xy[1]) ; // Range 0->1
     }
     auto hi = hg1.find_hex_at ({0,0,0});
-    data1[hi->vi] = 0.15f;
+    auto mx = data1.max();
+    data1[hi->vi] = 1.1f * mx;
 
     // sm::HexVisMode::HexInterp to see the hexagons or sm::HexVisMode::Triangles for a smoother surface plot
     const mplot::HexVisMode visMode = mplot::HexVisMode::HexInterp;
@@ -145,11 +146,11 @@ int main()
     gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::RectInterp;
     gv->setScalarData (&X1);
+    gv->colourScale = x0_scale;
     gv->zScale.null_scaling();
     gv->cm.setType (mplot::ColourMapType::Ice);
     gv->addLabel ("X1 (even)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
     gv->finalize();
-    auto x1_scale = gv->colourScale;
     v.addVisualModel (gv);
 
     offset[1] -= 1.25f * 2 * hfft.asa_rows * grid_spacing[1];
@@ -207,7 +208,7 @@ int main()
     gv->gridVisMode = mplot::GridVisMode::RectInterp;
     gv->setScalarData (&X1);
     gv->zScale.null_scaling();
-    gv->colourScale = x1_scale;
+    gv->colourScale = x0_scale;
     gv->cm.setType (mplot::ColourMapType::Ice);
     gv->addLabel ("X1 (even)", sm::vec<float>({0,-0.2,0}), mplot::TextFeatures(0.05f));
     gv->finalize();
