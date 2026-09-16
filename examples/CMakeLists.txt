@@ -9,6 +9,7 @@ set(MATHPLOT_EXAMPLES_MODULES
   ${PROJECT_SOURCE_DIR}/maths/sm/config.cppm
   ${PROJECT_SOURCE_DIR}/maths/sm/bootstrap.cppm
   ${PROJECT_SOURCE_DIR}/maths/sm/rungekutta4.cppm
+  ${SM_HEXFFT_MODULES}
 )
 list(REMOVE_DUPLICATES MATHPLOT_EXAMPLES_MODULES)
 add_library(mathplot_examples STATIC)
@@ -98,6 +99,9 @@ target_link_libraries(showcase mathplot_examples)
 
 add_executable(hexgrid hexgrid.cpp)
 target_link_libraries(hexgrid mathplot_examples)
+
+add_executable(hexgrid_fft hexgrid_fft.cpp)
+target_link_libraries(hexgrid_fft mathplot_examples)
 
 add_executable(model_crawler model_crawler.cpp)
 target_link_libraries(model_crawler mathplot_examples)
@@ -337,6 +341,13 @@ if(OpenMP_CXX_FOUND)
   target_link_libraries(hexgrid_image OpenMP::OpenMP_CXX mathplot_examples)
 else()
   target_link_libraries(hexgrid_image mathplot_examples)
+endif()
+
+add_executable(hexgrid_image_fft hexgrid_image_fft.cpp)
+if(OpenMP_CXX_FOUND)
+  target_link_libraries(hexgrid_image_fft OpenMP::OpenMP_CXX mathplot_examples)
+else()
+  target_link_libraries(hexgrid_image_fft mathplot_examples)
 endif()
 
 add_executable(hexgrid_image_mask hexgrid_image_mask.cpp)

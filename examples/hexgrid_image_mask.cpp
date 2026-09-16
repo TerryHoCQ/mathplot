@@ -19,6 +19,8 @@ import mplot.hexgridvisual;
 int main()
 {
     mplot::Visual v(1600, 1000, "Demo of hexgrid::resample_image");
+    v.setSceneTrans (sm::vec<float,3>{ float{0.0300908}, float{0.303269}, float{-8.56114} });
+    v.setSceneRotation (sm::quaternion<float>{ float{1}, float{0}, float{0}, float{0} });
 
     sm::hexgrid hg(0.01f, 3.0f, 0.0f);
     hg.set_rectangular_boundary (2.0f, 0.5f);
@@ -48,7 +50,7 @@ int main()
     // The inverse greyscale map is appropriate for a monochrome image
     hgv->cm.setType (mplot::ColourMapType::GreyscaleInv);
     // As it's an image, we don't want relief, so set the zScale to have a zero gradient
-    hgv->zScale.set_params (0, 1);
+    hgv->zScale.null_scaling();
 
     hgv->finalize();
     v.addVisualModel (hgv);
