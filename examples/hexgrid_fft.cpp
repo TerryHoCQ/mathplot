@@ -1,5 +1,5 @@
 /*
- * An example mplot::Visual scene, containing hexgrids.
+ * The FFT/inverse FFT of a small hexgrid.
  */
 
 #include <iostream>
@@ -68,9 +68,9 @@ int main()
     hgv1->finalize();
     v.addVisualModel (hgv1);
 
-    //
-    // flat_up
-    //
+    /*
+     * Forward transform
+     */
 
     sm::hexfft::fft<float, true> hfft;
     hfft.init (&hg1);
@@ -84,7 +84,6 @@ int main()
     }
 
     // Data on grids
-    // rows/cols:
     sm::vec<float, 2> grid_spacing = {hfft.hg->d, hfft.hg->d};
     constexpr sm::vec<float, 2> null_offset = {0.0f, 0.0f};
     sm::grid<std::uint32_t, float> grid(hfft.asa_cols, hfft.asa_rows, grid_spacing, null_offset,
@@ -104,7 +103,7 @@ int main()
 
     offset[1] -= (hfft.hg->width() / 2) + 1.25f * hfft.asa_rows * grid_spacing[1];
 
-    // Grid 1 ds.first
+    // Image data on ASA grids (d0/d1)
     auto gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
     gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::RectInterp;
@@ -129,6 +128,7 @@ int main()
 
     offset[0] += 1.25f * hfft.asa_cols * grid_spacing[0];
 
+    // Frequency space ASA grids (X0/X1)
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
     gv->set_parent (v.get_id());
     gv->gridVisMode = mplot::GridVisMode::RectInterp;
@@ -157,7 +157,7 @@ int main()
 
     offset[0] -= 1.25f * hfft.asa_cols * grid_spacing[0];
 
-    // Viz the ASA-compliant hexgrid
+    // Viz the ASA-compliant hexgrid with input image data
     hgv1 = std::make_unique<mplot::HexGridVisual<float, sm::hexalign::point_up, mplot::gl::version_4_1>>(hfft.hg_asa.get(), offset);
     hgv1->set_parent (v.get_id());
     hgv1->cm.setType (mplot::ColourMapType::Ice);
@@ -169,6 +169,7 @@ int main()
     hgv1->finalize();
     v.addVisualModel (hgv1);
 
+    // Real part of hexgrid FFT
     auto fhgv = std::make_unique<mplot::HexGridVisual<float, sm::hexalign::flat_up>>(hfft.hgf.get(), sm::vec<float>{3.0f, 0.0f});
     fhgv->set_parent (v.get_id());
     fhgv->zoom = (hfft.Uscale);
@@ -178,16 +179,20 @@ int main()
     fhgv->finalize();
     v.addVisualModel (fhgv);
 
-   sm::vvec<std::complex<float>> invimg = hfft.inverse();
 
-    // Re-show the X0/X1 grids
+    /*
+     * Inverse Transform
+     */
+
+    sm::vvec<std::complex<float>> invimg = hfft.inverse();
+
+    // Re-show the X0/X1 grids following the transform
     for (std::uint32_t i = 0; i < hfft.X0.size(); ++i) {
         d0[i] = std::real (hfft.d0[i]);
         d1[i] = std::real (hfft.d1[i]);
         X0[i] = std::real (hfft.X0[i]);
         X1[i] = std::real (hfft.X1[i]);
     }
-
 
     offset[0] += 1.25f * hfft.asa_cols * grid_spacing[0];
     gv = std::make_unique<mplot::GridVisual<float>>(&grid, offset);
