@@ -27,6 +27,7 @@ int main()
     // Contructor args are width, height, title
     mplot::Visual<mplot::gl::version_4_1> v(1600, 1000, "mplot::HexGridVisual");
     v.lightingEffects();
+    v.setSceneTrans (sm::vec<float,3>{ float{-1.62518}, float{1.53621}, float{-8.57515} });
 
     // Create a HexGrid to show in the scene. Hexes outside the circular boundary will
     // all be discarded.

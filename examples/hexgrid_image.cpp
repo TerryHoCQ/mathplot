@@ -17,9 +17,14 @@ import mplot.hexgridvisual;
 int main()
 {
     mplot::Visual v(1600, 1000, "Demo of sm::hexgrid::resample_image");
+    v.setSceneTrans (sm::vec<float,3>{ float{0.0370157}, float{0.350156}, float{-6.4843} });
+    v.setSceneRotation (sm::quaternion<float>{ float{1}, float{0}, float{0}, float{0} });
+
+    // You can choose flat_up or point_up for the hex alignment within the hexgrid
+    constexpr sm::hexalign ha = sm::hexalign::flat_up;
 
     // Demonstating the creating of a hexgrid with hexagons aligned with a 'flat' up (i.e. an edge at the top)
-    sm::hexgrid<float, sm::hexalign::flat_up> hg(0.01f, 3.0f, 0.0f);
+    sm::hexgrid<float, ha> hg(0.01f, 3.0f, 0.0f);
     hg.set_circular_boundary (1.2f);
 
     // Load an image with the help of mplot::loadpng().
@@ -36,15 +41,16 @@ int main()
     sm::vvec<float> hex_image_data = sm::algo::hexgrid::resample_image (hg, image_data, dims[1], image_scale, image_offset);
 
     // Now visualise with a HexGridVisual
-    auto hgv = std::make_unique<mplot::HexGridVisual<float, sm::hexalign::flat_up>>(&hg, sm::vec<float>({0,0,0}));
+    auto hgv = std::make_unique<mplot::HexGridVisual<float, ha>>(&hg, sm::vec<float>({0,0,0}));
     hgv->set_parent (v.get_id());
 
+    hgv->hexVisMode = mplot::HexVisMode::HexInterp;
     // Set the image data as the scalar data for the HexGridVisual
     hgv->setScalarData (&hex_image_data);
     // The inverse greyscale map is appropriate for a monochrome image
     hgv->cm.setType (mplot::ColourMapType::GreyscaleInv);
     // As it's an image, we don't want relief, so set the zScale to have a zero gradient
-    hgv->zScale.set_params (0, 1);
+    hgv->zScale.null_scaling();
 
     hgv->finalize();
     v.addVisualModel (hgv);
