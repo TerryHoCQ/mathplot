@@ -148,7 +148,6 @@ macro(setup_module_variables_for_mathplot base_directory maths_directory json_di
     ${base_directory}/mplot/HexGridVisual.cppm
     ${base_directory}/mplot/CartGridVisual.cppm
     ${base_directory}/mplot/AxesVisual.cppm
-    ${base_directory}/mplot/TriaxesVisual.cppm
     ${base_directory}/mplot/TxtVisual.cppm
     ${base_directory}/mplot/ScatterVisual.cppm
     ${base_directory}/mplot/CurvyTellyVisual.cppm

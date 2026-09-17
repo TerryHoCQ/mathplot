@@ -15,7 +15,7 @@ import mplot.visual;
 import mplot.graphvisual;
 import mplot.hexgridvisual;
 import mplot.gridvisual;
-import mplot.triaxesvisual;
+import mplot.axesvisual;
 import mplot.scattervisual;
 
 // A simple Izhikevich neuron model class used below
@@ -206,7 +206,7 @@ int main()
      */
     // First the Triaxes:
     auto scat_offs = sm::vec<float>({-4,-1.0,0});
-    auto tav = std::make_unique<mplot::TriaxesVisual<float>>(scat_offs);
+    auto tav = std::make_unique<mplot::AxesVisual<float, 3>>(scat_offs);
     tav->set_parent (v.get_id());
     tav->axisstyle = mplot::axisstyle::L;
     // Specify axes min and max with a min and max vector
