@@ -209,6 +209,8 @@ export namespace mplot
             }
         }
 
+        static constexpr float max_label_prop = 0.9f;
+
         //! Draw the tick labels (the numbers)
         void drawTickLabels()
         {
@@ -224,11 +226,39 @@ export namespace mplot
 
             mplot::TextFeatures tf(this->fontsize, this->fontres, false, mplot::colour::black, this->font);
 
+            // Pre-test the xtick labels to see if the length of the labels would make the text
+            // too crowded. If so, reduce font size. The combined length of the longest tick
+            // label should be less than the proportion 'max_label_prop' of the xtick
+            // spacing. Note that this comes AFTER the logic in maketicks() which could in
+            // principle be changed to reduce the number of ticks when the number of ticks
+            // combined with the font size and tick label string length might cause problems.
+            float x_font_factor = 1.0f;
+            float max_label_length = 0.0f;
+            float xtick_spacing = this->input_max[0] - this->input_min[0];
+            {
+                if (this->xtick_posns.size() >= 2) { xtick_spacing = this->xtick_posns[1] - this->xtick_posns[0]; }
+                // Create a temporary VisualTextModel to find the length of all the tick text
+                auto lbl = this->makeVisualTextModel (tf);
+                // Find longest string (more or less)
+                for (std::uint32_t i = 0; i < this->xtick_posns.size(); ++i) {
+                    std::string s = mplot::graphing::number_format (this->xticks[i], this->xticks[i==0 ? 1 : i-1]);
+                    mplot::TextGeometry geom = lbl->getTextGeometry (s);
+                    max_label_length = geom.width() > max_label_length ? geom.width() : max_label_length;
+                }
+            }
+
+            if (max_label_length > max_label_prop * xtick_spacing) {
+                // Labels are too long, compute the adjustment factor
+                x_font_factor = (xtick_spacing * max_label_prop) / max_label_length;
+            }
+
             for (std::uint32_t i = 0; i < this->xtick_posns.size(); ++i) {
                 std::string s = mplot::graphing::number_format (this->xticks[i], this->xticks[i==0 ? 1 : i-1]);
                 // Issue: I need the width of the text ss.str() before I can create the
                 // VisualTextModel, so need a static method like this:
+                tf.fontsize = x_font_factor * this->fontsize;
                 auto lbl = this->makeVisualTextModel (tf);
+                //tf.fontsize = this->fontsize; // don't reset, so that the y labels have same factor
                 mplot::TextGeometry geom = lbl->getTextGeometry (s);
                 this->xtick_height = geom.height() > this->xtick_height ? geom.height() : this->xtick_height;
                 this->xtick_width = geom.width() > this->xtick_width ? geom.width() : this->xtick_width;
