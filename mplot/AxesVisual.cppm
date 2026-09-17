@@ -1,7 +1,5 @@
 /*
- * A VisualModel for rendering a set of 3D axes, either 3 axes or a kind of framework
- * box. Use along with ScatterVisual or HexGridVisual for plotting 3D graph
- * visualisations.
+ * A VisualModel for rendering a set of 3D OR 2D axes,
  */
 module;
 
@@ -11,7 +9,7 @@ module;
 #include <deque>
 #include <utility>
 
-export module mplot.triaxesvisual;
+export module mplot.axesvisual;
 
 export import sm.mathconst;
 import sm.scale;
@@ -25,15 +23,15 @@ import mplot.graphstyles; // Share tickstyle, axestyle
 
 export namespace mplot
 {
-    template <typename Flt, std::int32_t glver = mplot::gl::version_4_1>
-    class TriaxesVisual : public VisualModel<glver>
+    template <typename F, std::int32_t dims = 2, std::int32_t glver = mplot::gl::version_4_1> requires (dims == 2 || dims == 3)
+    class AxesVisual : public VisualModel<glver>
     {
     public:
         //! Constructor
         //! \param sp shader program id
         //! \param tsp text shader program id
         //! \param _offset The offset within mplot::Visual space to place these axes
-        TriaxesVisual (const sm::vec<float> _offset)
+        AxesVisual (const sm::vec<float> _offset)
         {
             this->viewmatrix.translate (_offset);
             this->x_scale.do_autoscale = true;
@@ -47,11 +45,14 @@ export namespace mplot
             // the axes leaving range_mins at 0.
             this->x_scale.output_range.max = this->axis_ends[0];
             this->y_scale.output_range.max = this->axis_ends[1];
-            this->z_scale.output_range.max = this->axis_ends[2];
 
             this->x_scale.compute_scaling (this->input_min[0], this->input_max[0]);
             this->y_scale.compute_scaling (this->input_min[1], this->input_max[1]);
-            this->z_scale.compute_scaling (this->input_min[2], this->input_max[2]);
+
+            if constexpr (dims == 3) {
+                this->z_scale.output_range.max = this->axis_ends[2];
+                this->z_scale.compute_scaling (this->input_min[2], this->input_max[2]);
+            }
 
             // Now ensure that this->[x/y/z]tick_posns/[x/y/z]ticks are populated
             this->computeTickPositions();
@@ -69,33 +70,31 @@ export namespace mplot
                 std::cout << "Writeme: Implement a manual tick-setting scheme\n";
             } else {
                 // Compute locations for ticks...
-                Flt _xmin = this->x_scale.inverse_one (this->x_scale.output_range.min);
-                Flt _xmax = this->x_scale.inverse_one (this->x_scale.output_range.max);
-                Flt _ymin = this->y_scale.inverse_one (this->y_scale.output_range.min);
-                Flt _ymax = this->y_scale.inverse_one (this->y_scale.output_range.max);
-                Flt _zmin = this->z_scale.inverse_one (this->z_scale.output_range.min);
-                Flt _zmax = this->z_scale.inverse_one (this->z_scale.output_range.max);
-
+                F _xmin = this->x_scale.inverse_one (this->x_scale.output_range.min);
+                F _xmax = this->x_scale.inverse_one (this->x_scale.output_range.max);
                 float realmin = this->x_scale.inverse_one (0);
                 float realmax = this->x_scale.inverse_one (this->axis_ends[0]);
-                this->xticks = mplot::graphing::maketicks<Flt> (_xmin, _xmax, realmin, realmax, Flt{5}, Flt{13});
-
-                realmin = this->y_scale.inverse_one (0);
-                realmax = this->y_scale.inverse_one (this->axis_ends[1]);
-                this->yticks = mplot::graphing::maketicks<Flt> (_ymin, _ymax, realmin, realmax, Flt{5}, Flt{13});
-
-                realmin = this->z_scale.inverse_one (0);
-                realmax = this->z_scale.inverse_one (this->axis_ends[2]);
-                this->zticks = mplot::graphing::maketicks<Flt> (_zmin, _zmax, realmin, realmax, Flt{5}, Flt{13});
-
+                this->xticks = mplot::graphing::maketicks<F> (_xmin, _xmax, realmin, realmax, F{5}, F{13});
                 this->xtick_posns.resize (this->xticks.size());
                 this->x_scale.transform (xticks, xtick_posns);
 
+                F _ymin = this->y_scale.inverse_one (this->y_scale.output_range.min);
+                F _ymax = this->y_scale.inverse_one (this->y_scale.output_range.max);
+                realmin = this->y_scale.inverse_one (0);
+                realmax = this->y_scale.inverse_one (this->axis_ends[1]);
+                this->yticks = mplot::graphing::maketicks<F> (_ymin, _ymax, realmin, realmax, F{5}, F{13});
                 this->ytick_posns.resize (this->yticks.size());
                 this->y_scale.transform (yticks, ytick_posns);
 
-                this->ztick_posns.resize (this->zticks.size());
-                this->z_scale.transform (zticks, ztick_posns);
+                if constexpr (dims == 3) {
+                    F _zmin = this->z_scale.inverse_one (this->z_scale.output_range.min);
+                    F _zmax = this->z_scale.inverse_one (this->z_scale.output_range.max);
+                    realmin = this->z_scale.inverse_one (0);
+                    realmax = this->z_scale.inverse_one (this->axis_ends[2]);
+                    this->zticks = mplot::graphing::maketicks<F> (_zmin, _zmax, realmin, realmax, F{5}, F{13});
+                    this->ztick_posns.resize (this->zticks.size());
+                    this->z_scale.transform (zticks, ztick_posns);
+                }
             }
         }
 
@@ -117,23 +116,28 @@ export namespace mplot
                                this->axiscolour, this->axiscolour,
                                sm::mathconst<float>::one_over_root_2*this->axislinewidth,
                                4, sm::mathconst<float>::pi_over_4);
-            // z
-            this->computeTube ({0, 0, -0.5f*axislinewidth},
-                               {0, 0, this->axis_ends[2]+0.5f*axislinewidth},
-                               sm::vec<>::ux(), sm::vec<>::uy(),
-                               this->axiscolour, this->axiscolour,
-                               sm::mathconst<float>::one_over_root_2*this->axislinewidth,
-                               4, sm::mathconst<float>::pi_over_4);
+
+            if constexpr (dims == 3) {
+                // z
+                this->computeTube ({0, 0, -0.5f*axislinewidth},
+                                   {0, 0, this->axis_ends[2]+0.5f*axislinewidth},
+                                   sm::vec<>::ux(), sm::vec<>::uy(),
+                                   this->axiscolour, this->axiscolour,
+                                   sm::mathconst<float>::one_over_root_2*this->axislinewidth,
+                                   4, sm::mathconst<float>::pi_over_4);
+            }
 
             // Complete the box side panels if required
             if (this->axisstyle == axisstyle::box || this->axisstyle == axisstyle::panels) {
                 // x
-                this->computeTube ({ -0.5f*axislinewidth,                   0, this->axis_ends[2] },
-                                   { this->axis_ends[0]+0.5f*axislinewidth, 0, this->axis_ends[2] },
-                                   -sm::vec<>::uy(), sm::vec<>::uz(),
-                                   this->axiscolour2, this->axiscolour2,
-                                   sm::mathconst<float>::one_over_root_2*this->axislinewidth,
-                                   4, sm::mathconst<float>::pi_over_4);
+                if constexpr (dims == 3) {
+                    this->computeTube ({ -0.5f*axislinewidth,                   0, this->axis_ends[2] },
+                                       { this->axis_ends[0]+0.5f*axislinewidth, 0, this->axis_ends[2] },
+                                       -sm::vec<>::uy(), sm::vec<>::uz(),
+                                       this->axiscolour2, this->axiscolour2,
+                                       sm::mathconst<float>::one_over_root_2*this->axislinewidth,
+                                       4, sm::mathconst<float>::pi_over_4);
+                }
                 this->computeTube ({ -0.5f*axislinewidth,                   this->axis_ends[1], 0 },
                                    { this->axis_ends[0]+0.5f*axislinewidth, this->axis_ends[1], 0 },
                                    -sm::vec<>::uy(), sm::vec<>::uz(),
@@ -141,31 +145,35 @@ export namespace mplot
                                    sm::mathconst<float>::one_over_root_2*this->axislinewidth,
                                    4, sm::mathconst<float>::pi_over_4);
                 // y
-                this->computeTube ({ 0, -0.5f*axislinewidth,                   this->axis_ends[2] },
-                                   { 0, this->axis_ends[1]+0.5f*axislinewidth, this->axis_ends[2] },
-                                   sm::vec<>::ux(), sm::vec<>::uz(),
-                                   this->axiscolour2, this->axiscolour2,
-                                   sm::mathconst<float>::one_over_root_2*this->axislinewidth,
-                                   4, sm::mathconst<float>::pi_over_4);
+                if constexpr (dims == 3) {
+                    this->computeTube ({ 0, -0.5f*axislinewidth,                   this->axis_ends[2] },
+                                       { 0, this->axis_ends[1]+0.5f*axislinewidth, this->axis_ends[2] },
+                                       sm::vec<>::ux(), sm::vec<>::uz(),
+                                       this->axiscolour2, this->axiscolour2,
+                                       sm::mathconst<float>::one_over_root_2*this->axislinewidth,
+                                       4, sm::mathconst<float>::pi_over_4);
+                }
                 this->computeTube ({ this->axis_ends[0], -0.5f*axislinewidth,                   0 },
                                    { this->axis_ends[0], this->axis_ends[1]+0.5f*axislinewidth, 0 },
                                    sm::vec<>::ux(), sm::vec<>::uz(),
                                    this->axiscolour2, this->axiscolour2,
                                    sm::mathconst<float>::one_over_root_2*this->axislinewidth,
                                    4, sm::mathconst<float>::pi_over_4);
-                // z
-                this->computeTube ({ this->axis_ends[0], 0, -0.5f*axislinewidth },
-                                   { this->axis_ends[0], 0, this->axis_ends[2]+0.5f*axislinewidth },
-                                   sm::vec<>::ux(), sm::vec<>::uy(),
-                                   this->axiscolour2, this->axiscolour2,
-                                   sm::mathconst<float>::one_over_root_2*this->axislinewidth,
-                                   4, sm::mathconst<float>::pi_over_4);
-                this->computeTube ({ 0, this->axis_ends[1], -0.5f*axislinewidth },
-                                   { 0, this->axis_ends[1], this->axis_ends[2]+0.5f*axislinewidth },
-                                   sm::vec<>::ux(), sm::vec<>::uy(),
-                                   this->axiscolour2, this->axiscolour2,
-                                   sm::mathconst<float>::one_over_root_2*this->axislinewidth,
-                                   4, sm::mathconst<float>::pi_over_4);
+                if constexpr (dims == 3) {
+                    // z
+                    this->computeTube ({ this->axis_ends[0], 0, -0.5f*axislinewidth },
+                                       { this->axis_ends[0], 0, this->axis_ends[2]+0.5f*axislinewidth },
+                                       sm::vec<>::ux(), sm::vec<>::uy(),
+                                       this->axiscolour2, this->axiscolour2,
+                                       sm::mathconst<float>::one_over_root_2*this->axislinewidth,
+                                       4, sm::mathconst<float>::pi_over_4);
+                    this->computeTube ({ 0, this->axis_ends[1], -0.5f*axislinewidth },
+                                       { 0, this->axis_ends[1], this->axis_ends[2]+0.5f*axislinewidth },
+                                       sm::vec<>::ux(), sm::vec<>::uy(),
+                                       this->axiscolour2, this->axiscolour2,
+                                       sm::mathconst<float>::one_over_root_2*this->axislinewidth,
+                                       4, sm::mathconst<float>::pi_over_4);
+                }
             }
 
             if (this->axisstyle == axisstyle::box) {
@@ -190,13 +198,18 @@ export namespace mplot
                                        {0.0f, (float)yt, 0.0f}, sm::vec<>::uz(),
                                        this->axiscolour, this->axislinewidth*0.5f);
             }
-            // z ticks
-            for (auto zt : this->ztick_posns) {
-                this->computeFlatLine ({tl, 0.0f, (float)zt},
-                                       {0.0f, 0.0f, (float)zt}, sm::vec<>::uy(),
-                                       this->axiscolour, this->axislinewidth*0.5f);
+
+            if constexpr (dims == 3) {
+                // z ticks
+                for (auto zt : this->ztick_posns) {
+                    this->computeFlatLine ({tl, 0.0f, (float)zt},
+                                           {0.0f, 0.0f, (float)zt}, sm::vec<>::uy(),
+                                           this->axiscolour, this->axislinewidth*0.5f);
+                }
             }
         }
+
+        static constexpr float max_label_prop = 0.9f;
 
         //! Draw the tick labels (the numbers)
         void drawTickLabels()
@@ -213,11 +226,39 @@ export namespace mplot
 
             mplot::TextFeatures tf(this->fontsize, this->fontres, false, mplot::colour::black, this->font);
 
+            // Pre-test the xtick labels to see if the length of the labels would make the text
+            // too crowded. If so, reduce font size. The combined length of the longest tick
+            // label should be less than the proportion 'max_label_prop' of the xtick
+            // spacing. Note that this comes AFTER the logic in maketicks() which could in
+            // principle be changed to reduce the number of ticks when the number of ticks
+            // combined with the font size and tick label string length might cause problems.
+            float x_font_factor = 1.0f;
+            float max_label_length = 0.0f;
+            float xtick_spacing = this->input_max[0] - this->input_min[0];
+            {
+                if (this->xtick_posns.size() >= 2) { xtick_spacing = this->xtick_posns[1] - this->xtick_posns[0]; }
+                // Create a temporary VisualTextModel to find the length of all the tick text
+                auto lbl = this->makeVisualTextModel (tf);
+                // Find longest string (more or less)
+                for (std::uint32_t i = 0; i < this->xtick_posns.size(); ++i) {
+                    std::string s = mplot::graphing::number_format (this->xticks[i], this->xticks[i==0 ? 1 : i-1]);
+                    mplot::TextGeometry geom = lbl->getTextGeometry (s);
+                    max_label_length = geom.width() > max_label_length ? geom.width() : max_label_length;
+                }
+            }
+
+            if (max_label_length > max_label_prop * xtick_spacing) {
+                // Labels are too long, compute the adjustment factor
+                x_font_factor = (xtick_spacing * max_label_prop) / max_label_length;
+            }
+
             for (std::uint32_t i = 0; i < this->xtick_posns.size(); ++i) {
                 std::string s = mplot::graphing::number_format (this->xticks[i], this->xticks[i==0 ? 1 : i-1]);
                 // Issue: I need the width of the text ss.str() before I can create the
                 // VisualTextModel, so need a static method like this:
+                tf.fontsize = x_font_factor * this->fontsize;
                 auto lbl = this->makeVisualTextModel (tf);
+                //tf.fontsize = this->fontsize; // don't reset, so that the y labels have same factor
                 mplot::TextGeometry geom = lbl->getTextGeometry (s);
                 this->xtick_height = geom.height() > this->xtick_height ? geom.height() : this->xtick_height;
                 this->xtick_width = geom.width() > this->xtick_width ? geom.width() : this->xtick_width;
@@ -236,16 +277,17 @@ export namespace mplot
                 lbl->setupText (s, lblpos + this->viewmatrix.translation(), this->axiscolour);
                 this->texts.push_back (std::move(lbl));
             }
-
-            for (std::uint32_t i = 0; i < this->ztick_posns.size(); ++i) {
-                std::string s = mplot::graphing::number_format (this->zticks[i], this->zticks[i==0 ? 1 : i-1]);
-                auto lbl = this->makeVisualTextModel (tf);
-                mplot::TextGeometry geom = lbl->getTextGeometry (s);
-                this->ztick_height = geom.height() > this->ztick_height ? geom.height() : this->ztick_height;
-                this->ztick_width = geom.width() > this->ztick_width ? geom.width() : this->ztick_width;
-                sm::vec<float> lblpos = {y_for_zticks-this->ticklabelgap-geom.width(), 0, (float)this->ztick_posns[i]};
-                lbl->setupText (s, lblpos + this->viewmatrix.translation(), this->axiscolour);
-                this->texts.push_back (std::move(lbl));
+            if constexpr (dims == 3) {
+                for (std::uint32_t i = 0; i < this->ztick_posns.size(); ++i) {
+                    std::string s = mplot::graphing::number_format (this->zticks[i], this->zticks[i==0 ? 1 : i-1]);
+                    auto lbl = this->makeVisualTextModel (tf);
+                    mplot::TextGeometry geom = lbl->getTextGeometry (s);
+                    this->ztick_height = geom.height() > this->ztick_height ? geom.height() : this->ztick_height;
+                    this->ztick_width = geom.width() > this->ztick_width ? geom.width() : this->ztick_width;
+                    sm::vec<float> lblpos = {y_for_zticks-this->ticklabelgap-geom.width(), 0, (float)this->ztick_posns[i]};
+                    lbl->setupText (s, lblpos + this->viewmatrix.translation(), this->axiscolour);
+                    this->texts.push_back (std::move(lbl));
+                }
             }
         }
 
@@ -285,25 +327,27 @@ export namespace mplot
             }
             this->texts.push_back (std::move(lbl));
 
-            // z axis
-            lbl = this->makeVisualTextModel (tf);
-            geom = lbl->getTextGeometry (this->zlabel);
-            lblpos = {{ -(this->axislabelgap+this->ticklabelgap+geom.width()+this->ztick_width),
+            if constexpr (dims == 3) {
+                // z axis
+                lbl = this->makeVisualTextModel (tf);
+                geom = lbl->getTextGeometry (this->zlabel);
+                lblpos = {{ -(this->axislabelgap+this->ticklabelgap+geom.width()+this->ztick_width),
                         0,
                         0.5f * this->axis_ends[1] - geom.half_height() }};
-            lbl->setupText (this->zlabel, lblpos + this->viewmatrix.translation(), this->axiscolour);
-            this->texts.push_back (std::move(lbl));
+                lbl->setupText (this->zlabel, lblpos + this->viewmatrix.translation(), this->axiscolour);
+                this->texts.push_back (std::move(lbl));
+            }
         }
 
         //! Set the input_min to be the values at the zero points of the graph axes
-        sm::vec<Flt, 3> input_min = {0,0,0};
-        //! Set the input_min to be the values at the maxes of the graph axes
-        sm::vec<Flt, 3> input_max = {1,1,1};
+        sm::vec<F, 3> input_min = {0,0,0};
+        //! Set the input_max to be the values at the maxes of the graph axes
+        sm::vec<F, 3> input_max = {1,1,1};
 
         // Axes parameters
 
         //! x axis max location in model space. Default behaviour is a 1x1x1 cube
-        sm::vec<Flt, 3> axis_ends = {1,1,1};
+        sm::vec<F, 3> axis_ends = {1,1,1};
         //! colour for the axis box/lines. Text also takes this colour.
         sm::vec<float, 3> axiscolour = {0,0,0};
         sm::vec<float, 3> axiscolour2 = { 0.7f, 0.7f, 0.7f };
@@ -322,25 +366,25 @@ export namespace mplot
         //! Should ticks be manually set?
         bool manualticks = false;
         //! A scaling for the x axis
-        sm::scale<Flt> x_scale;
+        sm::scale<F> x_scale;
         //! A scaling for the y axis
-        sm::scale<Flt> y_scale;
+        sm::scale<F> y_scale;
         //! A scaling for the z axis
-        sm::scale<Flt> z_scale;
+        sm::scale<F> z_scale;
         //! The xtick values that should be displayed
-        std::deque<Flt> xticks;
+        std::deque<F> xticks;
         //! The positions, along the x axis (in model space) for the xticks
-        std::deque<Flt> xtick_posns;
+        std::deque<F> xtick_posns;
         //! The ytick values that should be displayed
-        std::deque<Flt> yticks;
+        std::deque<F> yticks;
         //! The positions, along the y axis (in model space) for the yticks
-        std::deque<Flt> ytick_posns;
+        std::deque<F> ytick_posns;
         //! The ztick values that should be displayed
-        std::deque<Flt> zticks;
+        std::deque<F> zticks;
         //! The positions, along the y axis (in model space) for the yticks
-        std::deque<Flt> ztick_posns;
+        std::deque<F> ztick_posns;
         // Default font
-        mplot::VisualFont font = mplot::VisualFont::Vera;
+        mplot::VisualFont font = mplot::VisualFont::DVSans;
         //! Font resolution - determines how textures for glyphs are generated. If your
         //! labels will be small, this should be smaller. If labels are large, then it
         //! should be increased.
