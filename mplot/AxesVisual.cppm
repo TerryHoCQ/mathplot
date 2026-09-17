@@ -384,7 +384,7 @@ export namespace mplot
         //! The positions, along the y axis (in model space) for the yticks
         std::deque<F> ztick_posns;
         // Default font
-        mplot::VisualFont font = mplot::VisualFont::Vera;
+        mplot::VisualFont font = mplot::VisualFont::DVSans;
         //! Font resolution - determines how textures for glyphs are generated. If your
         //! labels will be small, this should be smaller. If labels are large, then it
         //! should be increased.
