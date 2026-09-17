@@ -5,6 +5,7 @@
 # Header installation (list from ls *.h* -1, then re-ordered into functionality groups)
 install(
   FILES
+  AxesVisual.cppm
   BezCurvePathVisual.cppm
   BoolVisual.cppm
   CartGridVisual.cppm
@@ -62,7 +63,6 @@ install(
   TextGeometry.cppm
   tools.cppm
   TriangleVisual.cppm
-  TriaxesVisual.cppm
   TriFrameVisual.cppm
   TxtVisual.cppm
   unicode.cppm
