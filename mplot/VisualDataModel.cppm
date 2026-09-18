@@ -5,6 +5,7 @@ module;
 
 #include <vector>
 #include <cstdint>
+#include <complex>
 
 export module mplot.visualdatamodel;
 
@@ -19,6 +20,19 @@ export import mplot.gl.version;
 
 export namespace mplot
 {
+    // How should a VisualDataModel visualize complex data?
+    enum class complex_number_handling : std::uint32_t
+    {
+        as_real_scalar,
+        as_imaginary_scalar,
+        as_magnitude_scalar,
+        as_phase_scalar,
+        // many ways to do this. magnitude = z, phase = colour; colour from real/imag colour from mag/phase
+        as_colour_phase_magnitude_z, // two scalars
+        as_colour_vector_real_imaginary,
+        as_colour_vector_magnitude_phase
+    };
+
     //! VisualDataModel implementation base class containing common functionality - all the
     //! sm::scale objects and methods.
     template <typename T, std::int32_t glver>
@@ -119,6 +133,9 @@ export namespace mplot
         //! vectorData.
         sm::scale<sm::vec<T>> vectorScale;
 
+        //! If visualizing vector of complex, how to treat/visualize the data?
+        mplot::complex_number_handling complexHandling = mplot::complex_number_handling::as_real_scalar;
+
         /*
          * Scaled data. Used in GridVisual classes and PolarVisual or anywhere else where scalarData
          * or vectorData are scaled to be z values or colours.
@@ -145,6 +162,7 @@ export namespace mplot
         void setScalarData (const std::vector<T>* _data) { this->scalarData = _data; }
         void setVectorData (const std::vector<sm::vec<T>>* _vectors) { this->vectorData = _vectors; }
         void setDataCoords (std::vector<sm::vec<float>>* _coords) { this->dataCoords = _coords; }
+        void setComplexData (const std::vector<std::complex<T>>* _data) { this->complexData = _data; }
 
         //! Update the scalar data
         virtual void updateData (const std::vector<T>* _data)
@@ -169,6 +187,13 @@ export namespace mplot
             this->colourScale = cscale;
             this->reinit();
         }
+
+        virtual void updateData (const std::vector<std::complex<T>>* _data)
+        {
+            this->complexData = _data;
+            this->reinit();
+        }
+
 
         //! Update coordinate data and scalar data along with z-scaling for scalar data
         virtual void updateData (std::vector<sm::vec<float>>* _coords, const std::vector<T>* _data,
@@ -221,13 +246,15 @@ export namespace mplot
                 this->datasize = this->vectorData->size();
             } else if (this->scalarData != nullptr && !this->scalarData->empty()) {
                 this->datasize = this->scalarData->size();
+            } else if (this->complexData != nullptr && !this->complexData->empty()) {
+                this->datasize = this->complexData->size();
             } // else datasize remains 0
         }
 
         // Common function for setting up the z and colour scaling
         void setupScaling()
         {
-            this->dcopy.resize (this->datasize, 0);
+            this->dcopy.resize (this->datasize, 0.0f);
             this->dcolour.resize (this->datasize);
 
             if (this->scalarData != nullptr) {
@@ -236,6 +263,53 @@ export namespace mplot
                 this->zScale.transform (*(this->scalarData), this->dcopy);
                 this->dcopy.replace_nan_with (this->zScale.transform_one(0.0f));
                 this->colourScale.transform (*(this->scalarData), this->dcolour);
+
+            } else if (this->complexData != nullptr) {
+                if (this->complexHandling == mplot::complex_number_handling::as_colour_vector_real_imaginary
+                    || this->complexHandling == mplot::complex_number_handling::as_colour_vector_magnitude_phase) {
+                    this->dcolour2.resize (this->datasize);
+                    this->dcolour3.resize (this->datasize); // though we won't use this
+                    sm::vvec<float> veclens(this->dcopy);
+                    if (this->complexHandling == mplot::complex_number_handling::as_colour_vector_real_imaginary) {
+                        for (std::uint32_t i = 0; i < this->datasize; ++i) {
+                            veclens[i] = std::abs((*this->complexData)[i]);
+                            this->dcolour[i] = std::real ((*this->complexData)[i]);
+                            this->dcolour2[i] = std::imag ((*this->complexData)[i]);
+                        }
+                    } else {
+                        for (std::uint32_t i = 0; i < this->datasize; ++i) {
+                            veclens[i] = std::abs((*this->complexData)[i]);
+                            this->dcolour[i] = std::abs ((*this->complexData)[i]);
+                            this->dcolour2[i] = std::arg ((*this->complexData)[i]);
+                        }
+                    }
+                    this->zScale.transform (veclens, this->dcopy);
+
+                } else if (this->complexHandling == mplot::complex_number_handling::as_colour_phase_magnitude_z) {
+                    for (std::uint32_t i = 0; i < this->datasize; ++i) {
+                        this->dcopy[i] = this->zScale.transform_one (std::abs ((*this->complexData)[i]));
+                        if (std::isnan(this->dcopy[i])) { this->dcopy[i] = this->zScale.transform_one(0.0f); }
+                        this->dcolour[i] = this->colourScale.transform_one (std::arg ((*this->complexData)[i]));
+                    }
+                } else {
+                    for (std::uint32_t i = 0; i < this->datasize; ++i) {
+                        T _in = T{0};
+                        if (this->complexHandling == mplot::complex_number_handling::as_real_scalar) {
+                            _in = std::real ((*this->complexData)[i]);
+                        } else if (this->complexHandling == mplot::complex_number_handling::as_imaginary_scalar) {
+                            _in = std::imag ((*this->complexData)[i]);
+                        } else if (this->complexHandling == mplot::complex_number_handling::as_magnitude_scalar) {
+                            _in = std::abs ((*this->complexData)[i]);
+                        } else if (this->complexHandling == mplot::complex_number_handling::as_phase_scalar) {
+                            _in = std::arg ((*this->complexData)[i]);
+                        } else {
+                            throw std::runtime_error ("VisualDataModel: Unhandled complex_number_handling type");
+                        }
+                        this->dcopy[i] = this->zScale.transform_one (_in);
+                        if (std::isnan(this->dcopy[i])) { this->dcopy[i] = this->zScale.transform_one(0.0f); }
+                        this->dcolour[i] = this->colourScale.transform_one (_in);
+                    }
+                }
 
             } else if (this->vectorData != nullptr) {
 
@@ -250,7 +324,12 @@ export namespace mplot
                     this->dcolour3[i] = (*this->vectorData)[i][2];
                 }
                 this->zScale.transform (veclens, this->dcopy);
+            }
 
+            if (this->vectorData != nullptr
+                || (this->complexData != nullptr
+                    && (this->complexHandling == mplot::complex_number_handling::as_colour_vector_real_imaginary
+                        || this->complexHandling == mplot::complex_number_handling::as_colour_vector_magnitude_phase))) {
                 // Handle case where this->cm.getType() == mplot::ColourMapType::RGB and there is
                 // exactly one colour. ColourMapType::RGB (and RGBMono/Grey) assumes R/G/B data all
                 // in range 0->1 ALREADY and therefore they don't need to be re-scaled with
@@ -269,17 +348,33 @@ export namespace mplot
         }
 
         sm::vec<float> coordsCentroid() const { return sm::algo::centroid (*this->dataCoords); }
-        //! The data to visualize. T may simply be float or double, or, if the
-        //! visualization is of directional information, such as in a quiver plot,
+
+        /*!
+         * Scalar data to visualize. T may simply be float or double.
+         */
         const std::vector<T>* scalarData = nullptr;
 
-        //! A container for vector data to visualize. Can also be used for colour of the
-        //! hexes.
+        /*!
+         * Complex valued data to visualize. One may wish to:
+         *
+         * * treat complex as if it were scalar, and use just the real component
+         * * treat complex as if it were scalar and use just the imaginary component
+         * * treat complex as if it were scalar and use the magnitude
+         * * treat complex as if it were scalar and use the phase
+         * * treat complex as a 2D vector and visulize in several possible ways
+         */
+        const std::vector<std::complex<T>>* complexData = nullptr;
+
+        /*!
+         * Vector data to visualize (possibly as colour info, possibly as quiver direction)
+         */
         const std::vector<sm::vec<T>>* vectorData = nullptr;
 
-        //! The coordinates at which to visualize data, if appropriate (e.g. scatter
-        //! graph, quiver plot). Note fixed type of float, which is suitable for
-        //! OpenGL coordinates. Not const as child code may resize or update content.
+        /*!
+         * The coordinates at which to visualize data, if appropriate (e.g. scatter graph, quiver
+         * plot). Note fixed type of float, which is suitable for OpenGL coordinates. Not const as
+         * child code may resize or update content.
+         */
         std::vector<sm::vec<float>>* dataCoords = nullptr;
     };
 
