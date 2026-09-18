@@ -30,15 +30,15 @@ export namespace mplot
 
     //! The template argument T is the type of the data which this HexGridVisual
     //! will visualize and the type for the hexgrid.
-    template <class T, sm::hexalign A = sm::hexalign::point_up, int32_t glver = mplot::gl::version_4_1>
+    template <class T, sm::hexalign A = sm::hexalign::point_up, std::int32_t glver = mplot::gl::version_4_1>
     class HexGridVisual : public VisualDataModel<T,glver>
     {
     public:
-        //! Simplest constructor. Use this in all new code!
+        //! Construct with a hexgrid and the usual model offset
         HexGridVisual(const sm::hexgrid<T, A>* _hg, const sm::vec<float> _offset)
         {
             this->viewmatrix.translate (_offset);
-            this->zScale.set_params (1, 0);
+            this->zScale.identity_scaling();
             this->colourScale.do_autoscale = true;
             this->colourScale2.do_autoscale = true;
             this->colourScale3.do_autoscale = true;
@@ -46,11 +46,11 @@ export namespace mplot
         }
 
         //! Hexes to mark out. There are hex iterators, that I can do if (markedHexes.count(hi)) {}
-        std::set<uint32_t> markedHexes;
+        std::set<std::uint32_t> markedHexes;
 
         //! Mark a hex at location r,g,b=0 - it should be outlined with a ring, or
         //! something, so that it is visible.
-        void markHex (uint32_t hi) { this->markedHexes.insert(hi); }
+        void markHex (std::uint32_t hi) { this->markedHexes.insert(hi); }
 
         //! Zoom factor
         float zoom = 1.0f;
@@ -118,6 +118,105 @@ export namespace mplot
             }
         }
 
+        // reinitColours is a more modern scheme for a fast update. This is useful if your hexgrid
+        // is kept flat and so you can leave all the vertexPositions in place, and change only the
+        // colours.
+        void reinitColours()
+        {
+            constexpr std::array<float, 3> blkclr = {0,0,0};
+
+            std::uint32_t nhex = this->hg->num();
+
+            this->setupScaling();
+
+            if (this->hexVisMode == HexVisMode::Triangles) {
+                // Reinit triangle mesh colours
+                if (this->vertexColors.size() < 3u * nhex) {
+                    throw std::runtime_error ("vertexColors is too small to reinitColours");
+                }
+                for (std::uint32_t hi = 0; hi < nhex; ++hi) {
+                    std::array<float, 3> clr = this->setColour (hi);
+
+                    if (this->markedHexes.count(hi)) {
+                        this->vertexColors[hi * 3] = blkclr[0];
+                        this->vertexColors[hi * 3 + 1] = blkclr[1];
+                        this->vertexColors[hi * 3 + 2] = blkclr[2];
+                    } else {
+                        this->vertexColors[hi * 3] = clr[0];
+                        this->vertexColors[hi * 3 + 1] = clr[1];
+                        this->vertexColors[hi * 3 + 2] = clr[2];
+                    }
+                }
+
+            } else {
+                // Reinit hex mesh colours
+                if (this->vertexColors.size() < 7u * nhex) {
+                    throw std::runtime_error ("vertexColors is too small to reinitColours");
+                }
+                for (std::uint32_t hi = 0; hi < nhex; ++hi) {
+                    std::array<float, 3> clr = this->setColour (hi);
+                    if (std::isnan(this->dcolour[hi])) {
+                        // 7 colour vertices per hex, so 7 * 3 = 21 locations in vertexColors
+                        this->vertexColors[hi * 21] = clr[0];
+                        this->vertexColors[hi * 21 + 1] = clr[1];
+                        this->vertexColors[hi * 21 + 2] = clr[2];
+                        // Could also set the blkclrs but assume they are unchanging
+                    } else {
+
+                        bool mhex = this->markedHexes.count(hi);
+
+                        this->vertexColors[hi * 21 + 3 * 0] = clr[0];
+                        this->vertexColors[hi * 21 + 3 * 0 + 1] = clr[1];
+                        this->vertexColors[hi * 21 + 3 * 0 + 2] = clr[2];
+                        //2
+                        if (mhex) {
+                            this->vertexColors[hi * 21 + 3 * 1] = blkclr[0];
+                            this->vertexColors[hi * 21 + 3 * 1 + 1] = blkclr[1];
+                            this->vertexColors[hi * 21 + 3 * 1 + 2] = clr[2];
+                        } else {
+                            this->vertexColors[hi * 21 + 3 * 1] = clr[0];
+                            this->vertexColors[hi * 21 + 3 * 1 + 1] = clr[1];
+                            this->vertexColors[hi * 21 + 3 * 1 + 2] = clr[2];
+                        }
+                        //3
+                        this->vertexColors[hi * 21 + 3 * 2] = clr[0];
+                        this->vertexColors[hi * 21 + 3 * 2 + 1] = clr[1];
+                        this->vertexColors[hi * 21 + 3 * 2 + 2] = clr[2];
+                        //4
+                        if (mhex) {
+                            this->vertexColors[hi * 21 + 3 * 3] = blkclr[0];
+                            this->vertexColors[hi * 21 + 3 * 3 + 1] = blkclr[1];
+                            this->vertexColors[hi * 21 + 3 * 3 + 2] = clr[2];
+                        } else {
+                            this->vertexColors[hi * 21 + 3 * 3] = clr[0];
+                            this->vertexColors[hi * 21 + 3 * 3 + 1] = clr[1];
+                            this->vertexColors[hi * 21 + 3 * 3 + 2] = clr[2];
+                        }
+                        //5
+                        this->vertexColors[hi * 21 + 3 * 4] = clr[0];
+                        this->vertexColors[hi * 21 + 3 * 4 + 1] = clr[1];
+                        this->vertexColors[hi * 21 + 3 * 4 + 2] = clr[2];
+                        //6
+                        if (mhex) {
+                            this->vertexColors[hi * 21 + 3 * 5] = blkclr[0];
+                            this->vertexColors[hi * 21 + 3 * 5 + 1] = blkclr[1];
+                            this->vertexColors[hi * 21 + 3 * 5 + 2] = clr[2];
+                        } else {
+                            this->vertexColors[hi * 21 + 3 * 5] = clr[0];
+                            this->vertexColors[hi * 21 + 3 * 5 + 1] = clr[1];
+                            this->vertexColors[hi * 21 + 3 * 5 + 2] = clr[2];
+                        }
+                        //7
+                        this->vertexColors[hi * 21 + 3 * 6] = clr[0];
+                        this->vertexColors[hi * 21 + 3 * 6 + 1] = clr[1];
+                        this->vertexColors[hi * 21 + 3 * 6 + 2] = clr[2];
+                    }
+                }
+            }
+
+            this->reinit_colour_buffer();
+        }
+
         // Initialize vertex buffer objects and vertex array object.
 
         /*!
@@ -129,7 +228,7 @@ export namespace mplot
          */
         void initializeVerticesTris (const bool update)
         {
-            uint32_t nhex = this->hg->num();
+            std::uint32_t nhex = this->hg->num();
 
             this->setupScaling();
 
@@ -142,7 +241,7 @@ export namespace mplot
                 this->indices.reserve (6u * nhex);
             }
 
-            for (uint32_t hi = 0; hi < nhex; ++hi) {
+            for (std::uint32_t hi = 0; hi < nhex; ++hi) {
                 std::array<float, 3> clr = this->setColour (hi);
                 // If dataCoords has been populated, use these for hex positions, allowing for
                 // mapping of the 2D hexgrid onto a 3D manifold.
@@ -180,7 +279,7 @@ export namespace mplot
             // Only needs to happen *on init*. On update, this will not change :)
             if (update == false) {
                 std::size_t ind_sz = 0;
-                for (uint32_t hi = 0; hi < nhex; ++hi) {
+                for (std::uint32_t hi = 0; hi < nhex; ++hi) {
                     if (this->hg->has_n1(hi) && this->hg->has_n0(hi)) {
                         //std::cout << "1st triangle " << hi << "->" << NNE(hi) << "->" << NE(hi) << std::endl;
                         this->indices.resize (ind_sz + 3);
@@ -225,7 +324,7 @@ export namespace mplot
             float dne = this->hg->get_d_to_ne();
             float lr = this->hg->get_lr();
 
-            uint32_t nhex = this->hg->num();
+            std::uint32_t nhex = this->hg->num();
 
             this->setupScaling();
 
@@ -254,7 +353,7 @@ export namespace mplot
             sm::vec<float> coordN4 = {};
             sm::vec<float> coordN5 = {};
 
-            for (uint32_t hi = 0; hi < nhex; ++hi) {
+            for (std::uint32_t hi = 0; hi < nhex; ++hi) {
 
                 if (this->dataCoords == nullptr) {
                     _x = this->hg->d_x[hi];
@@ -611,10 +710,10 @@ export namespace mplot
             float sr = this->hg->get_sr();
             float dne = this->hg->get_d_to_ne();
             float lr = this->hg->get_lr();
-            uint32_t nhex = this->hg->num();
+            std::uint32_t nhex = this->hg->num();
 
             sm::vec<float> vtx_0, vtx_1, vtx_2;
-            for (uint32_t hi = 0; hi < nhex; ++hi) {
+            for (std::uint32_t hi = 0; hi < nhex; ++hi) {
 
                 // z position is always 0
                 float datum = 0.0f;
