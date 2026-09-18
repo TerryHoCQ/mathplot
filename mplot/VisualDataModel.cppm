@@ -6,7 +6,6 @@ module;
 #include <vector>
 #include <cstdint>
 #include <complex>
-#include <iostream> // debug
 
 export module mplot.visualdatamodel;
 
@@ -249,8 +248,6 @@ export namespace mplot
                 this->datasize = this->scalarData->size();
             } else if (this->complexData != nullptr && !this->complexData->empty()) {
                 this->datasize = this->complexData->size();
-            } else if (this->complexData != nullptr && this->complexData->empty()) {
-                std::cout << "Uh oh - complexData is empty?\n";
             } // else datasize remains 0
         }
 
