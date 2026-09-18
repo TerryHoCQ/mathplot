@@ -262,7 +262,11 @@ export namespace mplot
                 mplot::TextGeometry geom = lbl->getTextGeometry (s);
                 this->xtick_height = geom.height() > this->xtick_height ? geom.height() : this->xtick_height;
                 this->xtick_width = geom.width() > this->xtick_width ? geom.width() : this->xtick_width;
-                sm::vec<float> lblpos = {(float)this->xtick_posns[i]-geom.half_width(), y_for_xticks-(this->ticklabelgap+geom.height()), 0};
+                auto lblpos = sm::vec<float>{
+                    static_cast<float>(this->xtick_posns[i]) - geom.half_width(),
+                    y_for_xticks - (this->xticklabelgap + geom.height()),
+                    0.0f
+                };
                 lbl->setupText (s, lblpos + this->viewmatrix.translation(), this->axiscolour);
                 this->texts.push_back (std::move(lbl));
             }
@@ -273,7 +277,11 @@ export namespace mplot
                 mplot::TextGeometry geom = lbl->getTextGeometry (s);
                 this->ytick_height = geom.height() > this->ytick_height ? geom.height() : this->ytick_height;
                 this->ytick_width = geom.width() > this->ytick_width ? geom.width() : this->ytick_width;
-                sm::vec<float> lblpos = {x_for_yticks-this->ticklabelgap-geom.width(), (float)this->ytick_posns[i]-geom.half_height(), 0};
+                auto lblpos = sm::vec<float>{
+                    x_for_yticks - this->yticklabelgap - geom.width(),
+                    static_cast<float>(this->ytick_posns[i]) - geom.half_height(),
+                    0.0f
+                };
                 lbl->setupText (s, lblpos + this->viewmatrix.translation(), this->axiscolour);
                 this->texts.push_back (std::move(lbl));
             }
@@ -284,7 +292,11 @@ export namespace mplot
                     mplot::TextGeometry geom = lbl->getTextGeometry (s);
                     this->ztick_height = geom.height() > this->ztick_height ? geom.height() : this->ztick_height;
                     this->ztick_width = geom.width() > this->ztick_width ? geom.width() : this->ztick_width;
-                    sm::vec<float> lblpos = {y_for_zticks-this->ticklabelgap-geom.width(), 0, (float)this->ztick_posns[i]};
+                    auto lblpos = sm::vec<float>{
+                        y_for_zticks - this->zticklabelgap - geom.width(),
+                        0.0f,
+                        static_cast<float>(this->ztick_posns[i])
+                    };
                     lbl->setupText (s, lblpos + this->viewmatrix.translation(), this->axiscolour);
                     this->texts.push_back (std::move(lbl));
                 }
@@ -298,9 +310,11 @@ export namespace mplot
             // x axis label (easy)
             auto lbl = this->makeVisualTextModel (tf);
             mplot::TextGeometry geom = lbl->getTextGeometry (this->xlabel);
-            sm::vec<float> lblpos;
-            lblpos = {{0.5f * this->axis_ends[0] - geom.half_width(),
-                       -(this->axislabelgap+this->ticklabelgap+geom.height()+this->xtick_height), 0}};
+            auto lblpos = sm::vec<float>{
+                0.5f * this->axis_ends[0] - geom.half_width() + this->xaxislabelshift,
+                -(this->xaxislabelgap + this->xticklabelgap + geom.height() + this->xtick_height),
+                0.0f
+            };
             lbl->setupText (this->xlabel, lblpos + this->viewmatrix.translation(), this->axiscolour);
             this->texts.push_back (std::move(lbl));
 
@@ -311,15 +325,18 @@ export namespace mplot
             // Rotate label if it's long
             float leftshift = geom.width();
             float downshift = geom.height();
-            if (geom.width() > 2*this->fontsize) { // rotate so shift by text height
+            if (geom.width() > 2.0f * this->fontsize) { // rotate so shift by text height
                 leftshift = geom.height();
                 downshift = geom.half_width();
             }
 
-            lblpos = {{ -(this->axislabelgap+leftshift+this->ticklabelgap+this->ytick_width),
-                        0.5f*this->axis_ends[1] - downshift, 0 }};
+            lblpos = sm::vec<float>{
+                -(this->yaxislabelgap + leftshift + this->yticklabelgap + this->ytick_width),
+                0.5f * this->axis_ends[1] - downshift + this->yaxislabelshift,
+                0.0f
+            };
 
-            if (geom.width() > 2*this->fontsize) {
+            if (geom.width() > 2.0f * this->fontsize) {
                 sm::quaternion<float> leftrot(sm::vec<>::uz(), sm::mathconst<float>::pi_over_2);
                 lbl->setupText (this->ylabel, leftrot, lblpos + this->viewmatrix.translation(), this->axiscolour);
             } else {
@@ -331,25 +348,27 @@ export namespace mplot
                 // z axis
                 lbl = this->makeVisualTextModel (tf);
                 geom = lbl->getTextGeometry (this->zlabel);
-                lblpos = {{ -(this->axislabelgap+this->ticklabelgap+geom.width()+this->ztick_width),
-                        0,
-                        0.5f * this->axis_ends[1] - geom.half_height() }};
+                lblpos = sm::vec<float>{
+                    -(this->zaxislabelgap + this->zticklabelgap + geom.width() + this->ztick_width),
+                    0.0f,
+                    0.5f * this->axis_ends[1] - geom.half_height() + zaxislabelshift
+                };
                 lbl->setupText (this->zlabel, lblpos + this->viewmatrix.translation(), this->axiscolour);
                 this->texts.push_back (std::move(lbl));
             }
         }
 
         //! Set the input_min to be the values at the zero points of the graph axes
-        sm::vec<F, 3> input_min = {0,0,0};
+        sm::vec<F, 3> input_min = { F{0}, F{0}, F{0} };
         //! Set the input_max to be the values at the maxes of the graph axes
-        sm::vec<F, 3> input_max = {1,1,1};
+        sm::vec<F, 3> input_max = { F{1}, F{1}, F{1} };
 
         // Axes parameters
 
         //! x axis max location in model space. Default behaviour is a 1x1x1 cube
-        sm::vec<F, 3> axis_ends = {1,1,1};
+        sm::vec<F, 3> axis_ends = {F{1}, F{1}, F{1}};
         //! colour for the axis box/lines. Text also takes this colour.
-        sm::vec<float, 3> axiscolour = {0,0,0};
+        sm::vec<float, 3> axiscolour = { 0.0f, 0.0f, 0.0f };
         sm::vec<float, 3> axiscolour2 = { 0.7f, 0.7f, 0.7f };
         //! Set axis and text colours for a dark or black background
         bool darkbg = false;
@@ -390,12 +409,22 @@ export namespace mplot
         //! should be increased.
         std::int32_t fontres = 24;
         //! The font size is the width of an m in the chosen font, in model units
-        float fontsize = 0.05;
+        float fontsize = 0.05f;
         // might need tickfontsize and axisfontsize
-        //! Gap to x axis tick labels
-        float ticklabelgap = 0.05;
-        //! Gap from tick labels to axis label
-        float axislabelgap = 0.05;
+        //! Gap to axis tick labels. One attribute for each of x, y and z axes. This is not a vec<>
+        //! because it would be confusing because ticklabelgap[0] would be a shift for the x axis
+        //! and is thus a shift in the 'y' direction!
+        float xticklabelgap = 0.05f;
+        float yticklabelgap = 0.05f;
+        float zticklabelgap = 0.05f;
+        //! Gap from tick labels to axis label. One attribute for each of x, y and z axes
+        float xaxislabelgap = 0.05f;
+        float yaxislabelgap = 0.05f;
+        float zaxislabelgap = 0.05f;
+        //! A shift (+ve for 'right' wrt to the text) of the axis label
+        float xaxislabelshift = 0.0f;
+        float yaxislabelshift = 0.0f;
+        float zaxislabelshift = 0.0f;
         //! The x axis label
         std::string xlabel = "x";
         //! The y axis label
