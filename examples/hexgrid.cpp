@@ -35,12 +35,12 @@ int main()
 
     // Create a HexGrid to show in the scene. Hexes outside the circular boundary will
     // all be discarded.
-    sm::hexgrid<float, sm::hexalign::point_up> hg1(0.01f, 0.2f, 0.0f);
+    sm::hexgrid<float, sm::hexalign::point_up> hg1(0.01f, 0.205f, 0.0f);
     //hg1.set_circular_boundary (0.1f);
     hg1.set_boundary_on_outer_edge();
     std::cout << "Number of pixels in point_up grid:" << hg1.num() << std::endl;
 
-    sm::hexgrid<float, sm::hexalign::flat_up> hg2(0.01f, 0.2f, 0.0f);
+    sm::hexgrid<float, sm::hexalign::flat_up> hg2(0.01f, 0.205f, 0.0f);
     //hg2.set_circular_boundary (0.1f);
     hg2.set_boundary_on_outer_edge();
     std::cout << "Number of pixels in flat_up grid:" << hg2.num() << std::endl;
