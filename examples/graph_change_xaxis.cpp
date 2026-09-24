@@ -20,7 +20,7 @@ int main()
     mplot::DatasetStyle ds_left;
     ds_left.datalabel = "sine left";
     gv->setdata (x, (x+dx).sin(), ds_left);
-    gv->fontsize *= 2.0f; // Bigger fonts to encourage more font size auto-adjustment
+    gv->tf.fontsize *= 2.0f; // Bigger fonts to encourage more font size auto-adjustment
     // Enable auto-rescaling of the x axis
     gv->auto_rescale_x = true;
     gv->auto_rescale_y = true;

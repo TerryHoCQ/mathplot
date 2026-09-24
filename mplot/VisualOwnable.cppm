@@ -630,22 +630,22 @@ export namespace mplot
         }
 
         //! Add a label _text to the scene at position _toffset. Font features are
-        //! defined by the tfeatures. Return geometry of the text.
+        //! defined by the tf. Return geometry of the text.
         mplot::TextGeometry addLabel (const std::string& _text,
                                       const sm::vec<float, 3>& _toffset,
-                                      const mplot::TextFeatures& tfeatures = mplot::TextFeatures(0.01f))
+                                      const mplot::TextFeatures& tf = mplot::TextFeatures(0.01f))
         {
             this->setContext();
             if (this->shaders.tprog == 0) { throw std::runtime_error ("No text shader prog."); }
-            auto tmup = std::make_unique<mplot::VisualTextModel<glver>> (tfeatures);
+            auto tmup = std::make_unique<mplot::VisualTextModel<glver>> (tf);
             tmup->set_parent (this->visual_id);
-            if (tfeatures.centre_horz == true) {
+            if (tf.centre_horz == true) {
                 mplot::TextGeometry tg = tmup->getTextGeometry(_text);
                 sm::vec<float, 3> centred_locn = _toffset;
                 centred_locn[0] = -tg.half_width();
-                tmup->setupText (_text, centred_locn, tfeatures.colour);
+                tmup->setupText (_text, centred_locn, tf.colour);
             } else {
-                tmup->setupText (_text, _toffset, tfeatures.colour);
+                tmup->setupText (_text, _toffset, tf.colour);
             }
             mplot::VisualTextModel<glver>* tm = tmup.get();
             this->texts.push_back (std::move(tmup));
@@ -654,24 +654,24 @@ export namespace mplot
         }
 
         //! Add a label _text to the scene at position _toffset. Font features are
-        //! defined by the tfeatures. Return geometry of the text. The pointer tm is a
+        //! defined by the tf. Return geometry of the text. The pointer tm is a
         //! return value that allows client code to change the text after the label has been added.
         mplot::TextGeometry addLabel (const std::string& _text,
                                       const sm::vec<float, 3>& _toffset,
                                       mplot::VisualTextModel<glver>*& tm,
-                                      const mplot::TextFeatures& tfeatures = mplot::TextFeatures(0.01f))
+                                      const mplot::TextFeatures& tf = mplot::TextFeatures(0.01f))
         {
             this->setContext();
             if (this->shaders.tprog == 0) { throw std::runtime_error ("No text shader prog."); }
-            auto tmup = std::make_unique<mplot::VisualTextModel<glver>> (tfeatures);
+            auto tmup = std::make_unique<mplot::VisualTextModel<glver>> (tf);
             tmup->set_parent (this->visual_id);
-            if (tfeatures.centre_horz == true) {
+            if (tf.centre_horz == true) {
                 mplot::TextGeometry tg = tmup->getTextGeometry(_text);
                 sm::vec<float, 3> centred_locn = _toffset;
                 centred_locn[0] = -tg.half_width();
-                tmup->setupText (_text, centred_locn, tfeatures.colour);
+                tmup->setupText (_text, centred_locn, tf.colour);
             } else {
-                tmup->setupText (_text, _toffset, tfeatures.colour);
+                tmup->setupText (_text, _toffset, tf.colour);
             }
             tm = tmup.get();
             this->texts.push_back (std::move(tmup));

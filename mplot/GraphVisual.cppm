@@ -1240,8 +1240,8 @@ export namespace mplot
             float _h = this->height;
             this->resetsize (_w*factor, _h*factor);
 
-            this->fontsize *= factor;
-            this->axislabelfontsize *= factor;
+            this->tf.fontsize *= factor;
+            this->tf_axislabel.fontsize *= factor;
             this->ticklabelgap *= factor;
             this->axislabelgap *= factor;
             this->ticklength *= factor;
@@ -1562,7 +1562,7 @@ export namespace mplot
             std::uint32_t num_legends_max = static_cast<std::uint32_t>(this->graphData.size());
 
             // Text offset from marker to text
-            sm::vec<float> toffset = {this->fontsize, 0.0f, 0.0f};
+            sm::vec<float> toffset = {this->tf.fontsize, 0.0f, 0.0f};
 
             // To determine the legend layout, will need all the text geometries
             std::vector<mplot::TextGeometry> geom;
@@ -1573,7 +1573,6 @@ export namespace mplot
 
             float text_advance = 0.0f;
             std::int32_t num_legends = 0;
-            mplot::TextFeatures tf(this->fontsize, this->fontres, false, mplot::colour::black, this->font);
             for (std::uint32_t dsi = 0; dsi < num_legends_max; ++dsi) {
                 // If no label, then draw no legend. Thus the effective num_legends may be smaller
                 // than num_legends_max.
@@ -1581,7 +1580,7 @@ export namespace mplot
                 // Legend text. If all is well, this will be pushed onto the texts attribute and
                 // deleted when the model is deconstructed.
 
-                auto ltp = this->makeVisualTextModel (tf);
+                auto ltp = this->makeVisualTextModel (this->tf);
                 geom.push_back (ltp->getTextGeometry (this->datastyles[dsi].datalabel));
                 if (geom.back().total_advance > text_advance) { text_advance = geom.back().total_advance; }
                 legtexts[dsi] = std::move(ltp);
@@ -1623,7 +1622,7 @@ export namespace mplot
                 ++cur_entry;
 
                 lpos[0] = this->dataaxisdist + (static_cast<float>(col) * col_advance);
-                lpos[1] = this->height + 1.5f*this->fontsize + static_cast<float>(row)*2.0f*this->fontsize;
+                lpos[1] = this->height + 1.5f * this->tf.fontsize + static_cast<float>(row) * 2.0f * this->tf.fontsize;
                 // Legend line/marker
                 if (this->datastyles[dsi].showlines == true && this->datastyles[dsi].markerstyle != markerstyle::bar) {
                     // draw short line at lpos (rounded ends)
@@ -1654,8 +1653,7 @@ export namespace mplot
         void drawAxisLabels()
         {
             // x axis label (easy)
-            mplot::TextFeatures tf(this->fontsize, this->fontres, false, mplot::colour::black, this->font);
-            auto lbl = this->makeVisualTextModel (tf);
+            auto lbl = this->makeVisualTextModel (this->tf);
             mplot::TextGeometry geom = lbl->getTextGeometry (this->xlabel);
             sm::vec<float> lblpos;
             if (this->axisstyle == axisstyle::cross) {
@@ -1670,13 +1668,13 @@ export namespace mplot
             this->texts.push_back (std::move(lbl));
 
             // y axis label (have to rotate)
-            auto lbl2 = this->makeVisualTextModel (tf);
+            auto lbl2 = this->makeVisualTextModel (this->tf);
             geom = lbl2->getTextGeometry (this->ylabel);
 
             // Rotate label if it's long, but assume NOT rotated first:
             float leftshift = geom.width();
             float downshift = geom.height();
-            if (geom.width() > 2*this->fontsize) { // rotate so shift by text height
+            if (geom.width() > 2 * this->tf.fontsize) { // rotate so shift by text height
                 // Rotated, so left shift due to text is 0
                 leftshift = 0;
                 downshift = geom.half_width();
@@ -1691,7 +1689,7 @@ export namespace mplot
                             0.5f*this->height - downshift, 0 }};
             }
 
-            if (geom.width() > 2*this->fontsize) {
+            if (geom.width() > 2 * this->tf.fontsize) {
                 sm::quaternion<float> leftrot(sm::vec<>::uz(), sm::mathconst<float>::pi_over_2);
                 lbl2->setupText (this->ylabel, leftrot, lblpos + this->viewmatrix.translation(), this->axiscolour);
             } else {
@@ -1701,13 +1699,13 @@ export namespace mplot
 
             if (this->axisstyle == axisstyle::twinax) {
                 // y2 axis label (have to rotate)
-                auto lbl3 = this->makeVisualTextModel (tf);
+                auto lbl3 = this->makeVisualTextModel (this->tf);
                 geom = lbl3->getTextGeometry (this->ylabel2);
 
                 // Rotate label if it's long and then leftshift? No need if unrotated.
                 float leftshift = 0.0f;
                 float downshift = geom.height();
-                if (geom.width() > 2*this->fontsize) { // rotate so shift by text height
+                if (geom.width() > 2 * this->tf.fontsize) { // rotate so shift by text height
                     leftshift = geom.height();
                     downshift = geom.half_width();
                 }
@@ -1715,7 +1713,7 @@ export namespace mplot
                 lblpos = {{ this->width+(this->ticklabelgap+this->ytick_label_width2+this->axislabelgap+leftshift),
                             0.5f*this->height - downshift, 0 }};
 
-                if (geom.width() > 2*this->fontsize) {
+                if (geom.width() > 2 * this->tf.fontsize) {
                     sm::quaternion<float> leftrot(sm::vec<>::uz(), sm::mathconst<float>::pi_over_2);
                     lbl3->setupText (this->ylabel2, leftrot, lblpos + this->viewmatrix.translation(), this->axiscolour);
                 } else {
@@ -1743,8 +1741,6 @@ export namespace mplot
                 y_for_xticks = this->ord1_scale.transform_one (0);
             }
 
-            mplot::TextFeatures tf(this->fontsize, this->fontres, false, mplot::colour::black, this->font);
-
             if (!this->omit_x_tick_labels) {
 
                 // Pre-test the xtick labels to see if the length of the labels would make the text
@@ -1759,7 +1755,7 @@ export namespace mplot
                 {
                     if (this->xtick_posns.size() >= 2) { xtick_spacing = this->xtick_posns[1] - this->xtick_posns[0]; }
                     // Create a temporary VisualTextModel to find the length of all the tick text
-                    auto lbl = this->makeVisualTextModel (tf);
+                    auto lbl = this->makeVisualTextModel (this->tf);
                     // Find longest string (more or less)
                     for (std::uint32_t i = 0; i < this->xtick_posns.size(); ++i) {
                         std::string s = mplot::graphing::number_format (this->xticks[i], this->xticks[i==0 ? 1 : i-1]);
@@ -1781,12 +1777,13 @@ export namespace mplot
                     std::string s = mplot::graphing::number_format (this->xticks[i], this->xticks[i==0 ? 1 : i-1]);
                     // Issue: I need the width of the text ss.str() before I can create the
                     // VisualTextModel, so need a static method like this:
-                    tf.fontsize = x_font_factor * this->fontsize;
-                    auto lbl = this->makeVisualTextModel (tf);
-                    tf.fontsize = this->fontsize; // reset
+                    const float fontsize_save = this->tf.fontsize;
+                    this->tf.fontsize *= x_font_factor;
+                    auto lbl = this->makeVisualTextModel (this->tf);
+                    this->tf.fontsize = fontsize_save; // restore
                     mplot::TextGeometry geom = lbl->getTextGeometry (s);
                     this->xtick_label_height = geom.height() > this->xtick_label_height ? geom.height() : this->xtick_label_height;
-                    sm::vec<float> lblpos = {(float)this->xtick_posns[i]-geom.half_width(), y_for_xticks-(this->ticklabelgap+geom.height()), 0};
+                    sm::vec<float> lblpos = { static_cast<float>(this->xtick_posns[i]) - geom.half_width(), y_for_xticks - this->ticklabelgap - geom.height(), 0 };
                     lbl->setupText (s, lblpos + this->viewmatrix.translation(), this->axiscolour);
                     this->texts.push_back (std::move(lbl));
                 }
@@ -1798,10 +1795,10 @@ export namespace mplot
                     if (this->axisstyle == axisstyle::cross && this->yticks[i] == 0) { continue; }
 
                     std::string s = mplot::graphing::number_format (this->yticks[i], this->yticks[i==0 ? 1 : i-1]);
-                    auto lbl = this->makeVisualTextModel (tf);
+                    auto lbl = this->makeVisualTextModel (this->tf);
                     mplot::TextGeometry geom = lbl->getTextGeometry (s);
                     this->ytick_label_width = geom.width() > this->ytick_label_width ? geom.width() : this->ytick_label_width;
-                    sm::vec<float> lblpos = {x_for_yticks-this->ticklabelgap-geom.width(), (float)this->ytick_posns[i]-geom.half_height(), 0};
+                    sm::vec<float> lblpos = { x_for_yticks - this->ticklabelgap - geom.width(), static_cast<float>(this->ytick_posns[i]) - geom.half_height(), 0 };
                     std::array<float, 3> clr = this->axiscolour;
                     if (this->axisstyle == axisstyle::twinax && this->datastyles.size() > 0) {
                         clr = this->datastyles[0].policy == stylepolicy::lines ? this->datastyles[0].linecolour : this->datastyles[0].markercolour;
@@ -1815,10 +1812,10 @@ export namespace mplot
                 this->ytick_label_width2 = 0.0f;
                 for (std::uint32_t i = 0; i < this->ytick_posns2.size(); ++i) {
                     std::string s = mplot::graphing::number_format (this->yticks2[i], this->yticks2[i==0 ? 1 : i-1]);
-                    auto lbl = this->makeVisualTextModel (tf);
+                    auto lbl = this->makeVisualTextModel (this->tf);
                     mplot::TextGeometry geom = lbl->getTextGeometry (s);
                     this->ytick_label_width2 = geom.width() > this->ytick_label_width2 ? geom.width() : this->ytick_label_width2;
-                    sm::vec<float> lblpos = {x_for_yticks+this->ticklabelgap, (float)this->ytick_posns2[i]-geom.half_height(), 0};
+                    sm::vec<float> lblpos = { x_for_yticks + this->ticklabelgap, static_cast<float>(this->ytick_posns2[i]) - geom.half_height(), 0 };
                     std::array<float, 3> clr = this->axiscolour;
                     if (this->datastyles.size() > 1) {
                         clr = this->datastyles[1].policy == stylepolicy::lines ? this->datastyles[1].linecolour : this->datastyles[1].markercolour;
@@ -1845,13 +1842,13 @@ export namespace mplot
 
             for (auto xt : this->xtick_posns) {
                 // Want to place lines in screen units. So transform the data units
-                this->computeFlatLine ({(float)xt, _y0_mdl,                      -this->thickness},
-                                       {(float)xt, _y0_mdl - this->ticklength,   -this->thickness}, sm::vec<>::uz(),
+                this->computeFlatLine ({static_cast<float>(xt), _y0_mdl,                      -this->thickness},
+                                       {static_cast<float>(xt), _y0_mdl - this->ticklength,   -this->thickness}, sm::vec<>::uz(),
                                        this->axiscolour, this->axislinewidth*0.5f);
             }
             for (auto yt : this->ytick_posns) {
-                this->computeFlatLine ({_x0_mdl,                    (float)yt, -this->thickness},
-                                       {_x0_mdl - this->ticklength, (float)yt, -this->thickness}, sm::vec<>::uz(),
+                this->computeFlatLine ({_x0_mdl,                    static_cast<float>(yt), -this->thickness},
+                                       {_x0_mdl - this->ticklength, static_cast<float>(yt), -this->thickness}, sm::vec<>::uz(),
                                        this->axiscolour, this->axislinewidth*0.5f);
             }
         }
@@ -1888,13 +1885,13 @@ export namespace mplot
 
                 for (auto xt : this->xtick_posns) {
                     // Want to place lines in screen units. So transform the data units
-                    this->computeFlatLine ({(float)xt, 0.0f, -this->thickness},
-                                           {(float)xt, tl,   -this->thickness}, sm::vec<>::uz(),
+                    this->computeFlatLine ({static_cast<float>(xt), 0.0f, -this->thickness},
+                                           {static_cast<float>(xt), tl,   -this->thickness}, sm::vec<>::uz(),
                                            this->axiscolour, this->axislinewidth*0.5f);
                 }
                 for (auto yt : this->ytick_posns) {
-                    this->computeFlatLine ({0.0f, (float)yt, -this->thickness},
-                                           {tl,   (float)yt, -this->thickness}, sm::vec<>::uz(),
+                    this->computeFlatLine ({0.0f, static_cast<float>(yt), -this->thickness},
+                                           {tl,   static_cast<float>(yt), -this->thickness}, sm::vec<>::uz(),
                                            this->axiscolour, this->axislinewidth*0.5f);
                 }
 
@@ -1922,20 +1919,20 @@ export namespace mplot
                     // Tick positions
                     for (auto xt : this->xtick_posns) {
                         // Want to place lines in screen units. So transform the data units
-                        this->computeFlatLine ({(float)xt, this->height,      -this->thickness},
-                                               {(float)xt, this->height + tl, -this->thickness}, sm::vec<>::uz(),
+                        this->computeFlatLine ({static_cast<float>(xt), this->height,      -this->thickness},
+                                               {static_cast<float>(xt), this->height + tl, -this->thickness}, sm::vec<>::uz(),
                                                this->axiscolour, this->axislinewidth*0.5f);
                     }
                     for (auto yt : this->ytick_posns) {
-                        this->computeFlatLine ({this->width,      (float)yt, -this->thickness},
-                                               {this->width + tl, (float)yt, -this->thickness}, sm::vec<>::uz(),
+                        this->computeFlatLine ({this->width,      static_cast<float>(yt), -this->thickness},
+                                               {this->width + tl, static_cast<float>(yt), -this->thickness}, sm::vec<>::uz(),
                                                this->axiscolour, this->axislinewidth*0.5f);
                     }
                 } else if (this->axisstyle == axisstyle::twinax || !this->ytick_posns2.empty()) {
                     // Draw ticks for y2
                     for (auto yt : this->ytick_posns2) {
-                        this->computeFlatLine ({this->width,      (float)yt, -this->thickness},
-                                               {this->width + tl, (float)yt, -this->thickness}, sm::vec<>::uz(),
+                        this->computeFlatLine ({this->width,      static_cast<float>(yt), -this->thickness},
+                                               {this->width + tl, static_cast<float>(yt), -this->thickness}, sm::vec<>::uz(),
                                                this->axiscolour, this->axislinewidth*0.5f);
                     }
                 }
@@ -2303,7 +2300,7 @@ export namespace mplot
         mplot::stylepolicy policy = stylepolicy::both;
         //! axis features, starting with the colour for the axis box/lines. Text also
         //! takes this colour.
-        std::array<float, 3> axiscolour = {0,0,0};
+        std::array<float, 3> axiscolour = mplot::colour::black;
         //! Set axis and text colours for a dark or black background
         bool darkbg = false;
         //! The line width of the main axis bars
@@ -2338,17 +2335,10 @@ export namespace mplot
         sm::interval<Flt> num_ticks_range_x{ Flt{5}, Flt{10} };
         sm::interval<Flt> num_ticks_range_y{ Flt{5}, Flt{10} };
         sm::interval<Flt> num_ticks_range_y2{ Flt{5}, Flt{10} };
-        // Default font
-        mplot::VisualFont font = mplot::VisualFont::DVSans;
-        //! Font resolution - determines how textures for glyphs are generated. If your
-        //! labels will be small, this should be smaller. If labels are large, then it
-        //! should be increased.
-        std::int32_t fontres = 24;
-        //! The font size is the width of an m in the chosen font, in model units
-        float fontsize = 0.05f;
-        //! A separate fontsize for the axis labels, incase these should be different from the tick labels
-        float axislabelfontsize = fontsize;
-        // might need tickfontsize and axisfontsize
+        // 'Main text features' - the default font, size and resolution (colour is also in here, but it is usually overridden by axiscolour)
+        mplot::TextFeatures tf = { 0.05f, 24, false, mplot::colour::black, mplot::VisualFont::DVSans };
+        //! A separate font for the axis labels, in case these should be different from the tick labels
+        mplot::TextFeatures tf_axislabel = { 0.05f, 24, false, mplot::colour::black, mplot::VisualFont::DVSans };
         //! If this is true, then draw data lines even where they extend beyond the axes.
         bool draw_beyond_axes = false;
         //! EITHER Gap from the y axis to the right hand of the y axis tick label text

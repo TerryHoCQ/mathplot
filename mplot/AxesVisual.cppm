@@ -224,8 +224,6 @@ export namespace mplot
             float y_for_xticks = 0.0f;
             float y_for_zticks = 0.0f;
 
-            mplot::TextFeatures tf(this->fontsize, this->fontres, false, mplot::colour::black, this->font);
-
             // Pre-test the xtick labels to see if the length of the labels would make the text
             // too crowded. If so, reduce font size. The combined length of the longest tick
             // label should be less than the proportion 'max_label_prop' of the xtick
@@ -256,9 +254,9 @@ export namespace mplot
                 std::string s = mplot::graphing::number_format (this->xticks[i], this->xticks[i==0 ? 1 : i-1]);
                 // Issue: I need the width of the text ss.str() before I can create the
                 // VisualTextModel, so need a static method like this:
-                tf.fontsize = x_font_factor * this->fontsize;
+                tf.fontsize = x_font_factor * this->tf.fontsize;
                 auto lbl = this->makeVisualTextModel (tf);
-                //tf.fontsize = this->fontsize; // don't reset, so that the y labels have same factor
+                //tf.fontsize = this->tf.fontsize; // don't reset, so that the y labels have same factor
                 mplot::TextGeometry geom = lbl->getTextGeometry (s);
                 this->xtick_height = geom.height() > this->xtick_height ? geom.height() : this->xtick_height;
                 this->xtick_width = geom.width() > this->xtick_width ? geom.width() : this->xtick_width;
@@ -306,7 +304,6 @@ export namespace mplot
         //! Draw the axis labels
         void drawAxisLabels()
         {
-            mplot::TextFeatures tf(this->fontsize, this->fontres, false, mplot::colour::black, this->font);
             // x axis label (easy)
             auto lbl = this->makeVisualTextModel (tf);
             mplot::TextGeometry geom = lbl->getTextGeometry (this->xlabel);
@@ -325,7 +322,7 @@ export namespace mplot
             // Rotate label if it's long
             float leftshift = geom.width();
             float downshift = geom.height();
-            if (geom.width() > 2.0f * this->fontsize) { // rotate so shift by text height
+            if (geom.width() > 2.0f * this->tf.fontsize) { // rotate so shift by text height
                 leftshift = geom.height();
                 downshift = geom.half_width();
             }
@@ -336,7 +333,7 @@ export namespace mplot
                 0.0f
             };
 
-            if (geom.width() > 2.0f * this->fontsize) {
+            if (geom.width() > 2.0f * this->tf.fontsize) {
                 sm::quaternion<float> leftrot(sm::vec<>::uz(), sm::mathconst<float>::pi_over_2);
                 lbl->setupText (this->ylabel, leftrot, lblpos + this->viewmatrix.translation(), this->axiscolour);
             } else {
@@ -402,15 +399,10 @@ export namespace mplot
         std::deque<F> zticks;
         //! The positions, along the y axis (in model space) for the yticks
         std::deque<F> ztick_posns;
-        // Default font
-        mplot::VisualFont font = mplot::VisualFont::DVSans;
-        //! Font resolution - determines how textures for glyphs are generated. If your
-        //! labels will be small, this should be smaller. If labels are large, then it
-        //! should be increased.
-        std::int32_t fontres = 24;
-        //! The font size is the width of an m in the chosen font, in model units
-        float fontsize = 0.05f;
-        // might need tickfontsize and axisfontsize
+        // 'Main text features' - the default font, size and resolution (colour is also in here, but it is usually overridden by axiscolour)
+        mplot::TextFeatures tf = { 0.05f, 24, false, mplot::colour::black, mplot::VisualFont::DVSans };
+        //! A separate font for the axis labels, in case these should be different from the tick labels
+        mplot::TextFeatures tf_axislabel = { 0.05f, 24, false, mplot::colour::black, mplot::VisualFont::DVSans };
         //! Gap to axis tick labels. One attribute for each of x, y and z axes. This is not a vec<>
         //! because it would be confusing because ticklabelgap[0] would be a shift for the x axis
         //! and is thus a shift in the 'y' direction!
