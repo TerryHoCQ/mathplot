@@ -28,12 +28,12 @@ export namespace mplot
         ConfigVisual (const sm::config* _conf,
                       const std::vector<std::string>& _keys,
                       const sm::vec<float, 3>& _offset,
-                      const mplot::TextFeatures& _tfeatures)
+                      const mplot::TextFeatures& _tf)
         {
             this->viewmatrix.translate (_offset);
             this->conf = _conf;
             this->keys = _keys;
-            this->tfeatures = _tfeatures;
+            this->tf = _tf;
         }
 
         void initializeVertices()
@@ -48,7 +48,7 @@ export namespace mplot
                 // For now get value in float format
                 float value = conf->get<float>(key, 0.0f);
                 std::string lbl = key + std::string(": ") + std::to_string(value);
-                mplot::TextGeometry geom = this->addLabel (lbl, toffset, this->tfeatures);
+                mplot::TextGeometry geom = this->addLabel (lbl, toffset, this->tf);
                 toffset[1] -= line_spacing * geom.height();
             }
         }
@@ -61,7 +61,7 @@ export namespace mplot
         const sm::config* conf = nullptr;
 
         // How to format the text
-        mplot::TextFeatures tfeatures;
+        mplot::TextFeatures tf;
 
         // Spacing between lines of output
         float line_spacing = 1.5f;

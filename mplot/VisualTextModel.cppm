@@ -50,10 +50,10 @@ export namespace mplot
     struct VisualTextModel
     {
     public:
-        VisualTextModel (mplot::TextFeatures _tfeatures)
+        VisualTextModel (mplot::TextFeatures _tf)
         {
-            this->tfeatures = _tfeatures;
-            this->fontscale = tfeatures.fontsize / static_cast<float>(tfeatures.fontres);
+            this->tf = _tf;
+            this->fontscale = tf.fontsize / static_cast<float>(tf.fontres);
         }
 
         ~VisualTextModel()
@@ -121,7 +121,7 @@ export namespace mplot
             if (!mplot::VisualResources<glver>::i().test_glfn (this->parentVis)) { return geom; }
             if (this->face == nullptr) {
                 GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
-                this->face = VisualResources<glver>::i().getVisualFace (this->tfeatures, this->parentVis, _glfn);
+                this->face = VisualResources<glver>::i().getVisualFace (this->tf, this->parentVis, _glfn);
             }
 
             // First convert string from ASCII/UTF-8 into Unicode.
@@ -146,7 +146,7 @@ export namespace mplot
             if (!mplot::VisualResources<glver>::i().test_glfn (this->parentVis)) { return geom; }
             if (this->face == nullptr) {
                 GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
-                this->face = VisualResources<glver>::i().getVisualFace (this->tfeatures, this->parentVis, _glfn);
+                this->face = VisualResources<glver>::i().getVisualFace (this->tf, this->parentVis, _glfn);
             }
 
             for (std::basic_string<char32_t>::const_iterator c = this->txt.begin(); c != this->txt.end(); c++) {
@@ -193,7 +193,7 @@ export namespace mplot
 
             if (this->face == nullptr) {
                 GladGLContext* _glfn = mplot::VisualResources<glver>::i().get_glfn (this->parentVis);
-                this->face = VisualResources<glver>::i().getVisualFace (this->tfeatures, this->parentVis, _glfn);
+                this->face = VisualResources<glver>::i().getVisualFace (this->tf, this->parentVis, _glfn);
             }
 
             this->txt = _txt;
@@ -303,7 +303,7 @@ export namespace mplot
             _glfn->BindVertexArray(0); // carefully unbind
         }
 
-        //! A face for this text. The face is specfied by tfeatures.font
+        //! A face for this text. The face is specfied by tf.font
         mplot::visgl::VisualFace* face = nullptr;
 
         //! Set up a vertex buffer object - bind, buffer and set vertex array object attribute
@@ -470,7 +470,7 @@ export namespace mplot
 
     protected:
         // The text features for this VisualTextModel
-        mplot::TextFeatures tfeatures;
+        mplot::TextFeatures tf;
 
         // face is in derived class
 
@@ -478,7 +478,7 @@ export namespace mplot
         std::array<float, 3> clr_backing = {1.0f, 1.0f, 0.0f};
 
         //! A scaling factor based on the desired width of an 'm'
-        float fontscale = 1.0f; //  fontscale = tfeatures.fontsize/(float)tfeatures.fontres;
+        float fontscale = 1.0f; //  fontscale = tf.fontsize/(float)tf.fontres;
 
         //! A rotation of the parent model
         sm::quaternion<float> parent_rotation = {};

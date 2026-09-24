@@ -23,20 +23,20 @@ export namespace mplot
     public:
         TxtVisual (const std::string& _text,
                    const sm::vec<float, 3>& _offset,
-                   const mplot::TextFeatures& _tfeatures)
+                   const mplot::TextFeatures& _tf)
         {
             this->viewmatrix.translate (_offset);
             this->text = _text;
-            this->tfeatures = _tfeatures;
+            this->tf = _tf;
         }
 
         void initializeVertices()
         {
             // No op, but add text
-            this->addLabel (this->text, sm::vec<float>{}, this->tfeatures);
+            this->addLabel (this->text, sm::vec<float>{}, this->tf);
         }
 
         std::string text;
-        mplot::TextFeatures tfeatures;
+        mplot::TextFeatures tf;
     };
 }

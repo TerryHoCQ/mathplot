@@ -199,10 +199,10 @@ export namespace mplot
          *
          * See GraphVisual.h for examples.
          */
-        std::unique_ptr<mplot::VisualTextModel<glver>> makeVisualTextModel(const mplot::TextFeatures& tfeatures)
+        std::unique_ptr<mplot::VisualTextModel<glver>> makeVisualTextModel(const mplot::TextFeatures& tf)
         {
             // No longer really worth having, as there is only the make_unique call
-            auto tmup = std::make_unique<mplot::VisualTextModel<glver>> (tfeatures);
+            auto tmup = std::make_unique<mplot::VisualTextModel<glver>> (tf);
             tmup->set_parent (this->parentVis);
             return tmup;
         }
@@ -211,11 +211,11 @@ export namespace mplot
          * Add a text label to the model at location (within the model coordinates)
          * toffset. Return the text geometry of the added label so caller can place
          * associated text correctly.  Control font size, resolution, colour and font
-         * face with tfeatures.
+         * face with TextFeatures tf.
          */
         mplot::TextGeometry addLabel (const std::string& _text,
                                       const sm::vec<float, 3>& _toffset,
-                                      const mplot::TextFeatures& tfeatures = mplot::TextFeatures())
+                                      const mplot::TextFeatures& tf = mplot::TextFeatures())
         {
             if (mplot::VisualResources<glver>::i().get_tprog (this->parentVis) == 0) {
                 throw std::runtime_error ("No text shader prog. Did your VisualModel-derived class set it up?");
@@ -223,15 +223,15 @@ export namespace mplot
 
             mplot::VisualResources<glver>::i().setContext (this->parentVis); // For VisualTextModel
 
-            auto tmup = this->makeVisualTextModel (tfeatures);
+            auto tmup = this->makeVisualTextModel (tf);
 
-            if (tfeatures.centre_horz == true) {
+            if (tf.centre_horz == true) {
                 mplot::TextGeometry tg = tmup->getTextGeometry(_text);
                 sm::vec<float, 3> centred_locn = _toffset;
                 centred_locn[0] -= tg.half_width();
-                tmup->setupText (_text, centred_locn + this->viewmatrix.translation(), tfeatures.colour);
+                tmup->setupText (_text, centred_locn + this->viewmatrix.translation(), tf.colour);
             } else {
-                tmup->setupText (_text, _toffset + this->viewmatrix.translation(), tfeatures.colour);
+                tmup->setupText (_text, _toffset + this->viewmatrix.translation(), tf.colour);
             }
 
             this->texts.push_back (std::move(tmup));
@@ -243,14 +243,14 @@ export namespace mplot
         }
 
         /*!
-         * Add a text label, with given offset _toffset and the specified tfeatures. The
+         * Add a text label, with given offset _toffset and the specified tf. The
          * reference to a pointer, tm, allows client code to change the text of the
          * VisualTextModel as necessary, after the label has been added.
          */
         mplot::TextGeometry addLabel (const std::string& _text,
                                       const sm::vec<float, 3>& _toffset,
                                       mplot::VisualTextModel<glver>*& tm,
-                                      const mplot::TextFeatures& tfeatures = mplot::TextFeatures())
+                                      const mplot::TextFeatures& tf = mplot::TextFeatures())
         {
             if (mplot::VisualResources<glver>::i().get_tprog (this->parentVis) == 0) {
                 throw std::runtime_error ("No text shader prog. Did your VisualModel-derived class set it up?");
@@ -258,15 +258,15 @@ export namespace mplot
 
             mplot::VisualResources<glver>::i().setContext (this->parentVis); // For VisualTextModel
 
-            auto tmup = this->makeVisualTextModel (tfeatures);
+            auto tmup = this->makeVisualTextModel (tf);
 
-            if (tfeatures.centre_horz == true) {
+            if (tf.centre_horz == true) {
                 mplot::TextGeometry tg = tmup->getTextGeometry(_text);
                 sm::vec<float, 3> centred_locn = _toffset;
                 centred_locn[0] -= tg.half_width();
-                tmup->setupText (_text, centred_locn + this->viewmatrix.translation(), tfeatures.colour);
+                tmup->setupText (_text, centred_locn + this->viewmatrix.translation(), tf.colour);
             } else {
-                tmup->setupText (_text, _toffset + this->viewmatrix.translation(), tfeatures.colour);
+                tmup->setupText (_text, _toffset + this->viewmatrix.translation(), tf.colour);
             }
 
             this->texts.push_back (std::move(tmup));
