@@ -187,7 +187,7 @@ export namespace mplot
         //! Initialize vertex buffer objects and vertex array object. Empty for 'text only' VisualModels.
         virtual void initializeVertices() {};
         /*!
-         * Helper to make a VisualTextModel and bind it ready for use.
+         * Helper to make a VisualTextModel and set its parent so it is ready for use.
          *
          * You could write it out explicitly as:
          *
@@ -201,7 +201,6 @@ export namespace mplot
          */
         std::unique_ptr<mplot::VisualTextModel<glver>> makeVisualTextModel(const mplot::TextFeatures& tf)
         {
-            // No longer really worth having, as there is only the make_unique call
             auto tmup = std::make_unique<mplot::VisualTextModel<glver>> (tf);
             tmup->set_parent (this->parentVis);
             return tmup;
